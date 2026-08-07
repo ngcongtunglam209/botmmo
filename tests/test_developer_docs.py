@@ -32,7 +32,7 @@ def test_developer_docs_and_reference_are_available():
     assert b"SwaggerUIBundle" in reference.content
 
 
-def test_admin_login_uses_the_ops_control_center_skin():
+def test_admin_login_uses_the_admin_ui_skin():
     modules = load_modules()
     app = modules["app.models.api_models"].app
     client = TestClient(app)
@@ -42,7 +42,8 @@ def test_admin_login_uses_the_ops_control_center_skin():
     assert login.status_code == 200
     assert "Mọi hoạt động.".encode() in login.content
     assert b"login-signals" in login.content
-    assert b"--ops-green:#7cf29a" in login.content
+    assert b"--accent: #e3b96c" in login.content
+    assert b"login-shell" in login.content
     assert "Đăng nhập bằng Telegram".encode() in login.content
     assert b'name="username"' not in login.content
     assert b'name="password"' not in login.content

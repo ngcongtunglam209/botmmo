@@ -132,27 +132,17 @@ def _admin_web_category_config(category_name: str) -> dict:
 
 _admin_web_login_notify_cache = {}
 
-ADMIN_WEB_EXPERIENCE_CSS = (Path(__file__).parent / "static" / "experience.css").read_text(encoding="utf-8")
+# Single stylesheet for every admin surface (dashboard, detail pages, login).
+# Replaces admin_redesign.css + vip_admin.css + admin_ops_2026.css, which were
+# stacked in that order and overrode each other with !important.
+ADMIN_WEB_UI_CSS = (Path(__file__).parent / "static" / "admin_ui.css").read_text(encoding="utf-8")
 
-ADMIN_WEB_I18N_SCRIPT = (Path(__file__).parent / "static" / "i18n.js").read_text(encoding="utf-8")
-
-ADMIN_WEB_THREE_SCRIPT = (Path(__file__).parent / "static" / "three.js").read_text(encoding="utf-8")
-
-ADMIN_WEB_PRO_CSS = (Path(__file__).parent / "static" / "pro.css").read_text(encoding="utf-8")
-
-ADMIN_WEB_MMO_CSS = (Path(__file__).parent / "static" / "mmo.css").read_text(encoding="utf-8")
-
-ADMIN_WEB_DARK_CSS = (Path(__file__).parent / "static" / "dark.css").read_text(encoding="utf-8")
-
-ADMIN_WEB_MOTION_CSS = (Path(__file__).parent / "static" / "motion.css").read_text(encoding="utf-8")
-
-ADMIN_WEB_MOTION_SCRIPT = (Path(__file__).parent / "static" / "motion.js").read_text(encoding="utf-8")
-
-ADMIN_WEB_REDESIGN_CSS = (Path(__file__).parent / "static" / "admin_redesign.css").read_text(encoding="utf-8")
-
-ADMIN_WEB_VIP_CSS = (Path(__file__).parent / "static" / "vip_admin.css").read_text(encoding="utf-8")
-
-ADMIN_WEB_OPS_CSS = (Path(__file__).parent / "static" / "admin_ops_2026.css").read_text(encoding="utf-8")
+ADMIN_WEB_FONT_LINKS = (
+    '<link rel="preconnect" href="https://fonts.googleapis.com">'
+    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+    '<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500'
+    '&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">'
+)
 
 ADMIN_WEB_COMMAND_GROUPS = [
     {
@@ -257,8 +247,6 @@ ADMIN_WEB_COMMAND_GROUPS = [
     },
 ]
 
-
-_LAYOUT_CSS = (Path(__file__).parent / "static" / "layout.css").read_text(encoding="utf-8")
 
 def _admin_web_flat_commands():
     rows = []
@@ -1158,7 +1146,7 @@ def _admin_web_revenue_chart(days: int = 30) -> str:
         bar_h = max(2, int((v / max_val) * (H - PAD_B - 20))) if v > 0 else 2
         y = H - PAD_B - bar_h
         is_today = (d == today)
-        color = "#4ade80" if is_today else "#3b82f6"
+        color = "var(--accent)" if is_today else "var(--chart-bar)"
         tip = f"{d.strftime('%d/%m')}: {v:,}đ"
         bars_svg.append(
             f'<rect x="{x}" y="{y}" width="{bar_w}" height="{bar_h}" fill="{color}" rx="2" opacity="0.85">'
@@ -1168,7 +1156,7 @@ def _admin_web_revenue_chart(days: int = 30) -> str:
         if i % 5 == 0 or is_today:
             bars_svg.append(
                 f'<text x="{x + bar_w//2}" y="{H - PAD_B + 14}" text-anchor="middle" '
-                f'font-size="9" fill="{"#4ade80" if is_today else "#888"}">{d.strftime("%d/%m")}</text>'
+                f'font-size="9" fill="{"var(--accent)" if is_today else "var(--muted)"}">{d.strftime("%d/%m")}</text>'
             )
 
     # y-axis gridlines
@@ -1177,8 +1165,8 @@ def _admin_web_revenue_chart(days: int = 30) -> str:
         gy = H - PAD_B - int(frac * (H - PAD_B - 20))
         lbl = fmt_vnd(int(max_val * frac))
         grid_svg.append(
-            f'<line x1="{PAD_L}" y1="{gy}" x2="{W - 10}" y2="{gy}" stroke="#333" stroke-width="1" stroke-dasharray="3,3"/>'
-            f'<text x="{PAD_L - 4}" y="{gy + 4}" text-anchor="end" font-size="9" fill="#666">{lbl}</text>'
+            f'<line x1="{PAD_L}" y1="{gy}" x2="{W - 10}" y2="{gy}" stroke="var(--line)" stroke-width="1"/>'
+            f'<text x="{PAD_L - 6}" y="{gy + 4}" text-anchor="end" font-size="9" fill="var(--muted)">{lbl}</text>'
         )
 
     total_period = sum(values)
@@ -1186,23 +1174,23 @@ def _admin_web_revenue_chart(days: int = 30) -> str:
     total_week = sum(week_vals)
 
     svg = (
-        f'<svg viewBox="0 0 {W} {H}" style="width:100%;max-width:{W}px;height:auto;display:block;" xmlns="http://www.w3.org/2000/svg">'
+        f'<svg viewBox="0 0 {W} {H}" class="revenue-chart" xmlns="http://www.w3.org/2000/svg">'
         + "".join(grid_svg)
         + "".join(bars_svg)
-        + f'<line x1="{PAD_L}" y1="{H - PAD_B}" x2="{W - 10}" y2="{H - PAD_B}" stroke="#444" stroke-width="1"/>'
+        + f'<line x1="{PAD_L}" y1="{H - PAD_B}" x2="{W - 10}" y2="{H - PAD_B}" stroke="var(--line-2)" stroke-width="1"/>'
         + "</svg>"
     )
 
     return f"""
-<section class="mini-panel queue-panel" style="grid-column:1/-1;">
+<section class="mini-panel revenue-panel">
   <div class="card-head">
     <h3>Doanh thu {days} ngày gần nhất</h3>
-    <span class="muted" style="font-size:12px;">
-      Tuần: <b style="color:#4ade80;">{total_week:,}đ</b>
-      &nbsp;|&nbsp; {days} ngày: <b style="color:#3b82f6;">{total_period:,}đ</b>
+    <span class="chart-legend">
+      <span>Tuần <b class="money-positive">{total_week:,}đ</b></span>
+      <span>{days} ngày <b>{total_period:,}đ</b></span>
     </span>
   </div>
-  <div style="padding:8px 4px 0;">{svg}</div>
+  <div class="chart-body">{svg}</div>
 </section>"""
 
 
@@ -2205,7 +2193,30 @@ def _admin_web_unread_count() -> tuple[int, str]:
 def _admin_web_layout(title: str, body: str, request=None) -> str:
     key_query = _admin_web_key_query(request) if request is not None else ""
     unread, unread_msg = _admin_web_unread_count()
-    bell_html = f'<a href="javascript:void(0)" onclick="showToast(`{unread_msg}`)" title="Thông báo pending" style="position:relative;">🔔<span style="position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:bold;line-height:1;">{unread}</span></a>' if unread > 0 else '<a href="javascript:void(0)" onclick="showToast(`Không có thông báo mới!`)" style="opacity:0.3;cursor:pointer;">🔔</a>'
+    if unread > 0:
+        bell_html = (
+            '<a href="javascript:void(0)" title="Thông báo cần xử lý" aria-label="Thông báo cần xử lý"'
+            f' onclick="showToast(`{unread_msg}`)">🔔<span class="bell-count">{unread}</span></a>'
+        )
+    else:
+        bell_html = (
+            '<a href="javascript:void(0)" title="Không có thông báo mới" aria-label="Không có thông báo mới"'
+            ' onclick="showToast(`Không có thông báo mới`)">🔔</a>'
+        )
+    current_path = str(request.url.path) if request is not None else ""
+    nav_items = (
+        ("/admin", "Dashboard"),
+        ("/admin/categories", "Danh mục"),
+        ("/admin/commands", "Lệnh admin"),
+    )
+    nav_html = "".join(
+        '<a href="{href}"{current}>{label}</a>'.format(
+            href=f"{path}{key_query}",
+            current=' aria-current="page"' if current_path == path else "",
+            label=label,
+        )
+        for path, label in nav_items
+    )
     csrf_token = escape(_admin_web_csrf_token(request)) if request is not None else ""
     csrf_input = f'<input type="hidden" name="csrf_token" value="{csrf_token}">'
     body = re.sub(r'(<form\b(?=[^>]*\bmethod=["\']post["\'])[^>]*>)', rf'\1{csrf_input}', body, flags=re.IGNORECASE)
@@ -2214,23 +2225,26 @@ def _admin_web_layout(title: str, body: str, request=None) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0b0c0f">
   <title>{escape(title)}</title>
+  {ADMIN_WEB_FONT_LINKS}
   <style>
-{ADMIN_WEB_REDESIGN_CSS}
-{ADMIN_WEB_VIP_CSS}
-{ADMIN_WEB_OPS_CSS}
+{ADMIN_WEB_UI_CSS}
   </style>
+  <script>if (localStorage.getItem('admin_theme') === 'light') document.documentElement.classList.add('light-mode');</script>
 </head>
 <body>
+  <a class="skip-link" href="#admin-main">Tới nội dung chính</a>
   <header class="admin-topbar"><nav>
     <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Mở menu điều hướng" aria-controls="adminNavLinks" aria-expanded="false" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
-    <strong class="admin-brand"><span class="admin-brand-mark">D</span><span>Lâm Shop <b>Ops</b><small>Control center</small></span></strong>
-    <div class="topbar-actions">{bell_html}<button id="themeToggle" onclick="toggleTheme()" title="Đổi giao diện" aria-label="Đổi giao diện sáng tối">🌙</button></div>
-    <div id="adminNavLinks" class="admin-nav-links"><a href="/admin{key_query}">Dashboard</a><a href="/admin/categories{key_query}">Danh mục</a><a href="/admin/commands{key_query}">Lệnh admin</a><form method="post" action="/admin/logout">{csrf_input}<button id="admin-logout" type="submit">Đăng xuất</button></form></div>
+    <strong class="admin-brand"><span class="admin-brand-mark">L</span><span>Lâm Shop <b>Ops</b><small>Control center</small></span></strong>
+    <div class="topbar-actions">{bell_html}<button id="themeToggle" onclick="toggleTheme()" title="Đổi nền sáng/tối" aria-label="Đổi nền sáng tối">◐</button></div>
+    <div id="adminNavLinks" class="admin-nav-links">{nav_html}<form method="post" action="/admin/logout">{csrf_input}<button id="admin-logout" type="submit">Đăng xuất</button></form></div>
   </nav></header>
   <button id="mobileMenuBackdrop" class="mobile-menu-backdrop" type="button" aria-label="Đóng menu" onclick="toggleMobileMenu(false)"></button>
   <div id="toast-container"></div>
-  <main>{body}</main>
+  <main id="admin-main">{body}</main>
 <script>
 function toggleMobileMenu(force) {{
   const links = document.getElementById('adminNavLinks');
@@ -2247,15 +2261,15 @@ function toggleMobileMenu(force) {{
 document.addEventListener('keydown', event => {{ if (event.key === 'Escape') toggleMobileMenu(false); }});
 document.addEventListener('click', event => {{ if (event.target.closest('#adminNavLinks a')) toggleMobileMenu(false); }});
 function toggleTheme() {{
-  document.documentElement.classList.toggle('dark-mode');
-  const isDark = document.documentElement.classList.contains('dark-mode');
-  localStorage.setItem('admin_theme', isDark ? 'dark' : 'light');
-  document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+  const light = document.documentElement.classList.toggle('light-mode');
+  localStorage.setItem('admin_theme', light ? 'light' : 'dark');
+  document.getElementById('themeToggle').textContent = light ? '◑' : '◐';
 }}
-if (localStorage.getItem('admin_theme') === 'dark') {{
-  document.documentElement.classList.add('dark-mode');
-  document.addEventListener('DOMContentLoaded', () => document.getElementById('themeToggle').textContent = '☀️');
-}}
+document.addEventListener('DOMContentLoaded', () => {{
+  if (document.documentElement.classList.contains('light-mode')) {{
+    document.getElementById('themeToggle').textContent = '◑';
+  }}
+}});
 function showToast(message, isError = false) {{
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -4219,16 +4233,14 @@ async def admin_web_login_page(request: Request):
         """
     return HTMLResponse(f"""<!doctype html>
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#07110d"><title>Đăng nhập — Lâm Shop Ops</title>
-<style>{ADMIN_WEB_OPS_CSS}
-.telegram-login-button{{display:flex;align-items:center;justify-content:center;gap:11px;width:100%;box-sizing:border-box;padding:14px 18px;margin:18px 0 14px;border-radius:13px;background:#229ed9;color:#fff!important;text-decoration:none;font-weight:800;box-shadow:0 10px 28px rgba(34,158,217,.24);transition:.2s ease}}
-.telegram-login-button:hover{{background:#168dcc;transform:translateY(-1px)}}.telegram-login-button svg{{width:23px;height:23px;fill:currentColor}}
-</style></head>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b0c0f"><title>Đăng nhập — Lâm Shop Ops</title>
+{ADMIN_WEB_FONT_LINKS}
+<style>{ADMIN_WEB_UI_CSS}</style></head>
 <body class="admin-login-page">
-  <div class="login-ambient login-ambient-a"></div><div class="login-ambient login-ambient-b"></div>
   <main class="login-shell">
     <section class="login-story">
-      <a class="login-brand" href="/docs"><span class="admin-brand-mark">D</span><span>Lâm Shop <b>Ops</b></span></a>
+      <a class="login-brand" href="/docs"><span class="admin-brand-mark">L</span><span>Lâm Shop <b>Ops</b></span></a>
       <div class="login-copy">
         <span class="login-eyebrow"><i></i> ADMIN OPERATIONS</span>
         <h1>Mọi hoạt động.<br><em>Một trung tâm.</em></h1>
@@ -4243,7 +4255,7 @@ async def admin_web_login_page(request: Request):
     </section>
     <section class="login-panel">
       <div class="login-card">
-        <div class="login-card-head"><span class="login-lock">⌁</span><div><h2>Chào mừng trở lại</h2><p>Đăng nhập để tiếp tục vào Control Center.</p></div></div>
+        <div class="login-card-head"><span class="login-lock"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></svg></span><div><h2>Chào mừng trở lại</h2><p>Đăng nhập để tiếp tục vào Control Center.</p></div></div>
         {f'<div class="login-error"><b>Không thể đăng nhập Telegram</b><span>{telegram_error_message}</span></div>' if telegram_error_message else ''}
         {telegram_button}
         <div class="login-security"><i></i><span>Phiên đăng nhập được bảo vệ và tự động hết hạn.</span></div>
