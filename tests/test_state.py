@@ -19,7 +19,6 @@ class TestAppState:
         assert state.order_history == []
         assert state.user_data_db == {}
         assert state.products == {}
-        assert state.available_links == set()
         assert state.banned_users == set()
         assert state.pending_orders == {}
         assert state.api_keys == {}
@@ -36,7 +35,6 @@ class TestAppState:
             "order_history": [{"code": "ICLD001"}],
             "user_data_db": {"123": {"balance": 50000}},
             "products": {"p1": {"name": "Test"}},
-            "available_links": {"link1", "link2"},
             "MAINTENANCE_MODE": True,
             "bot_instance": "fake_bot",
         }
@@ -45,7 +43,6 @@ class TestAppState:
         assert len(state.order_history) == 1
         assert state.order_history[0]["code"] == "ICLD001"
         assert state.user_data_db["123"]["balance"] == 50000
-        assert state.available_links == {"link1", "link2"}
         assert state.maintenance_mode is True
         assert state.bot_instance == "fake_bot"
 
@@ -53,14 +50,12 @@ class TestAppState:
         state = AppState()
         state.order_history = [{"code": "ICLD002"}]
         state.products = {"p1": {"name": "Export Test"}}
-        state.available_links = {"exported_link"}
 
         namespace = {}
         state.export_to_globals(namespace)
 
         assert namespace["order_history"] == [{"code": "ICLD002"}]
         assert namespace["products"]["p1"]["name"] == "Export Test"
-        assert "exported_link" in namespace["available_links"]
 
     def test_bridge_roundtrip(self):
         """Data should survive bridge_from → export_to cycle."""

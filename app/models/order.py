@@ -85,20 +85,11 @@ class Order(BaseModel):
     refund_target: str = Field("", description="Where refund went (Ví Bot / Ví chung)")
 
     # API Partner fields
-    type: str = Field("store_product", description="store_product | icloud_link")
+    type: str = Field("store_product", description="store_product | manual_order")
     api_partner_key_hash: str = Field("", description="SHA256 hash of partner API key")
     api_customer_email: str | None = Field(None)
     api_partner_ref: str = Field("", description="Partner's external reference code")
     manual_fulfillment: bool = Field(False, description="Whether order requires manual processing")
-
-    # Social service (SocialSource) fields
-    is_social_source_service: bool = Field(False)
-    ctt_supplier_order_id: str = Field("")
-    ctt_supplier_status: str = Field("")
-    ctt_supplier_quantity: int = Field(0)
-    ctt_target_link: str = Field("")
-    ctt_comments: str = Field("")
-    payment_reference_code: str = Field("", description="Original order code before social service rename")
 
     model_config = ConfigDict(extra="allow")  # Allow legacy fields we haven't modeled yet
 
@@ -152,11 +143,6 @@ class PendingOrder(BaseModel):
     # USDT TRC20
     usdt_trc20_amount: str = Field("")
     usdt_trc20_amount_quant: str = Field("")
-
-    # Social service
-    is_social_source_service: bool = Field(False)
-    ctt_target_link: str = Field("")
-    ctt_comments: str = Field("")
 
     model_config = ConfigDict(extra="allow")
 

@@ -9,7 +9,6 @@ def build_admin_main_menu() -> InlineKeyboardMarkup:
             _btn("Marketing", icon_id="6143344362035090821", callback_data="adm:mk"),
         ],
         [
-            _btn("Resell", icon_id="5370715282044100355", callback_data="adm:resell"),
             _btn("API Partners", icon_id="5436359785534466562", callback_data="adm:api"),
         ],
         [
@@ -83,11 +82,8 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
             [_btn("Thêm SP mới", icon_id="5397916757333654639", callback_data="adm:h:newproduct"),
              _btn("Sửa sản phẩm", icon_id="5828072695694102691", callback_data="adm:h:editproduct")],
             [_btn("Thêm hàng vào kho", icon_id="5443127283898405358", callback_data="adm:h:addstock"),
-             _btn("Thêm link thủ công", icon_id="5271604874419647061", callback_data="adm:h:addlink")],
-            [_btn("Xóa link", icon_id="5445267414562389170", callback_data="adm:x:dellink"),
              _btn("Giới hạn đơn chờ", icon_id="5212985021870123409", callback_data="adm:h:setlimit")],
-            [_btn("Xóa sản phẩm", icon_id="6114086705512321034", callback_data="adm:h:delproduct"),
-             _btn("Gửi link bù", icon_id="4967770306555937780", callback_data="adm:h:guilink")],
+            [_btn("Xóa sản phẩm", icon_id="6114086705512321034", callback_data="adm:h:delproduct")],
             build_admin_back_row(),
         ])
         await _admin_edit("<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>KHO & SẢN PHẨM</b>\nChọn thao tác:", kb)
@@ -128,8 +124,7 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
 
     if action == "mk":
         kb = InlineKeyboardMarkup([
-            [_btn("Tạo Sale iCloud", icon_id="5240228673738527951", callback_data="adm:h:sale"),
-             _btn("Thêm coupon", icon_id="5377624166436445368", callback_data="adm:h:addcoupon")],
+            [_btn("Thêm coupon", icon_id="5377624166436445368", callback_data="adm:h:addcoupon")],
             [_btn("Xóa coupon", icon_id="5445267414562389170", callback_data="adm:h:delcoupon"),
              _btn("DS coupon", icon_id="5197269100878907942", callback_data="adm:x:listcoupons")],
             [_btn("Tạo Flash Sale", icon_id="5303290914041505430", callback_data="adm:h:flashsale"),
@@ -145,21 +140,6 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
             build_admin_back_row(),
         ])
         await _admin_edit("<tg-emoji emoji-id=\"5377624166436445368\">🎟</tg-emoji> <b>MARKETING & KHUYẾN MÃI</b>\nChọn thao tác:", kb)
-        return True
-
-    if action == "resell":
-        kb = InlineKeyboardMarkup([
-            [_btn("Thêm SP resell", icon_id="5397916757333654639", callback_data="adm:h:add_resell"),
-             _btn("DS SP resell", icon_id="5197269100878907942", callback_data="adm:x:list_resell")],
-            [_btn("Sửa markup %", icon_id="5828072695694102691", callback_data="adm:h:edit_markup"),
-             _btn("Xóa SP resell", icon_id="5445267414562389170", callback_data="adm:h:del_resell")],
-            [_btn("Đồng bộ giá & kho", icon_id="5370715282044100355", callback_data="adm:x:sync_resell")],
-            [_btn("DS dịch vụ SOCIAL_SOURCE", icon_id="5197269100878907942", callback_data="adm:x:list_ctt"),
-             _btn("Đồng bộ SOCIAL_SOURCE", icon_id="5370715282044100355", callback_data="adm:x:sync_ctt")],
-            [_btn("Số dư SOCIAL_SOURCE", icon_id="5278467510604160626", callback_data="adm:x:ctt_balance")],
-            build_admin_back_row(),
-        ])
-        await _admin_edit("<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>NGUỒN NGOÀI</b>\nChọn thao tác:", kb)
         return True
 
     if action == "api":
@@ -192,35 +172,12 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
 
     if action.startswith("h:"):
         cmd = action[2:]
-        if cmd == "add_ctt":
-            kb = InlineKeyboardMarkup([
-                [_btn("Quay lại", icon_id="6206032691075223572", callback_data="adm:resell")]
-            ])
-            await _admin_edit(
-                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>/add_ctt ĐÃ DEPRECATED</b>\n\n"
-                "Catalog SOCIAL_SOURCE giờ được đồng bộ tự động từ nguồn.\n"
-                "Dùng <code>/sync_ctt</code> để force refresh toàn bộ catalog social.",
-                kb,
-            )
-            return True
-        if cmd == "del_ctt":
-            kb = InlineKeyboardMarkup([
-                [_btn("Quay lại", icon_id="6206032691075223572", callback_data="adm:resell")]
-            ])
-            await _admin_edit(
-                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>/del_ctt KHÔNG CÒN LÀ FLOW CHÍNH</b>\n\n"
-                "Dịch vụ SOCIAL_SOURCE auto-managed sẽ được đánh dấu inactive khi biến mất từ nguồn.",
-                kb,
-            )
-            return True
         hints = {
             "newproduct":     "<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> Thêm sản phẩm mới (Wizard):\n<code>/newproduct</code>",
             "editproduct":   "<tg-emoji emoji-id=\"5350752364246606166\">✏️</tg-emoji> Sửa sản phẩm:\n<code>/editproduct</code>",
             "addstock":       "<tg-emoji emoji-id=\"5854908544712707500\">📥</tg-emoji> Thêm hàng vào kho:\n<code>/addstock</code>",
-            "addlink":        "<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> Thêm link thủ công:\n<code>/addlink [link]</code>",
             "setlimit":       "<tg-emoji emoji-id=\"5424857974784925603\">🚫</tg-emoji> Giới hạn đơn chờ:\n<code>/setlimit [product_id] [số]</code>",
             "delproduct":     "❌ Xóa sản phẩm:\n<code>/delproduct [product_id]</code>",
-            "guilink":        "<tg-emoji emoji-id=\"5854908544712707500\">📤</tg-emoji> Gửi link bù:\n<code>/guilink [email] [link]</code>",
             "find":           "<tg-emoji emoji-id=\"5429571366384842791\">🔍</tg-emoji> Tìm đơn hàng:\n<code>/find [mã_đơn]</code>",
             "refund":         "<tg-emoji emoji-id=\"5863724849851011383\">💸</tg-emoji> Hoàn tiền đơn:\n<code>/refund [mã_đơn]</code>",
             "clearpending":   "<tg-emoji emoji-id=\"5462956611033117422\">🧹</tg-emoji> Xóa đơn stuck:\n<code>/clearpending [mã/all]</code>",
@@ -232,7 +189,6 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
             "submoney":       "<tg-emoji emoji-id=\"5406745771280187626\">➖</tg-emoji> Trừ tiền user:\n<code>/submoney [user_id] [số_tiền]</code>",
             "chat":           "<tg-emoji emoji-id=\"6129860303619363484\">💬</tg-emoji> Chat với user:\n<code>/chat [user_id]</code>",
             "bc":             "<tg-emoji emoji-id=\"6129860303619363484\">📢</tg-emoji> Broadcast (Reply vào tin nhắn):\n<code>/bc</code>",
-            "sale":           "<tg-emoji emoji-id=\"6260059243605398502\">🏷</tg-emoji> Tạo Sale iCloud:\n<code>/sale [%_giảm] [số_lượng] [số_ngày]</code>",
             "addcoupon":      "<tg-emoji emoji-id=\"5377624166436445368\">🎟</tg-emoji> Thêm coupon:\n<code>/addcoupon [Mã] [Sl] [Tiền] [Ngày]</code>",
             "delcoupon":      "<tg-emoji emoji-id=\"5424857974784925603\">🗑</tg-emoji> Xóa coupon:\n<code>/delcoupon [Mã]</code>",
             "flashsale":      "<tg-emoji emoji-id=\"5303290914041505430\">⚡</tg-emoji> Tạo Flash Sale:\n<code>/flashsale [%_giảm] [số_phút] [product_id / all]</code>\n\nVí dụ:\n<code>/flashsale 30 60 all</code> — Giảm 30% tất cả trong 60 phút\n<code>/flashsale 50 30 netflix_1</code> — Giảm 50% SP cụ thể trong 30 phút",
@@ -241,11 +197,6 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
             "combo_create":   "<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> Tạo Combo Deal:\n<code>/combo create</code>",
             "combo_list":     "<tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> Xem Combo đang chạy:\n<code>/combo list</code>",
             "combo_delete":   "<tg-emoji emoji-id=\"5424857974784925603\">🗑</tg-emoji> Xóa Combo:\n<code>/combo delete [combo_id]</code>",
-            "add_resell":     "<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> Thêm SP resell:\n<code>/add_resell [supplier_source_product_id]</code>",
-            "edit_markup":    "<tg-emoji emoji-id=\"5350752364246606166\">✏️</tg-emoji> Sửa markup %:\n<code>/edit_markup [product_id] [%]</code>",
-            "del_resell":     "<tg-emoji emoji-id=\"5424857974784925603\">🗑</tg-emoji> Xóa SP resell:\n<code>/del_resell [product_id]</code>",
-            "add_ctt":        "<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> Thêm dịch vụ SOCIAL_SOURCE:\n<code>/add_ctt [service_id] [package_quantity] [gia_ban_vnd] [ten_tuy_chinh]</code>",
-            "del_ctt":        "<tg-emoji emoji-id=\"5424857974784925603\">🗑</tg-emoji> Xóa dịch vụ SOCIAL_SOURCE:\n<code>/del_ctt [product_id]</code>",
             "addapi":         "<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> Thêm Partner API:\n<code>/addapi [Tên_đối_tác]</code>",
             "delapi":         "<tg-emoji emoji-id=\"5424857974784925603\">🗑</tg-emoji> Xóa Partner:\n<code>/delapi [API_Key]</code>",
             "napi":           "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Nạp tiền API:\n<code>/napi [Key/Tên] [Số_tiền]</code>\nHoặc tạo QR:\n<code>/napi qr [Key/Tên] [Số_tiền]</code>",
@@ -258,15 +209,12 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
         hint = hints.get(cmd, f"Dùng lệnh: <code>/{cmd}</code>")
         back_category = {
             "newproduct": "kho", "editproduct": "kho", "addstock": "kho",
-            "addlink": "kho", "setlimit": "kho", "delproduct": "kho", "guilink": "kho",
             "find": "don", "refund": "don", "clearpending": "don", "setemail": "don",
             "info": "users", "ban": "users", "unban": "users", "addmoney": "users",
             "submoney": "users", "chat": "users", "bc": "users",
-            "sale": "mk", "addcoupon": "mk", "delcoupon": "mk", "create_ga": "mk", "end_ga": "mk",
+            "addcoupon": "mk", "delcoupon": "mk", "create_ga": "mk", "end_ga": "mk",
             "flashsale": "mk", "flashsale_list": "mk", "flashsale_stop": "mk",
             "combo_create": "mk", "combo_list": "mk", "combo_delete": "mk",
-            "add_resell": "resell", "edit_markup": "resell", "del_resell": "resell",
-            "add_ctt": "resell", "del_ctt": "resell",
             "addapi": "api", "delapi": "api", "napi": "api",
             "baotri": "sys", "aimode": "sys", "ask": "sys",
         }
@@ -296,8 +244,6 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
 
         cmd_map = {
             "products":             listproducts_command,
-            "kho":                  kholink_command,
-            "dellink":              removelink_command,
             "duyet":                duyet_command,
             "pending":              pending_manual_command,
             "doanhthu":             doanhthu_command,
@@ -309,11 +255,6 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
             "listcoupons":          listcoupons_command,
             "rewardtop":            rewardtop_command,
             "list_ga":              list_ga_command,
-            "list_resell":          list_resell_command,
-            "sync_resell":          sync_resell_command,
-            "list_ctt":             list_ctt_command,
-            "sync_ctt":             sync_ctt_command,
-            "ctt_balance":          ctt_balance_command,
             "api":                  listapi_command,
             "backup":               backup_command,
             "testing":              testing_command,

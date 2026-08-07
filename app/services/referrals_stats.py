@@ -365,7 +365,7 @@ def get_upsell_products(purchased_prod_id: str, limit: int = 2):
             continue
         cat = get_product_category(p['name'])
         if cat == purchased_cat:
-            stock_count = len(p.get('stock', [])) if not p.get('is_supplier_source_resell') else p.get('supplier_source_stock', 0)
+            stock_count = len(p.get('stock', []))
             has_stock = stock_count > 0 or p.get('requires_gmail', False)
             if has_stock:
                 candidates.append((pid, p))

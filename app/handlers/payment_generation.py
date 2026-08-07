@@ -68,26 +68,6 @@ async def _prompt_private_start_required(update: Update, context: ContextTypes.D
             pass
 
 
-def _build_ctt_pending_inputs(extra_pending_data: dict | None):
-    if not isinstance(extra_pending_data, dict):
-        return {}
-
-    inputs = {}
-    target_link = str(extra_pending_data.get("ctt_target_link") or "").strip()
-    comments = str(extra_pending_data.get("ctt_comments") or "").strip()
-    if target_link:
-        inputs["link"] = target_link
-    if comments:
-        inputs["comments"] = comments
-    return inputs
-
-
-def _build_product_payment_note(product_data: dict, quantity: int, extra_pending_data: dict | None):
-    if not _ctt_is_service_product(product_data):
-        return ""
-    return _ctt_build_payment_note(product_data, quantity, _build_ctt_pending_inputs(extra_pending_data))
-
-
 def _build_payment_legal_notice(user_id: int) -> str:
     return "\n\n" + lt(
         user_id,
@@ -112,25 +92,6 @@ def _get_product_checkout_total_amount(
     product_data: dict,
     quantity: int,
 ) -> int:
-    if _ctt_is_service_product(product_data):
-        totals = [_ctt_calculate_total_price(product_data, quantity)]
-        _best_price, _discount_type, discount_info = get_best_discount(
-            user_id,
-            prod_id,
-            int(product_data.get("price", 0) or 0),
-        )
-        if isinstance(discount_info, dict):
-            try:
-                discount_percent = int(discount_info.get("discount_percent", 0) or 0)
-            except (TypeError, ValueError, KeyError, AttributeError):
-                discount_percent = 0
-            if discount_percent > 0:
-                totals.append(_ctt_calculate_total_price(product_data, quantity, discount_percent=discount_percent))
-        _store_coupon_code, store_coupon_discount = get_active_store_coupon_context(context, prod_id, quantity)
-        if store_coupon_discount > 0:
-            totals.append(_ctt_calculate_total_price(product_data, quantity, coupon_unit_discount=store_coupon_discount))
-        return min(total for total in totals if int(total or 0) >= 0)
-
     price_base = product_data['price']
     price, _, _ = get_best_discount(user_id, prod_id, price_base)
     _store_coupon_code, store_coupon_discount = get_active_store_coupon_context(context, prod_id, quantity)
@@ -242,14 +203,13 @@ async def generate_product_payment_qr(
     else:
         balance_line = f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>{qr_text["payment"]}:</b> {qr_amount:,} VNĐ\n'
 
-    payment_note = _build_product_payment_note(p, quantity, extra_pending_data)
-    order_code_label = qr_text["payment_code"] if _ctt_is_service_product(p) else qr_text["order"]
+    order_code_label = qr_text["order"]
     caption = (
         f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> <b>{qr_text["invoice"]}</b>\n'
         f"━━━━━━━━━━━━━━━━━━\n<blockquote>"
         f'<tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>{qr_text["product"]}:</b> <i>{html.escape(str(product_name))}</i>\n'
         f'<tg-emoji emoji-id="5305749482170758709">0️⃣</tg-emoji> <b>{qr_text["quantity"]}:</b> {quantity}\n'
-        f'{balance_line}{payment_note}'
+        f'{balance_line}'
         f'<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>{order_code_label}:</b> <code>{order_code}</code>\n'
         f'<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>{qr_text["content"]}:</b> <code>{transfer_content}</code></blockquote>\n\n'
         f'<tg-emoji emoji-id="5411225014148014586">🔴</tg-emoji> <i>{qr_text["instruction"]}</i>\n'
@@ -388,13 +348,12 @@ async def generate_product_payment_binance(
         return
 
     balance_line = lt(user.id, '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Tổng giá:</b> {total:,} VNĐ\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Đã trừ ví:</b> -{used:,} VNĐ\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Total:</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Wallet used:</b> -{used:,} VND\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>总价：</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>钱包抵扣：</b> -{used:,} VND\n', total=total_amount, used=balance_used) if balance_used > 0 else ""
-    payment_note = _build_product_payment_note(p, quantity, extra_pending_data)
     caption = lt(
         user.id,
         '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>HÓA ĐƠN BINANCE PAY</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Sản phẩm:</b> <i>{product}</i>\n<tg-emoji emoji-id="5334890573281114250">🔢</tg-emoji> <b>Số lượng:</b> {quantity}\n{balance}{note}<tg-emoji emoji-id="5278467510604160626">🏦</tg-emoji> <b>Cần thanh toán:</b> {due:,} VNĐ\n<tg-emoji emoji-id="5379773896352355687">🪙</tg-emoji> <b>Ước tính:</b> {crypto} {currency}\n<tg-emoji emoji-id="6059654836918423763">📈</tg-emoji> <b>Tỷ giá cấu hình:</b> 1 USDT ≈ {rate:,} VNĐ\n<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>Mã đơn:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> Đơn hàng sẽ bị hủy sau {minutes} phút.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏳</tg-emoji> <b>Hết hạn lúc:</b> {expires}',
         '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>BINANCE PAY INVOICE</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Product:</b> <i>{product}</i>\n<tg-emoji emoji-id="5334890573281114250">🔢</tg-emoji> <b>Quantity:</b> {quantity}\n{balance}{note}<tg-emoji emoji-id="5278467510604160626">🏦</tg-emoji> <b>Amount due:</b> {due:,} VND\n<tg-emoji emoji-id="5379773896352355687">🪙</tg-emoji> <b>Estimated:</b> {crypto} {currency}\n<tg-emoji emoji-id="6059654836918423763">📈</tg-emoji> <b>Configured rate:</b> 1 USDT ≈ {rate:,} VND\n<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>Order code:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> Order expires in {minutes} minutes.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏳</tg-emoji> <b>Expires at:</b> {expires}',
         '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>BINANCE PAY 账单</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>商品：</b> <i>{product}</i>\n<tg-emoji emoji-id="5334890573281114250">🔢</tg-emoji> <b>数量：</b> {quantity}\n{balance}{note}<tg-emoji emoji-id="5278467510604160626">🏦</tg-emoji> <b>应付：</b> {due:,} VND\n<tg-emoji emoji-id="5379773896352355687">🪙</tg-emoji> <b>预计：</b> {crypto} {currency}\n<tg-emoji emoji-id="6059654836918423763">📈</tg-emoji> <b>设定汇率：</b> 1 USDT ≈ {rate:,} VND\n<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>订单号：</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> 订单将在 {minutes} 分钟后过期。{refund}\n<tg-emoji emoji-id="5213349767672769194">⏳</tg-emoji> <b>到期时间：</b> {expires}',
-        icon=BINANCE_BUTTON_ICON_ID, product=html.escape(str(p['name'])), quantity=quantity, balance=balance_line, note=payment_note, due=amount_due, crypto=html.escape(str(binance_order.get('quoted_usdt') or binance_order.get('totalFee') or '')), currency=html.escape(str(binance_order.get('currency') or 'USDT')), rate=BINANCE_PAY_RATE_VND_PER_USDT, code=order_code, minutes=ORDER_EXPIRATION_SECONDS // 60, refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "", expires=(datetime.now() + timedelta(seconds=ORDER_EXPIRATION_SECONDS)).strftime('%H:%M:%S'),
+        icon=BINANCE_BUTTON_ICON_ID, product=html.escape(str(p['name'])), quantity=quantity, balance=balance_line, note='', due=amount_due, crypto=html.escape(str(binance_order.get('quoted_usdt') or binance_order.get('totalFee') or '')), currency=html.escape(str(binance_order.get('currency') or 'USDT')), rate=BINANCE_PAY_RATE_VND_PER_USDT, code=order_code, minutes=ORDER_EXPIRATION_SECONDS // 60, refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "", expires=(datetime.now() + timedelta(seconds=ORDER_EXPIRATION_SECONDS)).strftime('%H:%M:%S'),
     )
     caption += _build_payment_legal_notice(user.id)
 
@@ -522,13 +481,12 @@ async def generate_product_payment_usdt_trc20(
         return
 
     balance_line = lt(user.id, '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Tổng giá:</b> {total:,} VNĐ\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Đã trừ ví:</b> -{used:,} VNĐ\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Total:</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Wallet used:</b> -{used:,} VND\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>总价：</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>钱包抵扣：</b> -{used:,} VND\n', total=total_amount, used=balance_used) if balance_used > 0 else ""
-    payment_note = _build_product_payment_note(p, quantity, extra_pending_data)
     caption = lt(
         user.id,
         '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>THANH TOÁN USDT (MẠNG TRC20)</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Sản phẩm:</b> <i>{product}</i> x{quantity}\n{balance}{note}• <b>Cần thanh toán:</b> {due:,} VNĐ\n\n• <b>Số tiền USDT:</b> <code>{crypto}</code>\n• <b>Địa chỉ ví:</b> <code>{wallet}</code>\n• <b>Mạng lưới:</b> TRON (TRC20)\n• <b>Tỉ giá:</b> 1 USDT = {rate:,} VNĐ\n• <b>Mã đơn:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>LƯU Ý QUAN TRỌNG:</b>\n- Chuyển <b>đúng số tiền ở trên</b> để hệ thống tự nhận diện.\n- Chỉ dùng mạng TRON (TRC20). Chuyển sai mạng sẽ mất tiền.\n- QR chỉ chứa địa chỉ ví; bạn cần tự điền số tiền USDT.\n- Hết hạn sau {minutes} phút.{refund}',
         '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>USDT PAYMENT (TRC20 NETWORK)</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Product:</b> <i>{product}</i> x{quantity}\n{balance}{note}• <b>Amount due:</b> {due:,} VND\n\n• <b>USDT amount:</b> <code>{crypto}</code>\n• <b>Wallet address:</b> <code>{wallet}</code>\n• <b>Network:</b> TRON (TRC20)\n• <b>Rate:</b> 1 USDT = {rate:,} VND\n• <b>Order code:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>IMPORTANT:</b>\n- Send the <b>exact amount above</b> for automatic detection.\n- Use only TRON (TRC20). Funds sent through another network may be lost.\n- The QR contains only the wallet address; enter the USDT amount manually.\n- Expires in {minutes} minutes.{refund}',
         '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>USDT 支付（TRC20 网络）</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>商品：</b> <i>{product}</i> x{quantity}\n{balance}{note}• <b>应付：</b> {due:,} VND\n\n• <b>USDT 金额：</b> <code>{crypto}</code>\n• <b>钱包地址：</b> <code>{wallet}</code>\n• <b>网络：</b> TRON (TRC20)\n• <b>汇率：</b> 1 USDT = {rate:,} VND\n• <b>订单号：</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>重要提示：</b>\n- 请转入<b>上方准确金额</b>以便系统自动识别。\n- 仅使用 TRON (TRC20)，转错网络可能造成资金丢失。\n- QR 仅包含钱包地址；请手动输入 USDT 金额。\n- {minutes} 分钟后过期。{refund}',
-        product=html.escape(str(p['name'])), quantity=quantity, balance=balance_line, note=payment_note, due=amount_due, crypto=html.escape(usdt_quote['amount_text']), wallet=html.escape(USDT_TRC20_WALLET_ADDRESS), rate=usdt_quote.get("live_rate", USDT_TRC20_RATE_VND_PER_USDT), code=order_code, minutes=ORDER_EXPIRATION_SECONDS // 60, refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "",
+        product=html.escape(str(p['name'])), quantity=quantity, balance=balance_line, note='', due=amount_due, crypto=html.escape(usdt_quote['amount_text']), wallet=html.escape(USDT_TRC20_WALLET_ADDRESS), rate=usdt_quote.get("live_rate", USDT_TRC20_RATE_VND_PER_USDT), code=order_code, minutes=ORDER_EXPIRATION_SECONDS // 60, refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "",
     )
     destination_lines = {
         "THANH TOÁN USDT (MẠNG TRC20)": "THANH TOÁN USDT (BINANCE ID / BEP20)",

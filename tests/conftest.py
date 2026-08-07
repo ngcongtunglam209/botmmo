@@ -22,7 +22,7 @@ def sample_order_data() -> dict:
         "status": "Hoàn thành",
         "timestamp": time.time() - 3600,
         "product_id": "prod_001",
-        "product_name": "iCloud 50GB 1 Tháng",
+        "product_name": "ChatGPT Plus 1 Tháng",
         "product_duration": "1 tháng",
         "quantity": 1,
         "items": ["https://example.com/link1"],
@@ -45,7 +45,7 @@ def sample_pending_order_data() -> dict:
         "time": time.time(),
         "status": "pending_payment",
         "product_id": "prod_001",
-        "product_name": "iCloud 50GB 1 Tháng",
+        "product_name": "ChatGPT Plus 1 Tháng",
         "quantity": 1,
         "transfer_content": "ICLD123456",
         "payment_method": "bank_transfer",
@@ -72,9 +72,9 @@ def sample_user_data() -> dict:
 def sample_product_data() -> dict:
     """A product dict in legacy format."""
     return {
-        "name": "iCloud 50GB 1 Tháng",
+        "name": "ChatGPT Plus 1 Tháng",
         "price": 35000,
-        "description": "Gói iCloud 50GB thời hạn 1 tháng",
+        "description": "Tài khoản ChatGPT Plus thời hạn 1 tháng",
         "duration": "1 tháng",
         "stock": ["link1", "link2", "link3"],
         "requires_gmail": False,

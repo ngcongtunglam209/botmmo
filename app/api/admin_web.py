@@ -168,15 +168,6 @@ ADMIN_WEB_COMMAND_GROUPS = [
         ],
     },
     {
-        "group": "Kho link legacy",
-        "commands": [
-            ("kho", "/kho", "Xem kho link legacy.", "readonly"),
-            ("addlink", "/addlink <link>", "Thêm link vào kho legacy.", "write"),
-            ("dellink", "/dellink <link>", "Xóa link kho legacy.", "write"),
-            ("guilink", "/guilink <user_id> <link>", "Gửi link thủ công cho user.", "danger"),
-        ],
-    },
-    {
         "group": "Sản phẩm và tồn kho",
         "commands": [
             ("products", "/products", "Danh sách sản phẩm store.", "readonly"),
@@ -249,24 +240,6 @@ ADMIN_WEB_COMMAND_GROUPS = [
             ("regapi", "/regapi", "Alias đăng ký API.", "user"),
             ("napapi", "/napapi", "User nạp ví API.", "user"),
             ("topupapi", "/topupapi", "Alias nạp ví API.", "user"),
-        ],
-    },
-    {
-        "group": "Supplier SupplierSource và SocialSource",
-        "commands": [
-            ("add_resell", "/add_resell ...", "Thêm sản phẩm resell SupplierSource.", "write"),
-            ("supplier_catalog_web", "/admin/supplier_catalog", "Web chọn sản phẩm SupplierCatalog, tick là hiện bot.", "write"),
-            ("list_supplier_catalog_products", "/list_supplier_catalog_products [keyword]", "Xem ID sản phẩm SupplierCatalog.", "readonly"),
-            ("add_supplier_catalog_resell", "/add_supplier_catalog_resell ...", "Thêm resell SupplierCatalog bằng ID.", "write"),
-            ("list_resell", "/list_resell", "Danh sách resell SupplierSource.", "readonly"),
-            ("edit_markup", "/edit_markup ...", "Sửa markup resell.", "write"),
-            ("del_resell", "/del_resell <product_id>", "Xóa resell.", "danger"),
-            ("sync_resell", "/sync_resell", "Đồng bộ SupplierSource.", "write"),
-            ("add_ctt", "/add_ctt ...", "Thêm dịch vụ SocialSource.", "write"),
-            ("list_ctt", "/list_ctt", "Danh sách dịch vụ SocialSource.", "readonly"),
-            ("del_ctt", "/del_ctt <product_id>", "Xóa dịch vụ SocialSource.", "danger"),
-            ("sync_ctt", "/sync_ctt", "Đồng bộ SocialSource.", "write"),
-            ("ctt_balance", "/ctt_balance", "Xem số dư SocialSource.", "readonly"),
         ],
     },
     {
@@ -565,10 +538,6 @@ def _admin_web_recent_orders(limit=10):
 def _admin_web_stock_count(product_data):
     if not isinstance(product_data, dict):
         return 0
-    if product_data.get("is_social_source_service"):
-        return "SOCIAL_SOURCE"
-    if product_data.get("is_supplier_source_resell"):
-        return product_data.get("supplier_source_stock", "API")
     if product_data.get("requires_gmail"):
         return "manual"
     try:
@@ -689,7 +658,7 @@ def _admin_web_render_product_rows(request=None, limit=None):
         pending_count = _pending_map.get(str(product_id), 0)
         sold_count = _sold_map.get(str(product_id), 0)
         stock_count = _admin_web_stock_count(product)
-        sync_state = str(product.get("ctt_sync_state") or "active")
+        sync_state = "active"
         status_class = "readonly"
         if product_type == "local" and isinstance(stock_count, int) and stock_count <= 0:
             status_class = "danger"
@@ -983,24 +952,6 @@ def _admin_web_render_ops_log_panel() -> str:
         f"<div class='ecg-body'>{lines_html}</div>"
         "</div>"
     )
-
-
-def _admin_web_render_legacy_link_rows(limit=80):
-    rows = []
-    source = list(available_links) if isinstance(available_links, set) else list(available_links or [])
-    for index, link in enumerate(source[:limit], 1):
-        link_text = str(link or "").strip()
-        if not link_text:
-            continue
-        search = _admin_web_row_search(link_text)
-        rows.append(
-            f'<tr class="data-row" data-search="{search}" data-kind="legacy-link">'
-            f"<td>{index}</td>"
-            f"<td><code>{escape(_admin_web_short(link_text, 140))}</code></td>"
-            f"<td><span class='tag readonly'>active</span></td>"
-            "</tr>"
-        )
-    return "".join(rows) or "<tr><td colspan='3' class='muted'>Kho link legacy đang trống.</td></tr>"
 
 
 def _admin_web_render_support_rows(request=None, limit=120):
@@ -1479,10 +1430,9 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
             _admin_web_summary_card("Bảo hành", product.get("warranty") or "Không"),
             _admin_web_summary_card("Pending manual", pending_count),
             _admin_web_summary_card("Orders", sold_count),
-            _admin_web_summary_card("Sync", product.get("ctt_sync_state") or "active"),
         ]
     )
-    stock_disabled = "disabled" if product.get("requires_gmail") or product.get("is_supplier_source_resell") or product.get("is_social_source_service") else ""
+    stock_disabled = "disabled" if product.get("requires_gmail") else ""
     category_name = _admin_web_product_category(product)
     image_path = _admin_web_product_image_path(product_id)
     category_image_path = _admin_web_category_image_path(category_name) if category_name else None
@@ -2150,17 +2100,6 @@ def _admin_web_action_cards(request) -> str:
     </form>
   </section>
   <section class="action-card">
-    <div class="card-head"><h3>Kho link legacy</h3><span class="tag write">legacy</span></div>
-    <form method="post" action="{action_url}" class="form-grid">
-      <input type="hidden" name="action" value="legacy_link">
-      <label>Thao tác
-        <select name="mode"><option value="replace">Thay link đang dùng</option><option value="add">Thêm link</option><option value="delete">Xóa link</option><option value="clear">Xóa toàn bộ</option></select>
-      </label>
-      <label class="wide">Link<textarea name="link" placeholder="Dán link legacy, mỗi dòng 1 link nếu thêm nhiều"></textarea></label>
-      <button class="wide" type="submit">Cập nhật kho link</button>
-    </form>
-  </section>
-  <section class="action-card">
     <div class="card-head"><h3>Coupon</h3><span class="tag write">promo</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="coupon">
@@ -2287,7 +2226,7 @@ def _admin_web_layout(title: str, body: str, request=None) -> str:
     <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Mở menu điều hướng" aria-controls="adminNavLinks" aria-expanded="false" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
     <strong class="admin-brand"><span class="admin-brand-mark">D</span><span>Lâm Shop <b>Ops</b><small>Control center</small></span></strong>
     <div class="topbar-actions">{bell_html}<button id="themeToggle" onclick="toggleTheme()" title="Đổi giao diện" aria-label="Đổi giao diện sáng tối">🌙</button></div>
-    <div id="adminNavLinks" class="admin-nav-links"><a href="/admin{key_query}">Dashboard</a><a href="/admin/resell{key_query}">API Resell</a><a href="/admin/supplier_catalog{key_query}">SupplierCatalog</a><a href="/admin/categories{key_query}">Danh mục</a><a href="/admin/commands{key_query}">Lệnh admin</a><form method="post" action="/admin/logout">{csrf_input}<button id="admin-logout" type="submit">Đăng xuất</button></form></div>
+    <div id="adminNavLinks" class="admin-nav-links"><a href="/admin{key_query}">Dashboard</a><a href="/admin/categories{key_query}">Danh mục</a><a href="/admin/commands{key_query}">Lệnh admin</a><form method="post" action="/admin/logout">{csrf_input}<button id="admin-logout" type="submit">Đăng xuất</button></form></div>
   </nav></header>
   <button id="mobileMenuBackdrop" class="mobile-menu-backdrop" type="button" aria-label="Đóng menu" onclick="toggleMobileMenu(false)"></button>
   <div id="toast-container"></div>
@@ -2414,7 +2353,6 @@ def _admin_web_dashboard_body(request=None, message: str | None = None, is_error
         ("Pending pay", len(pending_orders), "orders"),
         ("Sản phẩm", len(products), "products"),
         ("Low stock", _admin_web_low_stock_count(), "products"),
-        ("Kho link legacy", len(available_links) if isinstance(available_links, set) else 0, "products"),
         ("Users", len(user_data_db), "users"),
         ("Manual pending", len(pending_manual_orders), "orders"),
         ("API partner on", f"{active_api_keys}/{len(api_keys)}", "api"),
@@ -2464,12 +2402,9 @@ def _admin_web_dashboard_body(request=None, message: str | None = None, is_error
     <a href="#overview" data-page-link="overview">Tổng quan</a>
     <a href="#actions" data-page-link="actions">Actions</a>
     <a href="#products" data-page-link="products">Sản phẩm</a>
-    <a href="#legacy" data-page-link="legacy">Kho link</a>
     <a href="#orders" data-page-link="orders">Đơn hàng</a>
     <a href="#users" data-page-link="users">Users</a>
     <a href="#api" data-page-link="api">API partner</a>
-    <a href="/admin/resell{_admin_web_key_query(request) if request is not None else ''}">API Resell</a>
-    <a href="/admin/supplier_catalog{_admin_web_key_query(request) if request is not None else ''}">SupplierCatalog</a>
     <a href="#promo" data-page-link="promo">Khuyến mãi</a>
     <a href="#support" data-page-link="support">Hỗ trợ</a>
     <a href="#ops" data-page-link="ops">Vận hành</a>
@@ -2513,15 +2448,10 @@ def _admin_web_dashboard_body(request=None, message: str | None = None, is_error
 
     <section class="module-section admin-page" id="products">
       <div class="section-head">
-        <div><h2>Sản phẩm & tồn kho</h2><p>Quản lý catalog local, manual, SupplierSource và SocialSource. Đang hiển thị {min(len(products), ADMIN_WEB_PRODUCT_TABLE_LIMIT):,}/{len(products):,} sản phẩm mới nhất để dashboard tải nhanh.</p></div>
-        <select onchange="filterTableKind('productsTable', this.value)"><option value="">Tất cả loại</option><option value="local">local</option><option value="manual">manual</option><option value="supplier_source">supplier_source</option><option value="ctt">ctt</option></select>
+        <div><h2>Sản phẩm & tồn kho</h2><p>Quản lý catalog local và manual. Đang hiển thị {min(len(products), ADMIN_WEB_PRODUCT_TABLE_LIMIT):,}/{len(products):,} sản phẩm mới nhất để dashboard tải nhanh.</p></div>
+        <select onchange="filterTableKind('productsTable', this.value)"><option value="">Tất cả loại</option><option value="local">local</option><option value="manual">manual</option></select>
       </div>
       <div class="table-scroll"><table class="data-table" id="productsTable"><thead><tr><th>ID</th><th>Tên</th><th>Loại</th><th>Giá</th><th>Stock</th><th>Pending</th><th>Sold</th><th>Sync</th><th></th></tr></thead><tbody>{_admin_web_render_product_rows(request, limit=ADMIN_WEB_PRODUCT_TABLE_LIMIT)}</tbody></table></div>
-    </section>
-
-    <section class="module-section admin-page" id="legacy">
-      <div class="section-head"><div><h2>Kho link legacy</h2><p>Link dùng cho flow iCloud/API legacy. Có thể thay, thêm, xóa trực tiếp ở Actions.</p></div></div>
-      <div class="table-scroll"><table class="data-table" id="legacyLinksTable"><thead><tr><th>#</th><th>Link</th><th>Status</th></tr></thead><tbody>{_admin_web_render_legacy_link_rows()}</tbody></table></div>
     </section>
 
     <section class="module-section admin-page" id="orders">
@@ -3307,7 +3237,7 @@ async def _admin_web_action_product_update(form):
         product["max_pending_orders"] = int(max_pending)
         changes.append("gioi han manual")
     if stock_text:
-        if product.get("requires_gmail") or product.get("is_supplier_source_resell") or product.get("is_social_source_service"):
+        if product.get("requires_gmail"):
             return False, "Chi them stock local cho san pham auto/local stock."
         items = [line.strip() for line in stock_text.splitlines() if line.strip()]
         if not items:
@@ -3330,7 +3260,7 @@ async def _admin_web_action_product_stock(form):
         return False, "Khong tim thay product_id."
     mode = _admin_web_form_text(form, "mode")
     if mode == "clear_stock":
-        if product.get("requires_gmail") or product.get("is_supplier_source_resell") or product.get("is_social_source_service"):
+        if product.get("requires_gmail"):
             return False, "Chi xoa stock local cho san pham local stock."
         count = len(product.get("stock") or []) if isinstance(product.get("stock"), list) else 0
         product["stock"] = []
@@ -3350,41 +3280,6 @@ async def _admin_web_action_product_delete(form):
     products.pop(product_id, None)
     await save_data(force=True, tables=[PRODUCTS_FILE])
     return True, f"Da xoa san pham {product_id}: {product_name}."
-
-
-async def _admin_web_action_legacy_link(form):
-    mode = _admin_web_form_text(form, "mode") or "replace"
-    link_text = _admin_web_form_text(form, "link")
-    links = [line.strip() for line in link_text.splitlines() if line.strip()]
-    if mode in {"add", "replace", "delete"} and not links:
-        return False, "Can nhap it nhat 1 link."
-    if not isinstance(available_links, set):
-        return False, "Kho link legacy khong hop le."
-    if mode == "replace":
-        available_links.clear()
-        available_links.update(links)
-        await save_data(force=True, tables=[LINKS_FILE])
-        return True, f"Da thay kho link legacy bang {len(links)} link."
-    if mode == "add":
-        before = len(available_links)
-        available_links.update(links)
-        added = len(available_links) - before
-        await save_data(force=True, tables=[LINKS_FILE])
-        return True, f"Da them {added} link legacy. Tong hien tai: {len(available_links)}."
-    if mode == "delete":
-        removed = 0
-        for link in links:
-            if link in available_links:
-                available_links.discard(link)
-                removed += 1
-        await save_data(force=True, tables=[LINKS_FILE])
-        return True, f"Da xoa {removed} link legacy. Con lai: {len(available_links)}."
-    if mode == "clear":
-        count = len(available_links)
-        available_links.clear()
-        await save_data(force=True, tables=[LINKS_FILE])
-        return True, f"Da xoa toan bo {count} link legacy."
-    return False, "Thao tac kho link legacy khong hop le."
 
 
 async def _admin_web_action_api_partner(form):
@@ -3762,7 +3657,6 @@ def _admin_web_action_registry():
         "product_update": _admin_web_action_product_update,
         "product_stock": _admin_web_action_product_stock,
         "product_delete": _admin_web_action_product_delete,
-        "legacy_link": _admin_web_action_legacy_link,
         "api_partner": _admin_web_action_api_partner,
         "order_tools": _admin_web_action_order_tools,
         "coupon": _admin_web_action_coupon,
@@ -3770,7 +3664,6 @@ def _admin_web_action_registry():
         "pending_manual": _admin_web_action_pending_manual,
         "ops_config_update": _admin_web_action_ops_config_update,
         "support_update": _admin_web_action_support_update,
-        "supplier_catalog_resell": _admin_web_action_supplier_catalog_resell,
         "product_image_delete": _admin_web_action_product_image_delete,
         "category_image_delete": _admin_web_action_category_image_delete,
         "category_create": _admin_web_action_category_create,
@@ -4076,480 +3969,6 @@ async def admin_web_product_image_upload(request: Request):
     return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
 
 
-async def _admin_web_action_supplier_catalog_resell(form):
-    shop_product_id = _admin_web_form_text(form, "shop_product_id")
-    mode = _admin_web_form_text(form, "mode") or "enable"
-    if not shop_product_id:
-        return False, "Thieu shop_product_id."
-
-    existing_id = ""
-    for pid, product in products.items():
-        if not isinstance(product, dict):
-            continue
-        if product.get("resell_source") == "supplier_catalog" and str(product.get("supplier_source_variant_id") or product.get("supplier_source_product_id") or "") == str(shop_product_id):
-            existing_id = str(pid)
-            break
-
-    if mode == "disable":
-        if not existing_id:
-            return False, "San pham SupplierCatalog nay chua co trong bot."
-        products[existing_id]["resell_enabled"] = False
-        await save_data(force=True, tables=[PRODUCTS_FILE])
-        return True, f"Da tat SupplierCatalog resell {existing_id}."
-
-    try:
-        markup = float(_admin_web_form_text(form, "markup") or 30)
-        if markup < 0:
-            raise ValueError("markup")
-    except ValueError:
-        return False, "Markup phai la so >= 0."
-
-    custom_name = _admin_web_form_text(form, "custom_name")
-    try:
-        from app.integrations.supplier_source import supplier_catalog_get_product_info
-        result = await supplier_catalog_get_product_info(shop_product_id, log_error=False)
-    except Exception as exc:
-        return False, f"Loi goi SupplierCatalog API: {type(exc).__name__}: {exc}"
-
-    if not result.get("success"):
-        return False, f"Khong lay duoc san pham SupplierCatalog: {result.get('error') or 'unknown_error'}"
-
-    data = result.get("data", {}) if isinstance(result.get("data"), dict) else {}
-    source_price = _admin_web_int(data.get("price"), 0)
-    stock = _admin_web_int(data.get("stock"), 0)
-    selling_price = int(source_price * (1 + markup / 100))
-    api_description = str(data.get("description") or "").strip()
-    custom_description = _admin_web_form_text(form, "custom_description")
-    final_description = custom_description or api_description or "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Tài khoản chính hãng\n<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Giao hàng tự động qua Telegram"
-
-    if existing_id:
-        product_id = existing_id
-        product = products[product_id]
-        product.update({
-            "name": custom_name or data.get("productTitle") or product.get("name") or f"SupplierCatalog #{shop_product_id}",
-            "price": selling_price,
-            "description": final_description,
-            "supplier_source_price": source_price,
-            "markup_percent": markup,
-            "supplier_source_stock": stock,
-            "resell_enabled": True,
-        })
-        message = f"Da bat/cap nhat SupplierCatalog resell {product_id}."
-    else:
-        import uuid
-        product_id = f"resell_shop_{str(uuid.uuid4())[:8]}"
-        products[product_id] = {
-            "name": custom_name or data.get("productTitle") or f"SupplierCatalog #{shop_product_id}",
-            "price": selling_price,
-            "description": final_description,
-            "duration": "Theo thông tin sản phẩm",
-            "warranty": "Bảo hành theo quy định",
-            "requires_gmail": False,
-            "stock": [],
-            "is_supplier_source_resell": True,
-            "resell_source": "supplier_catalog",
-            "supplier_source_product_id": str(shop_product_id),
-            "supplier_source_variant_id": str(shop_product_id),
-            "supplier_source_price": source_price,
-            "markup_percent": markup,
-            "supplier_source_stock": stock,
-            "supplier_catalog_currency": "vnd",
-            "resell_enabled": True,
-            "created_at": time.time(),
-        }
-        message = f"Da them SupplierCatalog resell {product_id}."
-
-    await save_data(force=True, tables=[PRODUCTS_FILE])
-    return True, message
-
-
-def _admin_web_resell_body(request):
-    key_query = _admin_web_key_query(request)
-    supplier_catalog_count = 0
-    supplier_source_count = 0
-    ctt_count = 0
-    for product in products.values():
-        if not isinstance(product, dict):
-            continue
-        source = str(product.get("resell_source") or "supplier_source").lower()
-        if source == "supplier_catalog":
-            supplier_catalog_count += 1
-        elif source == "social_source" or product.get("is_ctt_service"):
-            ctt_count += 1
-        elif product.get("is_supplier_source_resell"):
-            supplier_source_count += 1
-    return f"""
-<section class="module-section">
-  <div class="section-head">
-    <div>
-      <h2>Quản lý API Resell</h2>
-      <p>Chọn nguồn API cần quản lý. Bấm vào đâu ra đúng khu đó, khỏi lục command rối mắt.</p>
-    </div>
-    <span class="tag write">resell hub</span>
-  </div>
-  <div class="stats-grid">
-    <a class="stat-card" href="/admin/supplier_catalog{key_query}" style="text-decoration:none;color:inherit;">
-      <small>SUPPLIER_CATALOG</small>
-      <strong>{supplier_catalog_count}</strong>
-      <span>Tick sản phẩm, chỉnh %, tên, mô tả, bật/tắt khỏi bot.</span>
-    </a>
-    <a class="stat-card" href="/admin/commands{key_query}#add_resell" style="text-decoration:none;color:inherit;">
-      <small>SUPPLIER_SOURCE</small>
-      <strong>{supplier_source_count}</strong>
-      <span>Quản lý lệnh SupplierSource: add/list/edit markup/sync/xóa.</span>
-    </a>
-    <a class="stat-card" href="/admin/commands{key_query}#add_ctt" style="text-decoration:none;color:inherit;">
-      <small>SOCIAL_SOURCE</small>
-      <strong>{ctt_count}</strong>
-      <span>Quản lý dịch vụ SOCIAL_SOURCE: add/list/sync/balance/xóa.</span>
-    </a>
-  </div>
-</section>
-<section class="module-section">
-  <div class="section-head"><div><h2>Lối tắt thao tác</h2><p>Các nút nhanh để nhảy đúng trang quản trị API.</p></div></div>
-  <div class="toolbar" style="gap:10px;flex-wrap:wrap;">
-    <a class="button" href="/admin/supplier_catalog{key_query}">Mở SupplierCatalog picker</a>
-    <a class="button" href="/admin/commands{key_query}">Mở lệnh SupplierSource/SOCIAL_SOURCE</a>
-    <a class="button" href="/admin{key_query}#api-partner">Về API partner</a>
-  </div>
-</section>
-"""
-
-
-@app.get("/admin/resell", tags=["Admin"])
-async def admin_web_resell(request: Request):
-    _admin_web_require(request)
-    await _admin_web_notify_login(request)
-    return HTMLResponse(_admin_web_layout("Lâm Shop Admin — API Resell", _admin_web_resell_body(request), request))
-
-
-def _admin_web_supplier_catalog_body(request, message: str | None = None, is_error: bool = False):
-    return_msg = ""
-    if message:
-        return_msg = f'<div class="alert {"error" if is_error else "success"}">{escape(message)}</div>'
-    return f"""
-<section class="module-section supplier_catalog-page">
-  <style>
-    .supplier_catalog-page {{ position:relative; overflow:hidden; border-radius:28px; padding:0; background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.92) 46%,rgba(8,47,73,.94)); color:#eaf6ff; box-shadow:0 28px 80px rgba(2,8,23,.35); }}
-    .supplier_catalog-page::before {{ content:""; position:absolute; inset:-120px -90px auto auto; width:320px; height:320px; border-radius:999px; background:radial-gradient(circle,rgba(34,211,238,.42),transparent 68%); filter:blur(8px); pointer-events:none; }}
-    .supplier_catalog-page::after {{ content:""; position:absolute; left:-120px; bottom:-150px; width:360px; height:360px; border-radius:999px; background:radial-gradient(circle,rgba(168,85,247,.32),transparent 66%); pointer-events:none; }}
-    .supplier_catalog-hero {{ position:relative; z-index:1; padding:24px; border-bottom:1px solid rgba(255,255,255,.12); background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.04)); backdrop-filter:blur(18px); }}
-    .supplier_catalog-hero-top {{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }}
-    .supplier_catalog-kicker {{ display:inline-flex; align-items:center; gap:8px; padding:7px 11px; border-radius:999px; color:#a7f3d0; background:rgba(16,185,129,.14); border:1px solid rgba(110,231,183,.28); font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }}
-    .supplier_catalog-hero h2 {{ margin:12px 0 8px; font-size:clamp(28px,4vw,46px); line-height:.98; letter-spacing:-.055em; color:#fff; text-shadow:0 12px 34px rgba(0,0,0,.24); }}
-    .supplier_catalog-hero p {{ max-width:760px; margin:0; color:rgba(226,242,255,.78); font-size:15px; line-height:1.65; }}
-    .supplier_catalog-pills {{ display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }}
-    .supplier_catalog-pill {{ padding:9px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.08); color:#e0f2fe; font-size:12px; font-weight:800; }}
-    .supplier_catalog-status-orb {{ width:74px; height:74px; border-radius:24px; display:grid; place-items:center; font-size:32px; background:linear-gradient(135deg,#22d3ee,#6366f1 58%,#a855f7); box-shadow:0 18px 45px rgba(34,211,238,.28), inset 0 1px 0 rgba(255,255,255,.4); transform:rotate(-4deg); }}
-    .supplier_catalog-content {{ position:relative; z-index:1; padding:20px; }}
-    .supplier_catalog-toolbar {{ display:flex; gap:12px; align-items:center; margin-bottom:16px; padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:20px; background:rgba(255,255,255,.08); backdrop-filter:blur(14px); }}
-    .supplier_catalog-search-wrap {{ position:relative; flex:1; }}
-    .supplier_catalog-search-wrap::before {{ content:"🔎"; position:absolute; left:16px; top:50%; transform:translateY(-50%); opacity:.72; z-index:1; }}
-    .supplier_catalog-toolbar input {{ width:100%; min-height:48px; padding:0 16px 0 46px; border-radius:16px; border:1px solid rgba(255,255,255,.16); background:rgba(15,23,42,.58); color:#fff; outline:none; box-sizing:border-box; box-shadow:inset 0 1px 0 rgba(255,255,255,.08); }}
-    .supplier_catalog-toolbar input::placeholder {{ color:rgba(226,232,240,.62); }}
-    .supplier_catalog-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(335px,1fr)); gap:16px; }}
-    .supplier_catalog-card {{ position:relative; border:1px solid rgba(255,255,255,.14); border-radius:24px; padding:18px; background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(248,250,252,.88)); color:#0f172a; box-shadow:0 22px 52px rgba(2,8,23,.22); overflow:hidden; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }}
-    .supplier_catalog-card::before {{ content:""; position:absolute; inset:0 0 auto 0; height:4px; background:linear-gradient(90deg,#22d3ee,#6366f1,#a855f7,#f59e0b); }}
-    .supplier_catalog-card:hover {{ transform:translateY(-3px); box-shadow:0 28px 70px rgba(2,8,23,.28); border-color:rgba(34,211,238,.42); }}
-    .supplier_catalog-card-head {{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }}
-    .supplier_catalog-title {{ min-width:0; }}
-    .supplier_catalog-title b {{ display:block; line-height:1.32; overflow-wrap:anywhere; font-size:16px; letter-spacing:-.015em; }}
-    .supplier_catalog-title small {{ display:block; margin-top:6px; color:#64748b; overflow-wrap:anywhere; font-weight:700; }}
-    .supplier_catalog-id {{ flex:0 0 auto; padding:7px 10px; border-radius:12px; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; font-weight:900; }}
-    .supplier_catalog-metrics {{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:14px 0; }}
-    .supplier_catalog-metric {{ border:1px solid #e2e8f0; border-radius:16px; padding:11px; background:linear-gradient(180deg,#fff,#f8fafc); min-width:0; box-shadow:inset 0 1px 0 rgba(255,255,255,.9); }}
-    .supplier_catalog-metric small {{ display:block; color:#64748b; font-size:11px; margin-bottom:5px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; }}
-    .supplier_catalog-metric strong, .supplier_catalog-metric span {{ display:block; overflow-wrap:anywhere; }}
-    .supplier_catalog-sell-price {{ color:#0f766e; }}
-    .supplier_catalog-form {{ display:grid; grid-template-columns:96px minmax(0,1fr); gap:9px; align-items:center; }}
-    .supplier_catalog-form label {{ font-size:12px; color:#475569; font-weight:900; }}
-    .supplier_catalog-form input, .supplier_catalog-form textarea {{ width:100%; min-width:0; box-sizing:border-box; border:1px solid #dbe4ef; border-radius:14px; background:#fff; color:#0f172a; padding:11px 12px; outline:none; transition:border-color .16s ease, box-shadow .16s ease; }}
-    .supplier_catalog-form input:focus, .supplier_catalog-form textarea:focus {{ border-color:#22d3ee; box-shadow:0 0 0 4px rgba(34,211,238,.16); }}
-    .supplier_catalog-actions {{ grid-column:1/-1; display:flex; gap:9px; flex-wrap:wrap; margin-top:6px; }}
-    .supplier_catalog-actions button {{ flex:1 1 140px; min-height:44px; border-radius:14px; font-weight:900; box-shadow:0 12px 26px rgba(37,99,235,.18); }}
-    .supplier_catalog-actions form {{ flex:1 1 140px; display:flex; }}
-    .supplier_catalog-actions form button {{ width:100%; }}
-    .supplier_catalog-desc {{ grid-column:1/-1; margin-top:6px; border:1px dashed #cbd5e1; border-radius:16px; padding:0 12px 10px; background:#f8fafc; }}
-    .supplier_catalog-desc summary {{ cursor:pointer; font-weight:900; padding:11px 0; color:#334155; }}
-    .supplier_catalog-desc textarea {{ min-height:104px; resize:vertical; }}
-    @media (max-width:560px) {{
-      .supplier_catalog-page {{ border-radius:20px; }}
-      .supplier_catalog-hero {{ padding:18px; }}
-      .supplier_catalog-content {{ padding:14px; }}
-      .supplier_catalog-status-orb {{ width:58px; height:58px; border-radius:18px; font-size:26px; }}
-      .supplier_catalog-grid {{ grid-template-columns:1fr; }}
-      .supplier_catalog-card {{ padding:15px; border-radius:20px; }}
-      .supplier_catalog-metrics {{ grid-template-columns:1fr 1fr; }}
-      .supplier_catalog-metric:last-child {{ grid-column:1/-1; }}
-      .supplier_catalog-form {{ grid-template-columns:1fr; }}
-      .supplier_catalog-actions {{ flex-direction:column; }}
-      .supplier_catalog-actions button, .supplier_catalog-actions form {{ width:100%; flex:auto; }}
-    }}
-  </style>
-  <div class="supplier_catalog-hero">
-    <div class="supplier_catalog-hero-top">
-      <div>
-        <span class="supplier_catalog-kicker">⚡ one-click supplier control</span>
-        <h2>SupplierCatalog Resell</h2>
-        <p>Chọn sản phẩm từ API nguồn, chỉnh markup, tên bán và mô tả trong một giao diện card xịn hơn — dùng ngon trên PC lẫn mobile, không còn mất nút khó chịu nữa.</p>
-        <div class="supplier_catalog-pills">
-          <span class="supplier_catalog-pill">Auto sync giá</span>
-          <span class="supplier_catalog-pill">Responsive mobile</span>
-          <span class="supplier_catalog-pill">Bật / tắt tức thì</span>
-        </div>
-      </div>
-      <div class="supplier_catalog-status-orb">🦖</div>
-    </div>
-  </div>
-  <div class="supplier_catalog-content">
-    {return_msg}
-    <div class="supplier_catalog-toolbar"><div class="supplier_catalog-search-wrap"><input id="supplier_catalog-filter" placeholder="Tìm Grok, Gmail, Netflix, Capcut..." oninput="filterShopbotRows()"></div></div>
-    <div id="supplier_catalog-list"><p class="muted">Đang tải SupplierCatalog API...</p></div>
-  </div>
-</section>
-<script>
-const supplier_catalogKeyQuery = {json.dumps(_admin_web_key_query(request))};
-const supplier_catalogActionUrl = '/admin/action' + supplier_catalogKeyQuery;
-function money(v) {{ return (Number(v || 0)).toLocaleString('vi-VN') + ' VND'; }}
-function esc(s) {{ return String(s ?? '').replace(/[&<>\"]/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}}[c])); }}
-async function loadShopbotProducts() {{
-  const box = document.getElementById('supplier_catalog-list');
-  try {{
-    const res = await fetch('/api/admin/supplier_catalog/products' + supplier_catalogKeyQuery);
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'API error');
-    const cards = data.products.map(p => {{
-      const mode = p.enabled ? 'update' : 'enable';
-      const btn = p.enabled ? 'Lưu chỉnh sửa' : 'Bật lên bot';
-      const dangerForm = p.enabled ? `
-        <form method="post" action="${{supplier_catalogActionUrl}}">
-          <input type="hidden" name="action" value="supplier_catalog_resell">
-          <input type="hidden" name="mode" value="disable">
-          <input type="hidden" name="shop_product_id" value="${{esc(p.id)}}">
-          <button type="submit" class="danger">Tắt khỏi bot</button>
-        </form>` : '';
-      const markup = Number(p.markup_percent || 30);
-      const sourcePrice = Number(p.price_vnd || 0);
-      const sellPrice = Math.round(sourcePrice * (1 + markup / 100));
-      const description = p.local_description || p.description || '';
-      return `<article class="supplier_catalog-card data-row" data-search="${{esc((p.name || '') + ' ' + p.id + ' ' + description)}}">
-        <div class="supplier_catalog-card-head">
-          <div class="supplier_catalog-title">
-            <b>${{esc(p.name || 'Không tên')}}</b>
-            <small>${{p.local_product_id ? 'Đang bán: ' + esc(p.local_product_id) : 'Chưa bật trong bot'}}</small>
-          </div>
-          <code class="supplier_catalog-id">#${{esc(p.id)}}</code>
-        </div>
-        <div class="supplier_catalog-metrics">
-          <div class="supplier_catalog-metric"><small>Giá nguồn</small><span>${{money(sourcePrice)}}</span></div>
-          <div class="supplier_catalog-metric"><small>Giá bán</small><strong class="supplier_catalog-sell-price">${{money(sellPrice)}}</strong><small>Ăn ${{markup}}%</small></div>
-          <div class="supplier_catalog-metric"><small>Kho</small><span class="tag readonly">${{esc(p.stock)}}</span></div>
-        </div>
-        <form method="post" action="${{supplier_catalogActionUrl}}" class="supplier_catalog-form">
-          <input type="hidden" name="action" value="supplier_catalog_resell">
-          <input type="hidden" name="mode" value="${{mode}}">
-          <input type="hidden" name="shop_product_id" value="${{esc(p.id)}}">
-          <label>Markup %</label>
-          <input name="markup" value="${{esc(markup)}}" title="Markup %" inputmode="decimal" oninput="updateShopbotSellPrice(this, ${{sourcePrice}})">
-          <label>Tên bán</label>
-          <input name="custom_name" value="${{esc(p.local_name || p.name || '')}}" title="Tên bán trong bot">
-          <details class="supplier_catalog-desc">
-            <summary>Mô tả API / sửa mô tả bán</summary>
-            <textarea name="custom_description">${{esc(description)}}</textarea>
-            <small class="muted">Để nguyên = dùng mô tả API. Sửa ở đây rồi bấm lưu.</small>
-          </details>
-          <div class="supplier_catalog-actions">
-            <button type="submit">${{btn}}</button>
-            ${{dangerForm}}
-          </div>
-        </form>
-      </article>`;
-    }}).join('');
-    box.innerHTML = `<div class="supplier_catalog-grid">${{cards}}</div>`;
-  }} catch (err) {{
-    box.innerHTML = '<div class="alert error">Không tải được SupplierCatalog API: ' + esc(err.message || err) + '</div>';
-  }}
-}}
-function updateShopbotSellPrice(input, sourcePrice) {{
-  const row = input.closest('.supplier_catalog-card');
-  const markup = Number(input.value || 0);
-  const sell = Math.round(Number(sourcePrice || 0) * (1 + markup / 100));
-  const priceEl = row && row.querySelector('.supplier_catalog-sell-price');
-  const smallEl = priceEl && priceEl.nextElementSibling;
-  if (priceEl) priceEl.textContent = money(sell);
-  if (smallEl) smallEl.textContent = 'Ăn ' + markup + '%';
-}}
-function filterShopbotRows() {{
-  const q = document.getElementById('supplier_catalog-filter').value.toLowerCase();
-  document.querySelectorAll('#supplier_catalog-list .data-row').forEach(row => {{
-    row.style.display = row.dataset.search.toLowerCase().includes(q) ? '' : 'none';
-  }});
-}}
-loadShopbotProducts();
-</script>
-"""
-
-
-@app.get("/admin/supplier_catalog", tags=["Admin"])
-async def admin_web_supplier_catalog(request: Request):
-    _admin_web_require(request)
-    await _admin_web_notify_login(request)
-    return HTMLResponse(_admin_web_layout("Lâm Shop Admin — SupplierCatalog Resell", _admin_web_supplier_catalog_body(request), request))
-
-
-@app.get("/api/admin/supplier_catalog/products", tags=["Admin"])
-async def api_admin_supplier_catalog_products(request: Request):
-    _admin_web_require(request)
-    try:
-        from app.integrations.supplier_source import supplier_catalog_get_products
-        result = await supplier_catalog_get_products(log_error=False)
-    except Exception as exc:
-        return {"ok": False, "error": f"{type(exc).__name__}: {exc}", "products": []}
-    if not result.get("success"):
-        return {"ok": False, "error": str(result.get("error") or "unknown_error"), "products": []}
-
-    enabled_map = {}
-    for pid, product in products.items():
-        if not isinstance(product, dict) or product.get("resell_source") != "supplier_catalog":
-            continue
-        source_id = str(product.get("supplier_source_variant_id") or product.get("supplier_source_product_id") or "")
-        enabled_map[source_id] = {
-            "enabled": product.get("resell_enabled") is not False,
-            "local_product_id": str(pid),
-            "markup_percent": product.get("markup_percent", 30),
-            "local_name": product.get("name") or "",
-            "local_description": product.get("description") or "",
-        }
-
-    out = []
-    for product in result.get("products") or []:
-        source_id = str(product.get("id") or "")
-        state = enabled_map.get(source_id, {})
-        markup_percent = float(state.get("markup_percent") or 30)
-        source_price = _admin_web_int(product.get("price_vnd"), 0)
-        out.append({
-            "id": source_id,
-            "name": str(product.get("name") or ""),
-            "price_vnd": source_price,
-            "sell_price_vnd": int(source_price * (1 + markup_percent / 100)),
-            "markup_percent": markup_percent,
-            "stock": _admin_web_int(product.get("stock"), 0),
-            "description": str(product.get("description") or ""),
-            "enabled": bool(state.get("enabled")),
-            "local_product_id": state.get("local_product_id") or "",
-            "local_name": state.get("local_name") or "",
-            "local_description": state.get("local_description") or "",
-        })
-    return {"ok": True, "products": out}
-
-
-def _admin_web_categories_media_body_legacy(request):
-    from html import escape as _esc
-    get_cat = globals().get("get_product_category")
-    products_data = globals().get("products", {})
-
-    # Build category → product list map
-    cat_map: dict = {}
-    for pid, prod in (products_data.items() if isinstance(products_data, dict) else []):
-        cat = str(prod.get("store_category") or "").strip()
-        if not cat and callable(get_cat):
-            try:
-                cat = str(get_cat(prod.get("name") or "") or "")
-            except Exception:
-                cat = ""
-        cat = cat or "Sản Phẩm Khác"
-        cat_map.setdefault(cat, []).append((pid, prod))
-
-    rows_html = ""
-    for cat_name in sorted(cat_map.keys()):
-        prods = cat_map[cat_name]
-        img_path = _admin_web_category_image_path(cat_name)
-        has_img = img_path is not None
-        slug = _admin_web_category_slug(cat_name)
-        count = len(prods)
-        own_img_count = sum(1 for pid, _ in prods if _admin_web_product_image_path(pid) is not None)
-
-        if has_img:
-            img_url = _admin_web_category_image_url(request, cat_name)
-            thumb = f'<img src="{_esc(img_url, quote=True)}" style="height:48px;width:64px;object-fit:cover;border-radius:6px;border:1px solid var(--glass-line);">'
-            status_badge = '<span class="tag success" style="font-size:11px;">✅ Có ảnh</span>'
-        else:
-            thumb = '<div style="height:48px;width:64px;border-radius:6px;border:1px dashed #555;display:flex;align-items:center;justify-content:center;color:#555;font-size:18px;">🖼</div>'
-            status_badge = '<span class="tag danger" style="font-size:11px;">❌ Chưa có</span>'
-
-        key_qs = _admin_web_key_query(request)
-        sample_pid = prods[0][0] if prods else ""
-        detail_url = _admin_web_page_url(request, "/admin/item", {"entity": "product", "id": sample_pid}) if sample_pid else "#"
-        upload_action = f"/admin/product_image_upload{key_qs}"
-        delete_form = (
-            f'<form method="post" action="/admin/action{key_qs}" style="display:inline;">'
-            f'<input type="hidden" name="action" value="category_image_delete">'
-            f'<input type="hidden" name="category_name" value="{_esc(cat_name, quote=True)}">'
-            f'<button type="submit" class="btn-xs danger" onclick="return confirm(\'Xoá ảnh danh mục {_esc(cat_name)}?\')">🗑</button>'
-            f'</form>'
-        ) if has_img else ""
-        row_id = f"cat-row-{slug}"
-        upload_form = (
-            f'<form method="post" action="{_esc(upload_action, quote=True)}" enctype="multipart/form-data" style="display:flex;gap:4px;align-items:center;margin-top:4px;">'
-            f'<input type="hidden" name="product_id" value="{_esc(sample_pid, quote=True)}">'
-            f'<input type="hidden" name="apply_to_category" value="1">'
-            f'<input type="hidden" name="category_name_override" value="{_esc(cat_name, quote=True)}">'
-            f'<input type="file" name="image" accept="image/jpeg,image/png,image/webp" required style="font-size:11px;max-width:140px;">'
-            f'<button type="submit" class="btn-xs">⬆ Upload</button>'
-            f'</form>'
-        ) if sample_pid else ""
-
-        rows_html += f"""
-<tr id="{_esc(row_id)}">
-  <td style="padding:8px 6px;">{thumb}</td>
-  <td style="padding:8px 6px;"><b>{_esc(cat_name)}</b><br><span class="muted" style="font-size:11px;">slug: {_esc(slug)}</span>{upload_form}</td>
-  <td style="padding:8px 6px;text-align:center;">{count}</td>
-  <td style="padding:8px 6px;text-align:center;color:#aaa;font-size:12px;">{own_img_count} / {count}</td>
-  <td style="padding:8px 6px;text-align:center;">{status_badge}</td>
-  <td style="padding:8px 6px;text-align:center;">
-    {delete_form}
-    <a href="{_esc(detail_url, quote=True)}" class="btn-xs" style="margin-left:4px;">📦</a>
-  </td>
-</tr>"""
-
-    total_cats = len(cat_map)
-    cats_with_img = sum(1 for c in cat_map if _admin_web_category_image_path(c) is not None)
-
-    body = f"""
-<section class="action-card">
-  <div class="card-head">
-    <h3>Quản lý ảnh danh mục</h3>
-    <span class="tag">media</span>
-  </div>
-  <p class="muted" style="margin:4px 0 12px;">
-    Tổng: <b>{total_cats}</b> danh mục —
-    <span style="color:#4ade80;">✅ {cats_with_img} có ảnh</span> &nbsp;|&nbsp;
-    <span style="color:#f87171;">❌ {total_cats - cats_with_img} chưa có</span>
-  </p>
-  <p class="muted" style="font-size:12px;margin-bottom:10px;">
-    Để upload ảnh danh mục: vào trang chi tiết sản phẩm thuộc danh mục đó → phần <b>Ảnh sản phẩm</b> → tick <i>"Áp dụng cho toàn bộ danh mục"</i>.
-  </p>
-  <div style="overflow-x:auto;">
-  <table style="width:100%;border-collapse:collapse;font-size:13px;">
-    <thead>
-      <tr style="border-bottom:1px solid var(--glass-line);color:#aaa;font-size:11px;text-transform:uppercase;">
-        <th style="padding:6px;text-align:left;">Ảnh</th>
-        <th style="padding:6px;text-align:left;">Danh mục</th>
-        <th style="padding:6px;text-align:center;">SP</th>
-        <th style="padding:6px;text-align:center;">Ảnh riêng</th>
-        <th style="padding:6px;text-align:center;">Trạng thái</th>
-        <th style="padding:6px;text-align:center;">Hành động</th>
-      </tr>
-    </thead>
-    <tbody>
-      {rows_html}
-    </tbody>
-  </table>
-  </div>
-</section>"""
-    return body
-
-
 def _admin_web_categories_body(request):
     products_data = products if isinstance(products, dict) else {}
     category_data = store_categories if isinstance(store_categories, dict) else {}
@@ -4765,6 +4184,8 @@ document.querySelectorAll('[data-category-close]').forEach(button => {{
   }});
 }});
 </script>"""
+
+
 
 
 @app.get("/admin/categories", tags=["Admin"])

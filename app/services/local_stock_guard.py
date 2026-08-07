@@ -18,7 +18,6 @@ def _is_local_stock_product(product_data: dict | None) -> bool:
     return bool(
         isinstance(product_data, dict)
         and not product_data.get("requires_gmail")
-        and not product_data.get("is_supplier_source_resell")
     )
 
 

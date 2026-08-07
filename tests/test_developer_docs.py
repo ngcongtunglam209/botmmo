@@ -16,7 +16,6 @@ def test_developer_docs_and_reference_are_available():
     assert docs.status_code == 200
     assert docs.headers["content-type"].startswith("text/html")
     assert "Tích hợp bán hàng".encode() in docs.content
-    assert b"/api/social/orders" in docs.content
     assert b'href="/reference"' in docs.content
 
     assert css.status_code == 200

@@ -448,8 +448,6 @@ async def handle_cancel_order_payment(query, context, command):
                 refunded_amount = balance_used
 
         prod_name = details.get('product_name') or products.get(details.get('product_id', ''), {}).get('name') or "Sản phẩm"
-        if details.get('type') == 'icloud':
-            prod_name = "iCloud 2TB"
 
         await save_data(force=True, tables=[PENDING_ORDERS_FILE, USERS_FILE, TRANSACTION_HISTORY_FILE])
 

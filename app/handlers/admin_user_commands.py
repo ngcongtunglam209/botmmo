@@ -838,7 +838,7 @@ async def doanhthu_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     now = datetime.now(); today_revenue, month_revenue, total_revenue = 0, 0, 0; today_orders, month_orders, total_orders = 0, 0, 0
     completed_orders = [o for o in order_history if "Hoàn thành" in status_text(o.get("status"))]
     for order in completed_orders:
-        amount = order.get("amount", ICLOUD_PACKAGE_PRICE); total_revenue += amount; total_orders += 1
+        amount = order.get("amount", 0) or 0; total_revenue += amount; total_orders += 1
         if 'timestamp' in order:
             order_time = datetime.fromtimestamp(order['timestamp'])
             if order_time.date() == now.date(): today_revenue += amount; today_orders += 1

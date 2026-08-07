@@ -80,7 +80,7 @@ async def helpapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         "<b>Body mẫu đơn social</b>\n"
         "<pre>{\n"
         '  "partner_ref": "SOCIAL_12345",\n'
-        '  "product_id": "ctt_8786",\n'
+        '  "product_id": "prod_8786",\n'
         '  "quantity": 100,\n'
         '  "target_link": "https://facebook.com/example"\n'
         "}</pre>\n"

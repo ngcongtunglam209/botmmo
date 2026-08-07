@@ -34,22 +34,7 @@ async def handle_games_callbacks(update, context, command):
         prize_type, prize_id = parts[0], parts[1]
         user = update.effective_user
         try:
-            if prize_type == 'icloud':
-                if not available_links:
-                    await safe_answer(query, lt(user_id, "Đã hết link iCloud!", "iCloud links are out of stock!", "iCloud 链接已售罄！"), show_alert=True)
-                    return
-                link = next(iter(available_links))
-                context.user_data['dice_prize_link'] = link
-                context.user_data['state'] = 'awaiting_dice_email'
-                await query.edit_message_text(
-                    lt(
-                        user_id,
-                        '<tg-emoji emoji-id="5449800250032143374">🎉</tg-emoji> <b>CHÚC MỪNG CHIẾN THẮNG!</b>\n\n<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji> <b>Phần thưởng:</b> Gói iCloud 2TB\n\n<tg-emoji emoji-id="6129860303619363484">📧</tg-emoji> Vui lòng <b>nhập email</b> để nhận link kích hoạt:',
-                        '<tg-emoji emoji-id="5449800250032143374">🎉</tg-emoji> <b>CONGRATULATIONS!</b>\n\n<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji> <b>Prize:</b> iCloud 2TB\n\n<tg-emoji emoji-id="6129860303619363484">📧</tg-emoji> Enter your <b>email</b> to receive the activation link:',
-                        '<tg-emoji emoji-id="5449800250032143374">🎉</tg-emoji> <b>恭喜获胜！</b>\n\n<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji> <b>奖品：</b> iCloud 2TB\n\n<tg-emoji emoji-id="6129860303619363484">📧</tg-emoji> 请输入<b>邮箱</b>以接收激活链接：',
-                    ), parse_mode='HTML'
-                )
-            elif prize_type == 'product':
+            if prize_type == 'product':
                 p = products.get(prize_id)
                 if not p:
                     await safe_answer(query, lt(user_id, "Sản phẩm không tồn tại!", "Product not found!", "商品不存在！"), show_alert=True)

@@ -12,7 +12,7 @@ async def view_stock_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else: await update.message.reply_text(msg)
         return ConversationHandler.END
         
-    # Filter only local-stock products; source API/resell products do not have manual stock to manage.
+    # Filter only local-stock products.
     auto_products = {pid: p for pid, p in products.items() if _is_add_stock_local_product(p)}
     
     if not auto_products:

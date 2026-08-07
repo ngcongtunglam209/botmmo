@@ -36,7 +36,7 @@ def test_latest_replacement_is_selected_for_manual_product():
 
 def test_resend_link_preserves_original_link():
     order = {"link": "https://old.example/invite"}
-    record_warranty_replacement(order, ["https://new.example/invite"], source="icloud_link", created_at=100)
+    record_warranty_replacement(order, ["https://new.example/invite"], source="store_stock", created_at=100)
     order["link"] = "https://new.example/invite"
 
     assert get_original_delivery_link(order) == "https://old.example/invite"

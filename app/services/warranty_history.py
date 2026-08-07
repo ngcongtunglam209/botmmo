@@ -9,8 +9,6 @@ WARRANTY_REPLACEMENT_HISTORY_LIMIT = 50
 _NON_DELIVERY_LINK_MARKERS = {
     "",
     "store product",
-    "resell product",
-    "resell product (pending source)",
     "sản phẩm khác",
 }
 

@@ -217,7 +217,7 @@ if _should_print_start_banner():
 
 
 # Biến toàn cục (Sẽ dần thay thế bằng DB)
-available_links, pending_orders, processed_transaction_ids = set(), {}, set()
+pending_orders, processed_transaction_ids = {}, set()
 order_history, user_data_db, banned_users, coupons, api_keys, pending_api_deposits = [], {}, set(), {}, {}, {}
 products = {} # Store for other products
 pending_api_registrations = set() # Set lưu user_id đang chờ duyệt API

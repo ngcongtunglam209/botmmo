@@ -68,7 +68,7 @@ def _legacy_create_backup_zip_json_export():
         if not exported_files:
             exported_files = [
                 USERS_FILE, HISTORY_FILE, PRODUCTS_FILE,
-                LINKS_FILE, BANNED_USERS_FILE, PENDING_ORDERS_FILE,
+                BANNED_USERS_FILE, PENDING_ORDERS_FILE,
                 PENDING_MANUAL_ORDERS_FILE,
                 COUPONS_FILE, PROCESSED_TX_FILE, API_KEYS_FILE,
                 "data_pending_api_deposits.json",
@@ -92,7 +92,6 @@ def _legacy_create_backup_zip_json_export():
 def get_backup_file_specs():
     """Canonical list of payloads that must be included in backup/restore."""
     return [
-        (LINKS_FILE, []),
         (HISTORY_FILE, []),
         (PROCESSED_TX_FILE, []),
         (USERS_FILE, {}),

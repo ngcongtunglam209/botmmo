@@ -3,7 +3,7 @@ Admin support service — warranty, reports, live chat, resend links.
 
 Extracted from callback_admin.py to reduce monolithic file size.
 Handles: approve_warranty:, reject_warranty:, admin_open_chat:,
-         admin_close_chat:, resend_link:, reject_expired:, reject_policy:,
+         admin_close_chat:, reject_expired:, reject_policy:,
          warranty_done:, dismiss_report:, replace_auto:, lienhe_admin
 
 This module runs inside the shared exec() namespace so all globals
@@ -87,56 +87,6 @@ async def handle_admin_close_chat(query, context, command):
     except (ValueError, TypeError, KeyError, IndexError) as e:
         logger.debug(f"Cannot edit admin_close_chat message: {e}")
     await safe_answer(query, "Đã đóng chat")
-
-
-async def handle_resend_link(query, context, command, user_id):
-    """Resend product link to user via email."""
-    try:
-        parts = command.split(':', 2)
-        if len(parts) < 3:
-            await safe_answer(query, "❌ Lỗi dữ liệu callback!", show_alert=True)
-            return
-        _, target_uid_str, target_email = parts
-        target_uid = int(target_uid_str)
-    except (ValueError, IndexError):
-        await safe_answer(query, "❌ Lỗi dữ liệu callback!", show_alert=True)
-        return
-
-    if not available_links:
-        await safe_answer(query, "❌ Kho link đang hết!", show_alert=True)
-        return
-
-    await safe_answer(query, "\u003ctg-emoji emoji-id=\"5213349767672769194\"\u003e⏳\u003c/tg-emoji\u003e Đang gửi email...")
-
-    original_caption = query.message.caption or query.message.text or "Báo cáo lỗi"
-
-    try:
-        if query.message.caption:
-            await query.edit_message_caption(
-                caption=f"{original_caption}\n\n\u003ctg-emoji emoji-id=\"5213349767672769194\"\u003e⏳\u003c/tg-emoji\u003e \u003cb\u003eĐang gửi email... vui lòng đợi...\u003c/b\u003e",
-                parse_mode=ParseMode.HTML
-            )
-        else:
-            await query.edit_message_text(
-                text=f"{original_caption}\n\n\u003ctg-emoji emoji-id=\"5213349767672769194\"\u003e⏳\u003c/tg-emoji\u003e \u003cb\u003eĐang gửi email... vui lòng đợi...\u003c/b\u003e",
-                parse_mode=ParseMode.HTML
-            )
-    except BadRequest:
-        pass
-
-    link = next(iter(available_links)) if available_links else "No Link Available"
-
-    create_background_task(
-        _send_resend_link_email_background(context, query, target_email, target_uid, link, original_caption)
-    )
-
-    try:
-        for r in pending_error_reports:
-            if str(r['user_id']) == str(target_uid) and not r.get('resolved'):
-                r['resolved'] = True
-    except (TelegramError, ValueError, KeyError, AttributeError) as e:
-        logger.warning(f"Cannot resolve pending error reports for user {user_id}: {e}")
-
 
 async def handle_replace_manual(query, context, command):
     """Prompt admin for replacement accounts/links for a manual product."""
