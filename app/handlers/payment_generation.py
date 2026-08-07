@@ -91,9 +91,9 @@ def _build_product_payment_note(product_data: dict, quantity: int, extra_pending
 def _build_payment_legal_notice(user_id: int) -> str:
     return "\n\n" + lt(
         user_id,
-        "🛡️ <b>Tuân thủ pháp luật:</b> QR chỉ dùng để thanh toán đơn hàng hợp pháp tại Dino Store. Nghiêm cấm gian lận, rửa tiền, chiếm đoạt tài sản và mọi hành vi trái pháp luật.",
-        "🛡️ <b>Legal compliance:</b> This QR is only for lawful Dino Store orders. Fraud, money laundering, misappropriation, and all unlawful activities are strictly prohibited.",
-        "🛡️ <b>合法合规：</b> 此二维码仅用于支付 Dino Store 的合法订单。严禁欺诈、洗钱、侵占财产及任何违法行为。",
+        "🛡️ <b>Tuân thủ pháp luật:</b> QR chỉ dùng để thanh toán đơn hàng hợp pháp tại Lâm Shop. Nghiêm cấm gian lận, rửa tiền, chiếm đoạt tài sản và mọi hành vi trái pháp luật.",
+        "🛡️ <b>Legal compliance:</b> This QR is only for lawful Lâm Shop orders. Fraud, money laundering, misappropriation, and all unlawful activities are strictly prohibited.",
+        "🛡️ <b>合法合规：</b> 此二维码仅用于支付 Lâm Shop 的合法订单。严禁欺诈、洗钱、侵占财产及任何违法行为。",
     )
 
 

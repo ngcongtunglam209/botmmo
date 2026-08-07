@@ -320,7 +320,7 @@ def main() -> None:
     try:
         print(startup_banner)
     except UnicodeEncodeError:
-        print("[DINO] DINO BOT STARTING...")
+        print("[LAM SHOP] LAM SHOP BOT STARTING...")
     
     logger.info(f"<tg-emoji emoji-id=\"5303145396254563405\">🦖</tg-emoji> AI Model:      {AI_MODEL}")
     logger.info(f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Products:      {len(products)}")
@@ -332,7 +332,7 @@ def main() -> None:
     logger.info(f"<tg-emoji emoji-id=\"5231489647946768652\">🌍</tg-emoji> USDT BEP20:    {'ON' if is_usdt_trc20_enabled() else 'OFF'}")
     logger.info(f"<tg-emoji emoji-id=\"5303145396254563405\">🤖</tg-emoji> AI Auto-Reply: {'ON' if AI_AUTO_REPLY else 'OFF'}")
     
-    logger.info("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> DINO SYSTEM: Bot started successfully! Ready to serve... <tg-emoji emoji-id=\"5303145396254563405\">🦖</tg-emoji>")
+    logger.info("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> LAM SHOP: Bot started successfully! Ready to serve... <tg-emoji emoji-id=\"5303145396254563405\">🦖</tg-emoji>")
     
     # Tối ưu: Cấu hình polling để phản hồi nhanh hơn
     try:

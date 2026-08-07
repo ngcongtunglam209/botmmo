@@ -1,5 +1,5 @@
 <script>
-// Dino Admin — Motion Runtime
+// Lâm Shop Admin — Motion Runtime
 // Scroll reveal, active sidebar tracking, ripple effects
 (function() {
   'use strict';

@@ -252,7 +252,7 @@ async def ask_ai(question: str, user_context: dict = None, user_id: int = 0) -> 
             return fallback_response
         
         # Fallback cuối cùng - Thân thiện, tự nhiên
-        return "Xin chào! Mình là trợ lý DinoTools <tg-emoji emoji-id=\"6293853394910057834\">😊</tg-emoji> Bạn cần tư vấn gì về iCloud, Netflix, Spotify hay sản phẩm nào không? Hoặc cứ chat thoải mái, mình trả lời được mọi thứ nha! ⭐️"
+        return "Xin chào! Mình là trợ lý Lâm Shop <tg-emoji emoji-id=\"6293853394910057834\">😊</tg-emoji> Bạn cần tư vấn gì về iCloud, Netflix, Spotify hay sản phẩm nào không? Hoặc cứ chat thoải mái, mình trả lời được mọi thứ nha! ⭐️"
     
     current_time = datetime.now()
     
@@ -321,9 +321,9 @@ async def ask_ai(question: str, user_context: dict = None, user_id: int = 0) -> 
     
     coupon_info = f"\n**MÃ GIẢM GIÁ:** Đang có {active_coupons} mã còn hiệu lực" if active_coupons > 0 else ""
     
-    # SYSTEM PROMPT: Trợ lý Dino siêu nhiệt tình, hài hước, lịch sự
+    # SYSTEM PROMPT: Trợ lý Lâm Shop siêu nhiệt tình, hài hước, lịch sự
     system_prompt = f"""
-<tg-emoji emoji-id=\"5303145396254563405\">🦕</tg-emoji> BẠN LÀ "DINO" - TRỢ LÝ CỦA DINOTOOLS STORE
+<tg-emoji emoji-id=\"5303145396254563405\">🦕</tg-emoji> BẠN LÀ TRỢ LÝ CỦA LÂM SHOP
 
 TINH CÁCH CỐT LÕI:
 - Siêu nhiệt tình, luôn hào hứng giúp đỡ khách hàng như gặp bạn thân lâu ngày.
@@ -340,8 +340,8 @@ CÁCH NÓI CHUYỆN:
 - Khi khách khen: Vui sướng, cảm ơn hết lời.
 - Khi khách chê/khó chịu: Xin lỗi chân thành, giải quyết ngay, không defensiv.
 
-NHIỆM VỤ CHÍNH - BÁN HÀNG DINOTOOLS STORE:
-Bạn là trợ lý bán hàng của DinoTools Store - chuyên cung cấp dịch vụ MMO cao cấp.
+NHIỆM VỤ CHÍNH - BÁN HÀNG LÂM SHOP:
+Bạn là trợ lý bán hàng của Lâm Shop - chuyên cung cấp dịch vụ MMO cao cấp.
 
 <tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> DATA REAL-TIME:
 {time_context}

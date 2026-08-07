@@ -70,7 +70,7 @@ async def check_if_banned(update) -> bool:
                 [InlineKeyboardButton("Tham gia nhóm", url=SUPPORT_GROUP_LINK)],
                 [InlineKeyboardButton("✅ Đã tham gia · Kiểm tra lại", callback_data="check_membership")],
             ])
-            msg = "⚠️ Bạn phải tham gia nhóm Dinostore để có thể sử dụng Bot!"
+            msg = "⚠️ Bạn phải tham gia nhóm Lâm Shop để có thể sử dụng Bot!"
             if update.message:
                 await update.message.reply_text(msg, reply_markup=markup)
             elif update.callback_query:
@@ -375,7 +375,7 @@ async def _bsc_rpc(client, method: str, params: list):
     response = await client.post(
         BSC_RPC_URL,
         json={"jsonrpc": "2.0", "id": 1, "method": method, "params": params},
-        headers={"Accept": "application/json", "User-Agent": "DinoBotMMO/2.0"},
+        headers={"Accept": "application/json", "User-Agent": "LamShopBot/2.0"},
     )
     response.raise_for_status()
     payload = response.json()

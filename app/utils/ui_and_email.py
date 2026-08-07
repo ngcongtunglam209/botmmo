@@ -50,7 +50,7 @@ def build_main_menu_status_button_text(user_id=None):
 
 
 HUONGDAN_TEXT = (
-    '<tg-emoji emoji-id="5321466670177330155">📖</tg-emoji> <b>HƯỚNG DẪN SỬ DỤNG DINO STORE</b>\n'
+    '<tg-emoji emoji-id="5321466670177330155">📖</tg-emoji> <b>HƯỚNG DẪN SỬ DỤNG LÂM SHOP</b>\n'
     '<i>Cập nhật: 06/08/2026</i>\n\n'
     '<b>1. Chọn sản phẩm</b>\n'
     '• Vào <b>Mua Hàng</b> → chọn danh mục → chọn sản phẩm.\n'
@@ -75,13 +75,13 @@ HUONGDAN_TEXT = (
     '• Gửi mã đơn, ảnh/video lỗi và mô tả thao tác đã thử.\n'
     '• Không thay đổi mật khẩu, email khôi phục hoặc chia sẻ tài khoản trước khi được kiểm tra.\n\n'
     '<b>6. An toàn tài khoản</b>\n'
-    '• Dino Store không yêu cầu gửi mật khẩu ngân hàng, OTP hoặc mã xác thực ví.\n'
+    '• Lâm Shop không yêu cầu gửi mật khẩu ngân hàng, OTP hoặc mã xác thực ví.\n'
     '• Không chia sẻ API key, mã đơn hoặc nội dung sản phẩm tại nơi công khai.\n\n'
     '<b>Cần hỗ trợ?</b> Chọn <b>Hỗ Trợ &amp; Liên Hệ</b> trong menu chính và gửi đầy đủ mã đơn cùng bằng chứng.'
 )
 
 CHINHSACH_TEXT = (
-    '<tg-emoji emoji-id="5321466670177330155">📜</tg-emoji> <b>CHÍNH SÁCH DINO STORE</b>\n'
+    '<tg-emoji emoji-id="5321466670177330155">📜</tg-emoji> <b>CHÍNH SÁCH LÂM SHOP</b>\n'
     '<i>Cập nhật: 06/08/2026</i>\n\n'
     '<b>1. Phạm vi áp dụng</b>\n'
     'Khi tạo đơn, người mua xác nhận đã đọc mô tả sản phẩm, giá, số lượng, phương thức giao và chính sách liên quan hiển thị tại thời điểm đặt hàng.\n\n'
@@ -114,10 +114,10 @@ CHINHSACH_TEXT = (
     '<b>7. Hành vi bị cấm</b>\n'
     '• Dùng sản phẩm cho lừa đảo, spam, xâm nhập trái phép, phát tán mã độc, đánh cắp dữ liệu hoặc nội dung vi phạm pháp luật.\n'
     '• Lợi dụng lỗi hệ thống, tạo giao dịch giả, hoàn tiền gian lận hoặc cố tình tạo đơn trùng.\n'
-    '• Dino Store có thể từ chối xử lý và yêu cầu xác minh khi phát hiện dấu hiệu bất thường.\n\n'
+    '• Lâm Shop có thể từ chối xử lý và yêu cầu xác minh khi phát hiện dấu hiệu bất thường.\n\n'
     '<b>8. Khiếu nại và hỗ trợ</b>\n'
     'Gửi yêu cầu qua <b>Hỗ Trợ &amp; Liên Hệ</b>, kèm mã đơn, thời gian, nội dung và bằng chứng. Hai bên ưu tiên kiểm tra dữ liệu hệ thống và trao đổi để giải quyết minh bạch.\n\n'
-    '<i>Chính sách này là thông tin giao dịch của Dino Store và không thay thế quy định pháp luật hiện hành.</i>'
+    '<i>Chính sách này là thông tin giao dịch của Lâm Shop và không thay thế quy định pháp luật hiện hành.</i>'
 )
 
 
@@ -361,10 +361,10 @@ def _send_email_sync(recipient_email: str, subject: str, full_name: str, activat
         </div>
     </div>
 
-    <hr><p>Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ admin qua Telegram hoặc tham gia nhóm hỗ trợ của chúng tôi.</p><p>Trân trọng,<br><b>DinoTools Team</b></p></div></body></html>'''
+    <hr><p>Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ admin qua Telegram hoặc tham gia nhóm hỗ trợ của chúng tôi.</p><p>Trân trọng,<br><b>Lam Shop Team</b></p></div></body></html>'''
     
     msg = MIMEText(html_body, 'html', 'utf-8')
-    msg['Subject'], msg['From'], msg['To'] = subject, f"DinoTools iCloud Store <{SENDER_EMAIL}>", recipient_email
+    msg['Subject'], msg['From'], msg['To'] = subject, f"Lam Shop iCloud <{SENDER_EMAIL}>", recipient_email
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
             smtp_server.login(SENDER_EMAIL, SENDER_APP_PASSWORD)

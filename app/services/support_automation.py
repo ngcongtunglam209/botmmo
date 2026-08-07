@@ -78,7 +78,7 @@ def handle_email_not_found() -> dict:
             f"{E_GLOBE} <b>Bước 1:</b> Kiểm tra hộp thư đến chính\n"
             f"<tg-emoji emoji-id=\"5424857974784925603\">🗑️</tg-emoji> <b>Bước 2:</b> Kiểm tra thư mục <b>Spam/Thư rác</b>\n"
             f"<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>Bước 3:</b> Kiểm tra các thư mục khác: Promotions, Social\n"
-            f"{E_TIP} <b>Bước 4:</b> Tìm kiếm với từ khóa <code>DinoTools</code> hoặc <code>iCloud</code>\n\n"
+            f"{E_TIP} <b>Bước 4:</b> Tìm kiếm với từ khóa <code>Lâm Shop</code> hoặc <code>iCloud</code>\n\n"
             f"<tg-emoji emoji-id=\"5426991207731437507\">📱</tg-emoji> <b>Trên Gmail Mobile:</b>\n"
             f"• Mở Gmail → Chạm 3 gạch ngang → Spam\n"
             f"• Nếu tìm thấy → Đánh dấu 'Không phải spam'\n\n"
@@ -125,7 +125,7 @@ def handle_billing_questions(query: str) -> dict:
             f"{E_LOADING} <b>Thời gian:</b> Vĩnh viễn (không hết hạn)\n"
             f"{E_TAG} <b>So sánh Apple chính hãng:</b>\n"
             f"• Apple: 70,000 VNĐ/tháng = 840,000 VNĐ/năm\n"
-            f"• DinoTools: {ICLOUD_PACKAGE_PRICE:,} VNĐ một lần\n"
+            f"• Lâm Shop: {ICLOUD_PACKAGE_PRICE:,} VNĐ một lần\n"
             f"• <b>Tiết kiệm: {840000 - ICLOUD_PACKAGE_PRICE:,} VNĐ/năm</b>\n\n"
             f"{E_TAG} <b>Ưu đãi hiện tại:</b>\n"
             f"• Miễn phí setup\n"
@@ -269,7 +269,7 @@ def automated_support_handler(query: str) -> str | None:
              else "Hiện tại chưa có mã giảm giá nào. <tg-emoji emoji-id=\"5386856460632201117\">😢</tg-emoji>\n\nNhưng giá đã rẻ lắm rồi! Gõ /start để mua ngay nhé! <tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji>"),
         
         ("không nhận được mail", "chưa nhận mail", "kiểm tra mail", "không có mail"):
-            "<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> <b>VỀ EMAIL KÍCH HOẠT:</b>\n\nLink kích hoạt được gửi <b>ngay lập tức</b> sau khi thanh toán thành công (< 3 phút).\n\n<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Vui lòng kiểm tra:\n• Hộp thư đến\n• Thư mục <b>Spam/Thư rác</b> (rất quan trọng!)\n• Tìm từ khóa 'iCloud' hoặc 'DinoTools'\n\nNếu vẫn không thấy sau 10 phút, dùng /start → Báo lỗi để được hỗ trợ!",
+            "<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> <b>VỀ EMAIL KÍCH HOẠT:</b>\n\nLink kích hoạt được gửi <b>ngay lập tức</b> sau khi thanh toán thành công (< 3 phút).\n\n<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Vui lòng kiểm tra:\n• Hộp thư đến\n• Thư mục <b>Spam/Thư rác</b> (rất quan trọng!)\n• Tìm từ khóa 'iCloud' hoặc 'Lâm Shop'\n\nNếu vẫn không thấy sau 10 phút, dùng /start → Báo lỗi để được hỗ trợ!",
         
         ("riêng tư", "thấy ảnh", "xem dữ liệu", "bảo mật", "an toàn"):
             "🔐 <b>VỀ BẢO MẬT & RIÊNG TƯ:</b>\n\nFamily Sharing <b>HOÀN TOÀN RIÊNG TƯ</b>! <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji>\n\n• Không ai xem được ảnh của bạn\n• Không ai xem được file của bạn\n• Không ai truy cập được iCloud của bạn\n• Apple bảo mật tuyệt đối\n\nFamily Sharing chỉ chia sẻ <b>DUNG LƯỢNG</b>, không chia sẻ dữ liệu!",

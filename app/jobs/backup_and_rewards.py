@@ -43,7 +43,7 @@ def _legacy_create_backup_zip_json_export():
     """Create a ZIP file containing all JSON data files exported from SQLite"""
     try:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        zip_filename = f"backup_dino_{timestamp}.zip"
+        zip_filename = f"backup_lamshop_{timestamp}.zip"
         
         # Connect to SQLite and dump to JSON files first
         exported_files = []
@@ -175,7 +175,7 @@ def _load_durable_backup_rows():
     return snapshots
 
 
-def create_backup_zip(prefix="backup_dino"):
+def create_backup_zip(prefix="backup_lamshop"):
     """Create ZIP directly from SQLite snapshot without mutating live JSON files."""
     zip_filename = None
     try:
@@ -344,7 +344,7 @@ def send_email_backup(zip_path, recipient_email):
             <p><b><tg-emoji emoji-id=\"5854908544712707500\">📂</tg-emoji> File:</b> {os.path.basename(zip_path)}</p>
             <p><b><tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Trạng thái:</b> An toàn</p>
             <br>
-            <p><i>Đây là tin nhắn tự động từ DinoBot. Vui lòng lưu trữ file này cẩn thận.</i></p>
+            <p><i>Đây là tin nhắn tự động từ Lâm Shop. Vui lòng lưu trữ file này cẩn thận.</i></p>
         </body>
         </html>
         """

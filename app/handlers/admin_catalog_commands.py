@@ -138,7 +138,7 @@ async def rewardtop_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         coupon_code = f"VIP30-{''.join(random.choices(string.ascii_uppercase + string.digits, k=5))}"
         expires_str = (datetime.now() + timedelta(days=30)).strftime('%d-%m-%Y')
         coupons[coupon_code] = {"discount": discount_amount, "quantity": 1, "expires": expires_str, "used": 0}
-        reward_message = (f"<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> <b>CHÚC MỪNG KHÁCH HÀNG THÂN THIẾT</b> <tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji>\n\nCảm ơn bạn đã ủng hộ DinoTools!\n" f"Chúng tôi xin gửi tặng bạn mã giảm giá <b>30%</b> cho lần mua tiếp theo: <code>{coupon_code}</code>\n" f"<i>(Mã dùng 1 lần, hết hạn ngày {expires_str})</i>")
+        reward_message = (f"<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> <b>CHÚC MỪNG KHÁCH HÀNG THÂN THIẾT</b> <tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji>\n\nCảm ơn bạn đã ủng hộ Lâm Shop!\n" f"Chúng tôi xin gửi tặng bạn mã giảm giá <b>30%</b> cho lần mua tiếp theo: <code>{coupon_code}</code>\n" f"<i>(Mã dùng 1 lần, hết hạn ngày {expires_str})</i>")
         try: await context.bot.send_message(user_id, reward_message, parse_mode=ParseMode.HTML); admin_feedback += f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã gửi coupon <code>{coupon_code}</code> cho {user_mention} ({purchase_count} đơn).\n"
         except (TelegramError, ValueError, KeyError, AttributeError) as e: admin_feedback += f"❌ Lỗi khi gửi coupon cho {user_mention}: {e}\n"
     await save_data(); await context.bot.send_message(update.effective_chat.id, admin_feedback, parse_mode=ParseMode.HTML)

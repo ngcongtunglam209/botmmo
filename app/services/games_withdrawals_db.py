@@ -76,9 +76,9 @@ async def withdrawal_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         update.effective_chat.id,
         lt(
             user_id,
-            "ℹ️ <b>TÍNH NĂNG RÚT TIỀN ĐÃ ĐƯỢC TẮT</b>\n\nSố dư tài khoản chỉ được dùng để mua sản phẩm và dịch vụ tại Dino Store.",
-            "ℹ️ <b>WITHDRAWALS ARE DISABLED</b>\n\nYour account balance can only be used to purchase products and services at Dino Store.",
-            "ℹ️ <b>提现功能已关闭</b>\n\n账户余额仅可用于购买 Dino Store 的产品和服务。",
+            "ℹ️ <b>TÍNH NĂNG RÚT TIỀN ĐÃ ĐƯỢC TẮT</b>\n\nSố dư tài khoản chỉ được dùng để mua sản phẩm và dịch vụ tại Lâm Shop.",
+            "ℹ️ <b>WITHDRAWALS ARE DISABLED</b>\n\nYour account balance can only be used to purchase products and services at Lâm Shop.",
+            "ℹ️ <b>提现功能已关闭</b>\n\n账户余额仅可用于购买 Lâm Shop 的产品和服务。",
         ), parse_mode=ParseMode.HTML,
     )
 
@@ -91,9 +91,9 @@ async def handle_withdrawal_input(update: Update, context: ContextTypes.DEFAULT_
     await update.message.reply_text(
         lt(
             user_id,
-            "ℹ️ Tính năng rút tiền đã được tắt. Số dư chỉ dùng để mua hàng tại Dino Store.",
-            "ℹ️ Withdrawals are disabled. Your balance can only be used for purchases at Dino Store.",
-            "ℹ️ 提现功能已关闭。余额仅可用于在 Dino Store 购物。",
+            "ℹ️ Tính năng rút tiền đã được tắt. Số dư chỉ dùng để mua hàng tại Lâm Shop.",
+            "ℹ️ Withdrawals are disabled. Your balance can only be used for purchases at Lâm Shop.",
+            "ℹ️ 提现功能已关闭。余额仅可用于在 Lâm Shop 购物。",
         )
     )
     return

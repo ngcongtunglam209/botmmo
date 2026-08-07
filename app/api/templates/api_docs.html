@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Tài liệu tích hợp Dino Store Partner API V2">
+  <meta name="description" content="Tài liệu tích hợp Lâm Shop Partner API V2">
   <meta name="theme-color" content="#07110d">
-  <title>Dino Store — API Developers</title>
+  <title>Lâm Shop — API Developers</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,9 +16,9 @@
   <div class="ambient ambient-two"></div>
 
   <header class="topbar">
-    <a class="brand" href="#top" aria-label="Dino Store API">
+    <a class="brand" href="#top" aria-label="Lâm Shop API">
       <span class="brand-mark">D</span>
-      <span>Dino Store <b>Developers</b></span>
+      <span>Lâm Shop <b>Developers</b></span>
     </a>
     <div class="top-actions">
       <span class="status"><i></i> API v2 ổn định</span>
@@ -53,7 +53,7 @@
       </nav>
       <div class="sidebar-note">
         <span>?</span>
-        <div><strong>Cần hỗ trợ?</strong><small>Liên hệ admin Dino Store để lấy API key.</small></div>
+        <div><strong>Cần hỗ trợ?</strong><small>Liên hệ admin Lâm Shop để lấy API key.</small></div>
       </div>
     </aside>
 
@@ -61,7 +61,7 @@
       <section class="hero reveal" id="overview" data-search="tổng quan base url api partner">
         <div class="eyebrow"><span>PARTNER API</span> / VERSION 2.0</div>
         <h1>Tích hợp bán hàng.<br><em>Không còn đoán mò.</em></h1>
-        <p class="lead">Một hướng dẫn đầy đủ để đồng bộ sản phẩm, tạo đơn an toàn và giao tài khoản tự động qua Dino Store Partner API.</p>
+        <p class="lead">Một hướng dẫn đầy đủ để đồng bộ sản phẩm, tạo đơn an toàn và giao tài khoản tự động qua Lâm Shop Partner API.</p>
         <div class="base-url">
           <span class="method method-base">BASE URL</span>
           <code>https://api.example.com</code>
@@ -213,7 +213,7 @@
         <div class="code-window tab-panel active" data-panel="node">
           <div class="code-head"><span><i></i><i></i><i></i></span><b>client.js</b><button class="copy" data-copy-target="node-code">Sao chép</button></div>
           <pre id="node-code"><code>const BASE_URL = <span class="token-green">"https://api.example.com"</span>;
-const API_KEY = process.env.DINO_API_KEY;
+const API_KEY = process.env.LAMSHOP_API_KEY;
 
 async function request(path, options = {}) {
   const response = await fetch(BASE_URL + path, {
@@ -235,7 +235,7 @@ async function request(path, options = {}) {
 import requests
 
 BASE_URL = <span class="token-green">"https://api.example.com"</span>
-API_KEY = os.environ[<span class="token-green">"DINO_API_KEY"</span>]
+API_KEY = os.environ[<span class="token-green">"LAMSHOP_API_KEY"</span>]
 
 def request(method, path, **kwargs):
     response = requests.request(
@@ -250,7 +250,7 @@ def request(method, path, **kwargs):
           <div class="code-head"><span><i></i><i></i><i></i></span><b>client.php</b><button class="copy" data-copy-target="php-code">Sao chép</button></div>
           <pre id="php-code"><code>&lt;?php
 $baseUrl = <span class="token-green">"https://api.example.com"</span>;
-$apiKey = getenv(<span class="token-green">"DINO_API_KEY"</span>);
+$apiKey = getenv(<span class="token-green">"LAMSHOP_API_KEY"</span>);
 
 $ch = curl_init($baseUrl . <span class="token-green">"/api/v2/me"</span>);
 curl_setopt_array($ch, [
@@ -263,7 +263,7 @@ $result = json_decode(curl_exec($ch), true);</code></pre>
       </section>
 
       <footer>
-        <div class="brand"><span class="brand-mark">D</span><span>Dino Store Developers</span></div>
+        <div class="brand"><span class="brand-mark">D</span><span>Lâm Shop Developers</span></div>
         <p>Partner API v2 · Cập nhật tháng 07/2026</p>
         <a href="#top">Lên đầu trang ↑</a>
       </footer>

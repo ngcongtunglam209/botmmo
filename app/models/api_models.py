@@ -2,7 +2,7 @@
 #  API SERVER (FASTAPI)
 # ==============================================================================
 API_DESCRIPTION = r"""
-# Dino Store Partner API
+# Lâm Shop Partner API
 
 API dùng chung **API key** và **ví partner**, nhưng tách hai luồng để catalog nhẹ,
 dễ đồng bộ và tránh nhầm field.
@@ -79,10 +79,10 @@ except Exception:
         return default
 
 app = FastAPI(
-    title="Dino Store Partner API",
+    title="Lâm Shop Partner API",
     description=API_DESCRIPTION,
     version="2.0",
-    contact={"name": "Dino Store"},
+    contact={"name": "Lâm Shop"},
     openapi_tags=[
         {"name": "Partner", "description": "Sản phẩm thường: catalog, tạo đơn và tra cứu đơn."},
         {"name": "Social Media", "description": "Dịch vụ social: catalog riêng, tạo đơn và trạng thái supplier."},

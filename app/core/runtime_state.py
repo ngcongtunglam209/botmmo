@@ -56,9 +56,9 @@ def rate_limit_command(cooldown: float = 2.0):
         return wrapper
     return decorator
 
-class DinoFormatter(logging.Formatter):
+class LamShopFormatter(logging.Formatter):
     """
-    <tg-emoji emoji-id=\"5303145396254563405\">🦕</tg-emoji> DinoTools Custom Formatter - Siêu Đẹp & Gọn Gàng
+    <tg-emoji emoji-id=\"5303145396254563405\">🦕</tg-emoji> Lâm Shop Custom Formatter - Siêu Đẹp & Gọn Gàng
     """
     ANSI_REGEX = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
     HTML_TAG_REGEX = re.compile(r"</?(?:b|i|u|s|code|pre|a|blockquote)\b[^>]*>", re.IGNORECASE)
@@ -108,7 +108,7 @@ class DinoFormatter(logging.Formatter):
         if self.use_color:
             log_fmt = self.FORMATS.get(record.levelno, self.FORMATS[logging.INFO])
             prefix = f"{self.CYAN}[{current_time}]{self.RESET}"
-            if "DINO" in message:
+            if "LAM SHOP" in message:
                 prefix = f"{self.MAGENTA}[{current_time}]{self.RESET}"
             line = self._sanitize_console_text(f"{prefix} {log_fmt}".replace("%(message)s", message))
         else:
@@ -123,7 +123,7 @@ class DinoFormatter(logging.Formatter):
 
 # Setup logging
 console_handler = logging.StreamHandler()
-console_handler.setFormatter(DinoFormatter())
+console_handler.setFormatter(LamShopFormatter())
 console_handler.addFilter(SensitiveDataFilter())
 
 # File handler (Giữ nguyên để debug)
@@ -210,9 +210,9 @@ def _should_print_start_banner() -> bool:
 if _should_print_start_banner():
     print("\n" + "="*60)
     if os.name != "nt" and bool(getattr(sys.stdout, "isatty", lambda: False)()):
-        print("\033[96m  [DINO]  D I N O   B O T   S T A R T I N G . . .  \033[0m")
+        print("\033[96m  [LAM SHOP]  L A M   S H O P   B O T   S T A R T I N G . . .  \033[0m")
     else:
-        print("  [DINO]  D I N O   B O T   S T A R T I N G . . .  ")
+        print("  [LAM SHOP]  L A M   S H O P   B O T   S T A R T I N G . . .  ")
     print("="*60 + "\n")
 
 

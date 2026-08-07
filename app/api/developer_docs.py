@@ -50,7 +50,7 @@ async def api_swagger_reference():
         )
     return get_swagger_ui_html(
         openapi_url=app.openapi_url,
-        title="Dino Store API Reference",
+        title="Lâm Shop API Reference",
         swagger_favicon_url="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22><text y=%22.9em%22 font-size=%2290%22>🦖</text></svg>",
         swagger_ui_parameters={
             "deepLinking": True,

@@ -1547,7 +1547,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
             ai_answer = await ask_ai(question)
 
-            await query.edit_message_text(f'<tg-emoji emoji-id="6271362510901747485">🤖</tg-emoji> <b>Trợ lý AI Dino trả lời:</b>\n\n{ai_answer}', parse_mode=ParseMode.HTML)  # FIX: ask_gemini -> ask_ai
+            await query.edit_message_text(f'<tg-emoji emoji-id="6271362510901747485">🤖</tg-emoji> <b>Trợ lý AI Lâm Shop trả lời:</b>\n\n{ai_answer}', parse_mode=ParseMode.HTML)  # FIX: ask_gemini -> ask_ai
 
         else: await query.edit_message_text("Đã có lỗi xảy ra. Vui lòng bắt đầu lại.")
 

@@ -47,10 +47,10 @@ ADMIN_WEB_API_TABLE_LIMIT = 260
 ADMIN_WEB_SUSPICIOUS_BALANCE_THRESHOLD = 1_000_000_000_000
 ADMIN_WEB_LOGIN_NOTIFY_COOLDOWN_SECONDS = 6 * 60 * 60
 ADMIN_WEB_LOGIN_NOTIFY_CACHE_MAX = 256
-ADMIN_WEB_SESSION_COOKIE = "dino_admin_session"
+ADMIN_WEB_SESSION_COOKIE = "lamshop_admin_session"
 ADMIN_WEB_LOGIN_WINDOW_SECONDS = 5 * 60
 ADMIN_WEB_LOGIN_MAX_ATTEMPTS = 5
-ADMIN_WEB_TELEGRAM_OIDC_COOKIE = "dino_admin_telegram_oidc"
+ADMIN_WEB_TELEGRAM_OIDC_COOKIE = "lamshop_admin_telegram_oidc"
 ADMIN_WEB_TELEGRAM_OIDC_TTL_SECONDS = 10 * 60
 ADMIN_WEB_TELEGRAM_AUTH_URL = "https://oauth.telegram.org/auth"
 ADMIN_WEB_TELEGRAM_TOKEN_URL = "https://oauth.telegram.org/token"
@@ -2133,7 +2133,7 @@ def _admin_web_action_cards(request) -> str:
         <select name="mode"><option value="topup">Nạp tiền key</option><option value="create">Tạo key</option><option value="disable">Tắt key</option><option value="enable">Bật key</option></select>
       </label>
       <label>Số tiền<input name="amount" placeholder="500000"></label>
-      <label class="wide">Key hoặc tên partner<input name="target" placeholder="DINO... hoặc tên"></label>
+      <label class="wide">Key hoặc tên partner<input name="target" placeholder="LAMSHOP... hoặc tên"></label>
       <button class="wide" type="submit">Cập nhật API</button>
     </form>
   </section>
@@ -2285,7 +2285,7 @@ def _admin_web_layout(title: str, body: str, request=None) -> str:
 <body>
   <header class="admin-topbar"><nav>
     <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Mở menu điều hướng" aria-controls="adminNavLinks" aria-expanded="false" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
-    <strong class="admin-brand"><span class="admin-brand-mark">D</span><span>Dino <b>Ops</b><small>Control center</small></span></strong>
+    <strong class="admin-brand"><span class="admin-brand-mark">D</span><span>Lâm Shop <b>Ops</b><small>Control center</small></span></strong>
     <div class="topbar-actions">{bell_html}<button id="themeToggle" onclick="toggleTheme()" title="Đổi giao diện" aria-label="Đổi giao diện sáng tối">🌙</button></div>
     <div id="adminNavLinks" class="admin-nav-links"><a href="/admin{key_query}">Dashboard</a><a href="/admin/resell{key_query}">API Resell</a><a href="/admin/supplier_catalog{key_query}">SupplierCatalog</a><a href="/admin/categories{key_query}">Danh mục</a><a href="/admin/commands{key_query}">Lệnh admin</a><form method="post" action="/admin/logout">{csrf_input}<button id="admin-logout" type="submit">Đăng xuất</button></form></div>
   </nav></header>
@@ -2458,7 +2458,7 @@ def _admin_web_dashboard_body(request=None, message: str | None = None, is_error
 <div class="admin-console">
   <aside class="side-rail">
     <div class="brand-block">
-      <b>Dino Admin</b>
+      <b>Lâm Shop Admin</b>
       <span>MMO ops center</span>
     </div>
     <a href="#overview" data-page-link="overview">Tổng quan</a>
@@ -2480,7 +2480,7 @@ def _admin_web_dashboard_body(request=None, message: str | None = None, is_error
     <div class="workspace-head">
       <div>
         <span class="eyebrow">MMO admin app</span>
-        <h1>Dino Control Center</h1>
+        <h1>Lâm Shop Control Center</h1>
         <p>Bảng điều khiển tập trung cho sản phẩm, kho, đơn hàng, user, ví, API partner, coupon, support và vận hành.</p>
       </div>
       <div class="console-tools">
@@ -3920,7 +3920,7 @@ async def admin_web_category_image_upload(request: Request):
                 ok, message = True, f"Đã tải ảnh cho danh mục {category_name}."
     notice_class = "success" if ok else "danger"
     body = f'<div class="notice {notice_class}">{escape(message)}</div>' + _admin_web_categories_body(request)
-    return HTMLResponse(_admin_web_layout("Dino Admin — Danh Mục", body, request))
+    return HTMLResponse(_admin_web_layout("Lâm Shop Admin — Danh Mục", body, request))
 
 
 @app.post("/admin/product_image_upload", include_in_schema=False)
@@ -3937,12 +3937,12 @@ async def admin_web_product_image_upload(request: Request):
 
     if image is None or not hasattr(image, "read"):
         body = _admin_web_product_detail_body(request, product_id, message="Chua chon file anh.", is_error=True)
-        return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
+        return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
 
     product = products.get(product_id)
     if not isinstance(product, dict):
         body = _admin_web_dashboard_body(request, message="Khong tim thay product_id.", is_error=True)
-        return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
+        return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
 
     apply_category = bool(apply_to_category)
     override_name = category_name_override
@@ -3952,7 +3952,7 @@ async def admin_web_product_image_upload(request: Request):
         category_name = ""
     if apply_category and not category_name:
         body = _admin_web_product_detail_body(request, product_id, message="Vui long nhap ten danh muc o o 'Ten danh muc ap dung'.", is_error=True)
-        return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
+        return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
 
     filename = (image.filename or "").lower()
     ext = filename.rsplit(".", 1)[-1] if "." in filename else ""
@@ -3965,15 +3965,15 @@ async def admin_web_product_image_upload(request: Request):
         ext = "webp"
     if ext not in ADMIN_WEB_PRODUCT_IMAGE_EXTS:
         body = _admin_web_product_detail_body(request, product_id, message="Dinh dang anh khong ho tro (chi nhan jpg/png/webp).", is_error=True)
-        return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
+        return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
 
     data = await image.read()
     if not data:
         body = _admin_web_product_detail_body(request, product_id, message="File anh rong.", is_error=True)
-        return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
+        return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
     if len(data) > ADMIN_WEB_PRODUCT_IMAGE_MAX_BYTES:
         body = _admin_web_product_detail_body(request, product_id, message="Anh qua lon (toi da 8MB).", is_error=True)
-        return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
+        return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
 
     if apply_category:
         slug = _admin_web_category_slug(category_name)
@@ -3989,7 +3989,7 @@ async def admin_web_product_image_upload(request: Request):
             target.write_bytes(data)
         except Exception as exc:
             body = _admin_web_product_detail_body(request, product_id, message=f"Khong luu duoc anh danh muc: {type(exc).__name__}: {exc}", is_error=True)
-            return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
+            return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
 
         # Invalidate cached telegram file_id on every product whose effective category matches,
         # so the bot re-uploads from the new on-disk image.
@@ -4017,7 +4017,7 @@ async def admin_web_product_image_upload(request: Request):
             logger.exception("Admin web audit save failed")
 
         body = _admin_web_product_detail_body(request, product_id, message=f"Da tai anh cho danh muc {category_name}.", is_error=False)
-        return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
+        return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
 
     # Per-product upload — copies the same image to each selected product.
     # selected_products is a list of product_ids ticked in the preview table.
@@ -4073,7 +4073,7 @@ async def admin_web_product_image_upload(request: Request):
         logger.exception("Admin web audit save failed")
 
     body = _admin_web_product_detail_body(request, product_id, message=summary_msg, is_error=not saved)
-    return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
+    return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
 
 
 async def _admin_web_action_supplier_catalog_resell(form):
@@ -4220,7 +4220,7 @@ def _admin_web_resell_body(request):
 async def admin_web_resell(request: Request):
     _admin_web_require(request)
     await _admin_web_notify_login(request)
-    return HTMLResponse(_admin_web_layout("Dino Admin — API Resell", _admin_web_resell_body(request), request))
+    return HTMLResponse(_admin_web_layout("Lâm Shop Admin — API Resell", _admin_web_resell_body(request), request))
 
 
 def _admin_web_supplier_catalog_body(request, message: str | None = None, is_error: bool = False):
@@ -4394,7 +4394,7 @@ loadShopbotProducts();
 async def admin_web_supplier_catalog(request: Request):
     _admin_web_require(request)
     await _admin_web_notify_login(request)
-    return HTMLResponse(_admin_web_layout("Dino Admin — SupplierCatalog Resell", _admin_web_supplier_catalog_body(request), request))
+    return HTMLResponse(_admin_web_layout("Lâm Shop Admin — SupplierCatalog Resell", _admin_web_supplier_catalog_body(request), request))
 
 
 @app.get("/api/admin/supplier_catalog/products", tags=["Admin"])
@@ -4772,7 +4772,7 @@ async def admin_web_categories(request: Request):
     _admin_web_require(request)
     await _admin_web_notify_login(request)
     body = _admin_web_categories_body(request)
-    return HTMLResponse(_admin_web_layout("Dino Admin — Danh Mục", body, request))
+    return HTMLResponse(_admin_web_layout("Lâm Shop Admin — Danh Mục", body, request))
 
 
 @app.get("/admin/login", include_in_schema=False)
@@ -4798,7 +4798,7 @@ async def admin_web_login_page(request: Request):
         """
     return HTMLResponse(f"""<!doctype html>
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#07110d"><title>Đăng nhập — Dino Ops</title>
+<meta name="theme-color" content="#07110d"><title>Đăng nhập — Lâm Shop Ops</title>
 <style>{ADMIN_WEB_OPS_CSS}
 .telegram-login-button{{display:flex;align-items:center;justify-content:center;gap:11px;width:100%;box-sizing:border-box;padding:14px 18px;margin:18px 0 14px;border-radius:13px;background:#229ed9;color:#fff!important;text-decoration:none;font-weight:800;box-shadow:0 10px 28px rgba(34,158,217,.24);transition:.2s ease}}
 .telegram-login-button:hover{{background:#168dcc;transform:translateY(-1px)}}.telegram-login-button svg{{width:23px;height:23px;fill:currentColor}}
@@ -4807,7 +4807,7 @@ async def admin_web_login_page(request: Request):
   <div class="login-ambient login-ambient-a"></div><div class="login-ambient login-ambient-b"></div>
   <main class="login-shell">
     <section class="login-story">
-      <a class="login-brand" href="/docs"><span class="admin-brand-mark">D</span><span>Dino <b>Ops</b></span></a>
+      <a class="login-brand" href="/docs"><span class="admin-brand-mark">D</span><span>Lâm Shop <b>Ops</b></span></a>
       <div class="login-copy">
         <span class="login-eyebrow"><i></i> ADMIN OPERATIONS</span>
         <h1>Mọi hoạt động.<br><em>Một trung tâm.</em></h1>
@@ -4818,7 +4818,7 @@ async def admin_web_login_page(request: Request):
           <div><span>03</span><b>Partners</b><small>API & vận hành ví</small></div>
         </div>
       </div>
-      <footer><i></i> Dino Store secured workspace</footer>
+      <footer><i></i> Lâm Shop secured workspace</footer>
     </section>
     <section class="login-panel">
       <div class="login-card">
@@ -4980,7 +4980,7 @@ async def admin_web_logout(request: Request):
 async def admin_web_dashboard(request: Request):
     _admin_web_require(request)
     await _admin_web_notify_login(request)
-    return HTMLResponse(_admin_web_layout("Dino Admin Web", _admin_web_dashboard_body(request), request))
+    return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", _admin_web_dashboard_body(request), request))
 
 
 @app.post("/admin/action", tags=["Admin"])
@@ -5006,7 +5006,7 @@ async def admin_web_action(request: Request):
         body = _admin_web_detail_body(request, return_entity, return_id, message=message, is_error=not ok)
     else:
         body = _admin_web_dashboard_body(request, message=message, is_error=not ok)
-    return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
+    return HTMLResponse(_admin_web_layout("Lâm Shop Admin Web", body, request))
 
 
 @app.get("/admin/api-partners/export.csv", include_in_schema=False)
@@ -5032,7 +5032,7 @@ async def admin_web_api_partners_export(request: Request):
     return Response(
         content="\ufeff" + output.getvalue(),
         media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": 'attachment; filename="dino-api-partners.csv"', "Cache-Control": "no-store"},
+        headers={"Content-Disposition": 'attachment; filename="lamshop-api-partners.csv"', "Cache-Control": "no-store"},
     )
 
 
@@ -5043,14 +5043,14 @@ async def admin_web_item(request: Request):
     entity = str(request.query_params.get("entity") or "").strip()
     item_id = str(request.query_params.get("id") or "").strip()
     body = _admin_web_detail_body(request, entity, item_id)
-    return HTMLResponse(_admin_web_layout("Dino Admin Detail", body, request))
+    return HTMLResponse(_admin_web_layout("Lâm Shop Admin Detail", body, request))
 
 
 @app.get("/admin/commands", tags=["Admin"])
 async def admin_web_commands(request: Request):
     _admin_web_require(request)
     await _admin_web_notify_login(request)
-    return HTMLResponse(_admin_web_layout("Dino Admin Commands", _admin_web_commands_body(), request))
+    return HTMLResponse(_admin_web_layout("Lâm Shop Admin Commands", _admin_web_commands_body(), request))
 
 
 @app.get("/api/admin/commands", tags=["Admin"])

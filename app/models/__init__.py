@@ -1,4 +1,4 @@
-"""Data models for the Dino Bot application."""
+"""Data models for the Lâm Shop Bot application."""
 
 from .order import Order, PendingOrder, OrderStatus
 from .user import UserProfile, VIPRank, TransactionRecord

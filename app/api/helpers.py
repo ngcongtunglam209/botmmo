@@ -323,7 +323,7 @@ def _api_build_v1_product_payload(product_id: str, product_data: dict, actor: di
     )
     return {
         "id": str(product_id or ""),
-        "sellerId": "dino_store",
+        "sellerId": "lam_shop",
         "title": str(product_data.get("name") or product_id),
         "shortDescription": str(product_data.get("description") or product_data.get("duration") or ""),
         "type": "SERVICE" if product_data.get("requires_gmail") or product_data.get("is_social_source_service") else "ACCOUNT",

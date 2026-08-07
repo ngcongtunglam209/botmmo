@@ -7,7 +7,7 @@ async def addapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     partner_name = context.args[0]
     # Tạo key ngẫu nhiên
-    new_key = "DINO-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
+    new_key = "LAMSHOP-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
     
     # Lưu dưới dạng Dict để chứa cả số dư
     api_keys[new_key] = {

@@ -432,7 +432,7 @@ async def _scan_binance_spot_payments(synthetic_transactions: list) -> None:
     start_timestamp_ms = max(0, min(item[4] for item in usdt_pending_orders) - 60_000)
     try:
         deposits = await fetch_binance_spot_deposits(start_timestamp_ms=start_timestamp_ms)
-        logger.debug(f"DINO CRON (Binance Spot): Tìm thấy {len(deposits)} giao dịch nạp từ {start_timestamp_ms}")
+        logger.debug(f"LAM SHOP CRON (Binance Spot): Tìm thấy {len(deposits)} giao dịch nạp từ {start_timestamp_ms}")
         if deposits:
             logger.debug(f"DEBUG Binance Spot Data: {[d.get('txId') + ' (' + str(d.get('amount')) + ' ' + d.get('coin') + ' status:' + str(d.get('status')) + ')' for d in deposits[:3]]}...")
         matched_hashes = set()
@@ -515,10 +515,10 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     if not pending_orders and not pending_api_deposits:
         if data_changed:
             await save_data()
-        logger.debug("DINO CRON: Không có đơn chờ, bỏ qua gọi API bank.")
+        logger.debug("LAM SHOP CRON: Không có đơn chờ, bỏ qua gọi API bank.")
         return
 
-    logger.debug(f"DINO CRON: Bắt đầu quét... Đơn chờ: {len(pending_orders)} | API Nạp chờ: {len(pending_api_deposits)}")
+    logger.debug(f"LAM SHOP CRON: Bắt đầu quét... Đơn chờ: {len(pending_orders)} | API Nạp chờ: {len(pending_api_deposits)}")
     synthetic_transactions: list = []
     await _scan_usdt_bep20_payments(synthetic_transactions)
     await _scan_binance_pay_id_payments(synthetic_transactions)
@@ -624,7 +624,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             _bank_api_fail_count = 0
             tx_count_now = len(api_data.get("transactions", []))
             transactions.extend(api_data.get("transactions", []))
-            logger.debug(f"DINO CRON: Tìm thấy {tx_count_now} giao dịch từ API.")
+            logger.debug(f"LAM SHOP CRON: Tìm thấy {tx_count_now} giao dịch từ API.")
             _bank_api_last_status = "ok"
             _bank_api_last_error = ""
             _bank_api_last_tx_count = tx_count_now
@@ -633,7 +633,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         _bank_api_total_checks += 1
 
         if synthetic_transactions:
-            logger.info(f"DINO CRON: Tìm thấy {len(synthetic_transactions)} giao dịch thanh toán đã xác nhận từ crypto/bank scan.")
+            logger.info(f"LAM SHOP CRON: Tìm thấy {len(synthetic_transactions)} giao dịch thanh toán đã xác nhận từ crypto/bank scan.")
 
         for tx in transactions:
             # FIX: Chuyển tx_id sang string để đồng bộ
@@ -662,7 +662,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             if secret_order_code or match_order: 
                 # === XỬ LÝ MUA LINK / QR BANK ===
                 order_code = str(secret_order_code) if secret_order_code else f"ICLD{match_order.group(1)}"
-                logger.info(f"DINO CRON: Phát hiện mã đơn {order_code} trong giao dịch {tx_id}")
+                logger.info(f"LAM SHOP CRON: Phát hiện mã đơn {order_code} trong giao dịch {tx_id}")
 
                 order_details = await pending_get(order_code)
                 if order_details:

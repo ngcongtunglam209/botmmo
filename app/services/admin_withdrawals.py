@@ -50,7 +50,7 @@ async def _handle_withdrawal_action_unlocked(query, context, command, user_id):
                 f"{E_TAG} Số tiền: {req['amount']:,} VNĐ\n"
                 f"<tg-emoji emoji-id=\"5278467510604160626\">🏦</tg-emoji> Đã chuyển về: <code>{html.escape(str(req['bank_info']))}</code>\n"
                 f"{E_TAG} Số dư còn lại: {new_balance:,} VNĐ\n\n"
-                f"Cảm ơn bạn đã đồng hành cùng DinoTools! {E_MENU}",
+                f"Cảm ơn bạn đã đồng hành cùng Lâm Shop! {E_MENU}",
                 parse_mode=ParseMode.HTML
             )
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
