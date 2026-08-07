@@ -494,6 +494,7 @@ async def save_data(force=False, tables=None):
                 (COUPONS_FILE, coupons), 
                 (API_KEYS_FILE, api_keys),
                 (PENDING_ORDERS_FILE, pending_orders),
+                (USER_TOPUP_FILE, pending_user_topups),
                 ("data_pending_api_deposits.json", pending_api_deposits),
                 (PRODUCTS_FILE, products),
                 (CUSTOM_STORE_ICONS_FILE, custom_store_icons),
@@ -557,6 +558,7 @@ async def save_data_debounced(context: ContextTypes.DEFAULT_TYPE):
         await save_data(force=True)
 
 def load_data():
+    global pending_user_topups
     global order_history, processed_transaction_ids, user_data_db, banned_users, coupons, pending_orders, api_keys, pending_api_deposits, products, custom_store_icons, store_categories, pending_manual_orders, stock_waitlist, flash_sales, combo_deals, wheel_data
     global warranty_claims, product_ratings, referral_data, live_chats, active_giveaways, dice_game_data, withdrawal_requests, transaction_history, admin_action_log, daily_promo_tracker
     
@@ -569,6 +571,9 @@ def load_data():
     banned_users = set(load_from_db(BANNED_USERS_FILE, [], BANNED_USERS_FILE))
     coupons = load_from_db(COUPONS_FILE, {}, COUPONS_FILE)
     pending_orders = load_from_db(PENDING_ORDERS_FILE, {}, PENDING_ORDERS_FILE)
+    pending_user_topups = load_from_db(USER_TOPUP_FILE, {}, USER_TOPUP_FILE)
+    if not isinstance(pending_user_topups, dict):
+        pending_user_topups = {}
     api_keys = load_from_db(API_KEYS_FILE, {}, API_KEYS_FILE)
     products = load_from_db(PRODUCTS_FILE, {}, PRODUCTS_FILE)
     custom_store_icons = load_from_db(CUSTOM_STORE_ICONS_FILE, {}, CUSTOM_STORE_ICONS_FILE)
@@ -605,6 +610,7 @@ def load_data():
         "banned_users",
         "coupons",
         "pending_orders",
+        "pending_user_topups",
         "api_keys",
         "pending_api_deposits",
         "products",

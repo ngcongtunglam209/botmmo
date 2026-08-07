@@ -29,6 +29,7 @@ SECTION_FILES = [
     APP_ROOT / "utils" / "i18n.py",
     APP_ROOT / "utils" / "ui_and_email.py",
     APP_ROOT / "handlers" / "payment_generation.py",
+    APP_ROOT / "handlers" / "user_topup.py",
     APP_ROOT / "services" / "notifications_async.py",
     APP_ROOT / "jobs" / "payment_monitor.py",
     APP_ROOT / "jobs" / "backup_and_rewards.py",

@@ -134,6 +134,7 @@ def main() -> None:
     application.add_handler(CommandHandler("cancel", cancel_command))
     application.add_handler(CommandHandler("guimail", guimail_command))  # NEW: Email submission command
     application.add_handler(CommandHandler("lichsu", lichsu_command))
+    application.add_handler(CommandHandler(["naptien", "topup", "napvi"], naptien_command))
     application.add_handler(CommandHandler(["baoloi", "huongdanbaoloi"], huongdan_baoloi_command)) # NEW
     application.add_handler(CommandHandler("ask", ask_command))
     application.add_handler(CommandHandler(["dkyapi", "dkapi", "dangkyapi", "regapi"], dkyapi_command))

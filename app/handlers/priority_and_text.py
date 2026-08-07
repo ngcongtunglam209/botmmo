@@ -647,6 +647,10 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         )
         
         return
+    if user_state == 'awaiting_topup_amount':
+        await handle_topup_amount_input(update, context, user_input)
+        return
+
     if user_state == 'awaiting_store_coupon':
         prod_id = context.user_data.get('store_coupon_prod_id')
         qty = context.user_data.get('store_coupon_qty', 1)

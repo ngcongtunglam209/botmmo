@@ -466,14 +466,18 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
     data_changed |= await _cleanup_expired_pending_orders(context, current_time)
     data_changed |= _cleanup_expired_api_deposits(current_time)
+    data_changed |= cleanup_expired_user_topups(current_time)
 
-    if not pending_orders and not pending_api_deposits:
+    if not pending_orders and not pending_api_deposits and not pending_user_topups:
         if data_changed:
             await save_data()
         logger.debug("LAM SHOP CRON: Không có đơn chờ, bỏ qua gọi API bank.")
         return
 
-    logger.debug(f"LAM SHOP CRON: Bắt đầu quét... Đơn chờ: {len(pending_orders)} | API Nạp chờ: {len(pending_api_deposits)}")
+    logger.debug(
+        f"LAM SHOP CRON: Bắt đầu quét... Đơn chờ: {len(pending_orders)} | "
+        f"API Nạp chờ: {len(pending_api_deposits)} | Ví nạp chờ: {len(pending_user_topups)}"
+    )
     synthetic_transactions: list = []
     await _scan_usdt_bep20_payments(synthetic_transactions)
     await _scan_binance_pay_id_payments(synthetic_transactions)
@@ -554,7 +558,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             _bank_api_last_error = bank_error_msg[:240]
         
         # Log full response if pending orders exist to debug
-        if pending_orders or pending_api_deposits:
+        if pending_orders or pending_api_deposits or pending_user_topups:
              logger.debug(f"DEBUG: API Response keys: {str(api_key_info)[:30]}...")
 
         # Check for API Error
@@ -608,10 +612,32 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             match_order = ICLD_PATTERN.search(description) or ICLD_PATTERN.search(no_space_description)
             secret_order_code = _find_pending_order_code_by_transfer_description(description)
             api_deposit_reference = _find_pending_api_deposit_reference(description)
+            user_topup_reference = find_pending_user_topup_reference(description)
 
-            if not (secret_order_code or match_order or api_deposit_reference):
+            if not (secret_order_code or match_order or api_deposit_reference or user_topup_reference):
                 continue
             if not db_claim_transaction(tx_id):
+                continue
+
+            if user_topup_reference:
+                # === NẠP TIỀN VÀO VÍ NGƯỜI DÙNG ===
+                handled = await credit_user_topup(context, str(user_topup_reference), int(amount))
+                db_add_tx(tx_id)
+                data_changed = True
+                if not handled:
+                    # Ma het han hoac da xu ly: tien da vao tai khoan nen phai bao admin
+                    # doi soat tay, khong duoc im lang bo qua.
+                    logger.warning(
+                        f"CRON: Ma nap {user_topup_reference} khong con trong hang cho (tx {tx_id})"
+                    )
+                    await safe_send_admin(
+                        context.bot,
+                        f"{E_LIMIT} <b>NẠP VÍ KHÔNG KHỚP LỆNH</b>\n"
+                        f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> Mã: <code>{user_topup_reference}</code>\n"
+                        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Số tiền: {int(amount):,} VNĐ\n"
+                        f"<tg-emoji emoji-id=\"5350481781306958339\">🧾</tg-emoji> TX: <code>{tx_id}</code>\n"
+                        f"<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Lệnh nạp đã hết hạn hoặc đã xử lý. Cộng tay: <code>/addmoney &lt;user_id&gt; {int(amount)}</code>"
+                    )
                 continue
 
             if secret_order_code or match_order: 
