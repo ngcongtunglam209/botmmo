@@ -32,6 +32,12 @@ async def run_api_server():
         log_level="warning",
         access_log=False,
         use_colors=False,
+        # Caddy terminates TLS and forwards over the Docker network, so the peer
+        # address is never 127.0.0.1 (uvicorn's default trust list). Without this
+        # every request looks like plain http and the same-origin check rejects
+        # the admin forms. The container port is only reachable from Caddy.
+        proxy_headers=True,
+        forwarded_allow_ips=TRUSTED_PROXY_IPS,
     )
     server = uvicorn.Server(config)
     await server.serve()

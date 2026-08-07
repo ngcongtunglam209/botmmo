@@ -115,6 +115,10 @@ MAINTENANCE_MODE = False
 AI_AUTO_REPLY = False
 API_SERVER_PORT = int(os.getenv("API_SERVER_PORT", "8080"))
 PUBLIC_API_SCHEME = os.getenv("PUBLIC_API_SCHEME", "https").strip().lower()
+# Which client IPs may set X-Forwarded-Proto/-For. Caddy reaches the bot over the
+# internal Docker network, so its address is not 127.0.0.1 and uvicorn would
+# otherwise drop those headers and report every HTTPS request as plain http.
+TRUSTED_PROXY_IPS = os.getenv("TRUSTED_PROXY_IPS", "*").strip() or "*"
 AUTO_PUBLIC_IP_DETECT = os.getenv("AUTO_PUBLIC_IP_DETECT", "true").strip().lower() in {"1", "true", "yes", "on"}
 BINANCE_PAY_CERT_SN = os.getenv("BINANCE_PAY_CERT_SN", os.getenv("BINANCE_PAY_API_KEY", "")).strip()
 BINANCE_PAY_SECRET_KEY = os.getenv("BINANCE_PAY_SECRET_KEY", "").strip()

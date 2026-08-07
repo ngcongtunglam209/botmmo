@@ -10,7 +10,7 @@ import string
 import time
 from html import escape, unescape
 from pathlib import Path
-from urllib.parse import parse_qs, quote, urlencode
+from urllib.parse import parse_qs, quote, urlencode, urlsplit
 
 from fastapi.responses import FileResponse, RedirectResponse
 
@@ -431,8 +431,22 @@ def _admin_web_require(request):
 
 
 def _admin_web_require_same_origin(request):
+    """Reject cross-site form posts.
+
+    Compares hosts, not full URLs: behind a TLS-terminating proxy the browser
+    sends Origin: https://host while the app may still see an http base_url,
+    and a scheme mismatch there is a deployment detail, not a cross-site post.
+    The CSRF token and the SameSite=strict session cookie stay the primary
+    defence; this is the extra layer.
+    """
     origin = str(request.headers.get("origin") or "").strip()
-    if origin and origin.rstrip("/") != str(request.base_url).rstrip("/"):
+    if not origin:
+        return
+    allowed = {urlsplit(str(request.base_url)).netloc.casefold()}
+    if PUBLIC_API_URL:
+        allowed.add(urlsplit(str(PUBLIC_API_URL)).netloc.casefold())
+    allowed.discard("")
+    if urlsplit(origin).netloc.casefold() not in allowed:
         raise HTTPException(status_code=403, detail="Invalid request origin")
 
 
