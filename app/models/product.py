@@ -25,7 +25,7 @@ class Product(BaseModel):
     name: str = Field(..., description="Display name")
     price: int = Field(..., ge=0, description="Price per unit in VND")
     description: str = Field("", description="Product description")
-    duration: str = Field("", description="Duration text (e.g. '1 thÃ¡ng', 'VÄ©nh viá»…n')")
+    duration: str = Field("", description="Duration text (e.g. '1 tháng', 'Vĩnh viễn')")
     stock: list[str] = Field(default_factory=list, description="Available stock items")
     stock_count: int = Field(0, ge=0, description="Cached stock count")
 

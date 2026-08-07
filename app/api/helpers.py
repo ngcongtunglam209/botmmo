@@ -485,7 +485,7 @@ def _api_normalize_allowed_ips(value) -> list[str]:
         try:
             network = ipaddress.ip_network(item, strict=False)
         except ValueError as exc:
-            raise ValueError(f"IP/CIDR khÃ´ng há»£p lá»‡: {item}") from exc
+            raise ValueError(f"IP/CIDR không hợp lệ: {item}") from exc
         canonical = str(network.network_address) if network.num_addresses == 1 else str(network)
         if canonical not in normalized:
             normalized.append(canonical)
@@ -540,7 +540,7 @@ async def _api_rotate_partner_key(api_key: str):
     return new_key, new_data
 
 
-# NOTE: run_api_server() Ä‘Ã£ Ä‘Æ°á»£c Ä‘á»‹nh nghÄ©a bÃªn dÆ°á»›i (gáº§n cuá»‘i file) â€” duy nháº¥t 1 báº£n.
+# NOTE: run_api_server() đã được định nghĩa bên dưới (gần cuối file) — duy nhất 1 bản.
 
 def _api_require_actor(
     x_api_key: str | None = None,
@@ -1024,14 +1024,14 @@ async def _api_notify_admin_order(order_data: dict, partner_name: str, remaining
     if order_data.get("api_admin_notified_at"):
         return True
     try:
-        balance_text = f"{remaining_balance:,} VNÄ" if isinstance(remaining_balance, int) else str(remaining_balance)
+        balance_text = f"{remaining_balance:,} VNĐ" if isinstance(remaining_balance, int) else str(remaining_balance)
         product_name = order_data.get("product_name") or "N/A"
         quantity = int(order_data.get("quantity", 1) or 1)
         delivery_mode = order_data.get("delivery_method") or "unknown"
         link_value = str(order_data.get("link") or "")
         delivered_items = order_data.get("items")
         balance_value = order_data.get("api_partner_remaining_balance", remaining_balance)
-        balance_text = f"{balance_value:,} VNÄ" if isinstance(balance_value, int) else html.escape(str(balance_value))
+        balance_text = f"{balance_value:,} VNĐ" if isinstance(balance_value, int) else html.escape(str(balance_value))
         sanitized_partner_name = html.escape(str(partner_name or "Unknown"))
         delivery_detail_line = ""
         preview_items = []
@@ -1044,23 +1044,23 @@ async def _api_notify_admin_order(order_data: dict, partner_name: str, remaining
         if preview_items:
             preview_items = preview_items[:3]
             preview_text = "\n".join(
-                f"â€¢ <code>{html.escape(str(item))}</code>" for item in preview_items
+                f"• <code>{html.escape(str(item))}</code>" for item in preview_items
             )
             if isinstance(delivered_items, (list, tuple, set)) and len(delivered_items) > len(preview_items):
-                preview_text += f"\nâ€¢ ... vÃ  {len(delivered_items) - len(preview_items)} item khÃ¡c"
-            delivery_detail_line = f"<tg-emoji emoji-id=\"5314638736462966754\">ðŸ“¬</tg-emoji> <b>Ná»™i dung Ä‘Ã£ gá»­i:</b>\n{preview_text}\n"
+                preview_text += f"\n• ... và {len(delivered_items) - len(preview_items)} item khác"
+            delivery_detail_line = f"<tg-emoji emoji-id=\"5314638736462966754\">📬</tg-emoji> <b>Nội dung đã gửi:</b>\n{preview_text}\n"
         elif delivery_mode == "instant_link" and link_value:
-            delivery_detail_line = f"<tg-emoji emoji-id=\"5231489647946768652\">ðŸ”—</tg-emoji> <b>Link:</b> <code>{html.escape(link_value)}</code>\n"
+            delivery_detail_line = f"<tg-emoji emoji-id=\"5231489647946768652\">🔗</tg-emoji> <b>Link:</b> <code>{html.escape(link_value)}</code>\n"
         admin_msg = (
-            f"<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> <b>ÄÆ N HÃ€NG API Má»šI (V2)</b>\n"
-            f"<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> <b>Partner:</b> {partner_name}\n"
-            f"<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> <b>MÃ£ Ä‘Æ¡n:</b> <code>{order_data.get('order_code')}</code>\n"
-            f"<tg-emoji emoji-id=\"6260059243605398502\">ðŸ·</tg-emoji> <b>Ref:</b> <code>{order_data.get('api_partner_ref') or 'N/A'}</code>\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> <b>Sáº£n pháº©m:</b> {html.escape(str(product_name))} x{quantity}\n"
-            f"<tg-emoji emoji-id=\"6129860303619363484\">ðŸ“§</tg-emoji> <b>Email:</b> <code>{order_data.get('api_customer_email') or 'N/A'}</code>\n"
-            f"<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>GiÃ¡:</b> {int(order_data.get('amount', 0)):,} VNÄ\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸšš</tg-emoji> <b>Delivery:</b> <code>{delivery_mode}</code>\n"
-            f"<tg-emoji emoji-id=\"5863724849851011383\">ðŸ’µ</tg-emoji> <b>Sá»‘ dÆ° Partner:</b> {balance_text}\n"
+            f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐƠN HÀNG API MỚI (V2)</b>\n"
+            f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Partner:</b> {partner_name}\n"
+            f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_data.get('order_code')}</code>\n"
+            f"<tg-emoji emoji-id=\"6260059243605398502\">🏷</tg-emoji> <b>Ref:</b> <code>{order_data.get('api_partner_ref') or 'N/A'}</code>\n"
+            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Sản phẩm:</b> {html.escape(str(product_name))} x{quantity}\n"
+            f"<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> <b>Email:</b> <code>{order_data.get('api_customer_email') or 'N/A'}</code>\n"
+            f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Giá:</b> {int(order_data.get('amount', 0)):,} VNĐ\n"
+            f"<tg-emoji emoji-id=\"5854908544712707500\">🚚</tg-emoji> <b>Delivery:</b> <code>{delivery_mode}</code>\n"
+            f"<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> <b>Số dư Partner:</b> {balance_text}\n"
             f"{delivery_detail_line}"
         )
         # Add approve/refund buttons for manual delivery API orders
@@ -1069,8 +1069,8 @@ async def _api_notify_admin_order(order_data: dict, partner_name: str, remaining
             order_code = order_data.get('order_code', '')
             reply_markup = InlineKeyboardMarkup([
                 [
-                    InlineKeyboardButton("<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> Duyá»‡t (ÄÃ£ add)", callback_data=f"api_approve_{order_code}"),
-                    InlineKeyboardButton("âŒ HoÃ n tiá»n", callback_data=f"api_refund_{order_code}"),
+                    InlineKeyboardButton("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Duyệt (Đã add)", callback_data=f"api_approve_{order_code}"),
+                    InlineKeyboardButton("❌ Hoàn tiền", callback_data=f"api_refund_{order_code}"),
                 ]
             ])
         sent_message = await safe_send_admin(bot_instance, admin_msg, reply_markup=reply_markup)
@@ -1081,8 +1081,8 @@ async def _api_notify_admin_order(order_data: dict, partner_name: str, remaining
         try:
             await save_data(force=True)
         except (ValueError, TypeError, KeyError, IndexError, AttributeError) as save_error:
-            logger.warning(f"KhÃ´ng lÆ°u Ä‘Æ°á»£c dáº¥u Ä‘Ã£ bÃ¡o admin cho Ä‘Æ¡n API {order_data.get('order_code')}: {save_error}")
+            logger.warning(f"Không lưu được dấu đã báo admin cho đơn API {order_data.get('order_code')}: {save_error}")
         return True
     except (ValueError, TypeError, KeyError, IndexError, AttributeError) as notify_error:
-        logger.error(f"Lá»—i gá»­i thÃ´ng bÃ¡o Admin API V2: {notify_error}")
+        logger.error(f"Lỗi gửi thông báo Admin API V2: {notify_error}")
 

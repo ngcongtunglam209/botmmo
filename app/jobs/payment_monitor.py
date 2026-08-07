@@ -46,7 +46,7 @@ async def _mark_pending_payment_message_completed(context, order_details: dict):
         return
 
     completed_button = InlineKeyboardButton(
-        "ÄÃ£ hoÃ n thÃ nh",
+        "Đã hoàn thành",
         callback_data="ignore",
         api_kwargs={
             "icon_custom_emoji_id": "6269163801178804220",
@@ -243,22 +243,22 @@ async def _cleanup_expired_pending_orders(context: ContextTypes.DEFAULT_TYPE, cu
                     current_balance = current_user_data.get('balance', 0)
                     new_balance = current_balance + balance_used
                     db_update_balance(user_id, new_balance)
-                    refund_text = f"\n\n<tg-emoji emoji-id=\"5462956611033117422\">â™»ï¸</tg-emoji> <b>ÄÃ£ hoÃ n láº¡i:</b> +{balance_used:,} VNÄ vÃ o vÃ­ (Do Ä‘Æ¡n háº¿t háº¡n)."
+                    refund_text = f"\n\n<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> <b>Đã hoàn lại:</b> +{balance_used:,} VNĐ vào ví (Do đơn hết hạn)."
 
             if details.get("type") == "store_product":
                 caption = (
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>ÄÆ N HÃ€NG ÄÃƒ Háº¾T Háº N</b> <tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji>\n\n"
-                    f"ÄÆ¡n hÃ ng nÃ y Ä‘Ã£ háº¿t háº¡n thanh toÃ¡n.\n"
-                    f"Vui lÃ²ng táº¡o Ä‘Æ¡n má»›i náº¿u báº¡n váº«n muá»‘n mua.{refund_text}"
+                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>ĐƠN HÀNG ĐÃ HẾT HẠN</b> <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji>\n\n"
+                    f"Đơn hàng này đã hết hạn thanh toán.\n"
+                    f"Vui lòng tạo đơn mới nếu bạn vẫn muốn mua.{refund_text}"
                 )
-                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">ðŸ›’</tg-emoji> Táº¡o Ä‘Æ¡n má»›i", "muahang_start")
+                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "muahang_start")
             else:
                 caption = (
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>ÄÆ N HÃ€NG ÄÃƒ Háº¾T Háº N</b> <tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji>\n\n"
-                    f"ÄÆ¡n hÃ ng cho email <b>{details.get('email', 'N/A')}</b> Ä‘Ã£ háº¿t háº¡n thanh toÃ¡n.\n"
-                    f"Vui lÃ²ng táº¡o Ä‘Æ¡n má»›i náº¿u báº¡n váº«n muá»‘n mua.{refund_text}"
+                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>ĐƠN HÀNG ĐÃ HẾT HẠN</b> <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji>\n\n"
+                    f"Đơn hàng cho email <b>{details.get('email', 'N/A')}</b> đã hết hạn thanh toán.\n"
+                    f"Vui lòng tạo đơn mới nếu bạn vẫn muốn mua.{refund_text}"
                 )
-                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">ðŸ›’</tg-emoji> Táº¡o Ä‘Æ¡n má»›i", "muahang_start")
+                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "muahang_start")
 
             if details.get('message_id'):
                 if details.get("message_kind") == "text":
@@ -432,7 +432,7 @@ async def _scan_binance_spot_payments(synthetic_transactions: list) -> None:
     start_timestamp_ms = max(0, min(item[4] for item in usdt_pending_orders) - 60_000)
     try:
         deposits = await fetch_binance_spot_deposits(start_timestamp_ms=start_timestamp_ms)
-        logger.debug(f"DINO CRON (Binance Spot): TÃ¬m tháº¥y {len(deposits)} giao dá»‹ch náº¡p tá»« {start_timestamp_ms}")
+        logger.debug(f"DINO CRON (Binance Spot): Tìm thấy {len(deposits)} giao dịch nạp từ {start_timestamp_ms}")
         if deposits:
             logger.debug(f"DEBUG Binance Spot Data: {[d.get('txId') + ' (' + str(d.get('amount')) + ' ' + d.get('coin') + ' status:' + str(d.get('status')) + ')' for d in deposits[:3]]}...")
         matched_hashes = set()
@@ -515,10 +515,10 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     if not pending_orders and not pending_api_deposits:
         if data_changed:
             await save_data()
-        logger.debug("DINO CRON: KhÃ´ng cÃ³ Ä‘Æ¡n chá», bá» qua gá»i API bank.")
+        logger.debug("DINO CRON: Không có đơn chờ, bỏ qua gọi API bank.")
         return
 
-    logger.debug(f"DINO CRON: Báº¯t Ä‘áº§u quÃ©t... ÄÆ¡n chá»: {len(pending_orders)} | API Náº¡p chá»: {len(pending_api_deposits)}")
+    logger.debug(f"DINO CRON: Bắt đầu quét... Đơn chờ: {len(pending_orders)} | API Nạp chờ: {len(pending_api_deposits)}")
     synthetic_transactions: list = []
     await _scan_usdt_bep20_payments(synthetic_transactions)
     await _scan_binance_pay_id_payments(synthetic_transactions)
@@ -588,7 +588,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             log_bank_error = logger.warning if is_temporary_bank_error else logger.error
             err_parts = [bank_error_msg]
             log_bank_error(
-                f"âŒ Bank API request failed: {' | '.join(err_parts)}"
+                f"❌ Bank API request failed: {' | '.join(err_parts)}"
             )
             api_data = {
                 "msg": " | ".join(err_parts),
@@ -607,7 +607,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             msg = api_data.get("msg", "Unknown Error")
             is_temporary_bank_error = bool(api_data.get("_temporary_bank_api_error"))
             log_bank_api_error = logger.warning if is_temporary_bank_error else logger.error
-            log_bank_api_error(f"âŒ Lá»–I API BANK: {msg} | Keys: {str(api_key_info)[:30]}...")
+            log_bank_api_error(f"❌ LỖI API BANK: {msg} | Keys: {str(api_key_info)[:30]}...")
             # Notify Admin if critical - with backoff to prevent spam
             _bank_api_fail_count += 1
             now_ts = time.time()
@@ -615,7 +615,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                  _bank_api_last_alert_time = now_ts
                  await context.bot.send_message(
                      ADMIN_USER_ID,
-                     f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>Lá»–I Káº¾T Ná»I BANK API</b> (láº§n {_bank_api_fail_count})\n\nServer tráº£ vá»: {msg}",
+                     f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>LỖI KẾT NỐI BANK API</b> (lần {_bank_api_fail_count})\n\nServer trả về: {msg}",
                      parse_mode=ParseMode.HTML
                  )
             if not transactions:
@@ -624,7 +624,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             _bank_api_fail_count = 0
             tx_count_now = len(api_data.get("transactions", []))
             transactions.extend(api_data.get("transactions", []))
-            logger.debug(f"DINO CRON: TÃ¬m tháº¥y {tx_count_now} giao dá»‹ch tá»« API.")
+            logger.debug(f"DINO CRON: Tìm thấy {tx_count_now} giao dịch từ API.")
             _bank_api_last_status = "ok"
             _bank_api_last_error = ""
             _bank_api_last_tx_count = tx_count_now
@@ -633,10 +633,10 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         _bank_api_total_checks += 1
 
         if synthetic_transactions:
-            logger.info(f"DINO CRON: TÃ¬m tháº¥y {len(synthetic_transactions)} giao dá»‹ch thanh toÃ¡n Ä‘Ã£ xÃ¡c nháº­n tá»« crypto/bank scan.")
+            logger.info(f"DINO CRON: Tìm thấy {len(synthetic_transactions)} giao dịch thanh toán đã xác nhận từ crypto/bank scan.")
 
         for tx in transactions:
-            # FIX: Chuyá»ƒn tx_id sang string Ä‘á»ƒ Ä‘á»“ng bá»™
+            # FIX: Chuyển tx_id sang string để đồng bộ
             tx_id = str(tx.get("transactionID", "")) # Default to empty string if missing
             description = tx.get("description", "")
             amount = tx.get("amount", 0)
@@ -648,7 +648,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             if db_check_tx_exists(tx_id): 
                 continue
             
-            # FIX: DÃ¹ng compiled regex patterns Ä‘á»ƒ tÄƒng tá»‘c
+            # FIX: Dùng compiled regex patterns để tăng tốc
             no_space_description = description.replace(" ", "")
             match_order = ICLD_PATTERN.search(description) or ICLD_PATTERN.search(no_space_description)
             secret_order_code = _find_pending_order_code_by_transfer_description(description)
@@ -660,15 +660,15 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                 continue
 
             if secret_order_code or match_order: 
-                # === Xá»¬ LÃ MUA LINK / QR BANK ===
+                # === XỬ LÝ MUA LINK / QR BANK ===
                 order_code = str(secret_order_code) if secret_order_code else f"ICLD{match_order.group(1)}"
-                logger.info(f"DINO CRON: PhÃ¡t hiá»‡n mÃ£ Ä‘Æ¡n {order_code} trong giao dá»‹ch {tx_id}")
+                logger.info(f"DINO CRON: Phát hiện mã đơn {order_code} trong giao dịch {tx_id}")
 
                 order_details = await pending_get(order_code)
                 if order_details:
                     expected_amount, actual_amount = int(order_details["amount"]), int(amount)
                     
-                    logger.info(f"CRON: So sÃ¡nh tiá»n - Mong Ä‘á»£i: {expected_amount}, Thá»±c táº¿: {actual_amount}")
+                    logger.info(f"CRON: So sánh tiền - Mong đợi: {expected_amount}, Thực tế: {actual_amount}")
 
                     if actual_amount == expected_amount:
                         # Handle Store Product vs iCloud Package
@@ -679,7 +679,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             
                             # FIX: Check product exists - handle deleted products gracefully
                             if not p:
-                                logger.error(f"âŒ CRITICAL: Product {prod_id} khÃ´ng tá»“n táº¡i (Ä‘Ã£ bá»‹ xÃ³a?) cho Ä‘Æ¡n {order_code}!")
+                                logger.error(f"❌ CRITICAL: Product {prod_id} không tồn tại (đã bị xóa?) cho đơn {order_code}!")
                                 
                                 deleted_balance_used = int(order_details.get('balance_used', 0))
                                 _deleted_total = actual_amount + deleted_balance_used
@@ -697,41 +697,41 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     user_id=order_details['user_id'],
                                     amount=_deleted_total,
                                     product_name=order_details.get('product_name') or str(prod_id),
-                                    reason="Sáº£n pháº©m khÃ´ng cÃ²n tá»“n táº¡i",
+                                    reason="Sản phẩm không còn tồn tại",
                                     order_data=order_details,
                                 )
 
                                 try:
                                     await context.bot.send_message(
                                         order_details['user_id'],
-                                        f"{E_ERROR} <b>XIN Lá»–I - Sáº¢N PHáº¨M KHÃ”NG KHáº¢ Dá»¤NG</b>\n\n"
-                                        f"Sáº£n pháº©m báº¡n Ä‘áº·t (MÃ£: <code>{prod_id}</code>) hiá»‡n khÃ´ng cÃ²n kháº£ dá»¥ng.\n\n"
-                                        f"{E_TAG} <b>Sá»‘ tiá»n CK:</b> {actual_amount:,} VNÄ\n"
-                                        f"{E_TAG} <b>ÄÃ£ hoÃ n vÃ­:</b> +{_deleted_total:,} VNÄ\n"
-                                        f"{E_TAG} <b>MÃ£ Ä‘Æ¡n:</b> <code>{order_code}</code>\n\n"
-                                        f"ToÃ n bá»™ tiá»n Ä‘Ã£ Ä‘Æ°á»£c hoÃ n vÃ o VÃ­ Bot.\n"
-                                        f"Khoáº£n hoÃ n tá»« {BANK_REFUND_MIN_AMOUNT:,} VNÄ sáº½ cÃ³ thÃªm lá»±a chá»n nháº­n qua ngÃ¢n hÃ ng.",
+                                        f"{E_ERROR} <b>XIN LỖI - SẢN PHẨM KHÔNG KHẢ DỤNG</b>\n\n"
+                                        f"Sản phẩm bạn đặt (Mã: <code>{prod_id}</code>) hiện không còn khả dụng.\n\n"
+                                        f"{E_TAG} <b>Số tiền CK:</b> {actual_amount:,} VNĐ\n"
+                                        f"{E_TAG} <b>Đã hoàn ví:</b> +{_deleted_total:,} VNĐ\n"
+                                        f"{E_TAG} <b>Mã đơn:</b> <code>{order_code}</code>\n\n"
+                                        f"Toàn bộ tiền đã được hoàn vào Ví Bot.\n"
+                                        f"Khoản hoàn từ {BANK_REFUND_MIN_AMOUNT:,} VNĐ sẽ có thêm lựa chọn nhận qua ngân hàng.",
                                         parse_mode=ParseMode.HTML
                                     )
                                 except (ValueError, TypeError, KeyError, IndexError) as e:
-                                    logger.error(f"KhÃ´ng gá»­i Ä‘Æ°á»£c thÃ´ng bÃ¡o cho user {order_details['user_id']}: {e}")
+                                    logger.error(f"Không gửi được thông báo cho user {order_details['user_id']}: {e}")
                                 
                                 # Alert admin with action buttons
                                 try:
                                     await context.bot.send_message(
                                         ADMIN_USER_ID,
-                                        f"<tg-emoji emoji-id=\"5447644880824181073\">ðŸš¨</tg-emoji> <b>Lá»–I NGHIÃŠM TRá»ŒNG - Sáº¢N PHáº¨M KHÃ”NG Tá»’N Táº I</b>\n\n"
-                                        f"<b>Chi tiáº¿t:</b>\n"
-                                        f"â€¢ ÄÆ¡n hÃ ng: <code>{order_code}</code>\n"
-                                        f"â€¢ Product ID: <code>{prod_id}</code>\n"
-                                        f"â€¢ KhÃ¡ch: {order_details.get('full_name')} (ID: <code>{order_details['user_id']}</code>)\n"
-                                        f"â€¢ Sá»‘ tiá»n Ä‘Ã£ nháº­n: {actual_amount:,} VNÄ\n"
-                                        f"â€¢ Tá»•ng Ä‘Ã£ hoÃ n vÃ­: {_deleted_total:,} VNÄ\n\n"
-                                        f"<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> Há»‡ thá»‘ng Ä‘Ã£ tá»± Ä‘á»™ng hoÃ n tiá»n. Vui lÃ²ng kiá»ƒm tra nguyÃªn nhÃ¢n product bá»‹ xÃ³a.",
+                                        f"<tg-emoji emoji-id=\"5447644880824181073\">🚨</tg-emoji> <b>LỖI NGHIÊM TRỌNG - SẢN PHẨM KHÔNG TỒN TẠI</b>\n\n"
+                                        f"<b>Chi tiết:</b>\n"
+                                        f"• Đơn hàng: <code>{order_code}</code>\n"
+                                        f"• Product ID: <code>{prod_id}</code>\n"
+                                        f"• Khách: {order_details.get('full_name')} (ID: <code>{order_details['user_id']}</code>)\n"
+                                        f"• Số tiền đã nhận: {actual_amount:,} VNĐ\n"
+                                        f"• Tổng đã hoàn ví: {_deleted_total:,} VNĐ\n\n"
+                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Hệ thống đã tự động hoàn tiền. Vui lòng kiểm tra nguyên nhân product bị xóa.",
                                         parse_mode=ParseMode.HTML
                                     )
                                 except (TelegramError, ValueError, KeyError, AttributeError) as e:
-                                    logger.error(f"KhÃ´ng gá»­i Ä‘Æ°á»£c alert cho admin: {e}")
+                                    logger.error(f"Không gửi được alert cho admin: {e}")
                                 
                                 # Mark transaction as processed to avoid re-checking
                                 db_add_tx(tx_id)
@@ -742,23 +742,23 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             requires_gmail = p.get('requires_gmail', False)
                             
                             if requires_gmail:
-                                # MANUAL PRODUCT: KhÃ´ng cáº§n stock, Ä‘á»£i email tá»« user
+                                # MANUAL PRODUCT: Không cần stock, đợi email từ user
                                 await context.bot.send_message(
                                     order_details['user_id'],
-                                    f"{E_SUCCESS} <b>THANH TOÃN THÃ€NH CÃ”NG!</b>\n\n"
-                                    f"{E_TAG} <b>Sáº£n pháº©m:</b> {p['name']}\n"
-                                    f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ”¢</tg-emoji> <b>Sá»‘ lÆ°á»£ng:</b> {qty}\n"
-                                    f"{E_TAG} <b>ÄÃ£ thanh toÃ¡n:</b> {actual_amount:,} VNÄ\n"
-                                    f"<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> <b>MÃ£ Ä‘Æ¡n:</b> <code>{order_code}</code>\n\n"
-                                    f"{E_GLOBE} <b>Vui lÃ²ng nháº­p email nháº­n dá»‹ch vá»¥:</b>\n"
-                                    f"<i>Email nÃ y sáº½ Ä‘Æ°á»£c dÃ¹ng Ä‘á»ƒ Admin setup/gá»­i thÃ´ng tin cho báº¡n</i>\n\n"
-                                    f"<b>CÃ¡ch gá»­i email:</b>\n"
-                                    f"â€¢ Reply tin nháº¯n nÃ y vá»›i email cá»§a báº¡n\n"
-                                    f"â€¢ Hoáº·c dÃ¹ng lá»‡nh: <code>/guimail email@abc.com</code>",
+                                    f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG!</b>\n\n"
+                                    f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
+                                    f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>Số lượng:</b> {qty}\n"
+                                    f"{E_TAG} <b>Đã thanh toán:</b> {actual_amount:,} VNĐ\n"
+                                    f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n\n"
+                                    f"{E_GLOBE} <b>Vui lòng nhập email nhận dịch vụ:</b>\n"
+                                    f"<i>Email này sẽ được dùng để Admin setup/gửi thông tin cho bạn</i>\n\n"
+                                    f"<b>Cách gửi email:</b>\n"
+                                    f"• Reply tin nhắn này với email của bạn\n"
+                                    f"• Hoặc dùng lệnh: <code>/guimail email@abc.com</code>",
                                     parse_mode=ParseMode.HTML
                                 )
                                 
-                                # LÆ°u vÃ o pending_manual_orders
+                                # Lưu vào pending_manual_orders
                                 balance_used_manual = int(order_details.get('balance_used', 0))
                                 total_paid_manual = actual_amount + balance_used_manual
                                 pending_manual_orders[order_code] = {
@@ -783,7 +783,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     if coupon_code_used in coupons:
                                         coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
                                 
-                                # XÃ³a khá»i pending_orders (safe delete)
+                                # Xóa khỏi pending_orders (safe delete)
                                 await _mark_pending_payment_message_completed(context, order_details)
                                 await pending_pop(order_code)
                                 db_add_tx(tx_id)
@@ -792,15 +792,15 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 # Log cho admin
                                 await context.bot.send_message(
                                     ADMIN_USER_ID,
-                                    f"<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> <b>ÄÃƒ NHáº¬N THANH TOÃN - ÄÆ N MANUAL</b>\n"
-                                    f"<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> MÃ£: <code>{order_code}</code>\n"
-                                    f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> SP: {p['name']}\n"
-                                    f"<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> {actual_amount:,} VNÄ\n"
-                                    f"<tg-emoji emoji-id=\"5213349767672769194\">â³</tg-emoji> Äang chá» khÃ¡ch nháº­p email...",
+                                    f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>ĐÃ NHẬN THANH TOÁN - ĐƠN MANUAL</b>\n"
+                                    f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> Mã: <code>{order_code}</code>\n"
+                                    f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> SP: {p['name']}\n"
+                                    f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> {actual_amount:,} VNĐ\n"
+                                    f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Đang chờ khách nhập email...",
                                     parse_mode=ParseMode.HTML
                                 )
                                 
-                                # Skip pháº§n xá»­ lÃ½ stock bÃªn dÆ°á»›i
+                                # Skip phần xử lý stock bên dưới
                                 continue
 
                             if p.get('is_social_source_service') or order_details.get('is_social_source_service'):
@@ -808,11 +808,11 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 total_paid_social = actual_amount + balance_used_order
                                 await context.bot.send_message(
                                     order_details['user_id'],
-                                    f"{E_SUCCESS} <b>THANH TOÃN THÃ€NH CÃ”NG!</b>\n\n"
-                                    f"{E_TAG} Sáº£n pháº©m: <b>{p['name']}</b>\n"
-                                    f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ”¢</tg-emoji> Sá»‘ lÆ°á»£ng: {qty}\n"
-                                    f"{E_TAG} Thanh toÃ¡n: {actual_amount:,} VNÄ\n\n"
-                                    f"{E_LOADING} <b>Äang táº¡o Ä‘Æ¡n social trÃªn nguá»“n...</b>",
+                                    f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG!</b>\n\n"
+                                    f"{E_TAG} Sản phẩm: <b>{p['name']}</b>\n"
+                                    f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> Số lượng: {qty}\n"
+                                    f"{E_TAG} Thanh toán: {actual_amount:,} VNĐ\n\n"
+                                    f"{E_LOADING} <b>Đang tạo đơn social trên nguồn...</b>",
                                     parse_mode=ParseMode.HTML,
                                 )
 
@@ -832,27 +832,27 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                         order_code=order_code,
                                         user_id=order_details['user_id'],
                                         amount=refund_amount,
-                                        product_name=p.get('name', 'Dá»‹ch vá»¥ social'),
-                                        reason="Lá»—i nguá»“n cung cáº¥p dá»‹ch vá»¥ social",
+                                        product_name=p.get('name', 'Dịch vụ social'),
+                                        reason="Lỗi nguồn cung cấp dịch vụ social",
                                         order_data=order_details,
                                     )
 
                                     await context.bot.send_message(
                                         order_details['user_id'],
-                                        f"âŒ <b>Lá»–I NGUá»’N CUNG Cáº¤P Dá»ŠCH Vá»¤ SOCIAL</b>\n\n"
-                                        f"ÄÆ¡n social khÃ´ng thá»ƒ táº¡o trÃªn nguá»“n vÃ o lÃºc nÃ y.\n"
-                                        f"<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> ÄÃ£ hoÃ n <b>{refund_amount:,} VNÄ</b> vÃ o vÃ­ Bot.\n\n"
-                                        f"MÃ£ Ä‘Æ¡n: <code>{order_code}</code>",
+                                        f"❌ <b>LỖI NGUỒN CUNG CẤP DỊCH VỤ SOCIAL</b>\n\n"
+                                        f"Đơn social không thể tạo trên nguồn vào lúc này.\n"
+                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã hoàn <b>{refund_amount:,} VNĐ</b> vào ví Bot.\n\n"
+                                        f"Mã đơn: <code>{order_code}</code>",
                                         parse_mode=ParseMode.HTML,
                                     )
                                     await safe_send_admin(
                                         context.bot,
                                         f"{E_SOS} <b>SOCIAL_SOURCE PAYMENT ORDER FAILED</b>\n"
-                                        f"{E_ID} ÄÆ¡n: <code>{order_code}</code>\n"
+                                        f"{E_ID} Đơn: <code>{order_code}</code>\n"
                                         f"{E_USER} User: <code>{order_details['user_id']}</code>\n"
                                         f"{E_TAG} SP: {html.escape(p['name'])} x{qty}\n"
-                                        f"{E_TAG} HoÃ n vÃ­: {refund_amount:,} VNÄ\n"
-                                        f"{E_ERROR} Lá»—i: <code>{html.escape(str(supplier_result.get('error') or 'unknown_error'))}</code>",
+                                        f"{E_TAG} Hoàn ví: {refund_amount:,} VNĐ\n"
+                                        f"{E_ERROR} Lỗi: <code>{html.escape(str(supplier_result.get('error') or 'unknown_error'))}</code>",
                                     )
                                     await pending_pop(order_code)
                                     db_add_tx(tx_id)
@@ -883,21 +883,21 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
                                 await context.bot.send_message(
                                     order_details['user_id'],
-                                    f"{E_SUCCESS} <b>ÄÆ N SOCIAL ÄÃƒ Táº O THÃ€NH CÃ”NG</b>\n\n"
-                                    f"{E_TAG} Sáº£n pháº©m: {html.escape(str(p['name']))}\n"
-                                    f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ”¢</tg-emoji> Sá»‘ lÆ°á»£ng: {qty}\n"
-                                    f"<tg-emoji emoji-id=\"5373251851074415873\">ðŸ“</tg-emoji> MÃ£ Ä‘Æ¡n: <code>{html.escape(str(completed_order.get('order_code') or order_code))}</code>\n"
-                                    f"<tg-emoji emoji-id=\"6059654836918423763\">ðŸ“Š</tg-emoji> Tá»•ng Ä‘Æ¡n vá»‹ nguá»“n: {int(supplier_result.get('supplier_quantity', 0) or 0):,}\n"
-                                    f"<tg-emoji emoji-id=\"5231489647946768652\">ðŸ”—</tg-emoji> Target: <code>{html.escape(str(supplier_result.get('target_link') or 'N/A'))}</code>\n"
-                                    f"<tg-emoji emoji-id=\"5373251851074415873\">ðŸ“</tg-emoji> MÃ£ supplier: <code>{html.escape(str(supplier_result.get('supplier_order_id') or ''))}</code>\n"
-                                    f"{E_STAT} Tráº¡ng thÃ¡i nguá»“n: {html.escape(str(supplier_result.get('supplier_status') or 'Pending'))}",
+                                    f"{E_SUCCESS} <b>ĐƠN SOCIAL ĐÃ TẠO THÀNH CÔNG</b>\n\n"
+                                    f"{E_TAG} Sản phẩm: {html.escape(str(p['name']))}\n"
+                                    f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> Số lượng: {qty}\n"
+                                    f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> Mã đơn: <code>{html.escape(str(completed_order.get('order_code') or order_code))}</code>\n"
+                                    f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> Tổng đơn vị nguồn: {int(supplier_result.get('supplier_quantity', 0) or 0):,}\n"
+                                    f"<tg-emoji emoji-id=\"5231489647946768652\">🔗</tg-emoji> Target: <code>{html.escape(str(supplier_result.get('target_link') or 'N/A'))}</code>\n"
+                                    f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> Mã supplier: <code>{html.escape(str(supplier_result.get('supplier_order_id') or ''))}</code>\n"
+                                    f"{E_STAT} Trạng thái nguồn: {html.escape(str(supplier_result.get('supplier_status') or 'Pending'))}",
                                     parse_mode=ParseMode.HTML,
                                     reply_markup=create_success_menu(),
                                 )
 
                                 await send_live_order_notification(
                                     context,
-                                    order_details.get("full_name", "KhÃ¡ch hÃ ng"),
+                                    order_details.get("full_name", "Khách hàng"),
                                     total_paid_social,
                                     product_name=p['name'],
                                     quantity=qty,
@@ -920,18 +920,18 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 continue
                             
                             # ===== SUPPLIER_SOURCE AUTO RESELL =====
-                            # Náº¿u lÃ  sáº£n pháº©m resell tá»« SupplierSource, mua tá»« API thay vÃ¬ láº¥y tá»« stock local
+                            # Nếu là sản phẩm resell từ SupplierSource, mua từ API thay vì lấy từ stock local
                             if p.get('is_supplier_source_resell'):
                                 supplier_source_product_id = p.get('supplier_source_product_id')
                                 supplier_source_variant_id = p.get('supplier_source_variant_id')
                                 
                                 await context.bot.send_message(
                                     order_details['user_id'],
-                                    f"{E_SUCCESS} <b>THANH TOÃN THÃ€NH CÃ”NG!</b>\n\n"
-                                    f"{E_TAG} Sáº£n pháº©m: <b>{p['name']}</b>\n"
-                                    f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ”¢</tg-emoji> Sá»‘ lÆ°á»£ng: {qty}\n"
-                                    f"{E_TAG} Thanh toÃ¡n: {actual_amount:,} VNÄ\n\n"
-                                    f"{E_LOADING} <b>Äang láº¥y tÃ i khoáº£n tá»« há»‡ thá»‘ng...</b>",
+                                    f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG!</b>\n\n"
+                                    f"{E_TAG} Sản phẩm: <b>{p['name']}</b>\n"
+                                    f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> Số lượng: {qty}\n"
+                                    f"{E_TAG} Thanh toán: {actual_amount:,} VNĐ\n\n"
+                                    f"{E_LOADING} <b>Đang lấy tài khoản từ hệ thống...</b>",
                                     parse_mode=ParseMode.HTML
                                 )
                                 
@@ -944,14 +944,14 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                         order_code=order_code,
                                         user_id=order_details['user_id'],
                                         amount=refund_amount,
-                                        product_name=p.get('name', 'Sáº£n pháº©m'),
-                                        reason="Sáº£n pháº©m táº¡m táº¯t resell",
+                                        product_name=p.get('name', 'Sản phẩm'),
+                                        reason="Sản phẩm tạm tắt resell",
                                         order_data=order_details,
                                     )
                                     await context.bot.send_message(
                                         order_details['user_id'],
-                                        f"âŒ <b>Sáº¢N PHáº¨M ÄANG Táº M Táº®T RESELL</b>\n\n"
-                                        f"ÄÆ¡n <code>{order_code}</code> Ä‘Ã£ Ä‘Æ°á»£c hoÃ n <b>{refund_amount:,} VNÄ</b> vÃ o vÃ­ Bot.",
+                                        f"❌ <b>SẢN PHẨM ĐANG TẠM TẮT RESELL</b>\n\n"
+                                        f"Đơn <code>{order_code}</code> đã được hoàn <b>{refund_amount:,} VNĐ</b> vào ví Bot.",
                                         parse_mode=ParseMode.HTML,
                                     )
                                     await pending_pop(order_code)
@@ -959,11 +959,11 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     data_changed = True
                                     continue
                                 
-                                # Gá»i API nguá»“n ngoÃ i Ä‘á»ƒ mua sáº£n pháº©m
+                                # Gọi API nguồn ngoài để mua sản phẩm
                                 supplier_source_result = await supplier_create_order(p, qty)
                                 
                                 if not supplier_source_result.get("success"):
-                                    # Lá»—i API - ThÃ´ng bÃ¡o Admin vÃ  hoÃ n tiá»n
+                                    # Lỗi API - Thông báo Admin và hoàn tiền
                                     error = supplier_source_result.get("error", "Unknown")
                                     
                                     balance_used_order = int(order_details.get("balance_used", 0) or 0)
@@ -978,25 +978,25 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                         order_code=order_code,
                                         user_id=order_details['user_id'],
                                         amount=refund_amount,
-                                        product_name=p.get('name', 'Sáº£n pháº©m'),
-                                        reason=f"Lá»—i nguá»“n cung cáº¥p: {error}",
+                                        product_name=p.get('name', 'Sản phẩm'),
+                                        reason=f"Lỗi nguồn cung cấp: {error}",
                                         order_data=order_details,
                                     )
                                     refund_breakdown_line = ""
                                     if balance_used_order > 0:
                                         refund_breakdown_line = (
-                                            f"<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> "
-                                            f"Tá»•ng hoÃ n thá»±c táº¿: <b>{refund_amount:,} VNÄ</b> "
-                                            f"(gá»“m {balance_used_order:,} VNÄ Ä‘Ã£ trá»« tá»« vÃ­)\n"
+                                            f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> "
+                                            f"Tổng hoàn thực tế: <b>{refund_amount:,} VNĐ</b> "
+                                            f"(gồm {balance_used_order:,} VNĐ đã trừ từ ví)\n"
                                         )
                                         
                                     await context.bot.send_message(
                                         order_details['user_id'],
-                                        f"âŒ <b>Lá»–I Há»† THá»NG NGUá»’N CUNG Cáº¤P</b>\n\n"
-                                        f"Ráº¥t xin lá»—i, sáº£n pháº©m hiá»‡n táº¡i táº¡m khÃ´ng thá»ƒ giao dá»‹ch (cÃ³ thá»ƒ do háº¿t hÃ ng hoáº·c káº¹t máº¡ng).\n"
-                                        f"<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> <b>ÄÃ£ tá»± Ä‘á»™ng hoÃ n {refund_amount:,} VNÄ</b> vÃ o sá»‘ dÆ° vÃ­ Bot cá»§a báº¡n.\n\n"
-                                        f"MÃ£ Ä‘Æ¡n: <code>{order_code}</code>\n"
-                                        f"Báº¡n cÃ³ thá»ƒ dÃ¹ng vÃ­ Ä‘á»ƒ mua láº¡i sau, hoáº·c mua máº·t hÃ ng khÃ¡c.",
+                                        f"❌ <b>LỖI HỆ THỐNG NGUỒN CUNG CẤP</b>\n\n"
+                                        f"Rất xin lỗi, sản phẩm hiện tại tạm không thể giao dịch (có thể do hết hàng hoặc kẹt mạng).\n"
+                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>Đã tự động hoàn {refund_amount:,} VNĐ</b> vào số dư ví Bot của bạn.\n\n"
+                                        f"Mã đơn: <code>{order_code}</code>\n"
+                                        f"Bạn có thể dùng ví để mua lại sau, hoặc mua mặt hàng khác.",
                                         parse_mode=ParseMode.HTML
                                     )
                                     if refund_breakdown_line:
@@ -1007,26 +1007,26 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                         )
                                     await safe_send_admin(
                                         context.bot,
-                                        f"{E_SOS} <b>Lá»–I API NGUá»’N CUNG Cáº¤P KHI THANH TOÃN QR/USDT</b>\n\n"
+                                        f"{E_SOS} <b>LỖI API NGUỒN CUNG CẤP KHI THANH TOÁN QR/USDT</b>\n\n"
                                         f"{E_TAG} SP: {html.escape(p['name'])}\n"
-                                        f"{E_ID} ÄÆ¡n: <code>{order_code}</code>\n"
-                                        f"<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¤</tg-emoji> User: <code>{order_details['user_id']}</code>\n"
-                                        f"{E_TAG} Tiá»n: {actual_amount:,} VNÄ\n\n"
-                                        f"{E_LIMIT} Lá»—i: <code>{html.escape(str(error))}</code>\n\n"
-                                        f"<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> ÄÃƒ Tá»° Äá»˜NG HOÃ€N VÃ€O Sá» DÆ¯ VÃ KHÃCH!",
+                                        f"{E_ID} Đơn: <code>{order_code}</code>\n"
+                                        f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> User: <code>{order_details['user_id']}</code>\n"
+                                        f"{E_TAG} Tiền: {actual_amount:,} VNĐ\n\n"
+                                        f"{E_LIMIT} Lỗi: <code>{html.escape(str(error))}</code>\n\n"
+                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> ĐÃ TỰ ĐỘNG HOÀN VÀO SỐ DƯ VÍ KHÁCH!",
                                     )
                                     if balance_used_order > 0:
                                         await safe_send_admin(
                                             context.bot,
-                                            f"{E_TAG} HoÃ n thá»±c táº¿: {refund_amount:,} VNÄ = CK {actual_amount:,} VNÄ + VÃ­ {balance_used_order:,} VNÄ\n"
-                                            f"{E_ID} ÄÆ¡n: <code>{order_code}</code>",
+                                            f"{E_TAG} Hoàn thực tế: {refund_amount:,} VNĐ = CK {actual_amount:,} VNĐ + Ví {balance_used_order:,} VNĐ\n"
+                                            f"{E_ID} Đơn: <code>{order_code}</code>",
                                         )
                                     await pending_pop(order_code)
                                     db_add_tx(tx_id)
                                     data_changed = True
                                     continue
                                 
-                                # Parse delivered content tá»« nguá»“n ngoÃ i
+                                # Parse delivered content từ nguồn ngoài
                                 supplier_source_orders = supplier_source_result.get("data", [])
                                 items_bought = []
                                 
@@ -1036,7 +1036,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                         logger.info(f"DEBUG SUPPLIER CONTENT TYPE: {type(delivered).__name__}")
                                         items_bought.extend(normalize_delivered_items(delivered))
                                 
-                                # Náº¿u chÆ°a cÃ³ content, thá»­ láº¥y order details
+                                # Nếu chưa có content, thử lấy order details
                                 if not items_bought:
                                     for dm_order in supplier_source_orders:
                                         dm_order_id = dm_order.get("id")
@@ -1049,21 +1049,21 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                                     items_bought.extend(normalize_delivered_items(delivered))
                                 
                                 if not items_bought:
-                                    # Váº«n khÃ´ng cÃ³ content
+                                    # Vẫn không có content
                                     await context.bot.send_message(
                                         order_details['user_id'],
-                                        f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>ÄANG Xá»¬ LÃ...</b>\n\n"
-                                        f"ÄÆ¡n hÃ ng Ä‘Ã£ táº¡o nhÆ°ng Ä‘ang chá» giao hÃ ng tá»« nguá»“n.\n"
-                                        f"Admin sáº½ gá»­i tÃ i khoáº£n sá»›m nháº¥t.\n\n"
-                                        f"MÃ£ Ä‘Æ¡n: <code>{order_code}</code>",
+                                        f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>ĐANG XỬ LÝ...</b>\n\n"
+                                        f"Đơn hàng đã tạo nhưng đang chờ giao hàng từ nguồn.\n"
+                                        f"Admin sẽ gửi tài khoản sớm nhất.\n\n"
+                                        f"Mã đơn: <code>{order_code}</code>",
                                         parse_mode=ParseMode.HTML
                                     )
                                     await context.bot.send_message(
                                         ADMIN_USER_ID,
-                                        f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>NGUá»’N CUNG Cáº¤P CHÆ¯A TRáº¢ HÃ€NG</b>\n\n"
-                                        f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> SP: {p['name']}\n"
-                                        f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ†”</tg-emoji> ÄÆ¡n: <code>{order_code}</code>\n"
-                                        f"Nguá»“n cung cáº¥p chÆ°a tráº£ content. Cáº§n check manual.",
+                                        f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>NGUỒN CUNG CẤP CHƯA TRẢ HÀNG</b>\n\n"
+                                        f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> SP: {p['name']}\n"
+                                        f"<tg-emoji emoji-id=\"5334890573281114250\">🆔</tg-emoji> Đơn: <code>{order_code}</code>\n"
+                                        f"Nguồn cung cấp chưa trả content. Cần check manual.",
                                         parse_mode=ParseMode.HTML
                                     )
                                     await _mark_pending_payment_message_completed(context, order_details)
@@ -1072,33 +1072,33 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     data_changed = True
                                     continue
                                 
-                                # ThÃ nh cÃ´ng! Gá»­i cho khÃ¡ch (code tiáº¿p tá»¥c bÃªn dÆ°á»›i vá»›i items_bought)
-                                # KhÃ´ng cáº§n xá»­ lÃ½ stock local vÃ¬ Ä‘Ã£ láº¥y tá»« API
+                                # Thành công! Gửi cho khách (code tiếp tục bên dưới với items_bought)
+                                # Không cần xử lý stock local vì đã lấy từ API
                                 
                                 purchase_date = datetime.datetime.fromtimestamp(current_time).strftime('%d/%m/%Y %H:%M:%S')
                                 product_description_txt = format_product_description_for_txt(p)
                                 
                                 file_content = "="*60 + "\n"
-                                file_content += "           THÃ”NG TIN ÄÆ N HÃ€NG\n"
+                                file_content += "           THÔNG TIN ĐƠN HÀNG\n"
                                 file_content += "="*60 + "\n\n"
-                                file_content += f"<tg-emoji emoji-id=\"5373251851074415873\">ðŸ“‹</tg-emoji> MÃƒ ÄÆ N HÃ€NG    : {order_code}\n"
-                                file_content += f"<tg-emoji emoji-id=\"5413879192267805083\">ðŸ“…</tg-emoji> NGÃ€Y MUA       : {purchase_date}\n"
-                                file_content += f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> Sáº¢N PHáº¨M       : {p['name']}\n"
-                                file_content += f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ”¢</tg-emoji> Sá» LÆ¯á»¢NG       : {qty}\n"
-                                file_content += f"<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> THANH TOÃN     : {actual_amount:,} VNÄ\n"
+                                file_content += f"<tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> MÃ ĐƠN HÀNG    : {order_code}\n"
+                                file_content += f"<tg-emoji emoji-id=\"5413879192267805083\">📅</tg-emoji> NGÀY MUA       : {purchase_date}\n"
+                                file_content += f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> SẢN PHẨM       : {p['name']}\n"
+                                file_content += f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> SỐ LƯỢNG       : {qty}\n"
+                                file_content += f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> THANH TOÁN     : {actual_amount:,} VNĐ\n"
                                 if product_description_txt:
-                                    file_content += f"\nMÃ” Táº¢ Sáº¢N PHáº¨M:\n{product_description_txt}\n\n"
-                                file_content += f"<tg-emoji emoji-id=\"5213349767672769194\">â°</tg-emoji> THá»œI Háº N       : {p.get('duration', 'N/A')}\n"
-                                file_content += f"<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡ï¸</tg-emoji> Báº¢O HÃ€NH       : {p.get('warranty', 'KhÃ´ng')}\n"
+                                    file_content += f"\nMÔ TẢ SẢN PHẨM:\n{product_description_txt}\n\n"
+                                file_content += f"<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> THỜI HẠN       : {p.get('duration', 'N/A')}\n"
+                                file_content += f"<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> BẢO HÀNH       : {p.get('warranty', 'Không')}\n"
                                 file_content += "\n" + "="*60 + "\n"
-                                file_content += "           TÃ€I KHOáº¢N Cá»¦A Báº N\n"
+                                file_content += "           TÀI KHOẢN CỦA BẠN\n"
                                 file_content += "="*60 + "\n\n"
                                 
                                 for i, item in enumerate(items_bought, 1):
                                     file_content += f"[{i}] {item}\n"
                                 
                                 file_content += "\n" + "="*60 + "\n"
-                                file_content += "LÆ¯U Ã: Vui lÃ²ng Ä‘á»•i máº­t kháº©u sau khi Ä‘Äƒng nháº­p!\n"
+                                file_content += "LƯU Ý: Vui lòng đổi mật khẩu sau khi đăng nhập!\n"
                                 file_content += "="*60 + "\n"
                                 
                                 delivery_result = await deliver_items_as_txt(
@@ -1108,28 +1108,28 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     items_bought,
                                     file_content=file_content,
                                     file_prefix="DonHang",
-                                    caption_html=f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“</tg-emoji> <b>THÃ”NG TIN TÃ€I KHOáº¢N</b>\n\nMÃ£ Ä‘Æ¡n: <code>{order_code}</code>\n<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> {p['name']} x{qty}",
+                                    caption_html=f"<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>THÔNG TIN TÀI KHOẢN</b>\n\nMã đơn: <code>{order_code}</code>\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {p['name']} x{qty}",
                                 )
-                                delivery_status = OrderStatus.COMPLETED.value if delivery_result.get("delivered") else "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Chá» gá»­i thá»§ cÃ´ng (Nguá»“n ngoÃ i)"
+                                delivery_status = OrderStatus.COMPLETED.value if delivery_result.get("delivered") else "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Chờ gửi thủ công (Nguồn ngoài)"
                                 if not delivery_result.get("delivered"):
                                     await safe_send_message(
                                         context,
                                         order_details['user_id'],
-                                        f"âŒ CÃ³ lá»—i khi gá»­i tÃ i khoáº£n cho Ä‘Æ¡n <code>{order_code}</code>.\n"
-                                        "Admin Ä‘Ã£ nháº­n cáº£nh bÃ¡o vÃ  sáº½ gá»­i thá»§ cÃ´ng sá»›m nháº¥t.",
+                                        f"❌ Có lỗi khi gửi tài khoản cho đơn <code>{order_code}</code>.\n"
+                                        "Admin đã nhận cảnh báo và sẽ gửi thủ công sớm nhất.",
                                         parse_mode=ParseMode.HTML,
                                     )
                                     await safe_send_admin(
                                         context.bot,
-                                        f"{E_SOS} <b>DELIVERY FAILED (NGUá»’N NGOÃ€I)</b>\n"
-                                        f"{E_ID} ÄÆ¡n: <code>{order_code}</code>\n"
+                                        f"{E_SOS} <b>DELIVERY FAILED (NGUỒN NGOÀI)</b>\n"
+                                        f"{E_ID} Đơn: <code>{order_code}</code>\n"
                                         f"{E_USER} User: <code>{order_details['user_id']}</code>\n"
                                         f"{E_TAG} SP: {html.escape(p['name'])} x{qty}\n"
-                                        f"{E_STAT} Fallback gá»­i: {delivery_result.get('sent_items', 0)}/{len(items_bought)} items\n"
+                                        f"{E_STAT} Fallback gửi: {delivery_result.get('sent_items', 0)}/{len(items_bought)} items\n"
                                         f"{E_ERROR} Errors: <code>{html.escape(' | '.join(delivery_result.get('errors', [])[-3:]) or 'n/a')}</code>",
                                     )
                                 
-                                # Log lá»‹ch sá»­
+                                # Log lịch sử
                                 order_record = {
                                     'order_code': order_code,
                                     'timestamp': current_time,
@@ -1152,27 +1152,27 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 data_changed = True
                                 await save_critical_tables(HISTORY_FILE, PROCESSED_TX_FILE, PRODUCTS_FILE, PENDING_ORDERS_FILE)
                                 
-                                # ThÃ´ng bÃ¡o Admin (sau khi Ä‘Ã£ save data an toÃ n)
+                                # Thông báo Admin (sau khi đã save data an toàn)
                                 try:
                                     supplier_source_cost = p.get('supplier_source_price', 0) * qty
                                     await context.bot.send_message(
                                         ADMIN_USER_ID,
-                                        f"{E_SUCCESS} <b>ÄÆ N RESELL THÃ€NH CÃ”NG!</b>\n\n"
+                                        f"{E_SUCCESS} <b>ĐƠN RESELL THÀNH CÔNG!</b>\n\n"
                                         f"{E_TAG} SP: {p['name']} x{qty}\n"
-                                        f"{E_ID} MÃ£: <code>{order_code}</code>\n"
-                                        f"{E_TAG} BÃ¡n: {actual_amount:,} VNÄ\n"
-                                        f"<tg-emoji emoji-id=\"5863724849851011383\">ðŸ’µ</tg-emoji> Gá»‘c: {supplier_source_cost:,} VNÄ\n"
-                                        f"{E_STAT} Lá»i: {actual_amount - supplier_source_cost:,} VNÄ",
+                                        f"{E_ID} Mã: <code>{order_code}</code>\n"
+                                        f"{E_TAG} Bán: {actual_amount:,} VNĐ\n"
+                                        f"<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> Gốc: {supplier_source_cost:,} VNĐ\n"
+                                        f"{E_STAT} Lời: {actual_amount - supplier_source_cost:,} VNĐ",
                                         parse_mode=ParseMode.HTML
                                     )
                                 except (TelegramError, ValueError, KeyError, AttributeError) as admin_err:
-                                    logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Supplier admin notification failed: {admin_err}")
+                                    logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Supplier admin notification failed: {admin_err}")
                                 continue
                             
                             # ===== END SUPPLIER_SOURCE AUTO RESELL =====
                             
-                            # AUTO PRODUCT: Cáº§n check stock (Sáº£n pháº©m cÃ³ stock local)
-                            # FIX BUG #5: DÃ¹ng lock Ä‘á»ƒ trÃ¡nh race condition
+                            # AUTO PRODUCT: Cần check stock (Sản phẩm có stock local)
+                            # FIX BUG #5: Dùng lock để tránh race condition
                             items_bought = await _reserve_or_reuse_pending_store_items(
                                 order_code,
                                 order_details,
@@ -1194,21 +1194,21 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 )
                                 await context.bot.send_message(
                                     order_details['user_id'],
-                                    f"âŒ <b>Ráº¤T TIáº¾C!</b>\n\n"
-                                    f"Sáº£n pháº©m <b>{p['name']}</b> vá»«a Ä‘Æ°á»£c mua háº¿t bá»Ÿi khÃ¡ch khÃ¡c.\n\n"
-                                    f"<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> ÄÆ¡n hÃ ng Ä‘Ã£ Ä‘Æ°á»£c hoÃ n tiá»n tá»± Ä‘á»™ng: <b>+{total_refund:,} VNÄ</b>\n"
-                                    f"<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> Sá»‘ dÆ° má»›i: <b>{new_balance:,} VNÄ</b>",
+                                    f"❌ <b>RẤT TIẾC!</b>\n\n"
+                                    f"Sản phẩm <b>{p['name']}</b> vừa được mua hết bởi khách khác.\n\n"
+                                    f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Đơn hàng đã được hoàn tiền tự động: <b>+{total_refund:,} VNĐ</b>\n"
+                                    f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư mới: <b>{new_balance:,} VNĐ</b>",
                                     parse_mode=ParseMode.HTML
                                 )
                                 
                                 # Log cho admin
                                 await context.bot.send_message(
                                     ADMIN_USER_ID,
-                                    f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>RACE CONDITION - Háº¾T HÃ€NG!</b>\n"
-                                    f"ÄÆ¡n: <code>{order_code}</code>\n"
+                                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>RACE CONDITION - HẾT HÀNG!</b>\n"
+                                    f"Đơn: <code>{order_code}</code>\n"
                                     f"SP: {p['name']}\n"
-                                    f"YÃªu cáº§u: {qty} | CÃ²n: {current_stock}\n\n"
-                                    f"ÄÃ£ auto refund: {total_refund:,} VNÄ -> User {order_details['user_id']}",
+                                    f"Yêu cầu: {qty} | Còn: {current_stock}\n\n"
+                                    f"Đã auto refund: {total_refund:,} VNĐ -> User {order_details['user_id']}",
                                     parse_mode=ParseMode.HTML
                                 )
                                 
@@ -1219,40 +1219,40 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 continue
                             
                             
-                            # Delivery cho AUTO product (manual Ä‘Ã£ Ä‘Æ°á»£c handle á»Ÿ trÃªn vá»›i continue)
+                            # Delivery cho AUTO product (manual đã được handle ở trên với continue)
                             
-                            # Gá»­i header message trÆ°á»›c
+                            # Gửi header message trước
                             try:
                                 await context.bot.send_message(
                                     order_details['user_id'],
-                                    f"{E_SUCCESS} <b>THANH TOÃN THÃ€NH CÃ”NG</b>\n\n"
-                                    f"{E_TAG} <b>Sáº£n pháº©m:</b> {p['name']}\n"
-                                    f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> <b>Sá»‘ lÆ°á»£ng:</b> {qty}\n"
-                                    f"{E_TAG} <b>Thanh toÃ¡n:</b> {actual_amount:,} VND\n"
-                                    f"{E_LOADING} <b>Thá»i háº¡n:</b> {p.get('duration', 'N/A')}\n"
-                                    f"<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡ï¸</tg-emoji> <b>Báº£o hÃ nh:</b> {p.get('warranty', 'KhÃ´ng')}\n\n"
-                                    f"{E_TIP} <b>Há»‡ thá»‘ng Ä‘ang gá»­i thÃ´ng tin tÃ i khoáº£n ngay sau tin nháº¯n nÃ y...</b>",
+                                    f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG</b>\n\n"
+                                    f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
+                                    f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Số lượng:</b> {qty}\n"
+                                    f"{E_TAG} <b>Thanh toán:</b> {actual_amount:,} VND\n"
+                                    f"{E_LOADING} <b>Thời hạn:</b> {p.get('duration', 'N/A')}\n"
+                                    f"<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>Bảo hành:</b> {p.get('warranty', 'Không')}\n\n"
+                                    f"{E_TIP} <b>Hệ thống đang gửi thông tin tài khoản ngay sau tin nhắn này...</b>",
                                     parse_mode=ParseMode.HTML
                                 )
                             except (TelegramError, ValueError, KeyError, AttributeError) as e:
-                                logger.error(f"Lá»—i gá»­i header message: {e}")
+                                logger.error(f"Lỗi gửi header message: {e}")
                             
                             purchase_date = datetime.datetime.fromtimestamp(current_time).strftime('%d/%m/%Y %H:%M:%S')
                             product_description_txt = format_product_description_for_txt(p)
                             file_content = "="*60 + "\n"
-                            file_content += "           THÃ”NG TIN ÄÆ N HÃ€NG\n"
+                            file_content += "           THÔNG TIN ĐƠN HÀNG\n"
                             file_content += "="*60 + "\n\n"
-                            file_content += f"MÃ£ Ä‘Æ¡n hÃ ng    : {order_code}\n"
-                            file_content += f"NgÃ y mua       : {purchase_date}\n"
-                            file_content += f"Sáº£n pháº©m       : {p['name']}\n"
-                            file_content += f"Sá»‘ lÆ°á»£ng       : {qty}\n"
-                            file_content += f"Thanh toÃ¡n     : {actual_amount:,} VND\n"
+                            file_content += f"Mã đơn hàng    : {order_code}\n"
+                            file_content += f"Ngày mua       : {purchase_date}\n"
+                            file_content += f"Sản phẩm       : {p['name']}\n"
+                            file_content += f"Số lượng       : {qty}\n"
+                            file_content += f"Thanh toán     : {actual_amount:,} VND\n"
                             if product_description_txt:
-                                file_content += f"\nMÃ´ táº£ sáº£n pháº©m:\n{product_description_txt}\n\n"
-                            file_content += f"Thá»i háº¡n       : {p.get('duration', 'N/A')}\n"
-                            file_content += f"Báº£o hÃ nh       : {p.get('warranty', 'KhÃ´ng')}\n"
+                                file_content += f"\nMô tả sản phẩm:\n{product_description_txt}\n\n"
+                            file_content += f"Thời hạn       : {p.get('duration', 'N/A')}\n"
+                            file_content += f"Bảo hành       : {p.get('warranty', 'Không')}\n"
                             file_content += "\n" + "="*60 + "\n"
-                            file_content += "           DANH SÃCH TÃ€I KHOáº¢N\n"
+                            file_content += "           DANH SÁCH TÀI KHOẢN\n"
                             file_content += "="*60 + "\n\n"
                             for idx_f, item_f in enumerate(items_bought, 1):
                                 file_content += f"{idx_f:03d}. {item_f}\n"
@@ -1265,30 +1265,30 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 items_bought,
                                 file_content=file_content,
                                 file_prefix="DonHang",
-                                caption_html=f"<tg-emoji emoji-id=\"5373251851074415873\">ðŸ“‹</tg-emoji> <b>File tÃ i khoáº£n</b>\nMÃ£ Ä‘Æ¡n: <code>{order_code}</code>",
+                                caption_html=f"<tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> <b>File tài khoản</b>\nMã đơn: <code>{order_code}</code>",
                                 reply_markup=create_success_menu(),
                             )
-                            delivery_status = "HoÃ n thÃ nh" if delivery_result.get("delivered") else "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Chá» gá»­i thá»§ cÃ´ng (AUTO Local)"
+                            delivery_status = "Hoàn thành" if delivery_result.get("delivered") else "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Chờ gửi thủ công (AUTO Local)"
                             if not delivery_result.get("delivered"):
                                 await safe_send_admin(
                                     context.bot,
                                     f"{E_SOS} <b>DELIVERY FAILED (AUTO LOCAL)</b>\n"
-                                    f"{E_ID} ÄÆ¡n: <code>{order_code}</code>\n"
+                                    f"{E_ID} Đơn: <code>{order_code}</code>\n"
                                     f"{E_USER} User: <code>{order_details['user_id']}</code>\n"
                                     f"{E_TAG} SP: {html.escape(p['name'])} x{qty}\n"
-                                    f"{E_STAT} Fallback gá»­i: {delivery_result.get('sent_items', 0)}/{len(items_bought)} items\n"
+                                    f"{E_STAT} Fallback gửi: {delivery_result.get('sent_items', 0)}/{len(items_bought)} items\n"
                                     f"{E_ERROR} Errors: <code>{html.escape(' | '.join(delivery_result.get('errors', [])[-3:]) or 'n/a')}</code>",
                                 )
                                 await safe_send_message(
                                     context,
                                     order_details['user_id'],
-                                    f"âŒ CÃ³ lá»—i khi gá»­i tÃ i khoáº£n cho Ä‘Æ¡n <code>{order_code}</code>.\n"
-                                    "Admin Ä‘Ã£ nháº­n cáº£nh bÃ¡o vÃ  sáº½ gá»­i thá»§ cÃ´ng sá»›m nháº¥t.",
+                                    f"❌ Có lỗi khi gửi tài khoản cho đơn <code>{order_code}</code>.\n"
+                                    "Admin đã nhận cảnh báo và sẽ gửi thủ công sớm nhất.",
                                     parse_mode=ParseMode.HTML,
                                     reply_markup=create_success_menu(),
                                 )
                             
-                            # Táº¡o completed_order cho AUTO product (LÆ¯U items Ä‘á»ƒ khÃ´i phá»¥c náº¿u cáº§n)
+                            # Tạo completed_order cho AUTO product (LƯU items để khôi phục nếu cần)
                             warranty_text = p.get('warranty', '')
                             warranty_expires = calculate_warranty_expiry(current_time, warranty_text)
 
@@ -1326,7 +1326,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
                             
                             # Live Notification
-                            await send_live_order_notification(context, order_details.get("full_name", "KhÃ¡ch hÃ ng"), total_paid, product_name=p['name'], quantity=qty, order_code=order_code)
+                            await send_live_order_notification(context, order_details.get("full_name", "Khách hàng"), total_paid, product_name=p['name'], quantity=qty, order_code=order_code)
                             
                             db_add_order(completed_order)
                             await _mark_pending_payment_message_completed(context, order_details)
@@ -1341,20 +1341,20 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             await process_referral_commission(context, order_details['user_id'], actual_amount)
                             # ===================================
                             
-                            # Auto-broadcast náº¿u háº¿t hÃ ng
+                            # Auto-broadcast nếu hết hàng
                             remaining_stock = int(get_local_stock_available_count(products.get(prod_id)) or 0)
                             if delivery_result.get("delivered"):
                                 create_background_task(send_post_purchase_followups(context, order_details['user_id'], prod_id))
                             if remaining_stock == 0:
                                 create_background_task(broadcast_out_of_stock(context, p['name'], prod_id))
                             
-                            # Admin notification (safe - sau khi Ä‘Ã£ save)
+                            # Admin notification (safe - sau khi đã save)
                             try:
-                                await safe_send_admin(context.bot, f"{E_SUCCESS} <b>ÄÆ N HÃ€NG STORE Má»šI</b>\n<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> MÃ£: <code>{order_code}</code>\n{E_TAG} SP: {html.escape(p['name'])} (x{qty})\n{E_TAG} {actual_amount:,} VNÄ")
+                                await safe_send_admin(context.bot, f"{E_SUCCESS} <b>ĐƠN HÀNG STORE MỚI</b>\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> Mã: <code>{order_code}</code>\n{E_TAG} SP: {html.escape(p['name'])} (x{qty})\n{E_TAG} {actual_amount:,} VNĐ")
                             except (TelegramError, ValueError, KeyError, AttributeError) as admin_err:
-                                logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Store admin notification failed: {admin_err}")
+                                logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Store admin notification failed: {admin_err}")
                             
-                            # SKIP shared cleanup (Ä‘Ã£ xá»­ lÃ½ á»Ÿ trÃªn)
+                            # SKIP shared cleanup (đã xử lý ở trên)
                             continue
                         
                         # Existing iCloud Logic
@@ -1375,81 +1375,81 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             if has_link:
                                 email_sent, email_error = await send_activation_email(
                                     email,
-                                    f"Link kÃ­ch hoáº¡t gÃ³i iCloud 2TB - {order_code}",
-                                    order_details.get("full_name", "báº¡n"),
+                                    f"Link kích hoạt gói iCloud 2TB - {order_code}",
+                                    order_details.get("full_name", "bạn"),
                                     link_to_send,
                                 )
                                 if email_sent:
                                     await context.bot.send_message(
                                         user_id,
-                                        f"{E_SUCCESS} <b>THANH TOÃN THÃ€NH CÃ”NG</b> {E_SUCCESS}\n\n"
-                                        f"Cáº£m Æ¡n báº¡n! Link kÃ­ch hoáº¡t Ä‘Ã£ Ä‘Æ°á»£c gá»­i Ä‘áº¿n email <b>{email}</b>.",
+                                        f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG</b> {E_SUCCESS}\n\n"
+                                        f"Cảm ơn bạn! Link kích hoạt đã được gửi đến email <b>{email}</b>.",
                                         parse_mode=ParseMode.HTML,
                                         reply_markup=create_success_menu(),
                                     )
                                 else:
                                     await context.bot.send_message(
                                         user_id,
-                                        f"{E_SUCCESS} <b>THANH TOÃN THÃ€NH CÃ”NG</b> {E_SUCCESS}\n\n"
-                                        f"ÄÆ¡n cá»§a báº¡n Ä‘Ã£ hoÃ n táº¥t nhÆ°ng gá»­i email kÃ­ch hoáº¡t tháº¥t báº¡i.\n"
-                                        f"Vui lÃ²ng liÃªn há»‡ Admin vÃ  cung cáº¥p mÃ£ Ä‘Æ¡n <code>{order_code}</code>.",
+                                        f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG</b> {E_SUCCESS}\n\n"
+                                        f"Đơn của bạn đã hoàn tất nhưng gửi email kích hoạt thất bại.\n"
+                                        f"Vui lòng liên hệ Admin và cung cấp mã đơn <code>{order_code}</code>.",
                                         parse_mode=ParseMode.HTML,
                                         reply_markup=create_success_menu(),
                                     )
                                 
-                                await send_live_order_notification(context, order_details.get("full_name", "KhÃ¡ch hÃ ng"), actual_amount, product_name="iCloud 2TB", quantity=1, order_code=order_code)
+                                await send_live_order_notification(context, order_details.get("full_name", "Khách hàng"), actual_amount, product_name="iCloud 2TB", quantity=1, order_code=order_code)
                                 
                                 try:
-                                    email_status = "ThÃ nh cÃ´ng" if email_sent else f"Tháº¥t báº¡i ({html.escape(str(email_error or 'Unknown error'))})"
+                                    email_status = "Thành công" if email_sent else f"Thất bại ({html.escape(str(email_error or 'Unknown error'))})"
                                     admin_notification = (
-                                        f"{E_SUCCESS} <b>ÄÆ N HÃ€NG Má»šI</b>\n"
-                                        f"<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> <b>MÃ£ Ä‘Æ¡n:</b> <code>{order_code}</code>\n"
-                                        f"<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¤</tg-emoji> <b>KhÃ¡ch:</b> {html.escape(order_details.get('full_name', 'N/A'))} (@{html.escape(order_details.get('username') or 'N/A')})\n"
-                                        f"{E_GLOBE} <b>Email:</b> <code>{html.escape(email)}</code> | {E_TAG} <b>GiÃ¡:</b> {actual_amount:,} VNÄ\n"
-                                        f"<tg-emoji emoji-id=\"6129860303619363484\">âœ‰ï¸</tg-emoji> <b>Email:</b> {email_status}"
+                                        f"{E_SUCCESS} <b>ĐƠN HÀNG MỚI</b>\n"
+                                        f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n"
+                                        f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Khách:</b> {html.escape(order_details.get('full_name', 'N/A'))} (@{html.escape(order_details.get('username') or 'N/A')})\n"
+                                        f"{E_GLOBE} <b>Email:</b> <code>{html.escape(email)}</code> | {E_TAG} <b>Giá:</b> {actual_amount:,} VNĐ\n"
+                                        f"<tg-emoji emoji-id=\"6129860303619363484\">✉️</tg-emoji> <b>Email:</b> {email_status}"
                                     )
                                     await safe_send_admin(context.bot, admin_notification)
                                 except (TelegramError, ValueError, KeyError, AttributeError) as admin_err:
-                                    logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> iCloud admin notification failed: {admin_err}")
+                                    logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> iCloud admin notification failed: {admin_err}")
                             else:
-                                await context.bot.send_message(user_id, f"{E_SUCCESS} <b>THANH TOÃN THÃ€NH CÃ”NG</b>\n\nTuy nhiÃªn, há»‡ thá»‘ng Ä‘ang táº¡m háº¿t link. Admin sáº½ gá»­i link cho báº¡n sá»›m nháº¥t.", parse_mode=ParseMode.HTML)
-                                await safe_send_admin(context.bot, f"{E_SOS} <b>Cáº¢NH BÃO: Háº¾T LINK!</b> {E_SOS}\n\nKhÃ¡ch <b>{html.escape(email)}</b> Ä‘Ã£ thanh toÃ¡n. Vui lÃ²ng <code>/addlink</code>.")
+                                await context.bot.send_message(user_id, f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG</b>\n\nTuy nhiên, hệ thống đang tạm hết link. Admin sẽ gửi link cho bạn sớm nhất.", parse_mode=ParseMode.HTML)
+                                await safe_send_admin(context.bot, f"{E_SOS} <b>CẢNH BÁO: HẾT LINK!</b> {E_SOS}\n\nKhách <b>{html.escape(email)}</b> đã thanh toán. Vui lòng <code>/addlink</code>.")
                             
                             coupon_code_used = order_details.get("coupon_code")
                             if coupon_code_used:
                                 coupon_code_used = coupon_code_used.upper()
                                 if coupon_code_used in coupons:
                                     coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
-                        # FIX BUG #12: DÃ¹ng db_add_order Ä‘á»ƒ update index
+                        # FIX BUG #12: Dùng db_add_order để update index
                         db_add_order(completed_order)
                         db_add_tx(tx_id)
                         await _mark_pending_payment_message_completed(context, order_details)
                         await pending_pop(order_code)
                         data_changed = True
                     else:
-                        logger.warning(f"Giao dá»‹ch gáº§n Ä‘Ãºng! Code: {order_code}, Mong Ä‘á»£i: {expected_amount}, Thá»±c táº¿: {actual_amount}")
-                        alert_message = ( f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>Cáº¢NH BÃO GIAO Dá»ŠCH ÄÃNG NGá»œ</b> <tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji>\n\n" f"PhÃ¡t hiá»‡n giao dá»‹ch cÃ³ mÃ£ Ä‘Æ¡n hÃ ng Ä‘ang chá» nhÆ°ng sai sá»‘ tiá»n.\n\n" f"- <b>MÃ£ Ä‘Æ¡n hÃ ng:</b> <code>{order_code}</code>\n" f"- <b>KhÃ¡ch hÃ ng:</b> {html.escape(order_details.get('full_name', 'N/A'))} (@{html.escape(order_details.get('username') or 'N/A')})\n" f"- <b>Sá»‘ tiá»n Ä‘Ãºng:</b> <pre>{expected_amount:,} VNÄ</pre>\n" f"- <b>Sá»‘ tiá»n Ä‘Ã£ chuyá»ƒn:</b> <pre>{actual_amount:,} VNÄ</pre>\n\n" f"Vui lÃ²ng kiá»ƒm tra vÃ  xá»­ lÃ½ thá»§ cÃ´ng. Giao dá»‹ch nÃ y chÆ°a Ä‘Æ°á»£c tá»± Ä‘á»™ng xá»­ lÃ½." )
+                        logger.warning(f"Giao dịch gần đúng! Code: {order_code}, Mong đợi: {expected_amount}, Thực tế: {actual_amount}")
+                        alert_message = ( f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>CẢNH BÁO GIAO DỊCH ĐÁNG NGỜ</b> <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji>\n\n" f"Phát hiện giao dịch có mã đơn hàng đang chờ nhưng sai số tiền.\n\n" f"- <b>Mã đơn hàng:</b> <code>{order_code}</code>\n" f"- <b>Khách hàng:</b> {html.escape(order_details.get('full_name', 'N/A'))} (@{html.escape(order_details.get('username') or 'N/A')})\n" f"- <b>Số tiền đúng:</b> <pre>{expected_amount:,} VNĐ</pre>\n" f"- <b>Số tiền đã chuyển:</b> <pre>{actual_amount:,} VNĐ</pre>\n\n" f"Vui lòng kiểm tra và xử lý thủ công. Giao dịch này chưa được tự động xử lý." )
                         await safe_send_admin(context.bot, alert_message); db_add_tx(tx_id); data_changed = True
 
                 else:
                     if not db_check_tx_exists(tx_id):
                         db_add_tx(tx_id); data_changed = True
-                        logger.warning(f'CRON: PhÃ¡t hiá»‡n thanh toÃ¡n trá»…/orphan: {order_code} - {int(amount):,} VNÄ (Ä‘Æ¡n Ä‘Ã£ háº¿t háº¡n hoáº·c Ä‘Ã£ xá»­ lÃ½)')
+                        logger.warning(f'CRON: Phát hiện thanh toán trễ/orphan: {order_code} - {int(amount):,} VNĐ (đơn đã hết hạn hoặc đã xử lý)')
                         existing_order = order_index.get(order_code)
                         if not existing_order:
                             await safe_send_admin(
                                 context.bot,
-                                f'<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>THANH TOÃN TRá»„ - Cáº¦N Xá»¬ LÃ</b>\n\n'
-                                f'MÃ£ Ä‘Æ¡n: <code>{order_code}</code>\n'
-                                f'Sá»‘ tiá»n: <b>{int(amount):,} VNÄ</b>\n'
-                                f'MÃ´ táº£ GD: <code>{html.escape(description[:100])}</code>\n'
+                                f'<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>THANH TOÁN TRỄ - CẦN XỬ LÝ</b>\n\n'
+                                f'Mã đơn: <code>{order_code}</code>\n'
+                                f'Số tiền: <b>{int(amount):,} VNĐ</b>\n'
+                                f'Mô tả GD: <code>{html.escape(description[:100])}</code>\n'
                                 f'TX ID: <code>{tx_id}</code>\n\n'
-                                f'ÄÆ¡n hÃ ng nÃ y Ä‘Ã£ háº¿t háº¡n hoáº·c khÃ´ng tá»“n táº¡i trong hÃ ng chá».\n'
-                                f'Vui lÃ²ng kiá»ƒm tra vÃ  hoÃ n tiá»n náº¿u cáº§n: <code>/refund {order_code}</code>'
+                                f'Đơn hàng này đã hết hạn hoặc không tồn tại trong hàng chờ.\n'
+                                f'Vui lòng kiểm tra và hoàn tiền nếu cần: <code>/refund {order_code}</code>'
                             )
 
             elif api_deposit_reference:
-                # === Xá»¬ LÃ Náº P TIá»€N API ===
+                # === XỬ LÝ NẠP TIỀN API ===
                 deposit_code = str(api_deposit_reference)
                 if deposit_code in pending_api_deposits:
                     details = pending_api_deposits[deposit_code]
@@ -1463,9 +1463,9 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                         data_changed = True
                         await safe_send_admin(
                             context.bot,
-                            f"{E_LIMIT} <b>Náº P API Lá»–I Cáº¤U HÃŒNH</b>\n"
-                            f"<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> Code: <code>{deposit_code}</code>\n"
-                            f"<tg-emoji emoji-id=\"5350481781306958339\">ðŸ§¾</tg-emoji> LÃ½ do: Sá»‘ tiá»n ká»³ vá»ng khÃ´ng há»£p lá»‡ ({amount_expected})."
+                            f"{E_LIMIT} <b>NẠP API LỖI CẤU HÌNH</b>\n"
+                            f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> Code: <code>{deposit_code}</code>\n"
+                            f"<tg-emoji emoji-id=\"5350481781306958339\">🧾</tg-emoji> Lý do: Số tiền kỳ vọng không hợp lệ ({amount_expected})."
                         )
                         continue
                     
@@ -1477,10 +1477,10 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             data_changed = True
                             await safe_send_admin(
                                 context.bot,
-                                f"{E_LIMIT} <b>Náº P API Lá»–I KEY</b>\n"
-                                f"<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> Code: <code>{deposit_code}</code>\n"
-                                f"<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> Nháº­n: {amount_received:,} VNÄ\n"
-                                f"<tg-emoji emoji-id=\"5350481781306958339\">ðŸ§¾</tg-emoji> LÃ½ do: API key khÃ´ng tá»“n táº¡i hoáº·c Ä‘Ã£ bá»‹ xÃ³a."
+                                f"{E_LIMIT} <b>NẠP API LỖI KEY</b>\n"
+                                f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> Code: <code>{deposit_code}</code>\n"
+                                f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Nhận: {amount_received:,} VNĐ\n"
+                                f"<tg-emoji emoji-id=\"5350481781306958339\">🧾</tg-emoji> Lý do: API key không tồn tại hoặc đã bị xóa."
                             )
                             continue
 
@@ -1491,9 +1491,9 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             data_changed = True
                             await safe_send_admin(
                                 context.bot,
-                                f"{E_LIMIT} <b>Náº P API Lá»–I Dá»® LIá»†U</b>\n"
-                                f"<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> Code: <code>{deposit_code}</code>\n"
-                                f"<tg-emoji emoji-id=\"5350481781306958339\">ðŸ§¾</tg-emoji> LÃ½ do: Dá»¯ liá»‡u API key khÃ´ng há»£p lá»‡."
+                                f"{E_LIMIT} <b>NẠP API LỖI DỮ LIỆU</b>\n"
+                                f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> Code: <code>{deposit_code}</code>\n"
+                                f"<tg-emoji emoji-id=\"5350481781306958339\">🧾</tg-emoji> Lý do: Dữ liệu API key không hợp lệ."
                             )
                             continue
 
@@ -1509,9 +1509,9 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             data_changed = True
                             await safe_send_admin(
                                 context.bot,
-                                f"{E_LIMIT} <b>Náº P API Lá»–I KHÃ“A VÃ</b>\n"
-                                f"<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> Code: <code>{deposit_code}</code>\n"
-                                f"<tg-emoji emoji-id=\"5350481781306958339\">ðŸ§¾</tg-emoji> LÃ½ do: KhÃ´ng thá»ƒ cáº­p nháº­t sá»‘ dÆ° API key."
+                                f"{E_LIMIT} <b>NẠP API LỖI KHÓA VÍ</b>\n"
+                                f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> Code: <code>{deposit_code}</code>\n"
+                                f"<tg-emoji emoji-id=\"5350481781306958339\">🧾</tg-emoji> Lý do: Không thể cập nhật số dư API key."
                             )
                             continue
                         p_name = details.get("partner_name", key_data.get("name", "N/A"))
@@ -1522,43 +1522,43 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                         
                         await safe_send_admin(
                             context.bot,
-                            f"{E_SUCCESS} <b>Náº P TIá»€N API THÃ€NH CÃ”NG</b>\n\n"
-                            f"<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¤</tg-emoji> <b>Partner:</b> {html.escape(str(p_name))}\n"
-                            f"{E_TAG} <b>Náº¡p vÃ o:</b> {amount_received:,} VNÄ\n"
-                            f"<tg-emoji emoji-id=\"5863724849851011383\">ðŸ’µ</tg-emoji> <b>Sá»‘ dÆ° má»›i:</b> {new_bal:,} VNÄ\n"
-                            f"{E_TAG} <b>MÃ£ GD:</b> <code>{deposit_code}</code>"
+                            f"{E_SUCCESS} <b>NẠP TIỀN API THÀNH CÔNG</b>\n\n"
+                            f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Partner:</b> {html.escape(str(p_name))}\n"
+                            f"{E_TAG} <b>Nạp vào:</b> {amount_received:,} VNĐ\n"
+                            f"<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> <b>Số dư mới:</b> {new_bal:,} VNĐ\n"
+                            f"{E_TAG} <b>Mã GD:</b> <code>{deposit_code}</code>"
                         )
                         
-                        # Gá»­i thÃ´ng bÃ¡o cho user (náº¿u cÃ³ user_id Ä‘Æ°á»£c lÆ°u)
+                        # Gửi thông báo cho user (nếu có user_id được lưu)
                         user_id_to_notify = details.get("user_id")
                         if user_id_to_notify:
                             try:
                                 await context.bot.send_message(
                                     chat_id=user_id_to_notify,
                                     text=(
-                                        f"<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> <b>Náº P TIá»€N API THÃ€NH CÃ”NG!</b>\n\n"
-                                        f"<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¤</tg-emoji> <b>Partner:</b> {html.escape(str(p_name))}\n"
-                                        f"<tg-emoji emoji-id=\"5397916757333654639\">âž•</tg-emoji> <b>ÄÃ£ náº¡p:</b> {amount_received:,} VNÄ\n"
-                                        f"<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>Sá»‘ dÆ° má»›i:</b> {new_bal:,} VNÄ\n"
-                                        f"<i>Cáº£m Æ¡n báº¡n Ä‘Ã£ náº¡p tiá»n!</i>"
+                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>NẠP TIỀN API THÀNH CÔNG!</b>\n\n"
+                                        f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Partner:</b> {html.escape(str(p_name))}\n"
+                                        f"<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> <b>Đã nạp:</b> {amount_received:,} VNĐ\n"
+                                        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số dư mới:</b> {new_bal:,} VNĐ\n"
+                                        f"<i>Cảm ơn bạn đã nạp tiền!</i>"
                                     ),
                                     parse_mode=ParseMode.HTML
                                 )
                             except (TelegramError, ValueError, KeyError, AttributeError) as e:
                                 logger.error(f"Khong the gui thong bao nap API thanh cong cho user {user_id_to_notify}: {e}")
                     else:
-                         # Thiáº¿u tiá»n
+                         # Thiếu tiền
                          db_add_tx(tx_id); data_changed = True
                          await safe_send_admin(
                             context.bot,
-                            f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>Lá»–I Náº P API (THIáº¾U TIá»€N)</b>\nCode: {deposit_code}\nNháº­n: {amount_received:,}\nCáº§n: {amount_expected:,}"
+                            f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>LỖI NẠP API (THIẾU TIỀN)</b>\nCode: {deposit_code}\nNhận: {amount_received:,}\nCần: {amount_expected:,}"
                          )
 
-    except (TelegramError, httpx.HTTPError, sqlite3.Error, ValueError, KeyError) as e: logger.error(f"âŒ Lá»–I KHÃ”NG XÃC Äá»ŠNH TRONG check_payment_job: {e}", exc_info=True)
+    except (TelegramError, httpx.HTTPError, sqlite3.Error, ValueError, KeyError) as e: logger.error(f"❌ LỖI KHÔNG XÁC ĐỊNH TRONG check_payment_job: {e}", exc_info=True)
     if data_changed: await save_critical_tables(HISTORY_FILE, PROCESSED_TX_FILE, PENDING_ORDERS_FILE, USERS_FILE, API_KEYS_FILE, "data_pending_api_deposits.json")
 
 async def cleanup_expired_coupons_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    logger.info("CRON: Báº¯t Ä‘áº§u quÃ©t mÃ£ giáº£m giÃ¡ khÃ´ng há»£p lá»‡...")
+    logger.info("CRON: Bắt đầu quét mã giảm giá không hợp lệ...")
     today = datetime.now().date(); invalid_codes = []
     for code, details in list(coupons.items()):
         is_expired, is_used_up = False, False
@@ -1566,27 +1566,27 @@ async def cleanup_expired_coupons_job(context: ContextTypes.DEFAULT_TYPE) -> Non
         if expiry_str:
             try:
                 if datetime.strptime(expiry_str, '%d-%m-%Y').date() < today: is_expired = True
-            except ValueError: logger.warning(f"Lá»—i Ä‘á»‹nh dáº¡ng ngÃ y á»Ÿ mÃ£ giáº£m giÃ¡ '{code}': '{expiry_str}'")
+            except ValueError: logger.warning(f"Lỗi định dạng ngày ở mã giảm giá '{code}': '{expiry_str}'")
         quantity = details.get('quantity')
         if isinstance(quantity, int) and details.get('used', 0) >= quantity: is_used_up = True
         if is_expired or is_used_up:
-            reason = "háº¿t háº¡n" if is_expired else "háº¿t lÆ°á»£t sá»­ dá»¥ng"; invalid_codes.append(f"{code} ({reason})"); coupons.pop(code, None)
+            reason = "hết hạn" if is_expired else "hết lượt sử dụng"; invalid_codes.append(f"{code} ({reason})"); coupons.pop(code, None)
     if invalid_codes:
-        logger.info(f"<tg-emoji emoji-id=\"5462956611033117422\">ðŸ§¹</tg-emoji> ÄÃ£ tá»± Ä‘á»™ng xÃ³a {len(invalid_codes)} mÃ£ giáº£m giÃ¡: {', '.join(invalid_codes)}"); await save_data()
+        logger.info(f"<tg-emoji emoji-id=\"5462956611033117422\">🧹</tg-emoji> Đã tự động xóa {len(invalid_codes)} mã giảm giá: {', '.join(invalid_codes)}"); await save_data()
         try:
-            report_text = f"<tg-emoji emoji-id=\"5462956611033117422\">ðŸ§¹</tg-emoji> <b>BÃO CÃO Dá»ŒN Dáº¸P HÃ€NG NGÃ€Y</b>\n\nÄÃ£ tá»± Ä‘á»™ng xÃ³a <b>{len(invalid_codes)}</b> mÃ£ giáº£m giÃ¡ khÃ´ng há»£p lá»‡:\n- <code>" + "</code>\n- <code>".join(invalid_codes) + "</code>"
+            report_text = f"<tg-emoji emoji-id=\"5462956611033117422\">🧹</tg-emoji> <b>BÁO CÁO DỌN DẸP HÀNG NGÀY</b>\n\nĐã tự động xóa <b>{len(invalid_codes)}</b> mã giảm giá không hợp lệ:\n- <code>" + "</code>\n- <code>".join(invalid_codes) + "</code>"
             await safe_send_admin(context.bot, report_text)
-        except (TelegramError, ValueError, KeyError, AttributeError) as e: logger.error(f"KhÃ´ng thá»ƒ gá»­i tin nháº¯n bÃ¡o cÃ¡o dá»n dáº¹p cho admin: {e}")
-    else: logger.info("CRON: KhÃ´ng cÃ³ mÃ£ giáº£m giÃ¡ nÃ o cáº§n dá»n dáº¹p.")
+        except (TelegramError, ValueError, KeyError, AttributeError) as e: logger.error(f"Không thể gửi tin nhắn báo cáo dọn dẹp cho admin: {e}")
+    else: logger.info("CRON: Không có mã giảm giá nào cần dọn dẹp.")
 
 async def automatic_reward_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Tá»± Ä‘á»™ng trao thÆ°á»Ÿng Top tuáº§n/thÃ¡ng"""
+    """Tự động trao thưởng Top tuần/tháng"""
     now = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh"))
     today = now.date()
     
-    # --- THÆ¯á»žNG TUáº¦N (Cháº¡y vÃ o thá»© 2 hÃ ng tuáº§n) ---
-    if today.weekday() == 0: # 0 = Thá»© 2
-        # Láº¥y dá»¯ liá»‡u tuáº§n trÆ°á»›c (Thá»© 2 tuáº§n trÆ°á»›c -> Chá»§ nháº­t tuáº§n trÆ°á»›c)
+    # --- THƯỞNG TUẦN (Chạy vào thứ 2 hàng tuần) ---
+    if today.weekday() == 0: # 0 = Thứ 2
+        # Lấy dữ liệu tuần trước (Thứ 2 tuần trước -> Chủ nhật tuần trước)
         start_date = today - timedelta(days=7)
         end_date = today - timedelta(days=1)
         
@@ -1595,9 +1595,9 @@ async def automatic_reward_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         
         await process_top_buyer_reward(context, start_dt, end_dt, "WEEKLY", 2, 15)
 
-    # --- THÆ¯á»žNG THÃNG (Cháº¡y vÃ o ngÃ y 1 hÃ ng thÃ¡ng) ---
+    # --- THƯỞNG THÁNG (Chạy vào ngày 1 hàng tháng) ---
     if today.day == 1:
-        # Láº¥y dá»¯ liá»‡u thÃ¡ng trÆ°á»›c
+        # Lấy dữ liệu tháng trước
         first_day_this_month = today
         last_day_last_month = first_day_this_month - timedelta(days=1)
         first_day_last_month = last_day_last_month.replace(day=1)
@@ -1611,7 +1611,7 @@ async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quant
     start_ts = start_dt.timestamp()
     end_ts = end_dt.timestamp()
     
-    # Lá»c Ä‘Æ¡n hÃ ng hoÃ n thÃ nh trong khoáº£ng thá»i gian
+    # Lọc đơn hàng hoàn thành trong khoảng thời gian
     eligible_orders = [
         o for o in order_history 
         if is_completed_order(o)
@@ -1621,7 +1621,7 @@ async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quant
     if not eligible_orders:
         return
 
-    # Äáº¿m sá»‘ Ä‘Æ¡n theo user
+    # Đếm số đơn theo user
     user_counts = Counter(
         resolved_uid for resolved_uid in (_api_get_effective_order_user_id(order) for order in eligible_orders)
         if resolved_uid
@@ -1629,13 +1629,13 @@ async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quant
     if not user_counts:
         return
         
-    # Láº¥y Top 1
+    # Lấy Top 1
     top_user_id, count = user_counts.most_common(1)[0]
     
-    # Táº¡o Coupon
+    # Tạo Coupon
     coupons_created = []
     for _ in range(quantity):
-        # MÃ£: TOPWEEK-ID-RANDOM hoáº·c TOPMONTH-ID-RANDOM
+        # Mã: TOPWEEK-ID-RANDOM hoặc TOPMONTH-ID-RANDOM
         prefix = "TOPWEEK" if reward_type == "WEEKLY" else "TOPMONTH"
         code = f"{prefix}-{top_user_id}-{random.randint(1000,9999)}"
         
@@ -1652,41 +1652,41 @@ async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quant
         
     await save_data()
     
-    # Gá»­i thÃ´ng bÃ¡o cho User
+    # Gửi thông báo cho User
     user_info = user_data_db.get(str(top_user_id), {})
-    full_name = user_info.get("first_name", "KhÃ¡ch hÃ ng")
+    full_name = user_info.get("first_name", "Khách hàng")
     
-    period_name = "TUáº¦N" if reward_type == "WEEKLY" else "THÃNG"
+    period_name = "TUẦN" if reward_type == "WEEKLY" else "THÁNG"
     time_range_str = f"{start_dt.strftime('%d/%m')} - {end_dt.strftime('%d/%m')}"
     
     msg = (
-        f"â­ï¸ <b>CHÃšC Má»ªNG TOP 1 NGÆ¯á»œI MUA HÃ€NG {period_name} QUA!</b> â­ï¸\n"
+        f"⭐️ <b>CHÚC MỪNG TOP 1 NGƯỜI MUA HÀNG {period_name} QUA!</b> ⭐️\n"
         f"<i>({time_range_str})</i>\n\n"
-        f"Xin chÃ o <b>{full_name}</b>,\n"
-        f"Báº¡n lÃ  ngÆ°á»i mua hÃ ng nhiá»u nháº¥t trong {period_name.lower()} vá»«a qua vá»›i <b>{count} Ä‘Æ¡n hÃ ng</b>.\n\n"
-        f"<tg-emoji emoji-id=\"5449800250032143374\">ðŸŽ</tg-emoji> <b>Pháº§n thÆ°á»Ÿng cá»§a báº¡n:</b>\n"
-        f"<b>{quantity}x MÃ£ giáº£m giÃ¡ {discount_percent}%</b>\n\n"
+        f"Xin chào <b>{full_name}</b>,\n"
+        f"Bạn là người mua hàng nhiều nhất trong {period_name.lower()} vừa qua với <b>{count} đơn hàng</b>.\n\n"
+        f"<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> <b>Phần thưởng của bạn:</b>\n"
+        f"<b>{quantity}x Mã giảm giá {discount_percent}%</b>\n\n"
     )
     
     for code in coupons_created:
-        msg += f"<tg-emoji emoji-id=\"5377624166436445368\">ðŸŽŸï¸</tg-emoji> <code>{code}</code>\n"
+        msg += f"<tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> <code>{code}</code>\n"
         
-    msg += "\n<i>(Háº¡n sá»­ dá»¥ng: 30 ngÃ y. Ãp dá»¥ng cho Ä‘Æ¡n hÃ ng tiáº¿p theo)</i>"
+    msg += "\n<i>(Hạn sử dụng: 30 ngày. Áp dụng cho đơn hàng tiếp theo)</i>"
     
     try:
         await context.bot.send_message(top_user_id, msg, parse_mode=ParseMode.HTML)
         
-        # ThÃ´ng bÃ¡o Admin
+        # Thông báo Admin
         admin_msg = (
-            f"{E_SUCCESS} <b>ÄÃƒ Tá»° Äá»˜NG TRAO THÆ¯á»žNG {period_name}</b>\n\n"
-            f"<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¤</tg-emoji> <b>User:</b> {full_name} (ID: <code>{top_user_id}</code>)\n"
-            f"{E_STAT} <b>ThÃ nh tÃ­ch:</b> {count} Ä‘Æ¡n\n"
-            f"{E_TAG} <b>Pháº§n thÆ°á»Ÿng:</b> {quantity} mÃ£ {discount_percent}%\n"
-            f"<tg-emoji emoji-id=\"5377624166436445368\">ðŸŽŸï¸</tg-emoji> <b>MÃ£:</b> {', '.join(coupons_created)}"
+            f"{E_SUCCESS} <b>ĐÃ TỰ ĐỘNG TRAO THƯỞNG {period_name}</b>\n\n"
+            f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>User:</b> {full_name} (ID: <code>{top_user_id}</code>)\n"
+            f"{E_STAT} <b>Thành tích:</b> {count} đơn\n"
+            f"{E_TAG} <b>Phần thưởng:</b> {quantity} mã {discount_percent}%\n"
+            f"<tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> <b>Mã:</b> {', '.join(coupons_created)}"
         )
         await safe_send_admin(context.bot, admin_msg)
         
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Lá»—i gá»­i thÆ°á»Ÿng {reward_type} cho user {top_user_id}: {e}")
+        logger.error(f"Lỗi gửi thưởng {reward_type} cho user {top_user_id}: {e}")
 
 

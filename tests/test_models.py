@@ -29,7 +29,7 @@ class TestOrder:
         assert order.order_code == "ICLD123456"
         assert order.user_id == 1000000001
         assert order.amount == 35000
-        assert order.product_name == "iCloud 50GB 1 ThÃ¡ng"
+        assert order.product_name == "iCloud 50GB 1 Tháng"
         assert order.quantity == 1
 
     def test_roundtrip_to_legacy(self, sample_order_data):
@@ -59,10 +59,10 @@ class TestOrder:
 
 class TestOrderStatus:
     def test_from_legacy_vietnamese(self):
-        assert OrderStatus.from_legacy("HoÃ n thÃ nh") == OrderStatus.COMPLETED
+        assert OrderStatus.from_legacy("Hoàn thành") == OrderStatus.COMPLETED
 
     def test_from_legacy_with_emoji(self):
-        raw = '<tg-emoji emoji-id="5462956611033117422">â™»ï¸</tg-emoji> ÄÃ£ hoÃ n tiá»n (VÃ­ Bot)'
+        raw = '<tg-emoji emoji-id="5462956611033117422">♻️</tg-emoji> Đã hoàn tiền (Ví Bot)'
         assert OrderStatus.from_legacy(raw) == OrderStatus.REFUNDED
 
     def test_from_legacy_english(self):
@@ -101,31 +101,31 @@ class TestUserProfile:
     def test_vip_rank_bronze(self):
         user = UserProfile(user_id=1, total_spent=0)
         rank = user.get_vip_rank()
-        assert "Äá»“ng" in rank.name
+        assert "Đồng" in rank.name
         assert rank.discount == 0
 
     def test_vip_rank_silver(self):
         user = UserProfile(user_id=1, total_spent=500000)
         rank = user.get_vip_rank()
-        assert "Báº¡c" in rank.name
+        assert "Bạc" in rank.name
         assert rank.discount == 2
 
     def test_vip_rank_gold(self):
         user = UserProfile(user_id=1, total_spent=1_000_000)
         rank = user.get_vip_rank()
-        assert "VÃ ng" in rank.name
+        assert "Vàng" in rank.name
         assert rank.discount == 5
 
     def test_vip_rank_diamond(self):
         user = UserProfile(user_id=1, total_spent=5_000_000)
         rank = user.get_vip_rank()
-        assert "Kim CÆ°Æ¡ng" in rank.name
+        assert "Kim Cương" in rank.name
         assert rank.discount == 8
 
     def test_vip_rank_master(self):
         user = UserProfile(user_id=1, total_spent=10_000_000)
         rank = user.get_vip_rank()
-        assert "Cao Thá»§" in rank.name
+        assert "Cao Thủ" in rank.name
         assert rank.discount == 8
 
     def test_discount_percent(self):
@@ -158,7 +158,7 @@ class TestProduct:
     def test_create_from_dict(self, sample_product_data):
         product = Product.from_dict("prod_001", sample_product_data)
         assert product.product_id == "prod_001"
-        assert product.name == "iCloud 50GB 1 ThÃ¡ng"
+        assert product.name == "iCloud 50GB 1 Tháng"
         assert product.price == 35000
         assert product.available_stock_count() == 3
 

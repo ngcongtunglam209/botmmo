@@ -23,7 +23,7 @@ SOCIAL_SOURCE_PLATFORM_ICON_IDS = {
 
 
 def get_product_category(name):
-    """Helper: XÃ¡c Ä‘á»‹nh category dá»±a trÃªn tÃªn sáº£n pháº©m."""
+    """Helper: Xác định category dựa trên tên sản phẩm."""
     import re
 
     name_lower = str(name or "").lower()
@@ -53,8 +53,8 @@ def get_product_category(name):
     if "adobe" in name_lower:
         return "Adobe Creative Cloud"
     if any(k in name_lower for k in ["elxa", "duolingo", "douligo", "doulingo"]):
-        return "Há»c Táº­p"
-    return "Sáº£n Pháº©m KhÃ¡c"
+        return "Học Tập"
+    return "Sản Phẩm Khác"
 
 
 def get_effective_store_category(product):
@@ -63,7 +63,7 @@ def get_effective_store_category(product):
         return explicit
     """Infer a category only when the admin has not assigned one."""
     inferred = get_product_category((product or {}).get("name"))
-    if inferred != "Sáº£n Pháº©m KhÃ¡c":
+    if inferred != "Sản Phẩm Khác":
         return inferred
     return (product or {}).get("store_category") or inferred
 
@@ -101,8 +101,8 @@ def get_store_icon_id(label: str, fallback: str = "5854908544712707500") -> str:
         "proxy": "5447410659077661506",
         "ai tools (gpt, copilot...)": "5359726582447487916",
         "adobe creative cloud": "5359320531944358335",
-        "há»c táº­p": "5796371348808799072",
-        "sáº£n pháº©m khÃ¡c": "5854908544712707500",
+        "học tập": "5796371348808799072",
+        "sản phẩm khác": "5854908544712707500",
         str(SOCIAL_SOURCE_AUTO_MANAGED_ROOT_CATEGORY).strip().lower(): "5397916757333654639",
     }
     if value in exact_map:
@@ -148,7 +148,7 @@ def get_store_icon_id(label: str, fallback: str = "5854908544712707500") -> str:
         (("grok", "super grok", "supergrok"), "6179337489350663129"),
         (("claude",), "6174520215376763867"),
         (("chatgpt", "gpt", "openai", "gemini", "cursor", "ai tools"), "5359726582447487916"),
-        (("duolingo", "douligo", "doulingo", "elxa", "hoc tap", "há»c táº­p"), "5796371348808799072"),
+        (("duolingo", "douligo", "doulingo", "elxa", "hoc tap", "học tập"), "5796371348808799072"),
         (("hotmail", "outlook"), "5253742260054409879"),
         (("social",), "5397916757333654639"),
     ]
@@ -213,7 +213,7 @@ def _paginate_items(items, page: int, page_size: int = SOCIAL_SOURCE_STORE_PAGE_
 def _build_pagination_row(previous_callback: str | None = None, next_callback: str | None = None):
     row = []
     if previous_callback:
-        row.append(_btn("Trang trÆ°á»›c", icon_id="6206032691075223572", callback_data=previous_callback))
+        row.append(_btn("Trang trước", icon_id="6206032691075223572", callback_data=previous_callback))
     if next_callback:
         row.append(_btn("Trang sau", icon_id="6186252635805323641", callback_data=next_callback))
     return row
@@ -514,11 +514,11 @@ def create_ctt_source_category_menu(page: int = 0):
                 style="danger",
             )
         ])
-        keyboard.append([_btn("Quay láº¡i Cá»­a hÃ ng", icon_id="6206032691075223572", callback_data="store_main")])
+        keyboard.append([_btn("Quay lại Cửa hàng", icon_id="6206032691075223572", callback_data="store_main")])
         return InlineKeyboardMarkup(keyboard)
 
     keyboard.append([
-        _btn("TÃ¬m kiáº¿m dá»‹ch vá»¥", icon_id="5429571366384842791", callback_data="ctt_search_prompt", style="primary")
+        _btn("Tìm kiếm dịch vụ", icon_id="5429571366384842791", callback_data="ctt_search_prompt", style="primary")
     ])
 
     pending_manual_count_by_pid = _collect_pending_manual_count_by_pid()
@@ -549,7 +549,7 @@ def create_ctt_source_category_menu(page: int = 0):
         if pagination_row:
             keyboard.append(pagination_row)
 
-    keyboard.append([_btn("Quay láº¡i Cá»­a hÃ ng", icon_id="6206032691075223572", callback_data="store_main")])
+    keyboard.append([_btn("Quay lại Cửa hàng", icon_id="6206032691075223572", callback_data="store_main")])
     return InlineKeyboardMarkup(keyboard)
 
 
@@ -557,8 +557,8 @@ def create_ctt_source_product_menu(source_index: int, page: int = 0):
     category_name, category_products = get_ctt_source_category_by_index(source_index)
     if not category_name:
         return InlineKeyboardMarkup([
-            [_btn("Danh má»¥c social trá»‘ng", icon_id="5447644880824181073", callback_data="ignore")],
-            [_btn("Quay láº¡i", icon_id="6206032691075223572", callback_data="view_ctt_root_0")],
+            [_btn("Danh mục social trống", icon_id="5447644880824181073", callback_data="ignore")],
+            [_btn("Quay lại", icon_id="6206032691075223572", callback_data="view_ctt_root_0")],
         ])
 
     keyboard = []
@@ -587,7 +587,7 @@ def create_ctt_source_product_menu(source_index: int, page: int = 0):
             keyboard.append(pagination_row)
 
     root_page = max(0, int(source_index or 0) // SOCIAL_SOURCE_STORE_PAGE_SIZE)
-    keyboard.append([_btn("Quay láº¡i Ná»n táº£ng", icon_id="6206032691075223572", callback_data=f"view_ctt_root_{root_page}")])
+    keyboard.append([_btn("Quay lại Nền tảng", icon_id="6206032691075223572", callback_data=f"view_ctt_root_{root_page}")])
     return InlineKeyboardMarkup(keyboard)
 
 
@@ -597,10 +597,10 @@ def create_ctt_search_result_menu(search_query: str, page: int = 0):
 
     if not matches:
         return InlineKeyboardMarkup([
-            [_btn("KhÃ´ng cÃ³ káº¿t quáº£ phÃ¹ há»£p", icon_id="5447644880824181073", callback_data="ignore", style="danger")],
+            [_btn("Không có kết quả phù hợp", icon_id="5447644880824181073", callback_data="ignore", style="danger")],
             [
-                _btn("TÃ¬m láº¡i", icon_id="5429571366384842791", callback_data="ctt_search_prompt"),
-                _btn("Quay láº¡i Ná»n táº£ng", icon_id="6206032691075223572", callback_data="view_ctt_root_0"),
+                _btn("Tìm lại", icon_id="5429571366384842791", callback_data="ctt_search_prompt"),
+                _btn("Quay lại Nền tảng", icon_id="6206032691075223572", callback_data="view_ctt_root_0"),
             ],
         ])
 
@@ -628,8 +628,8 @@ def create_ctt_search_result_menu(search_query: str, page: int = 0):
             keyboard.append(pagination_row)
 
     keyboard.append([
-        _btn("TÃ¬m láº¡i", icon_id="5429571366384842791", callback_data="ctt_search_prompt"),
-        _btn("Quay láº¡i Ná»n táº£ng", icon_id="6206032691075223572", callback_data="view_ctt_root_0"),
+        _btn("Tìm lại", icon_id="5429571366384842791", callback_data="ctt_search_prompt"),
+        _btn("Quay lại Nền tảng", icon_id="6206032691075223572", callback_data="view_ctt_root_0"),
     ])
     return InlineKeyboardMarkup(keyboard)
 
@@ -678,14 +678,14 @@ def get_store_resell_category_by_token(category_token: str) -> str:
 def create_store_menu(selected_category=None, user_id=None):
     lang = get_user_lang(user_id)
     labels = {
-        "vi": {"back_main": "Quay láº¡i Main Menu", "back_categories": "Quay láº¡i Danh Má»¥c", "empty": "Danh má»¥c trá»‘ng", "left": "CÃ²n {count}", "out": "Háº¿t hÃ ng", "available": "Sáºµn hÃ ng", "paused": "Táº¡m ngá»«ng"},
+        "vi": {"back_main": "Quay lại Main Menu", "back_categories": "Quay lại Danh Mục", "empty": "Danh mục trống", "left": "Còn {count}", "out": "Hết hàng", "available": "Sẵn hàng", "paused": "Tạm ngừng"},
         "en": {"back_main": "Back to Main Menu", "back_categories": "Back to Categories", "empty": "Empty category", "left": "{count} left", "out": "Out of stock", "available": "Available", "paused": "Paused"},
-        "zh": {"back_main": "è¿”å›žä¸»èœå•", "back_categories": "è¿”å›žåˆ†ç±»", "empty": "åˆ†ç±»ä¸ºç©º", "left": "å‰©ä½™ {count}", "out": "ç¼ºè´§", "available": "æœ‰è´§", "paused": "æš‚åœé”€å”®"},
+        "zh": {"back_main": "返回主菜单", "back_categories": "返回分类", "empty": "分类为空", "left": "剩余 {count}", "out": "缺货", "available": "有货", "paused": "暂停销售"},
     }.get(lang)
 
     def _fmt_price(price_vnd: int) -> str:
-        if not price_vnd: return "0Ä‘" if lang == "vi" else "0 USDT"
-        if lang == "vi": return f"{price_vnd:,}Ä‘"
+        if not price_vnd: return "0đ" if lang == "vi" else "0 USDT"
+        if lang == "vi": return f"{price_vnd:,}đ"
         try:
             rate = float(globals().get("_cached_live_usdt_rate") or USDT_TRC20_RATE_VND_PER_USDT)
             return f"{price_vnd / rate:.2f} USDT"
@@ -713,14 +713,14 @@ def create_store_menu(selected_category=None, user_id=None):
         icloud_btn = None
         if ENABLE_ICLOUD_SALES and available_links:
             icloud_btn = _btn(
-                f"GÃ³i iCloud 2TB (Auto) | {_fmt_price(ICLOUD_PACKAGE_PRICE)}",
+                f"Gói iCloud 2TB (Auto) | {_fmt_price(ICLOUD_PACKAGE_PRICE)}",
                 icon_id="5334955749409834455",
                 callback_data="muahang_start",
                 style="success",
             )
         elif ENABLE_ICLOUD_SALES:
             icloud_btn = _btn(
-                "GÃ³i iCloud 2TB - Táº M Háº¾T HÃ€NG",
+                "Gói iCloud 2TB - TẠM HẾT HÀNG",
                 icon_id="5273914604752216432",
                 callback_data="muahang_start",
                 style="danger",
@@ -735,7 +735,7 @@ def create_store_menu(selected_category=None, user_id=None):
             total_price = sum(int(product.get("price", 0) or 0) for product in combo_products)
             combo_price = int(total_price * (100 - combo["discount_percent"]) / 100)
             combo_name = (
-                f"<tg-emoji emoji-id=\"5226711870492126219\">ðŸŽ¯</tg-emoji> "
+                f"<tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> "
                 f"{combo_products[0]['name']} + {combo_products[1]['name']} | {_fmt_price(combo_price)} (-{combo['discount_percent']}%)"
             )
             combo_available = all(
@@ -778,8 +778,8 @@ def create_store_menu(selected_category=None, user_id=None):
             "Proxy": "5447410659077661506",
             "AI Tools (GPT, Copilot...)": "5359726582447487916",
             "Adobe Creative Cloud": "5359320531944358335",
-            "Há»c Táº­p": "5460966473512001416",
-            "Sáº£n Pháº©m KhÃ¡c": "5854908544712707500",
+            "Học Tập": "5460966473512001416",
+            "Sản Phẩm Khác": "5854908544712707500",
         }
 
         category_names = set(grouped_products.keys())
@@ -881,10 +881,10 @@ def create_store_menu(selected_category=None, user_id=None):
     selected_products = grouped_products.get(selected_category, [])
     if any(product.get("is_supplier_source_resell") for _, product in selected_products):
         refresh_label = {
-            "vi": "LÃ m má»›i giÃ¡ & tá»“n kho",
+            "vi": "Làm mới giá & tồn kho",
             "en": "Refresh",
-            "zh": "åˆ·æ–°",
-        }.get(lang, "LÃ m má»›i giÃ¡ & tá»“n kho")
+            "zh": "刷新",
+        }.get(lang, "Làm mới giá & tồn kho")
         keyboard.append([
             _btn(
                 refresh_label,

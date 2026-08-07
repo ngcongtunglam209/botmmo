@@ -1,27 +1,27 @@
 # ==============================================================================
-#  DICE GAME SYSTEM (MAY Máº®N XÃšC Xáº®C)
+#  DICE GAME SYSTEM (MAY MẮN XÚC XẮC)
 # ==============================================================================
 
 DICE_COOLDOWN_HOURS = 24  # 24 hours cooldown
-DICE_MAX_PRODUCT_PRICE = 36000  # Only products under 36k VNÄ
+DICE_MAX_PRODUCT_PRICE = 36000  # Only products under 36k VNĐ
 
-# Winning combinations - CHá»ˆ 111 VÃ€ 222 Má»šI CÃ“ GIáº¢I (Tá»· lá»‡ tháº¯ng 0.92%)
+# Winning combinations - CHỈ 111 VÀ 222 MỚI CÓ GIẢI (Tỷ lệ thắng 0.92%)
 WINNING_TRIPLES = [(1,1,1), (2,2,2)]
-# WINNING_SEQUENCES = [(1,2,3), (2,3,4), (3,4,5), (4,5,6)]  # ÄÃƒ Táº®T Ä‘á»ƒ giáº£m tá»· lá»‡ tháº¯ng
+# WINNING_SEQUENCES = [(1,2,3), (2,3,4), (3,4,5), (4,5,6)]  # ĐÃ TẮT để giảm tỷ lệ thắng
 
 def is_dice_winning_combination(dice_values):
     """
     Check if dice combination is a winner
     dice_values: tuple of (dice1, dice2, dice3)
     
-    CHá»ˆ 111 VÃ€ 222 THáº®NG!
-    Tá»· lá»‡: 2/216 = 0.92%
+    CHỈ 111 VÀ 222 THẮNG!
+    Tỷ lệ: 2/216 = 0.92%
     """
-    # CHá»ˆ CHECK TRIPLES - 111, 222
+    # CHỈ CHECK TRIPLES - 111, 222
     if dice_values in WINNING_TRIPLES:
         return True
     
-    # ÄÃƒ Táº®T sequences Ä‘á»ƒ giáº£m tá»· lá»‡ tháº¯ng (trÃ¡nh lá»— vá»‘n)
+    # ĐÃ TẮT sequences để giảm tỷ lệ thắng (tránh lỗ vốn)
     # if dice_values in WINNING_SEQUENCES:
     #     return True
     
@@ -62,7 +62,7 @@ def get_available_dice_products():
 
 
 # ==============================================================================
-#  WITHDRAWAL SYSTEM (RÃšT TIá»€N)
+#  WITHDRAWAL SYSTEM (RÚT TIỀN)
 # ==============================================================================
 
 async def withdrawal_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -76,9 +76,9 @@ async def withdrawal_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         update.effective_chat.id,
         lt(
             user_id,
-            "â„¹ï¸ <b>TÃNH NÄ‚NG RÃšT TIá»€N ÄÃƒ ÄÆ¯á»¢C Táº®T</b>\n\nSá»‘ dÆ° tÃ i khoáº£n chá»‰ Ä‘Æ°á»£c dÃ¹ng Ä‘á»ƒ mua sáº£n pháº©m vÃ  dá»‹ch vá»¥ táº¡i Dino Store.",
-            "â„¹ï¸ <b>WITHDRAWALS ARE DISABLED</b>\n\nYour account balance can only be used to purchase products and services at Dino Store.",
-            "â„¹ï¸ <b>æçŽ°åŠŸèƒ½å·²å…³é—­</b>\n\nè´¦æˆ·ä½™é¢ä»…å¯ç”¨äºŽè´­ä¹° Dino Store çš„äº§å“å’ŒæœåŠ¡ã€‚",
+            "ℹ️ <b>TÍNH NĂNG RÚT TIỀN ĐÃ ĐƯỢC TẮT</b>\n\nSố dư tài khoản chỉ được dùng để mua sản phẩm và dịch vụ tại Dino Store.",
+            "ℹ️ <b>WITHDRAWALS ARE DISABLED</b>\n\nYour account balance can only be used to purchase products and services at Dino Store.",
+            "ℹ️ <b>提现功能已关闭</b>\n\n账户余额仅可用于购买 Dino Store 的产品和服务。",
         ), parse_mode=ParseMode.HTML,
     )
 
@@ -91,14 +91,14 @@ async def handle_withdrawal_input(update: Update, context: ContextTypes.DEFAULT_
     await update.message.reply_text(
         lt(
             user_id,
-            "â„¹ï¸ TÃ­nh nÄƒng rÃºt tiá»n Ä‘Ã£ Ä‘Æ°á»£c táº¯t. Sá»‘ dÆ° chá»‰ dÃ¹ng Ä‘á»ƒ mua hÃ ng táº¡i Dino Store.",
-            "â„¹ï¸ Withdrawals are disabled. Your balance can only be used for purchases at Dino Store.",
-            "â„¹ï¸ æçŽ°åŠŸèƒ½å·²å…³é—­ã€‚ä½™é¢ä»…å¯ç”¨äºŽåœ¨ Dino Store è´­ç‰©ã€‚",
+            "ℹ️ Tính năng rút tiền đã được tắt. Số dư chỉ dùng để mua hàng tại Dino Store.",
+            "ℹ️ Withdrawals are disabled. Your balance can only be used for purchases at Dino Store.",
+            "ℹ️ 提现功能已关闭。余额仅可用于在 Dino Store 购物。",
         )
     )
     return
 
-    # Luá»“ng dÆ°á»›i Ä‘Ã¢y chá»‰ Ä‘Æ°á»£c giá»¯ Ä‘á»ƒ Ä‘á»c dá»¯ liá»‡u/yÃªu cáº§u lá»‹ch sá»­; khÃ´ng thá»ƒ truy cáº­p.
+    # Luồng dưới đây chỉ được giữ để đọc dữ liệu/yêu cầu lịch sử; không thể truy cập.
     user_id_str = str(user_id)
     state = context.user_data.get('state')
     text = update.message.text.strip()
@@ -106,23 +106,23 @@ async def handle_withdrawal_input(update: Update, context: ContextTypes.DEFAULT_
         try:
             amount = int(text.replace(',', '').replace('.', ''))
         except ValueError:
-            await update.message.reply_text(lt(user_id, f"{E_LIMIT} Vui lÃ²ng nháº­p sá»‘ tiá»n há»£p lá»‡ (chá»‰ sá»‘).", f"{E_LIMIT} Enter a valid amount using numbers only.", f"{E_LIMIT} è¯·è¾“å…¥æœ‰æ•ˆé‡‘é¢ï¼ˆä»…æ•°å­—ï¼‰ã€‚"))
+            await update.message.reply_text(lt(user_id, f"{E_LIMIT} Vui lòng nhập số tiền hợp lệ (chỉ số).", f"{E_LIMIT} Enter a valid amount using numbers only.", f"{E_LIMIT} 请输入有效金额（仅数字）。"))
             return
         balance = user_data_db.get(user_id_str, {}).get('balance', 0)
         if amount < MIN_WITHDRAWAL_AMOUNT:
-            await update.message.reply_text(lt(user_id, "{limit} Sá»‘ tiá»n rÃºt tá»‘i thiá»ƒu lÃ  {amount:,} VNÄ.", "{limit} Minimum withdrawal is {amount:,} VND.", "{limit} æœ€ä½ŽæçŽ°é‡‘é¢ä¸º {amount:,} VNDã€‚", limit=E_LIMIT, amount=MIN_WITHDRAWAL_AMOUNT))
+            await update.message.reply_text(lt(user_id, "{limit} Số tiền rút tối thiểu là {amount:,} VNĐ.", "{limit} Minimum withdrawal is {amount:,} VND.", "{limit} 最低提现金额为 {amount:,} VND。", limit=E_LIMIT, amount=MIN_WITHDRAWAL_AMOUNT))
             return
         if amount > balance:
-            await update.message.reply_text(lt(user_id, "{limit} Sá»‘ dÆ° khÃ´ng Ä‘á»§ (Hiá»‡n táº¡i: {balance:,} VNÄ).", "{limit} Insufficient balance (Current: {balance:,} VND).", "{limit} ä½™é¢ä¸è¶³ï¼ˆå½“å‰ï¼š{balance:,} VNDï¼‰ã€‚", limit=E_LIMIT, balance=balance))
+            await update.message.reply_text(lt(user_id, "{limit} Số dư không đủ (Hiện tại: {balance:,} VNĐ).", "{limit} Insufficient balance (Current: {balance:,} VND).", "{limit} 余额不足（当前：{balance:,} VND）。", limit=E_LIMIT, balance=balance))
             return
         context.user_data['withdrawal_amount'] = amount
         context.user_data['state'] = 'awaiting_bank_info'
         await update.message.reply_text(
             lt(
                 user_id,
-                "{success} <b>XÃC NHáº¬N Sá» TIá»€N:</b> {amount:,} VNÄ\n\n{tag} <b>Vui lÃ²ng nháº­p thÃ´ng tin nháº­n tiá»n:</b>\n<i>(NgÃ¢n hÃ ng, Sá»‘ tÃ i khoáº£n, TÃªn chá»§ tÃ i khoáº£n)</i>\n\nVÃ­ dá»¥: <code>Vietcombank - 0123456789 - NGUYEN VAN A</code>",
+                "{success} <b>XÁC NHẬN SỐ TIỀN:</b> {amount:,} VNĐ\n\n{tag} <b>Vui lòng nhập thông tin nhận tiền:</b>\n<i>(Ngân hàng, Số tài khoản, Tên chủ tài khoản)</i>\n\nVí dụ: <code>Vietcombank - 0123456789 - NGUYEN VAN A</code>",
                 "{success} <b>AMOUNT CONFIRMED:</b> {amount:,} VND\n\n{tag} <b>Enter receiving bank details:</b>\n<i>(Bank, Account number, Account holder)</i>\n\nExample: <code>Vietcombank - 0123456789 - NGUYEN VAN A</code>",
-                "{success} <b>é‡‘é¢å·²ç¡®è®¤ï¼š</b> {amount:,} VND\n\n{tag} <b>è¯·è¾“å…¥æ”¶æ¬¾ä¿¡æ¯ï¼š</b>\n<i>ï¼ˆé“¶è¡Œã€è´¦å·ã€è´¦æˆ·åï¼‰</i>\n\nç¤ºä¾‹ï¼š<code>Vietcombank - 0123456789 - NGUYEN VAN A</code>",
+                "{success} <b>金额已确认：</b> {amount:,} VND\n\n{tag} <b>请输入收款信息：</b>\n<i>（银行、账号、账户名）</i>\n\n示例：<code>Vietcombank - 0123456789 - NGUYEN VAN A</code>",
                 success=E_SUCCESS, tag=E_TAG, amount=amount,
             ), parse_mode=ParseMode.HTML,
         )
@@ -136,20 +136,20 @@ async def handle_withdrawal_input(update: Update, context: ContextTypes.DEFAULT_
         async with withdrawal_lock:
             current_balance = user_data_db.get(user_id_str, {}).get('balance', 0)
             if amount > current_balance:
-                await update.message.reply_text(lt(user_id, "{limit} Sá»‘ dÆ° hiá»‡n táº¡i khÃ´ng Ä‘á»§ ({balance:,} VNÄ). YÃªu cáº§u Ä‘Ã£ bá»‹ há»§y.", "{limit} Current balance is insufficient ({balance:,} VND). Request cancelled.", "{limit} å½“å‰ä½™é¢ä¸è¶³ï¼ˆ{balance:,} VNDï¼‰ï¼Œç”³è¯·å·²å–æ¶ˆã€‚", limit=E_LIMIT, balance=current_balance))
+                await update.message.reply_text(lt(user_id, "{limit} Số dư hiện tại không đủ ({balance:,} VNĐ). Yêu cầu đã bị hủy.", "{limit} Current balance is insufficient ({balance:,} VND). Request cancelled.", "{limit} 当前余额不足（{balance:,} VND），申请已取消。", limit=E_LIMIT, balance=current_balance))
                 context.user_data.pop('state', None)
                 context.user_data.pop('withdrawal_amount', None)
                 return
             request_id = f"WD_{int(time.time())}_{random.randint(1000, 9999)}"
             withdrawal_requests[request_id] = {'user_id': user.id, 'full_name': user.full_name, 'username': user.username, 'amount': amount, 'bank_info': bank_info, 'status': 'pending', 'timestamp': time.time()}
-            db_update_balance(user.id, current_balance - amount, reason=f"YÃªu cáº§u rÃºt tiá»n {request_id}")
+            db_update_balance(user.id, current_balance - amount, reason=f"Yêu cầu rút tiền {request_id}")
             await save_data()
         await update.message.reply_text(
             lt(
                 user_id,
-                "{success} <b>Gá»¬I YÃŠU Cáº¦U THÃ€NH CÃ”NG!</b>\n\n{id_icon} MÃ£ yÃªu cáº§u: <code>{request_id}</code>\n{tag} Sá»‘ tiá»n: {amount:,} VNÄ\n{tag} ThÃ´ng tin: {bank}\n\n{loading} Admin sáº½ duyá»‡t vÃ  chuyá»ƒn khoáº£n trong 24h.",
+                "{success} <b>GỬI YÊU CẦU THÀNH CÔNG!</b>\n\n{id_icon} Mã yêu cầu: <code>{request_id}</code>\n{tag} Số tiền: {amount:,} VNĐ\n{tag} Thông tin: {bank}\n\n{loading} Admin sẽ duyệt và chuyển khoản trong 24h.",
                 "{success} <b>REQUEST SUBMITTED!</b>\n\n{id_icon} Request ID: <code>{request_id}</code>\n{tag} Amount: {amount:,} VND\n{tag} Details: {bank}\n\n{loading} Admin will review and transfer within 24 hours.",
-                "{success} <b>ç”³è¯·æäº¤æˆåŠŸï¼</b>\n\n{id_icon} ç”³è¯·ç¼–å·ï¼š<code>{request_id}</code>\n{tag} é‡‘é¢ï¼š{amount:,} VND\n{tag} æ”¶æ¬¾ä¿¡æ¯ï¼š{bank}\n\n{loading} ç®¡ç†å‘˜å°†åœ¨ 24 å°æ—¶å†…å®¡æ ¸å¹¶è½¬è´¦ã€‚",
+                "{success} <b>申请提交成功！</b>\n\n{id_icon} 申请编号：<code>{request_id}</code>\n{tag} 金额：{amount:,} VND\n{tag} 收款信息：{bank}\n\n{loading} 管理员将在 24 小时内审核并转账。",
                 success=E_SUCCESS, id_icon=E_ID, tag=E_TAG, loading=E_LOADING, request_id=request_id, amount=amount, bank=bank_info,
             ), parse_mode=ParseMode.HTML,
         )
@@ -165,19 +165,19 @@ def normalize_bank_info(raw_bank_info: str) -> tuple[str | None, str | None]:
 
     raw = " ".join(str(raw_bank_info or "").strip().split())
     if len(raw) > 160:
-        return None, "ThÃ´ng tin ngÃ¢n hÃ ng quÃ¡ dÃ i (tá»‘i Ä‘a 160 kÃ½ tá»±)."
+        return None, "Thông tin ngân hàng quá dài (tối đa 160 ký tự)."
     parts = [part.strip() for part in raw.split("-", 2)]
     if len(parts) != 3:
-        return None, "Vui lÃ²ng nháº­p Ä‘Ãºng máº«u: NgÃ¢n hÃ ng - Sá»‘ tÃ i khoáº£n - TÃªn chá»§ tÃ i khoáº£n."
+        return None, "Vui lòng nhập đúng mẫu: Ngân hàng - Số tài khoản - Tên chủ tài khoản."
 
     bank_name, account_number, account_holder = parts
     account_number = re.sub(r"\s+", "", account_number)
     if not 2 <= len(bank_name) <= 50 or not re.fullmatch(r"[0-9A-Za-z .&()]+", bank_name):
-        return None, "TÃªn ngÃ¢n hÃ ng khÃ´ng há»£p lá»‡."
+        return None, "Tên ngân hàng không hợp lệ."
     if not re.fullmatch(r"\d{6,19}", account_number):
-        return None, "Sá»‘ tÃ i khoáº£n pháº£i gá»“m 6-19 chá»¯ sá»‘."
+        return None, "Số tài khoản phải gồm 6-19 chữ số."
     if not 2 <= len(account_holder) <= 70 or any(ch in "<>" for ch in account_holder):
-        return None, "TÃªn chá»§ tÃ i khoáº£n khÃ´ng há»£p lá»‡."
+        return None, "Tên chủ tài khoản không hợp lệ."
     return f"{bank_name} - {account_number} - {account_holder}", None
 
 
@@ -187,25 +187,25 @@ async def notify_admin_withdrawal(context: ContextTypes.DEFAULT_TYPE, request_id
     if not req: return
     
     is_order_refund = req.get("source") == "order_refund"
-    request_title = "YÃŠU Cáº¦U HOÃ€N Vá»€ NGÃ‚N HÃ€NG" if is_order_refund else "YÃŠU Cáº¦U RÃšT TIá»€N Má»šI"
+    request_title = "YÊU CẦU HOÀN VỀ NGÂN HÀNG" if is_order_refund else "YÊU CẦU RÚT TIỀN MỚI"
     safe_order_code = html.escape(str(req.get("order_code") or ""))
     safe_full_name = html.escape(str(req.get("full_name") or "Unknown"))
     safe_username = html.escape(str(req.get("username") or ""))
     safe_bank_info = html.escape(str(req.get("bank_info") or ""))
     safe_request_id = html.escape(str(request_id))
-    order_line = f"{E_ID} MÃ£ Ä‘Æ¡n: <code>{safe_order_code}</code>\n" if is_order_refund else ""
+    order_line = f"{E_ID} Mã đơn: <code>{safe_order_code}</code>\n" if is_order_refund else ""
     msg = (
         f"{E_TAG} <b>{request_title}</b>\n\n"
         f"{E_USER} User: {safe_full_name} (@{safe_username})\n"
         f"{order_line}"
-        f"{E_TAG} Sá»‘ tiá»n: <b>{req['amount']:,} VNÄ</b>\n"
+        f"{E_TAG} Số tiền: <b>{req['amount']:,} VNĐ</b>\n"
         f"{E_TAG} Bank: <code>{safe_bank_info}</code>\n"
         f"{E_ID} ID: <code>{safe_request_id}</code>"
     )
     
     keyboard = [
-        [_btn("ÄÃƒ CHUYá»‚N KHOáº¢N", icon_id="6129870117619634982", callback_data=f"approve_withdraw:{request_id}")],
-        [_btn("Tá»ª CHá»I", icon_id="5445353829304387411", callback_data=f"reject_withdraw:{request_id}")]
+        [_btn("ĐÃ CHUYỂN KHOẢN", icon_id="6129870117619634982", callback_data=f"approve_withdraw:{request_id}")],
+        [_btn("TỪ CHỐI", icon_id="5445353829304387411", callback_data=f"reject_withdraw:{request_id}")]
     ]
     
     try:
@@ -230,8 +230,8 @@ async def ga_comment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     message = update.message
     if not message or not message.reply_to_message: return
     
-    # FIX BUG: Skip private chats - GA chá»‰ hoáº¡t Ä‘á»™ng trong groups/channels
-    # Äiá»u nÃ y giÃºp email replies trong private chat khÃ´ng bá»‹ cháº·n
+    # FIX BUG: Skip private chats - GA chỉ hoạt động trong groups/channels
+    # Điều này giúp email replies trong private chat không bị chặn
     if message.chat.type == 'private':
         return
     reply_to = message.reply_to_message
@@ -277,7 +277,7 @@ async def ga_comment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     # Feedback (React to message to confirm)
     try:
-        await message.set_reaction("<tg-emoji emoji-id=\"6269163801178804220\">ðŸ‘</tg-emoji>")
+        await message.set_reaction("<tg-emoji emoji-id=\"6269163801178804220\">👍</tg-emoji>")
     except (Forbidden, BadRequest) as e:
         logger.debug(f"Cannot set reaction in giveaway comment: {e}") # Bot might not have permission
 
@@ -305,7 +305,7 @@ async def ga_edit_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 # feedback
                 try:
                     await edited_msg.reply_text(
-                        f"{E_ERROR} <b>Cáº¢NH BÃO:</b> Báº¡n Ä‘Ã£ sá»­a tin nháº¯n! Káº¿t quáº£ nÃ y sáº½ KHÃ”NG Ä‘Æ°á»£c tÃ­nh.",
+                        f"{E_ERROR} <b>CẢNH BÁO:</b> Bạn đã sửa tin nhắn! Kết quả này sẽ KHÔNG được tính.",
                         parse_mode='HTML'
                     )
                 except (Forbidden, BadRequest) as e:
@@ -313,7 +313,7 @@ async def ga_edit_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 break
 
 # ==============================================================================
-#  BUTTON HANDLER (Xá»¬ LÃ NÃšT Báº¤M)ONLY)
+#  BUTTON HANDLER (XỬ LÝ NÚT BẤM)ONLY)
 # ==============================================================================
 # Removed legacy SQLite functions to unify project storage around JSON.
 # All data is now handled via load_data/save_data and in-memory globals.
@@ -321,7 +321,7 @@ async def ga_edit_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # --- DB Helper Functions (Shimmed to use Globals) ---
 def db_upsert_user(user_id, username, full_name, first_seen, balance=0):
     """Shim: Updates user_data_db global dict directly.
-    FIX BUG #15: Normalize user_id consistently nhÆ° db_get_user
+    FIX BUG #15: Normalize user_id consistently như db_get_user
     """
     # FIX: Normalize user_id to match db_get_user behavior
     user_id_str = str(int(user_id)) if user_id else None
@@ -516,7 +516,7 @@ def db_add_order(order_data, schedule_save=True):
 
 def db_get_order(order_code):
     """Shim: Finds order in order_history."""
-    # FIX: DÃ¹ng index O(1) thay vÃ¬ linear search O(n)
+    # FIX: Dùng index O(1) thay vì linear search O(n)
     return order_index.get(order_code)
 
 def find_order_by_code_or_supplier_id(order_code):
@@ -545,14 +545,14 @@ def db_add_tx(tx_id):
     return db_complete_transaction(tx_id)
 
 
-# Tá»‘i Æ°u: HTTP connection pooling vá»›i limits
-# FIX: Bá» httpx.Limits Ä‘á»ƒ trÃ¡nh lá»—i AsyncLibraryNotFoundError trÃªn má»™t sá»‘ mÃ´i trÆ°á»ng Windows cÅ©
+# Tối ưu: HTTP connection pooling với limits
+# FIX: Bỏ httpx.Limits để tránh lỗi AsyncLibraryNotFoundError trên một số môi trường Windows cũ
 # http_client = httpx.AsyncClient(
 #     timeout=httpx.Timeout(15.0, connect=5.0),
 #     limits=httpx.Limits(max_keepalive_connections=10, max_connections=20)
 # )
 
-# FIX: HTTP client sáº½ Ä‘Æ°á»£c khá»Ÿi táº¡o trong post_init vÃ  Ä‘Ã³ng trong pre_shutdown
+# FIX: HTTP client sẽ được khởi tạo trong post_init và đóng trong pre_shutdown
 http_client = None
 
 def _get_http_client(timeout: float = 30.0) -> httpx.AsyncClient:
@@ -561,7 +561,7 @@ def _get_http_client(timeout: float = 30.0) -> httpx.AsyncClient:
         return http_client
     return httpx.AsyncClient(timeout=timeout)
 
-# Cache Ä‘á»ƒ giáº£m database reads
+# Cache để giảm database reads
 _cache = {
     "last_save_time": 0,
     "save_debounce": 2.0,
@@ -569,14 +569,14 @@ _cache = {
     "last_cleanup_time": 0
 }
 
-# Throttle spam log cho lá»—i Conflict (nhiá»u instance polling cÃ¹ng token)
+# Throttle spam log cho lỗi Conflict (nhiều instance polling cùng token)
 _last_conflict_report_time = 0.0
 _conflict_report_cooldown = 60.0
 
 class OrderStatus(Enum):
-    COMPLETED = f"{E_SUCCESS} HoÃ n thÃ nh"
-    COMPLETED_RESENT = f"{E_SUCCESS} HoÃ n thÃ nh (Gá»­i láº¡i)"
-    PENDING_LINK = f"{E_LOADING} Chá» link"
+    COMPLETED = f"{E_SUCCESS} Hoàn thành"
+    COMPLETED_RESENT = f"{E_SUCCESS} Hoàn thành (Gửi lại)"
+    PENDING_LINK = f"{E_LOADING} Chờ link"
 
 def status_text(s):
     return s.value if isinstance(s, OrderStatus) else str(s or "")
@@ -589,7 +589,7 @@ def is_completed_order(order: dict) -> bool:
     if not normalized_status:
         return False
 
-    if "hoÃ n thÃ nh" in normalized_status or "hoan thanh" in normalized_status:
+    if "hoàn thành" in normalized_status or "hoan thanh" in normalized_status:
         return True
     if normalized_status == "completed":
         return True
@@ -607,7 +607,7 @@ def get_order_item_name(order: dict) -> str:
     if product_name:
         return product_name
     if str(order.get("type") or "") in {"store_product", "manual_order"}:
-        return "Sáº£n pháº©m"
-    return "GÃ³i iCloud 2TB"
+        return "Sản phẩm"
+    return "Gói iCloud 2TB"
 
 

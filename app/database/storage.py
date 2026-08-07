@@ -1,18 +1,18 @@
 def init_db():
-    """Khá»Ÿi táº¡o database SQLite vá»›i WAL mode vÃ  PRAGMA tá»‘i Æ°u."""
+    """Khởi tạo database SQLite với WAL mode và PRAGMA tối ưu."""
     from contextlib import closing
     import sqlite3 as _sqlite3
     with closing(_sqlite3.connect(DB_PATH)) as conn:
         cursor = conn.cursor()
-        # WAL mode: cho phÃ©p Ä‘á»c song song khi Ä‘ang ghi, giáº£m lock contention
+        # WAL mode: cho phép đọc song song khi đang ghi, giảm lock contention
         cursor.execute("PRAGMA journal_mode=WAL")
-        # synchronous=NORMAL: an toÃ n vá»›i WAL, nhanh hÆ¡n FULL ~2-3x
+        # synchronous=NORMAL: an toàn với WAL, nhanh hơn FULL ~2-3x
         cursor.execute("PRAGMA synchronous=NORMAL")
-        # Giá»›i háº¡n WAL file tá»‘i Ä‘a 32MB Ä‘á»ƒ trÃ¡nh phÃ¬nh quÃ¡ lá»›n
+        # Giới hạn WAL file tối đa 32MB để tránh phình quá lớn
         cursor.execute("PRAGMA journal_size_limit=33554432")
-        # TÄƒng cache lÃªn 16MB (máº·c Ä‘á»‹nh 2MB) cho hiá»‡u suáº¥t Ä‘á»c
+        # Tăng cache lên 16MB (mặc định 2MB) cho hiệu suất đọc
         cursor.execute("PRAGMA cache_size=-16000")
-        # Báº­t foreign keys (best practice)
+        # Bật foreign keys (best practice)
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.execute("CREATE TABLE IF NOT EXISTS kv_store (key TEXT PRIMARY KEY, value TEXT)")
         cursor.execute("CREATE TABLE IF NOT EXISTS processed_transactions (tx_id TEXT PRIMARY KEY, status TEXT NOT NULL DEFAULT 'completed', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL DEFAULT 0)")
@@ -46,7 +46,7 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_api_ledger_type_time ON api_partner_ledger(entry_type, created_at DESC)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_api_ledger_reference ON api_partner_ledger(reference)")
         conn.commit()
-        logger.info("<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> SQLite initialized: WAL mode, NORMAL sync, 16MB cache")
+        logger.info("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> SQLite initialized: WAL mode, NORMAL sync, 16MB cache")
 
 
 def _backfill_durable_registries():
@@ -402,7 +402,7 @@ def db_api_partner_ledger_summary(key_fingerprint: str = "", since: float = 0) -
 
 
 def load_from_db(key, default_value, migrate_file=None):
-    """Load data tá»« SQLite KV store (sync cho startup)"""
+    """Load data từ SQLite KV store (sync cho startup)"""
     from contextlib import closing
     import sqlite3 as _sqlite3
     try:
@@ -413,7 +413,7 @@ def load_from_db(key, default_value, migrate_file=None):
             if row:
                 return json.loads(row[0])
             
-            # Migrate tá»« JSON cÅ© náº¿u tá»“n táº¡i
+            # Migrate từ JSON cũ nếu tồn tại
             value_to_save = default_value
             if migrate_file and os.path.exists(migrate_file):
                 try:
@@ -421,17 +421,17 @@ def load_from_db(key, default_value, migrate_file=None):
                         value_to_save = json.load(f)
                     bak_path = f"{migrate_file}.bak"
                     os.replace(migrate_file, bak_path)
-                    logger.info(f"ÄÃ£ migrate {migrate_file} vÃ o {DB_PATH}")
-                    # XÃ³a file .bak sau khi migrate thÃ nh cÃ´ng
+                    logger.info(f"Đã migrate {migrate_file} vào {DB_PATH}")
+                    # Xóa file .bak sau khi migrate thành công
                     try:
                         os.remove(bak_path)
-                        logger.info(f"ÄÃ£ xÃ³a file backup: {bak_path}")
+                        logger.info(f"Đã xóa file backup: {bak_path}")
                     except OSError:
                         pass
                 except (json.JSONDecodeError, OSError) as e:
-                    logger.error(f"Lá»—i Ä‘á»c JSON {migrate_file}: {e}")
+                    logger.error(f"Lỗi đọc JSON {migrate_file}: {e}")
             
-            # LÆ°u vÃ o DB
+            # Lưu vào DB
             cursor.execute("INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)", (key, json.dumps(value_to_save, ensure_ascii=False)))
             conn.commit()
             return value_to_save
@@ -440,13 +440,13 @@ def load_from_db(key, default_value, migrate_file=None):
         return default_value
 
 async def _apply_wal_pragmas(db):
-    """Ãp dá»¥ng PRAGMA tá»‘i Æ°u cho má»—i káº¿t ná»‘i aiosqlite."""
+    """Áp dụng PRAGMA tối ưu cho mỗi kết nối aiosqlite."""
     await db.execute("PRAGMA journal_mode=WAL")
     await db.execute("PRAGMA synchronous=NORMAL")
     await db.execute("PRAGMA cache_size=-16000")
 
 async def save_data(force=False, tables=None):
-    """LÆ°u dá»¯ liá»‡u an toÃ n vÃ o SQLite KV vá»›i WAL mode vÃ  atomic transaction."""
+    """Lưu dữ liệu an toàn vào SQLite KV với WAL mode và atomic transaction."""
     current_time = time.time()
     
     if not force and not tables and (current_time - _cache["last_save_time"]) < _cache["save_debounce"]:
@@ -542,12 +542,12 @@ async def save_data(force=False, tables=None):
                 len(order_history),
             )
         except (sqlite3.Error, aiosqlite.Error, ValueError) as e:
-            logger.error(f"âŒ Lá»—i nghiÃªm trá»ng khi lÆ°u dá»¯ liá»‡u vÃ o SQLite: {e}", exc_info=True)
+            logger.error(f"❌ Lỗi nghiêm trọng khi lưu dữ liệu vào SQLite: {e}", exc_info=True)
 
 async def save_critical_tables(*table_keys):
-    """Save ngay láº­p tá»©c cÃ¡c báº£ng quan trá»ng (payment, order) khÃ´ng qua debounce.
+    """Save ngay lập tức các bảng quan trọng (payment, order) không qua debounce.
     
-    DÃ¹ng cho cÃ¡c luá»“ng nghiá»‡p vá»¥ critical: match payment, táº¡o Ä‘Æ¡n hÃ ng, etc.
+    Dùng cho các luồng nghiệp vụ critical: match payment, tạo đơn hàng, etc.
     """
     if table_keys:
         await save_data(force=True, tables=list(table_keys))
@@ -555,7 +555,7 @@ async def save_critical_tables(*table_keys):
         await save_data(force=True)
 
 async def save_data_debounced(context: ContextTypes.DEFAULT_TYPE):
-    """Background task Ä‘á»ƒ save dá»¯ liá»‡u pending"""
+    """Background task để save dữ liệu pending"""
     if _cache.get("pending_save"):
         await save_data(force=True)
 
@@ -650,14 +650,14 @@ def load_data():
         changed = False
         if not str(legacy_order.get("refund_target") or "").strip():
             legacy_status = str(legacy_order.get("status") or "").casefold()
-            if "vÃ­ chung" in legacy_status or "vi chung" in legacy_status:
-                legacy_order["refund_target"] = "VÃ­ chung"
-            elif "ngÃ¢n hÃ ng" in legacy_status or "ngan hang" in legacy_status:
-                legacy_order["refund_target"] = "NgÃ¢n hÃ ng"
-            elif "hoÃ n" in legacy_status or "hoan" in legacy_status or "refund" in legacy_status:
-                legacy_order["refund_target"] = "VÃ­ Bot"
+            if "ví chung" in legacy_status or "vi chung" in legacy_status:
+                legacy_order["refund_target"] = "Ví chung"
+            elif "ngân hàng" in legacy_status or "ngan hang" in legacy_status:
+                legacy_order["refund_target"] = "Ngân hàng"
+            elif "hoàn" in legacy_status or "hoan" in legacy_status or "refund" in legacy_status:
+                legacy_order["refund_target"] = "Ví Bot"
             else:
-                legacy_order["refund_target"] = "KhÃ´ng rÃµ (dá»¯ liá»‡u cÅ©)"
+                legacy_order["refund_target"] = "Không rõ (dữ liệu cũ)"
             changed = True
         try:
             known_refund_amount = int(legacy_order.get("refund_amount", 0) or 0)
@@ -696,5 +696,5 @@ def load_data():
         app_state.bridge_from_globals(globals())
     except ImportError:
         pass
-    logger.info(f"<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> Dá»¯ liá»‡u Ä‘Ã£ Ä‘Æ°á»£c táº£i tá»« SQLite. Orders: {len(order_history)}, Index: {len(order_index)}")
+    logger.info(f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Dữ liệu đã được tải từ SQLite. Orders: {len(order_history)}, Index: {len(order_index)}")
 

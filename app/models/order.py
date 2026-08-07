@@ -29,10 +29,10 @@ class OrderStatus(str, enum.Enum):
         normalized = re.sub(r"<tg-emoji[^>]*>[^<]*</tg-emoji>", "", normalized).strip().lower()
 
         mapping = {
-            "hoÃ n thÃ nh": cls.COMPLETED,
+            "hoàn thành": cls.COMPLETED,
             "hoan thanh": cls.COMPLETED,
             "completed": cls.COMPLETED,
-            "Ä‘Ã£ hoÃ n tiá»n": cls.REFUNDED,
+            "đã hoàn tiền": cls.REFUNDED,
             "refunded": cls.REFUNDED,
             "pending_payment": cls.PENDING_PAYMENT,
             "awaiting_email": cls.AWAITING_EMAIL,
@@ -52,13 +52,13 @@ class Order(BaseModel):
     order_code: str = Field(..., description="Unique order identifier (e.g. ICLD123456, PROD...)")
     user_id: int | str = Field(..., description="Telegram user ID or PARTNER_ prefixed ID")
     amount: int = Field(0, ge=0, description="Total amount in VND")
-    status: str = Field("HoÃ n thÃ nh", description="Order status (legacy string or OrderStatus)")
+    status: str = Field("Hoàn thành", description="Order status (legacy string or OrderStatus)")
     timestamp: float = Field(default_factory=time.time, description="Unix timestamp of creation")
 
     # Product info
     product_id: str = Field("", description="Product ID from catalog")
     product_name: str = Field("", description="Human-readable product name")
-    product_duration: str = Field("", description="Duration text (e.g. '1 thÃ¡ng', 'VÄ©nh viá»…n')")
+    product_duration: str = Field("", description="Duration text (e.g. '1 tháng', 'Vĩnh viễn')")
     quantity: int = Field(1, ge=1, description="Number of units purchased")
 
     # Delivery
@@ -82,7 +82,7 @@ class Order(BaseModel):
     refunded_at: float | None = Field(None, description="Unix timestamp when refunded")
     refund_amount: int = Field(0, ge=0, description="Amount refunded")
     refund_reason: str = Field("", description="Refund reason description")
-    refund_target: str = Field("", description="Where refund went (VÃ­ Bot / VÃ­ chung)")
+    refund_target: str = Field("", description="Where refund went (Ví Bot / Ví chung)")
 
     # API Partner fields
     type: str = Field("store_product", description="store_product | icloud_link")

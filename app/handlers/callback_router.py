@@ -8,15 +8,15 @@ except ImportError:
     pass
 
 
-API_PREM_WARN = '<tg-emoji emoji-id="5447644880824181073">âš ï¸</tg-emoji>'
-API_PREM_OK = '<tg-emoji emoji-id="6269163801178804220">âœ…</tg-emoji>'
-API_PREM_STOP = '<tg-emoji emoji-id="5424857974784925603">â›”</tg-emoji>'
-API_PREM_FAIL = 'âŒ'
-API_PREM_USER = '<tg-emoji emoji-id="5350778980158956492">ðŸ‘¤</tg-emoji>'
-API_PREM_SHIELD = '<tg-emoji emoji-id="5197288647275071607">ðŸ›¡ï¸</tg-emoji>'
-API_PREM_LOCK = 'ðŸ”'
-API_PREM_MONEY = '<tg-emoji emoji-id="5278467510604160626">ðŸ’°</tg-emoji>'
-API_PREM_NOTE = '<tg-emoji emoji-id="5350481781306958339">ðŸ’¾</tg-emoji>'
+API_PREM_WARN = '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji>'
+API_PREM_OK = '<tg-emoji emoji-id="6269163801178804220">✅</tg-emoji>'
+API_PREM_STOP = '<tg-emoji emoji-id="5424857974784925603">⛔</tg-emoji>'
+API_PREM_FAIL = '❌'
+API_PREM_USER = '<tg-emoji emoji-id="5350778980158956492">👤</tg-emoji>'
+API_PREM_SHIELD = '<tg-emoji emoji-id="5197288647275071607">🛡️</tg-emoji>'
+API_PREM_LOCK = '🔐'
+API_PREM_MONEY = '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji>'
+API_PREM_NOTE = '<tg-emoji emoji-id="5350481781306958339">💾</tg-emoji>'
 
 def _callback_requires_manual_answer(command: str) -> bool:
     command = str(command or "")
@@ -112,14 +112,14 @@ def _parse_duration_days_from_text(text: str) -> int:
     if not normalized:
         return 0
 
-    if any(token in normalized for token in ("vÄ©nh viá»…n", "vinh vien", "lifetime", "permanent", "forever")):
+    if any(token in normalized for token in ("vĩnh viễn", "vinh vien", "lifetime", "permanent", "forever")):
         return 0
 
     unit_multipliers = (
-        (365, ("nÄƒm", "nam", "year", "years")),
-        (30, ("thÃ¡ng", "thang", "month", "months")),
-        (7, ("tuáº§n", "tuan", "week", "weeks")),
-        (1, ("ngÃ y", "ngay", "day", "days")),
+        (365, ("năm", "nam", "year", "years")),
+        (30, ("tháng", "thang", "month", "months")),
+        (7, ("tuần", "tuan", "week", "weeks")),
+        (1, ("ngày", "ngay", "day", "days")),
     )
     for multiplier, units in unit_multipliers:
         for unit in units:
@@ -198,15 +198,15 @@ def _format_social_service_display_status(order: dict, fallback_status: str) -> 
 
     normalized = raw_status.casefold()
     if normalized in {"completed", "complete"}:
-        label = "âœ… HoÃ n thÃ nh"
+        label = "✅ Hoàn thành"
     elif normalized in {"in progress", "processing", "running"}:
-        label = "ðŸ”µ Äang cháº¡y"
+        label = "🔵 Đang chạy"
     elif normalized in {"pending", "queued"}:
-        label = "â³ Äang chá»"
+        label = "⏳ Đang chờ"
     elif normalized in {"partial"}:
-        label = "âš ï¸ HoÃ n thÃ nh má»™t pháº§n"
+        label = "⚠️ Hoàn thành một phần"
     elif normalized in {"canceled", "cancelled"}:
-        label = "âŒ ÄÃ£ há»§y"
+        label = "❌ Đã hủy"
     else:
         label = raw_status
     return f"{html.escape(label)} (Social Service)"
@@ -278,9 +278,9 @@ async def _complete_partner_api_key_rotation(
             context,
             chat_id,
             (
-                "âŒ "
-                "<b>KhÃ´ng thá»ƒ hoÃ n táº¥t Ä‘á»•i API key.</b>\n\n"
-                "Há»‡ thá»‘ng Ä‘Ã£ giá»¯ nguyÃªn key cÅ© Ä‘á»ƒ trÃ¡nh giÃ¡n Ä‘oáº¡n. HÃ£y thá»­ láº¡i sau."
+                "❌ "
+                "<b>Không thể hoàn tất đổi API key.</b>\n\n"
+                "Hệ thống đã giữ nguyên key cũ để tránh gián đoạn. Hãy thử lại sau."
             ),
             parse_mode=ParseMode.HTML,
         )
@@ -293,11 +293,11 @@ async def _complete_partner_api_key_rotation(
                 chat_id=source_chat_id,
                 message_id=source_message_id,
                 caption=(
-                    f"{API_PREM_WARN} <b>QR/API KEY CÅ¨ ÄÃƒ Háº¾T HIá»†U Lá»°C</b>\n"
-                    "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-                    f"{API_PREM_SHIELD} <b>Key cÅ©:</b> <code>{old_key}</code>\n"
-                    f"{API_PREM_LOCK} <b>Key má»›i:</b> <code>{new_key}</code>\n\n"
-                    "<i>Vui lÃ²ng dÃ¹ng key hoáº·c QR á»Ÿ tin nháº¯n má»›i nháº¥t bÃªn dÆ°á»›i. KhÃ´ng dÃ¹ng láº¡i áº£nh QR cÅ© nÃ y.</i>"
+                    f"{API_PREM_WARN} <b>QR/API KEY CŨ ĐÃ HẾT HIỆU LỰC</b>\n"
+                    "━━━━━━━━━━━━━━━━━━\n"
+                    f"{API_PREM_SHIELD} <b>Key cũ:</b> <code>{old_key}</code>\n"
+                    f"{API_PREM_LOCK} <b>Key mới:</b> <code>{new_key}</code>\n\n"
+                    "<i>Vui lòng dùng key hoặc QR ở tin nhắn mới nhất bên dưới. Không dùng lại ảnh QR cũ này.</i>"
                 ),
                 parse_mode=ParseMode.HTML,
                 reply_markup=None,
@@ -306,16 +306,16 @@ async def _complete_partner_api_key_rotation(
             logger.debug("Cannot update stale API wallet QR message for user %s", user_id)
 
     text = (
-        f"{API_PREM_LOCK} <b>ÄÃƒ Äá»”I API KEY</b>\n"
-        "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
+        f"{API_PREM_LOCK} <b>ĐÃ ĐỔI API KEY</b>\n"
+        "━━━━━━━━━━━━━━━━━━\n"
         f"{API_PREM_USER} <b>Partner:</b> {html.escape(str(partner_name))}\n"
-        f"{API_PREM_NOTE} <b>API Key má»›i:</b> <code>{new_key}</code>\n"
-        f"{API_PREM_MONEY} <b>Sá»‘ dÆ° vÃ­ chung:</b> {current_balance:,} VNÄ\n\n"
-        f"<i>{API_PREM_WARN} API key cÅ© Ä‘Ã£ bá»‹ vÃ´ hiá»‡u hÃ³a Ä‘á»ƒ báº£o máº­t. HÃ£y cáº­p nháº­t key má»›i trong há»‡ thá»‘ng cá»§a báº¡n.</i>"
+        f"{API_PREM_NOTE} <b>API Key mới:</b> <code>{new_key}</code>\n"
+        f"{API_PREM_MONEY} <b>Số dư ví chung:</b> {current_balance:,} VNĐ\n\n"
+        f"<i>{API_PREM_WARN} API key cũ đã bị vô hiệu hóa để bảo mật. Hãy cập nhật key mới trong hệ thống của bạn.</i>"
     )
     kb = InlineKeyboardMarkup([
-        [_btn("Náº¡p VÃ­", icon_id="5278467510604160626", callback_data="api_member_wallet")],
-        [_btn("Quay láº¡i menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+        [_btn("Nạp Ví", icon_id="5278467510604160626", callback_data="api_member_wallet")],
+        [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
     ])
     await safe_send_message(
         context,
@@ -334,9 +334,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     user_id = update.effective_user.id if update.effective_user else 0
     logger.info(f"[CALLBACK] user={user_id} data={command}")
 
-    # Kiá»ƒm tra cháº¿ Ä‘á»™ báº£o trÃ¬
+    # Kiểm tra chế độ bảo trì
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
-        await safe_answer(update.callback_query, "<tg-emoji emoji-id=\"5215392879320505675\">ðŸ› ï¸</tg-emoji> Há»‡ thá»‘ng Ä‘ang báº£o trÃ¬!", show_alert=True)
+        await safe_answer(update.callback_query, "<tg-emoji emoji-id=\"5215392879320505675\">🛠️</tg-emoji> Hệ thống đang bảo trì!", show_alert=True)
         return
 
     # Check Store Callback
@@ -358,7 +358,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     # Check Rate Limit
     if not await check_rate_limit(update.effective_user.id):
-        try: await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Thao tÃ¡c quÃ¡ nhanh!", show_alert=False)
+        try: await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Thao tác quá nhanh!", show_alert=False)
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
             logger.debug(f"Cannot answer rate-limit callback for user {update.effective_user.id}: {e}")
         return
@@ -416,7 +416,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         await safe_send_message(
                             context,
                             user_id,
-                            f"<tg-emoji emoji-id=\"5462956611033117422\">â™»ï¸</tg-emoji> <b>ÄÃ£ hoÃ n láº¡i:</b> +{balance_used:,} VNÄ vÃ o vÃ­ (Do há»§y Ä‘Æ¡n).",
+                            f"<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> <b>Đã hoàn lại:</b> +{balance_used:,} VNĐ vào ví (Do hủy đơn).",
                             parse_mode=ParseMode.HTML
                         )
                     except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -441,12 +441,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         except Forbidden:
             deep_link = f"https://t.me/{BOT_USERNAME}?start=start"
             fallback_text = (
-                "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>KhÃ´ng thá»ƒ nháº¯n riÃªng cho báº¡n.</b>\n\n"
-                "Vui lÃ²ng má»Ÿ chat riÃªng vá»›i bot vÃ  gá»­i <code>/start</code> trÆ°á»›c,\n"
-                "sau Ä‘Ã³ quay láº¡i thao tÃ¡c nÃ y."
+                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>Không thể nhắn riêng cho bạn.</b>\n\n"
+                "Vui lòng mở chat riêng với bot và gửi <code>/start</code> trước,\n"
+                "sau đó quay lại thao tác này."
             )
             fallback_kb = InlineKeyboardMarkup([
-                [InlineKeyboardButton("<tg-emoji emoji-id=\"6129860303619363484\">ðŸ“©</tg-emoji> Má»Ÿ chat bot", url=deep_link)]
+                [InlineKeyboardButton("<tg-emoji emoji-id=\"6129860303619363484\">📩</tg-emoji> Mở chat bot", url=deep_link)]
             ])
             try:
                 await safe_edit_message(
@@ -509,21 +509,21 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             ENABLE_ICLOUD_SALES = True
 
         if not ENABLE_ICLOUD_SALES:
-            await safe_answer(query, "âŒ Dá»‹ch vá»¥ iCloud hiá»‡n Ä‘ang táº¡m Ä‘Ã³ng.", show_alert=True)
+            await safe_answer(query, "❌ Dịch vụ iCloud hiện đang tạm đóng.", show_alert=True)
             return
 
         # Check stock
         if not available_links:
             try:
                 await query.edit_message_text(
-                    "âŒ <b>Táº M Háº¾T HÃ€NG!</b>\n\n"
-                    "<tg-emoji emoji-id=\"5231489647946768652\">â˜ï¸</tg-emoji> GÃ³i iCloud 2TB hiá»‡n Ä‘ang háº¿t link kÃ­ch hoáº¡t.\n\n"
-                    f"{E_TIP} Vui lÃ²ng quay láº¡i sau hoáº·c liÃªn há»‡ Admin Ä‘á»ƒ Ä‘Æ°á»£c thÃ´ng bÃ¡o khi cÃ³ hÃ ng!",
+                    "❌ <b>TẠM HẾT HÀNG!</b>\n\n"
+                    "<tg-emoji emoji-id=\"5231489647946768652\">☁️</tg-emoji> Gói iCloud 2TB hiện đang hết link kích hoạt.\n\n"
+                    f"{E_TIP} Vui lòng quay lại sau hoặc liên hệ Admin để được thông báo khi có hàng!",
                     parse_mode='HTML',
                     reply_markup=create_back_button_menu()
                 )
             except BadRequest:
-                await safe_answer(query, "âŒ Háº¿t hÃ ng! Vui lÃ²ng quay láº¡i sau.", show_alert=True)
+                await safe_answer(query, "❌ Hết hàng! Vui lòng quay lại sau.", show_alert=True)
             return
         
         # Clear any existing state
@@ -533,18 +533,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data['state'] = 'awaiting_email'
         
         msg = (
-            f"<tg-emoji emoji-id=\"5231489647946768652\">â˜ï¸</tg-emoji> <b>MUA GÃ“I iCLOUD 2TB</b>\n\n"
-            f"<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>GiÃ¡:</b> {ICLOUD_PACKAGE_PRICE:,} VNÄ\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> <b>Tráº¡ng thÃ¡i:</b> <tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> CÃ²n hÃ ng\n\n"
-            f"<tg-emoji emoji-id=\"6129860303619363484\">ðŸ“§</tg-emoji> <b>Vui lÃ²ng nháº­p email Ä‘á»ƒ nháº­n link kÃ­ch hoáº¡t:</b>\n"
-            f"<i>(Email sáº½ Ä‘Æ°á»£c dÃ¹ng Ä‘á»ƒ gá»­i link kÃ­ch hoáº¡t iCloud)</i>"
+            f"<tg-emoji emoji-id=\"5231489647946768652\">☁️</tg-emoji> <b>MUA GÓI iCLOUD 2TB</b>\n\n"
+            f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Giá:</b> {ICLOUD_PACKAGE_PRICE:,} VNĐ\n"
+            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Trạng thái:</b> <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Còn hàng\n\n"
+            f"<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> <b>Vui lòng nhập email để nhận link kích hoạt:</b>\n"
+            f"<i>(Email sẽ được dùng để gửi link kích hoạt iCloud)</i>"
         )
         
         await query.edit_message_text(
             msg,
             parse_mode='HTML',
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("âŒ Há»§y", callback_data="back_to_main")]
+                [InlineKeyboardButton("❌ Hủy", callback_data="back_to_main")]
             ])
         )
     
@@ -561,7 +561,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     elif command == 'withdraw_request':
         context.user_data.pop('state', None)
         context.user_data.pop('withdrawal_amount', None)
-        await safe_answer(query, "TÃ­nh nÄƒng rÃºt tiá»n Ä‘Ã£ Ä‘Æ°á»£c táº¯t. Sá»‘ dÆ° chá»‰ dÃ¹ng Ä‘á»ƒ mua hÃ ng.", show_alert=True)
+        await safe_answer(query, "Tính năng rút tiền đã được tắt. Số dư chỉ dùng để mua hàng.", show_alert=True)
         return
 
     elif command.startswith('refund_bank:'):
@@ -588,12 +588,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         ga_key = f"{query.message.chat.id}_{query.message.message_id}"
         
         if ga_key not in active_giveaways:
-            await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Giveaway nÃ y Ä‘Ã£ káº¿t thÃºc hoáº·c bá»‹ xÃ³a!", show_alert=True)
+            await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Giveaway này đã kết thúc hoặc bị xóa!", show_alert=True)
             return
             
         ga = active_giveaways[ga_key]
         if ga['status'] != 'active':
-            await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Giveaway Ä‘Ã£ káº¿t thÃºc!", show_alert=True)
+            await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Giveaway đã kết thúc!", show_alert=True)
             return
 
         # Normalize participants to support both old format
@@ -611,27 +611,27 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         ga['participants'] = list(dict.fromkeys(normalized_participants))
 
         if user_id in ga['participants']:
-            await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Báº¡n Ä‘Ã£ tham gia rá»“i!", show_alert=True)
+            await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Bạn đã tham gia rồi!", show_alert=True)
             return
             
         # Add participant
         ga['participants'].append(user_id)
         await save_data()
         
-        await safe_answer(query, "<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> Tham gia thÃ nh cÃ´ng! ChÃºc may máº¯n!", show_alert=True)
+        await safe_answer(query, "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Tham gia thành công! Chúc may mắn!", show_alert=True)
         
         # Update UI count (Debounced preferred but simple edit here)
         try:
             ud = ga
             end_ts = ud.get('end_time', 0)
-            end_str = datetime.fromtimestamp(end_ts).strftime('%H:%M %d/%m') if end_ts > 0 else "Khi Admin káº¿t thÃºc"
+            end_str = datetime.fromtimestamp(end_ts).strftime('%H:%M %d/%m') if end_ts > 0 else "Khi Admin kết thúc"
             
             msg_text = (
-                f"<tg-emoji emoji-id=\"5449800250032143374\">ðŸŽ‰</tg-emoji> <b>Sá»° KIá»†N GIVEAWAY: {ud.get('title', 'EVENT').upper()}</b> <tg-emoji emoji-id=\"5449800250032143374\">ðŸŽ‰</tg-emoji>\n\n"
-                f"<tg-emoji emoji-id=\"5449800250032143374\">ðŸŽ</tg-emoji> <b>Pháº§n thÆ°á»Ÿng:</b> {ud.get('prize_qty', 1)}x {ud.get('prize_name', 'MÃ³n quÃ  bÃ­ áº©n')}\n"
-                f"<tg-emoji emoji-id=\"5213349767672769194\">â³</tg-emoji> <b>Káº¿t thÃºc:</b> {end_str}\n"
-                f"<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¥</tg-emoji> <b>NgÆ°á»i tham gia:</b> {len(ga['participants'])}\n\n"
-                f"<tg-emoji emoji-id=\"6186252635805323641\">ðŸ‘‡</tg-emoji> <i>Báº¥m nÃºt bÃªn dÆ°á»›i Ä‘á»ƒ thá»­ váº­n may!</i>"
+                f"<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> <b>SỰ KIỆN GIVEAWAY: {ud.get('title', 'EVENT').upper()}</b> <tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji>\n\n"
+                f"<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> <b>Phần thưởng:</b> {ud.get('prize_qty', 1)}x {ud.get('prize_name', 'Món quà bí ẩn')}\n"
+                f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <b>Kết thúc:</b> {end_str}\n"
+                f"<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>Người tham gia:</b> {len(ga['participants'])}\n\n"
+                f"<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> <i>Bấm nút bên dưới để thử vận may!</i>"
             )
             
             await query.edit_message_caption(caption=msg_text, parse_mode='HTML', reply_markup=query.message.reply_markup)
@@ -648,9 +648,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             context.user_data['warranty_claim_order'] = order_code
             context.user_data['state'] = 'awaiting_warranty_description'
             await query.edit_message_text(
-                "<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡ï¸</tg-emoji> <b>YÃŠU Cáº¦U Báº¢O HÃ€NH</b>\n\nVui lÃ²ng <b>mÃ´ táº£ váº¥n Ä‘á»</b> báº¡n gáº·p pháº£i:\n<i>(Gá»­i tin nháº¯n mÃ´ táº£ chi tiáº¿t)</i>",
+                "<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>YÊU CẦU BẢO HÀNH</b>\n\nVui lòng <b>mô tả vấn đề</b> bạn gặp phải:\n<i>(Gửi tin nhắn mô tả chi tiết)</i>",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("âŒ Há»§y", callback_data="main_menu")]])
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("❌ Hủy", callback_data="main_menu")]])
             )
 
     elif command == 'open_live_chat':
@@ -659,20 +659,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             live_chats[user_id_str] = {'messages': [], 'status': 'active', 'last_activity': time.time(), 'unread_by_admin': 0}
         context.user_data['state'] = 'in_live_chat'
         chat = live_chats[user_id_str]
-        msg = f'<tg-emoji emoji-id="6129860303619363484">ðŸ’¬</tg-emoji> <b>{t("live_chat_title", user_id=user_id)}</b>\n\n'
+        msg = f'<tg-emoji emoji-id="6129860303619363484">💬</tg-emoji> <b>{t("live_chat_title", user_id=user_id)}</b>\n\n'
         recent_msgs = chat['messages'][-10:]
         for m in recent_msgs:
             from_who = (
-                f'<tg-emoji emoji-id="5350778980158956492">ðŸ§‘</tg-emoji> {t("live_chat_you", user_id=user_id)}'
+                f'<tg-emoji emoji-id="5350778980158956492">🧑</tg-emoji> {t("live_chat_you", user_id=user_id)}'
                 if m['from'] == 'user'
-                else f'<tg-emoji emoji-id="5350778980158956492">ðŸ‘¨</tg-emoji>â€<tg-emoji emoji-id="5854908544712707500">ðŸ’¼</tg-emoji> {t("live_chat_admin", user_id=user_id)}'
+                else f'<tg-emoji emoji-id="5350778980158956492">👨</tg-emoji>‍<tg-emoji emoji-id="5854908544712707500">💼</tg-emoji> {t("live_chat_admin", user_id=user_id)}'
             )
             time_str = datetime.fromtimestamp(m['timestamp']).strftime('%H:%M')
             msg += f"{from_who} ({time_str}):\n{m['text']}\n\n"
         if not recent_msgs:
             msg += f'<i>{t("live_chat_empty", user_id=user_id)}</i>\n\n'
-        msg += f'<tg-emoji emoji-id="5460753627817723162">ðŸ’¡</tg-emoji> {t("live_chat_prompt", user_id=user_id)}'
-        btns = [[InlineKeyboardButton(f'âŒ {t("live_chat_close", user_id=user_id)}', callback_data="close_live_chat")]]
+        msg += f'<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> {t("live_chat_prompt", user_id=user_id)}'
+        btns = [[InlineKeyboardButton(f'❌ {t("live_chat_close", user_id=user_id)}', callback_data="close_live_chat")]]
         await query.edit_message_text(msg, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(btns))
 
     elif command == 'close_live_chat':
@@ -688,40 +688,40 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             live_chats[user_id_str] = {'messages': [], 'status': 'active', 'last_activity': time.time(), 'unread_by_admin': 0}
         context.user_data['state'] = 'in_live_chat'
         chat = live_chats[user_id_str]
-        msg = f'<tg-emoji emoji-id="6129860303619363484">ðŸ’¬</tg-emoji> <b>{t("live_chat_title", user_id=user_id)}</b>\n\n'
+        msg = f'<tg-emoji emoji-id="6129860303619363484">💬</tg-emoji> <b>{t("live_chat_title", user_id=user_id)}</b>\n\n'
         recent_msgs = chat['messages'][-10:]
         for m in recent_msgs:
             from_who = (
-                f'<tg-emoji emoji-id="5350778980158956492">ðŸ§‘</tg-emoji> {t("live_chat_you", user_id=user_id)}'
+                f'<tg-emoji emoji-id="5350778980158956492">🧑</tg-emoji> {t("live_chat_you", user_id=user_id)}'
                 if m['from'] == 'user'
-                else f'<tg-emoji emoji-id="5350778980158956492">ðŸ‘¨</tg-emoji>â€<tg-emoji emoji-id="5854908544712707500">ðŸ’¼</tg-emoji> {t("live_chat_admin", user_id=user_id)}'
+                else f'<tg-emoji emoji-id="5350778980158956492">👨</tg-emoji>‍<tg-emoji emoji-id="5854908544712707500">💼</tg-emoji> {t("live_chat_admin", user_id=user_id)}'
             )
             time_str = datetime.fromtimestamp(m['timestamp']).strftime('%H:%M')
             msg += f"{from_who} ({time_str}):\n{m['text']}\n\n"
         if not recent_msgs:
             msg += f'<i>{t("live_chat_empty", user_id=user_id)}</i>\n\n'
-        msg += f'<tg-emoji emoji-id="5460753627817723162">ðŸ’¡</tg-emoji> {t("live_chat_prompt", user_id=user_id)}'
-        btns = [[InlineKeyboardButton(f'âŒ {t("live_chat_close", user_id=user_id)}', callback_data="close_live_chat")]]
+        msg += f'<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> {t("live_chat_prompt", user_id=user_id)}'
+        btns = [[InlineKeyboardButton(f'❌ {t("live_chat_close", user_id=user_id)}', callback_data="close_live_chat")]]
         await safe_send_message(context, user_id, msg, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(btns))
 
     elif command in {'api_register_request', 'api_register_guide'}:
         if command == 'api_register_guide':
             text = (
-                "<tg-emoji emoji-id=\"5350481781306958339\">ðŸ“˜</tg-emoji> <b>HÆ¯á»šNG DáºªN ÄÄ‚NG KÃ API PARTNER</b>\n"
-                "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-                "1. Nháº¥n nÃºt <b>Gá»­i yÃªu cáº§u Ä‘Äƒng kÃ½</b> bÃªn dÆ°á»›i.\n"
-                "2. Chá» Admin duyá»‡t tÃ i khoáº£n.\n"
-                "3. Bot gá»­i API Key cho báº¡n qua tin nháº¯n.\n"
-                "4. Náº¡p vÃ­ báº±ng lá»‡nh <code>/napapi [sá»‘_tiá»n]</code>.\n"
-                "5. VÃ o láº¡i <code>/start</code> Ä‘á»ƒ tháº¥y menu <b>API Partner</b>.\n\n"
-                "<i>Menu API chá»‰ hiá»‡n sau khi Ä‘Æ°á»£c Admin duyá»‡t.</i>"
+                "<tg-emoji emoji-id=\"5350481781306958339\">📘</tg-emoji> <b>HƯỚNG DẪN ĐĂNG KÝ API PARTNER</b>\n"
+                "━━━━━━━━━━━━━━━━━━\n"
+                "1. Nhấn nút <b>Gửi yêu cầu đăng ký</b> bên dưới.\n"
+                "2. Chờ Admin duyệt tài khoản.\n"
+                "3. Bot gửi API Key cho bạn qua tin nhắn.\n"
+                "4. Nạp ví bằng lệnh <code>/napapi [số_tiền]</code>.\n"
+                "5. Vào lại <code>/start</code> để thấy menu <b>API Partner</b>.\n\n"
+                "<i>Menu API chỉ hiện sau khi được Admin duyệt.</i>"
             )
             kb = InlineKeyboardMarkup([
-                [_btn("Gá»­i yÃªu cáº§u Ä‘Äƒng kÃ½", icon_id="5436359785534466562", callback_data="api_register_request")],
-                [_btn("Quay láº¡i", icon_id="6206032691075223572", callback_data="back_to_main")]
+                [_btn("Gửi yêu cầu đăng ký", icon_id="5436359785534466562", callback_data="api_register_request")],
+                [_btn("Quay lại", icon_id="6206032691075223572", callback_data="back_to_main")]
             ])
             kb = InlineKeyboardMarkup([
-                [_btn("Quay láº¡i menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
             ])
             await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
             return
@@ -734,7 +734,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     elif command in {'api_member_menu', 'api_member_wallet', 'api_member_docs', 'api_member_topup_help', 'api_member_endpoints', 'api_member_rotate_key'}:
         partner_key, partner_data = get_partner_api_entry_by_user(user_id)
         if not partner_key or not isinstance(partner_data, dict):
-            await safe_answer(query, "<tg-emoji emoji-id=\"5424857974784925603\">â›”</tg-emoji> Báº¡n chÆ°a Ä‘Æ°á»£c Admin duyá»‡t API.", show_alert=True)
+            await safe_answer(query, "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> Bạn chưa được Admin duyệt API.", show_alert=True)
             return
         await safe_answer(query)
 
@@ -769,13 +769,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 query.message.chat_id,
                 (
                     f"{API_PREM_WARN} "
-                    "<b>XÃC NHáº¬N Äá»”I API KEY</b>\n\n"
-                    "Äá»ƒ trÃ¡nh báº¥m nháº§m, hÃ£y nháº­p <code>sure</code> vÃ o chat Ä‘á»ƒ xÃ¡c nháº­n Ä‘á»•i key.\n"
-                    "Náº¿u khÃ´ng muá»‘n Ä‘á»•i ná»¯a, hÃ£y gÃµ <code>/cancel</code>."
+                    "<b>XÁC NHẬN ĐỔI API KEY</b>\n\n"
+                    "Để tránh bấm nhầm, hãy nhập <code>sure</code> vào chat để xác nhận đổi key.\n"
+                    "Nếu không muốn đổi nữa, hãy gõ <code>/cancel</code>."
                 ),
                 parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup([
-                    [_btn("Quay láº¡i menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                    [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
                 ]),
             )
             if sent_confirmation:
@@ -831,9 +831,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     context,
                     query.message.chat_id,
                     (
-                        "âŒ "
-                        "<b>KhÃ´ng thá»ƒ hoÃ n táº¥t Ä‘á»•i API key.</b>\n\n"
-                        "Há»‡ thá»‘ng Ä‘Ã£ giá»¯ nguyÃªn key cÅ© Ä‘á»ƒ trÃ¡nh giÃ¡n Ä‘oáº¡n. HÃ£y thá»­ láº¡i sau."
+                        "❌ "
+                        "<b>Không thể hoàn tất đổi API key.</b>\n\n"
+                        "Hệ thống đã giữ nguyên key cũ để tránh gián đoạn. Hãy thử lại sau."
                     ),
                     parse_mode=ParseMode.HTML,
                 )
@@ -842,16 +842,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             logger.info("API key rotated for user %s", user_id)
 
             text = (
-                "\U0001F511 <b>ÄÃƒ Äá»”I API KEY</b>\n"
-                "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
+                "\U0001F511 <b>ĐÃ ĐỔI API KEY</b>\n"
+                "━━━━━━━━━━━━━━━━━━\n"
                 f"\U0001F464 <b>Partner:</b> {html.escape(str(partner_name))}\n"
-                f"\U0001F6E1 <b>API Key má»›i:</b> <code>{new_key}</code>\n"
-                f"\U0001F4B0 <b>Sá»‘ dÆ° vÃ­ chung:</b> {current_balance:,} VNÄ\n\n"
-                "<i>\u26A0\uFE0F API key cÅ© Ä‘Ã£ bá»‹ vÃ´ hiá»‡u hÃ³a Ä‘á»ƒ báº£o máº­t. HÃ£y cáº­p nháº­t key má»›i trong há»‡ thá»‘ng cá»§a báº¡n.</i>"
+                f"\U0001F6E1 <b>API Key mới:</b> <code>{new_key}</code>\n"
+                f"\U0001F4B0 <b>Số dư ví chung:</b> {current_balance:,} VNĐ\n\n"
+                "<i>\u26A0\uFE0F API key cũ đã bị vô hiệu hóa để bảo mật. Hãy cập nhật key mới trong hệ thống của bạn.</i>"
             )
             kb = InlineKeyboardMarkup([
-                [_btn("Náº¡p VÃ­", icon_id="5278467510604160626", callback_data="api_member_wallet")],
-                [_btn("Quay láº¡i menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                [_btn("Nạp Ví", icon_id="5278467510604160626", callback_data="api_member_wallet")],
+                [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
             ])
             from app.core.emoji_runtime import upgrade_text_to_premium_emoji
             await safe_send_message(
@@ -866,18 +866,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if command == 'api_member_menu':
             text = lt(
                 user_id,
-                "<tg-emoji emoji-id=\"6271362510901747485\">ðŸ¤–</tg-emoji> <b>MENU API PARTNER (THÃ€NH VIÃŠN)</b>\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¥</tg-emoji> <b>Partner:</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡</tg-emoji> <b>API Key:</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>Sá»‘ dÆ° vÃ­ chung:</b> {balance:,} VNÄ\n\n<b>Full lá»‡nh/API cho thÃ nh viÃªn:</b>\nâ€¢ <code>/napapi [sá»‘_tiá»n]</code> - táº¡o QR náº¡p vÃ­ chung\nâ€¢ <code>/lichsu</code> - xem lá»‹ch sá»­ Ä‘Æ¡n thÆ°á»ng + Ä‘Æ¡n API\nâ€¢ <code>GET /api/v2/me</code> - kiá»ƒm tra key + sá»‘ dÆ°\nâ€¢ <code>GET /api/v2/catalog</code> - láº¥y danh má»¥c sáº£n pháº©m\nâ€¢ <code>GET /api/v2/orders</code> - láº¥y lá»‹ch sá»­ Ä‘Æ¡n API\nâ€¢ <code>POST /api/v2/orders</code> - táº¡o Ä‘Æ¡n mua\nâ€¢ <code>GET /api/v2/orders/{{order_code}}</code> - tra cá»©u Ä‘Æ¡n\nâ€¢ <code>GET /api/v2/orders/by-ref/{{partner_ref}}</code> - tra theo mÃ£ Ä‘á»‘i tÃ¡c\n\n<i>Menu nÃ y chá»‰ hiá»ƒn thá»‹ khi tÃ i khoáº£n Ä‘Ã£ Ä‘Æ°á»£c Admin duyá»‡t API.</i>",
-                "<tg-emoji emoji-id=\"6271362510901747485\">ðŸ¤–</tg-emoji> <b>API PARTNER MENU (MEMBER)</b>\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¥</tg-emoji> <b>Partner:</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡</tg-emoji> <b>API Key:</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>Shared wallet balance:</b> {balance:,} VND\n\n<b>Member commands/API:</b>\nâ€¢ <code>/napapi [amount]</code> - create a shared-wallet top-up QR\nâ€¢ <code>/lichsu</code> - view regular and API orders\nâ€¢ <code>GET /api/v2/me</code> - verify key and balance\nâ€¢ <code>GET /api/v2/catalog</code> - get product catalog\nâ€¢ <code>GET /api/v2/orders</code> - get API order history\nâ€¢ <code>POST /api/v2/orders</code> - create an order\nâ€¢ <code>GET /api/v2/orders/{{order_code}}</code> - look up an order\nâ€¢ <code>GET /api/v2/orders/by-ref/{{partner_ref}}</code> - look up by partner reference\n\n<i>This menu appears only after Admin approves API access.</i>",
-                "<tg-emoji emoji-id=\"6271362510901747485\">ðŸ¤–</tg-emoji> <b>API åˆä½œä¼™ä¼´èœå•ï¼ˆæˆå‘˜ï¼‰</b>\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¥</tg-emoji> <b>åˆä½œä¼™ä¼´ï¼š</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡</tg-emoji> <b>API Keyï¼š</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>å…±äº«é’±åŒ…ä½™é¢ï¼š</b> {balance:,} VND\n\n<b>æˆå‘˜å‘½ä»¤/APIï¼š</b>\nâ€¢ <code>/napapi [é‡‘é¢]</code> - åˆ›å»ºå…±äº«é’±åŒ…å……å€¼äºŒç»´ç \nâ€¢ <code>/lichsu</code> - æŸ¥çœ‹æ™®é€šè®¢å•å’Œ API è®¢å•\nâ€¢ <code>GET /api/v2/me</code> - æ£€æŸ¥å¯†é’¥å’Œä½™é¢\nâ€¢ <code>GET /api/v2/catalog</code> - èŽ·å–å•†å“ç›®å½•\nâ€¢ <code>GET /api/v2/orders</code> - èŽ·å– API è®¢å•åŽ†å²\nâ€¢ <code>POST /api/v2/orders</code> - åˆ›å»ºè®¢å•\nâ€¢ <code>GET /api/v2/orders/{{order_code}}</code> - æŸ¥è¯¢è®¢å•\nâ€¢ <code>GET /api/v2/orders/by-ref/{{partner_ref}}</code> - æŒ‰åˆä½œä¼™ä¼´ç¼–å·æŸ¥è¯¢\n\n<i>ä»…åœ¨ç®¡ç†å‘˜æ‰¹å‡† API æƒé™åŽæ˜¾ç¤ºæ­¤èœå•ã€‚</i>",
+                "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>MENU API PARTNER (THÀNH VIÊN)</b>\n━━━━━━━━━━━━━━━━━━\n<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>Partner:</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">🛡</tg-emoji> <b>API Key:</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số dư ví chung:</b> {balance:,} VNĐ\n\n<b>Full lệnh/API cho thành viên:</b>\n• <code>/napapi [số_tiền]</code> - tạo QR nạp ví chung\n• <code>/lichsu</code> - xem lịch sử đơn thường + đơn API\n• <code>GET /api/v2/me</code> - kiểm tra key + số dư\n• <code>GET /api/v2/catalog</code> - lấy danh mục sản phẩm\n• <code>GET /api/v2/orders</code> - lấy lịch sử đơn API\n• <code>POST /api/v2/orders</code> - tạo đơn mua\n• <code>GET /api/v2/orders/{{order_code}}</code> - tra cứu đơn\n• <code>GET /api/v2/orders/by-ref/{{partner_ref}}</code> - tra theo mã đối tác\n\n<i>Menu này chỉ hiển thị khi tài khoản đã được Admin duyệt API.</i>",
+                "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>API PARTNER MENU (MEMBER)</b>\n━━━━━━━━━━━━━━━━━━\n<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>Partner:</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">🛡</tg-emoji> <b>API Key:</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Shared wallet balance:</b> {balance:,} VND\n\n<b>Member commands/API:</b>\n• <code>/napapi [amount]</code> - create a shared-wallet top-up QR\n• <code>/lichsu</code> - view regular and API orders\n• <code>GET /api/v2/me</code> - verify key and balance\n• <code>GET /api/v2/catalog</code> - get product catalog\n• <code>GET /api/v2/orders</code> - get API order history\n• <code>POST /api/v2/orders</code> - create an order\n• <code>GET /api/v2/orders/{{order_code}}</code> - look up an order\n• <code>GET /api/v2/orders/by-ref/{{partner_ref}}</code> - look up by partner reference\n\n<i>This menu appears only after Admin approves API access.</i>",
+                "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>API 合作伙伴菜单（成员）</b>\n━━━━━━━━━━━━━━━━━━\n<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>合作伙伴：</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">🛡</tg-emoji> <b>API Key：</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>共享钱包余额：</b> {balance:,} VND\n\n<b>成员命令/API：</b>\n• <code>/napapi [金额]</code> - 创建共享钱包充值二维码\n• <code>/lichsu</code> - 查看普通订单和 API 订单\n• <code>GET /api/v2/me</code> - 检查密钥和余额\n• <code>GET /api/v2/catalog</code> - 获取商品目录\n• <code>GET /api/v2/orders</code> - 获取 API 订单历史\n• <code>POST /api/v2/orders</code> - 创建订单\n• <code>GET /api/v2/orders/{{order_code}}</code> - 查询订单\n• <code>GET /api/v2/orders/by-ref/{{partner_ref}}</code> - 按合作伙伴编号查询\n\n<i>仅在管理员批准 API 权限后显示此菜单。</i>",
                 partner=html.escape(str(partner_name)), key=partner_key, balance=partner_balance,
             )
             kb = InlineKeyboardMarkup([
-                [_btn(lt(user_id, "VÃ­ Chung", "Shared Wallet", "å…±äº«é’±åŒ…"), icon_id="5278467510604160626", callback_data="api_member_wallet"),
-                 _btn(lt(user_id, "Lá»‹ch Sá»­", "History", "åŽ†å²"), icon_id="5444856076954520455", callback_data="lichsu_entry")],
-                [_btn(lt(user_id, "Náº¡p VÃ­", "Top Up", "å……å€¼"), icon_id="5278467510604160626", callback_data="api_member_wallet"),
-                 _btn(lt(user_id, "TÃ i Liá»‡u API", "API Docs", "API æ–‡æ¡£"), icon_id="5350481781306958339", callback_data="api_member_docs")],
+                [_btn(lt(user_id, "Ví Chung", "Shared Wallet", "共享钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet"),
+                 _btn(lt(user_id, "Lịch Sử", "History", "历史"), icon_id="5444856076954520455", callback_data="lichsu_entry")],
+                [_btn(lt(user_id, "Nạp Ví", "Top Up", "充值"), icon_id="5278467510604160626", callback_data="api_member_wallet"),
+                 _btn(lt(user_id, "Tài Liệu API", "API Docs", "API 文档"), icon_id="5350481781306958339", callback_data="api_member_docs")],
                 [_btn("Endpoints", icon_id="5215039453487893428", callback_data="api_member_endpoints")],
-                [_btn(lt(user_id, "Quay láº¡i", "Back", "è¿”å›ž"), icon_id="6206032691075223572", callback_data="back_to_main")]
+                [_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data="back_to_main")]
             ])
             if getattr(query.message, "photo", None):
                 await context.bot.send_message(
@@ -898,15 +898,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             )
             caption = lt(
                 user_id,
-                "<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>QR Náº P VÃ CHUNG</b>\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¥</tg-emoji> <b>Partner:</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡</tg-emoji> <b>API Key:</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> <b>Sá»‘ dÆ° hiá»‡n táº¡i:</b> {balance:,} VNÄ\n<tg-emoji emoji-id=\"5373251851074415873\">ðŸ“</tg-emoji> <b>Ná»™i dung CK:</b> <code>{content}</code>\n\n<b>QuÃ©t QR rá»“i nháº­p sá»‘ tiá»n báº¡n muá»‘n náº¡p trong app ngÃ¢n hÃ ng.</b>\n\n<i>Há»‡ thá»‘ng sáº½ tá»± cá»™ng tiá»n khi nháº­n Ä‘Æ°á»£c giao dá»‹ch cÃ³ ná»™i dung Ä‘Ãºng Telegram ID cá»§a báº¡n.</i>",
-                "<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>SHARED WALLET TOP-UP QR</b>\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¥</tg-emoji> <b>Partner:</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡</tg-emoji> <b>API Key:</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> <b>Current balance:</b> {balance:,} VND\n<tg-emoji emoji-id=\"5373251851074415873\">ðŸ“</tg-emoji> <b>Transfer content:</b> <code>{content}</code>\n\n<b>Scan the QR and enter your top-up amount in your banking app.</b>\n\n<i>The system credits your wallet automatically when the transfer content matches your Telegram ID.</i>",
-                "<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>å…±äº«é’±åŒ…å……å€¼äºŒç»´ç </b>\nâ”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¥</tg-emoji> <b>åˆä½œä¼™ä¼´ï¼š</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡</tg-emoji> <b>API Keyï¼š</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> <b>å½“å‰ä½™é¢ï¼š</b> {balance:,} VND\n<tg-emoji emoji-id=\"5373251851074415873\">ðŸ“</tg-emoji> <b>è½¬è´¦å†…å®¹ï¼š</b> <code>{content}</code>\n\n<b>æ‰«æäºŒç»´ç ï¼Œç„¶åŽåœ¨é“¶è¡Œåº”ç”¨ä¸­è¾“å…¥å……å€¼é‡‘é¢ã€‚</b>\n\n<i>æ”¶åˆ°è½¬è´¦å†…å®¹ä¸Žæ‚¨çš„ Telegram ID åŒ¹é…çš„äº¤æ˜“åŽï¼Œç³»ç»Ÿå°†è‡ªåŠ¨å…¥è´¦ã€‚</i>",
+                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>QR NẠP VÍ CHUNG</b>\n━━━━━━━━━━━━━━━━━━\n<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>Partner:</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">🛡</tg-emoji> <b>API Key:</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Số dư hiện tại:</b> {balance:,} VNĐ\n<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Nội dung CK:</b> <code>{content}</code>\n\n<b>Quét QR rồi nhập số tiền bạn muốn nạp trong app ngân hàng.</b>\n\n<i>Hệ thống sẽ tự cộng tiền khi nhận được giao dịch có nội dung đúng Telegram ID của bạn.</i>",
+                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>SHARED WALLET TOP-UP QR</b>\n━━━━━━━━━━━━━━━━━━\n<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>Partner:</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">🛡</tg-emoji> <b>API Key:</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Current balance:</b> {balance:,} VND\n<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Transfer content:</b> <code>{content}</code>\n\n<b>Scan the QR and enter your top-up amount in your banking app.</b>\n\n<i>The system credits your wallet automatically when the transfer content matches your Telegram ID.</i>",
+                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>共享钱包充值二维码</b>\n━━━━━━━━━━━━━━━━━━\n<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>合作伙伴：</b> {partner}\n<tg-emoji emoji-id=\"5197288647275071607\">🛡</tg-emoji> <b>API Key：</b> <code>{key}</code>\n<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>当前余额：</b> {balance:,} VND\n<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>转账内容：</b> <code>{content}</code>\n\n<b>扫描二维码，然后在银行应用中输入充值金额。</b>\n\n<i>收到转账内容与您的 Telegram ID 匹配的交易后，系统将自动入账。</i>",
                 partner=html.escape(str(partner_name)), key=partner_key,
                 balance=partner_balance, content=transfer_content,
             )
             kb = InlineKeyboardMarkup([[
-                _btn(lt(user_id, "Äá»•i API Key", "Rotate API Key", "æ›´æ¢ API Key"), icon_id="5352716320093695452", callback_data="api_member_rotate_key"),
-                _btn(lt(user_id, "Quay láº¡i menu API", "Back to API Menu", "è¿”å›ž API èœå•"), icon_id="6206032691075223572", callback_data="api_member_menu")
+                _btn(lt(user_id, "Đổi API Key", "Rotate API Key", "更换 API Key"), icon_id="5352716320093695452", callback_data="api_member_rotate_key"),
+                _btn(lt(user_id, "Quay lại menu API", "Back to API Menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")
             ]])
             await context.bot.send_photo(
                 chat_id=query.message.chat_id,
@@ -919,56 +919,56 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         if command == 'api_member_topup_help':
             text = (
-                "<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>HÆ¯á»šNG DáºªN Náº P VÃ CHUNG</b>\n"
-                "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-                "1. GÃµ lá»‡nh: <code>/napapi [sá»‘_tiá»n]</code>\n"
-                "2. Bot tráº£ vá» QR + ná»™i dung chuyá»ƒn khoáº£n (NAPI...)\n"
-                "3. Chuyá»ƒn Ä‘Ãºng sá»‘ tiá»n vÃ  Ä‘Ãºng ná»™i dung\n"
-                "4. Chá» 1-3 phÃºt há»‡ thá»‘ng tá»± cá»™ng vÃ o vÃ­ chung\n\n"
-                "<b>VÃ­ dá»¥:</b>\n"
-                "â€¢ <code>/napapi 200000</code>\n"
-                "â€¢ <code>/napapi 500000</code>"
+                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>HƯỚNG DẪN NẠP VÍ CHUNG</b>\n"
+                "━━━━━━━━━━━━━━━━━━\n"
+                "1. Gõ lệnh: <code>/napapi [số_tiền]</code>\n"
+                "2. Bot trả về QR + nội dung chuyển khoản (NAPI...)\n"
+                "3. Chuyển đúng số tiền và đúng nội dung\n"
+                "4. Chờ 1-3 phút hệ thống tự cộng vào ví chung\n\n"
+                "<b>Ví dụ:</b>\n"
+                "• <code>/napapi 200000</code>\n"
+                "• <code>/napapi 500000</code>"
             )
             kb = InlineKeyboardMarkup([
-                [_btn("VÃ­ Chung", icon_id="5278467510604160626", callback_data="api_member_wallet")],
-                [_btn("Quay láº¡i menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                [_btn("Ví Chung", icon_id="5278467510604160626", callback_data="api_member_wallet")],
+                [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
             ])
             await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
             return
 
         base_url_note = (
-            "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> <b>Link hiá»‡n táº¡i lÃ  Cloudflare Quick Tunnel.</b> Náº¿u server restart hoáº·c má»Ÿ láº¡i cloudflared thÃ¬ URL cÃ³ thá»ƒ Ä‘á»•i.\n\n"
+            "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>Link hiện tại là Cloudflare Quick Tunnel.</b> Nếu server restart hoặc mở lại cloudflared thì URL có thể đổi.\n\n"
             if "trycloudflare.com" in base_url
-            else "<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> <b>Link nÃ y Ä‘ang láº¥y tá»« cáº¥u hÃ¬nh PUBLIC_API_URL hiá»‡n táº¡i.</b>\n\n"
+            else "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>Link này đang lấy từ cấu hình PUBLIC_API_URL hiện tại.</b>\n\n"
         )
 
         if command == 'api_member_endpoints':
             text = (
-                "<tg-emoji emoji-id=\"5215392879320505675\">ðŸ› ï¸</tg-emoji> <b>DANH SÃCH ENDPOINT PARTNER</b>\n"
-                "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-                f"<tg-emoji emoji-id=\"5447410659077661506\">ðŸŒ</tg-emoji> <b>Base URL:</b> <code>{base_url}</code>\n"
+                "<tg-emoji emoji-id=\"5215392879320505675\">🛠️</tg-emoji> <b>DANH SÁCH ENDPOINT PARTNER</b>\n"
+                "━━━━━━━━━━━━━━━━━━\n"
+                f"<tg-emoji emoji-id=\"5447410659077661506\">🌐</tg-emoji> <b>Base URL:</b> <code>{base_url}</code>\n"
                 f"{base_url_note}"
-                f"<tg-emoji emoji-id=\"5350481781306958339\">ðŸ“–</tg-emoji> <b>TÃ i liá»‡u Web:</b> "
+                f"<tg-emoji emoji-id=\"5350481781306958339\">📖</tg-emoji> <b>Tài liệu Web:</b> "
                 f"<a href=\"{safe_docs_url}\">{safe_docs_url}</a>\n\n"
-                "<b>Sáº£n pháº©m thÆ°á»ng:</b>\n"
-                "â€¢ <code>GET /api/v2/me</code>\n"
-                "â€¢ <code>GET /api/v2/catalog</code>\n"
-                "â€¢ <code>POST /api/v2/orders</code>\n"
-                "â€¢ <code>GET /api/v2/orders/{order_code}</code>\n\n"
+                "<b>Sản phẩm thường:</b>\n"
+                "• <code>GET /api/v2/me</code>\n"
+                "• <code>GET /api/v2/catalog</code>\n"
+                "• <code>POST /api/v2/orders</code>\n"
+                "• <code>GET /api/v2/orders/{order_code}</code>\n\n"
                 "<b>Social Media:</b>\n"
-                "â€¢ <code>GET /api/social/catalog</code>\n"
-                "â€¢ <code>POST /api/social/orders</code>\n"
-                "â€¢ <code>GET /api/social/orders?limit=20&amp;offset=0</code>\n"
-                "â€¢ <code>GET /api/social/orders/{order_code}</code>\n"
-                "â€¢ <code>GET /api/social/orders/by-ref/{partner_ref}</code>\n\n"
-                "<b>Headers dÃ¹ng chung:</b>\n"
-                f"â€¢ <code>x-api-key: {partner_key}</code>\n"
-                "â€¢ <code>x-idempotency-key: MA_DON_DOI_TAC</code>\n\n"
-                "<b>MÃ£ pháº£n há»“i:</b> <code>200</code> OK Â· <code>400</code> sai endpoint/field Â· <code>401</code> sai key Â· <code>402</code> thiáº¿u tiá»n Â· <code>404</code> khÃ´ng tÃ¬m tháº¥y"
+                "• <code>GET /api/social/catalog</code>\n"
+                "• <code>POST /api/social/orders</code>\n"
+                "• <code>GET /api/social/orders?limit=20&amp;offset=0</code>\n"
+                "• <code>GET /api/social/orders/{order_code}</code>\n"
+                "• <code>GET /api/social/orders/by-ref/{partner_ref}</code>\n\n"
+                "<b>Headers dùng chung:</b>\n"
+                f"• <code>x-api-key: {partner_key}</code>\n"
+                "• <code>x-idempotency-key: MA_DON_DOI_TAC</code>\n\n"
+                "<b>Mã phản hồi:</b> <code>200</code> OK · <code>400</code> sai endpoint/field · <code>401</code> sai key · <code>402</code> thiếu tiền · <code>404</code> không tìm thấy"
             )
             kb = InlineKeyboardMarkup([
-                [_btn("TÃ i Liá»‡u API", icon_id="5350481781306958339", callback_data="api_member_docs")],
-                [_btn("Quay láº¡i menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                [_btn("Tài Liệu API", icon_id="5350481781306958339", callback_data="api_member_docs")],
+                [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
             ])
             await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
             return
@@ -976,8 +976,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if command == 'api_member_docs':
             guide_sent = False
             guide_status = (
-                "<tg-emoji emoji-id=\"5303290914041505430\">âš¡ï¸</tg-emoji> "
-                "<b>MÃ¬nh Ä‘Ã£ gá»­i file tÃ i liá»‡u chi tiáº¿t á»Ÿ tin nháº¯n bÃªn dÆ°á»›i.</b>\n\n"
+                "<tg-emoji emoji-id=\"5303290914041505430\">⚡️</tg-emoji> "
+                "<b>Mình đã gửi file tài liệu chi tiết ở tin nhắn bên dưới.</b>\n\n"
             )
             try:
                 from telegram import InputFile
@@ -990,11 +990,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                             chat_id=user_id,
                             document=InputFile(guide_stream, filename="API_PARTNER_GUIDE.md"),
                             caption=(
-                                "<tg-emoji emoji-id=\"5350481781306958339\">ðŸ“š</tg-emoji> "
-                                "<b>TÃ i liá»‡u API Partner chi tiáº¿t</b>\n"
-                                f"<tg-emoji emoji-id=\"5350481781306958339\">ðŸ“–</tg-emoji> "
+                                "<tg-emoji emoji-id=\"5350481781306958339\">📚</tg-emoji> "
+                                "<b>Tài liệu API Partner chi tiết</b>\n"
+                                f"<tg-emoji emoji-id=\"5350481781306958339\">📖</tg-emoji> "
                                 f"<a href=\"{safe_docs_url}\">{safe_docs_url}</a>\n"
-                                "<i>File nÃ y cÃ³ vÃ­ dá»¥ táº¡o Ä‘Æ¡n, poll Ä‘Æ¡n, nháº­n sáº£n pháº©m, quantity vÃ  cÃ¡c response máº«u.</i>"
+                                "<i>File này có ví dụ tạo đơn, poll đơn, nhận sản phẩm, quantity và các response mẫu.</i>"
                             ),
                             parse_mode='HTML',
                         )
@@ -1004,57 +1004,57 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
             if not guide_sent:
                 guide_status = (
-                    "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> "
-                    "<b>ChÆ°a gá»­i Ä‘Æ°á»£c file tÃ i liá»‡u.</b> Báº¡n váº«n cÃ³ thá»ƒ xem báº£n tÃ³m táº¯t bÃªn dÆ°á»›i.\n\n"
+                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> "
+                    "<b>Chưa gửi được file tài liệu.</b> Bạn vẫn có thể xem bản tóm tắt bên dưới.\n\n"
                 )
 
             text = (
-                "<tg-emoji emoji-id=\"5350481781306958339\">ðŸ“œ</tg-emoji> <b>TÃ€I LIá»†U API DÃ€NH CHO THÃ€NH VIÃŠN</b>\n"
-                "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
+                "<tg-emoji emoji-id=\"5350481781306958339\">📜</tg-emoji> <b>TÀI LIỆU API DÀNH CHO THÀNH VIÊN</b>\n"
+                "━━━━━━━━━━━━━━━━━━\n"
                 f"{guide_status}"
-                f"<tg-emoji emoji-id=\"5447410659077661506\">ðŸŒ</tg-emoji> <b>Base URL:</b> <code>{base_url}</code>\n"
+                f"<tg-emoji emoji-id=\"5447410659077661506\">🌐</tg-emoji> <b>Base URL:</b> <code>{base_url}</code>\n"
                 f"{base_url_note}"
-                f"<tg-emoji emoji-id=\"5350481781306958339\">ðŸ“–</tg-emoji> <b>TÃ i liá»‡u Web:</b> "
+                f"<tg-emoji emoji-id=\"5350481781306958339\">📖</tg-emoji> <b>Tài liệu Web:</b> "
                 f"<a href=\"{safe_docs_url}\">{safe_docs_url}</a>\n\n"
-                f"<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡</tg-emoji> <b>API Key cá»§a báº¡n:</b> <code>{partner_key}</code>\n\n"
-                "<b>Gá»i API cáº§n cÃ¡c header:</b>\n"
-                f"â€¢ <code>x-api-key: {partner_key}</code>\n"
-                "â€¢ <code>x-idempotency-key: MA_DON_DOI_TAC</code> (khuyáº¿n nghá»‹)\n\n"
-                "<b>Hai luá»“ng tÃ­ch há»£p:</b>\n"
-                "1. Sáº£n pháº©m thÆ°á»ng: <code>GET /api/v2/catalog</code> â†’ <code>POST /api/v2/orders</code>\n"
-                "2. Social: <code>GET /api/social/catalog</code> â†’ <code>POST /api/social/orders</code>\n"
-                "3. ÄÆ¡n thÆ°á»ng poll táº¡i <code>/api/v2/orders/{order_code}</code>\n"
-                "4. ÄÆ¡n social poll táº¡i <code>/api/social/orders/{order_code}</code>\n\n"
-                "<b>Ghi nhá»›:</b>\n"
-                "â€¢ Hai nhÃ³m dÃ¹ng chung API key vÃ  vÃ­ partner\n"
-                "â€¢ Sáº£n pháº©m thÆ°á»ng giao ngay náº±m trong <code>data.items</code>\n"
-                "â€¢ Social Ä‘á»c <code>supplier_status</code> vÃ  <code>supplier_remains</code>\n"
-                "â€¢ Retry pháº£i giá»¯ nguyÃªn <code>partner_ref</code> vÃ  <code>x-idempotency-key</code>\n"
-                "â€¢ Gáº·p <code>402</code>: náº¡p vÃ­ báº±ng <code>/napapi [sá»‘_tiá»n]</code>"
+                f"<tg-emoji emoji-id=\"5197288647275071607\">🛡</tg-emoji> <b>API Key của bạn:</b> <code>{partner_key}</code>\n\n"
+                "<b>Gọi API cần các header:</b>\n"
+                f"• <code>x-api-key: {partner_key}</code>\n"
+                "• <code>x-idempotency-key: MA_DON_DOI_TAC</code> (khuyến nghị)\n\n"
+                "<b>Hai luồng tích hợp:</b>\n"
+                "1. Sản phẩm thường: <code>GET /api/v2/catalog</code> → <code>POST /api/v2/orders</code>\n"
+                "2. Social: <code>GET /api/social/catalog</code> → <code>POST /api/social/orders</code>\n"
+                "3. Đơn thường poll tại <code>/api/v2/orders/{order_code}</code>\n"
+                "4. Đơn social poll tại <code>/api/social/orders/{order_code}</code>\n\n"
+                "<b>Ghi nhớ:</b>\n"
+                "• Hai nhóm dùng chung API key và ví partner\n"
+                "• Sản phẩm thường giao ngay nằm trong <code>data.items</code>\n"
+                "• Social đọc <code>supplier_status</code> và <code>supplier_remains</code>\n"
+                "• Retry phải giữ nguyên <code>partner_ref</code> và <code>x-idempotency-key</code>\n"
+                "• Gặp <code>402</code>: nạp ví bằng <code>/napapi [số_tiền]</code>"
             )
             kb = InlineKeyboardMarkup([
-                [InlineKeyboardButton("Má»Ÿ tÃ i liá»‡u Web", url=docs_url)],
-                [_btn("VÃ­ Chung", icon_id="5278467510604160626", callback_data="api_member_wallet"),
+                [InlineKeyboardButton("Mở tài liệu Web", url=docs_url)],
+                [_btn("Ví Chung", icon_id="5278467510604160626", callback_data="api_member_wallet"),
                  _btn("Endpoints", icon_id="5215039453487893428", callback_data="api_member_endpoints")],
-                [_btn("Gá»­i láº¡i tÃ i liá»‡u", icon_id="5350481781306958339", callback_data="api_member_docs")],
-                [_btn("Quay láº¡i menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                [_btn("Gửi lại tài liệu", icon_id="5350481781306958339", callback_data="api_member_docs")],
+                [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
             ])
             await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
             return
 
         # command == 'api_member_docs'
         text = (
-            "<tg-emoji emoji-id=\"5350481781306958339\">ðŸ“œ</tg-emoji> <b>TÃ€I LIá»†U API DÃ€NH CHO THÃ€NH VIÃŠN</b>\n"
-            "â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”\n"
-            f"<tg-emoji emoji-id=\"5447410659077661506\">ðŸŒ</tg-emoji> <b>Base URL:</b> <code>{base_url}</code>\n"
+            "<tg-emoji emoji-id=\"5350481781306958339\">📜</tg-emoji> <b>TÀI LIỆU API DÀNH CHO THÀNH VIÊN</b>\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            f"<tg-emoji emoji-id=\"5447410659077661506\">🌐</tg-emoji> <b>Base URL:</b> <code>{base_url}</code>\n"
             f"{base_url_note}"
-            f"<tg-emoji emoji-id=\"5350481781306958339\">ðŸ“–</tg-emoji> <b>TÃ i liá»‡u Web:</b> "
+            f"<tg-emoji emoji-id=\"5350481781306958339\">📖</tg-emoji> <b>Tài liệu Web:</b> "
             f"<a href=\"{safe_docs_url}\">{safe_docs_url}</a>\n\n"
-            f"<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡</tg-emoji> <b>API Key cá»§a báº¡n:</b> <code>{partner_key}</code>\n\n"
-            "<b>Headers khi gá»i API:</b>\n"
-            f"â€¢ <code>x-api-key: {partner_key}</code>\n"
-            "â€¢ <code>x-idempotency-key: MA_DON_DOI_TAC</code> (khuyáº¿n nghá»‹)\n\n"
-            "<b>Máº«u cURL mua Ä‘Æ¡n AUTO (TÃ i khoáº£n cÃ³ sáºµn):</b>\n"
+            f"<tg-emoji emoji-id=\"5197288647275071607\">🛡</tg-emoji> <b>API Key của bạn:</b> <code>{partner_key}</code>\n\n"
+            "<b>Headers khi gọi API:</b>\n"
+            f"• <code>x-api-key: {partner_key}</code>\n"
+            "• <code>x-idempotency-key: MA_DON_DOI_TAC</code> (khuyến nghị)\n\n"
+            "<b>Mẫu cURL mua đơn AUTO (Tài khoản có sẵn):</b>\n"
             "<pre>curl -X POST " + f"{base_url}/api/v2/orders" + " \\\n"
             "  -H 'Content-Type: application/json' \\\n"
             "  -H 'x-api-key: " + f"{partner_key}" + "' \\\n"
@@ -1066,7 +1066,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             '    "customer_id": "telegram_9988",\n'
             '    "note": "don tu bot doi tac"\n'
             "  }'</pre>\n\n"
-            "<b>Máº«u cURL mua Ä‘Æ¡n MANUAL (YÃªu cáº§u nháº­p mail):</b>\n"
+            "<b>Mẫu cURL mua đơn MANUAL (Yêu cầu nhập mail):</b>\n"
             "<pre>curl -X POST " + f"{base_url}/api/v2/orders" + " \\\n"
             "  -H 'Content-Type: application/json' \\\n"
             "  -H 'x-api-key: " + f"{partner_key}" + "' \\\n"
@@ -1079,24 +1079,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             '    "customer_id": "telegram_9988",\n'
             '    "note": "youtube premium cho khach"\n'
             "  }'</pre>\n"
-            "<b>Test nhanh (DÃ nh cho Shell/cURL):</b>\n"
+            "<b>Test nhanh (Dành cho Shell/cURL):</b>\n"
             "<pre>curl -X GET " + f"{base_url}/api/v2/me" + "\\\n"
             "  -H 'x-api-key: " + f"{partner_key}" + "'</pre>\n\n"
-            "<b>Káº¿t quáº£ test máº«u (thá»±c táº¿):</b>\n"
-            "â€¢ <code>GET /api/v2/status -> 200 OK</code>\n"
-            "â€¢ <code>GET /api/v2/me -> 200 OK</code>\n"
-            "â€¢ <code>GET /api/v2/catalog -> 200 OK</code>\n"
-            "â€¢ <code>GET /api/v2/orders -> 200 OK</code>\n"
-            "â€¢ <code>POST /api/v2/orders -> 402 Payment Required</code> (khi vÃ­ chung = 0)\n"
-            "â€¢ CÃ¡ch xá»­ lÃ½: náº¡p vÃ­ chung báº±ng <code>/napapi [sá»‘_tiá»n]</code> rá»“i gá»i láº¡i Ä‘Æ¡n.\n\n"
-            "<b>Ná»™i dung tÃ i khoáº£n tráº£ vá»:</b>\n"
-            "â€¢ Äá»c á»Ÿ <code>data.items</code>\n"
-            "â€¢ ThÆ°á»ng dáº¡ng <code>email|password</code>\n"
-            "â€¢ Náº¿u Ä‘Æ¡n manual/pending thÃ¬ chÆ°a cÃ³ items ngay"
+            "<b>Kết quả test mẫu (thực tế):</b>\n"
+            "• <code>GET /api/v2/status -> 200 OK</code>\n"
+            "• <code>GET /api/v2/me -> 200 OK</code>\n"
+            "• <code>GET /api/v2/catalog -> 200 OK</code>\n"
+            "• <code>GET /api/v2/orders -> 200 OK</code>\n"
+            "• <code>POST /api/v2/orders -> 402 Payment Required</code> (khi ví chung = 0)\n"
+            "• Cách xử lý: nạp ví chung bằng <code>/napapi [số_tiền]</code> rồi gọi lại đơn.\n\n"
+            "<b>Nội dung tài khoản trả về:</b>\n"
+            "• Đọc ở <code>data.items</code>\n"
+            "• Thường dạng <code>email|password</code>\n"
+            "• Nếu đơn manual/pending thì chưa có items ngay"
         )
         kb = InlineKeyboardMarkup([
             [_btn("Endpoints", icon_id="5215039453487893428", callback_data="api_member_endpoints")],
-            [_btn("Quay láº¡i menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+            [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
         ])
         await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
         return
@@ -1113,12 +1113,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 reply_markup=menu,
             )
         else:
-            # Text quÃ¡ dÃ i cho edit_message_text (limit 4096) â†’ gá»­i tin má»›i
+            # Text quá dài cho edit_message_text (limit 4096) → gửi tin mới
             try:
                 await safe_edit_message(
                     query,
-                    text='<tg-emoji emoji-id="5350481781306958339">ðŸ“š</tg-emoji> '
-                         '<b>Xem ná»™i dung chi tiáº¿t á»Ÿ tin nháº¯n bÃªn dÆ°á»›i.</b>',
+                    text='<tg-emoji emoji-id="5350481781306958339">📚</tg-emoji> '
+                         '<b>Xem nội dung chi tiết ở tin nhắn bên dưới.</b>',
                     parse_mode=ParseMode.HTML,
                     reply_markup=menu,
                 )
@@ -1155,10 +1155,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         order = find_order_by_code_or_supplier_id(order_code)
         if not order or not _api_user_can_access_order(user_id, order):
-            await safe_answer(query, lt(user_id, "KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng.", "Order not found.", "æœªæ‰¾åˆ°è®¢å•ã€‚"), show_alert=True)
+            await safe_answer(query, lt(user_id, "Không tìm thấy đơn hàng.", "Order not found.", "未找到订单。"), show_alert=True)
             return
         if _api_is_order_record(order):
-            await safe_answer(query, lt(user_id, "ÄÆ¡n API Partner cáº§n mua láº¡i qua API.", "API Partner orders must be reordered through the API.", "API åˆä½œä¼™ä¼´è®¢å•éœ€è¦é€šè¿‡ API é‡æ–°è´­ä¹°ã€‚"), show_alert=True)
+            await safe_answer(query, lt(user_id, "Đơn API Partner cần mua lại qua API.", "API Partner orders must be reordered through the API.", "API 合作伙伴订单需要通过 API 重新购买。"), show_alert=True)
             return
 
         product_id, current_product = _resolve_repurchase_product(order)
@@ -1167,15 +1167,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 query,
                 lt(
                     user_id,
-                    "Sáº£n pháº©m nÃ y Ä‘Ã£ ngá»«ng bÃ¡n hoáº·c khÃ´ng cÃ²n trong cá»­a hÃ ng.",
+                    "Sản phẩm này đã ngừng bán hoặc không còn trong cửa hàng.",
                     "This product is no longer available in the store.",
-                    "è¯¥å•†å“å·²åœå”®æˆ–ä¸å†å­˜åœ¨äºŽå•†åº—ä¸­ã€‚",
+                    "该商品已停售或不再存在于商店中。",
                 ),
                 show_alert=True,
             )
             return
 
-        await safe_answer(query, lt(user_id, "Äang kiá»ƒm tra giÃ¡ vÃ  tá»“n kho má»›i...", "Checking the latest price and stock...", "æ­£åœ¨æ£€æŸ¥æœ€æ–°ä»·æ ¼å’Œåº“å­˜â€¦â€¦"))
+        await safe_answer(query, lt(user_id, "Đang kiểm tra giá và tồn kho mới...", "Checking the latest price and stock...", "正在检查最新价格和库存……"))
         if current_product.get("is_supplier_source_resell"):
             await _refresh_resell_product_entries([(product_id, current_product)])
 
@@ -1184,7 +1184,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             context,
             product_id,
             back_callback_data=f"view_order_history_{order_code}:{history_page}",
-            back_button_text=lt(user_id, "Quay láº¡i Ä‘Æ¡n hÃ ng", "Back to Order", "è¿”å›žè®¢å•"),
+            back_button_text=lt(user_id, "Quay lại đơn hàng", "Back to Order", "返回订单"),
             already_answered=True,
         )
         return
@@ -1209,19 +1209,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         except ValueError:
             history_page = 0
 
-        # FIX: DÃ¹ng index O(1)
+        # FIX: Dùng index O(1)
         order = find_order_by_code_or_supplier_id(order_code)
         
         if not order:
-            await safe_answer(query, lt(user_id, "ÄÆ¡n hÃ ng khÃ´ng tá»“n táº¡i", "Order not found", "è®¢å•ä¸å­˜åœ¨"), show_alert=True)
+            await safe_answer(query, lt(user_id, "Đơn hàng không tồn tại", "Order not found", "订单不存在"), show_alert=True)
             await lichsu_command(update, context, is_callback=True, page=history_page)
             return
 
         if not _api_user_can_access_order(user_id, order):
-            await safe_answer(query, lt(user_id, "Báº¡n khÃ´ng cÃ³ quyá»n xem Ä‘Æ¡n nÃ y", "You cannot access this order", "æ‚¨æ— æƒæŸ¥çœ‹æ­¤è®¢å•"), show_alert=True)
+            await safe_answer(query, lt(user_id, "Bạn không có quyền xem đơn này", "You cannot access this order", "您无权查看此订单"), show_alert=True)
             return
         if order.get('refunded_at'):
-            await safe_answer(query, lt(user_id, "ÄÆ¡n hÃ ng Ä‘Ã£ Ä‘Æ°á»£c hoÃ n tiá»n vÃ  khÃ´ng thá»ƒ xem láº¡i", "This order was refunded and can no longer be viewed", "æ­¤è®¢å•å·²é€€æ¬¾ï¼Œæ— æ³•å†æ¬¡æŸ¥çœ‹"), show_alert=True)
+            await safe_answer(query, lt(user_id, "Đơn hàng đã được hoàn tiền và không thể xem lại", "This order was refunded and can no longer be viewed", "此订单已退款，无法再次查看"), show_alert=True)
             return
         
         await safe_answer(query)
@@ -1237,9 +1237,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         
         detail_msg = lt(
             user_id,
-            'ðŸ”Ž <b>CHI TIáº¾T ÄÆ N HÃ€NG</b>\n\nðŸ”¸ <b>MÃ£ Ä‘Æ¡n:</b> <code>{code}</code>\nâœï¸ <b>Thá»i gian:</b> {time}\nðŸ· <b>Thanh toÃ¡n:</b> {amount:,} VNÄ\nðŸ“Š <b>Tráº¡ng thÃ¡i:</b> {status}\n',
-            'ðŸ”Ž <b>ORDER DETAILS</b>\n\nðŸ”¸ <b>Order code:</b> <code>{code}</code>\nâœï¸ <b>Time:</b> {time}\nðŸ· <b>Payment:</b> {amount:,} VND\nðŸ“Š <b>Status:</b> {status}\n',
-            'ðŸ”Ž <b>è®¢å•è¯¦æƒ…</b>\n\nðŸ”¸ <b>è®¢å•å·ï¼š</b> <code>{code}</code>\nâœï¸ <b>æ—¶é—´ï¼š</b> {time}\nðŸ· <b>ä»˜æ¬¾ï¼š</b> {amount:,} VND\nðŸ“Š <b>çŠ¶æ€ï¼š</b> {status}\n',
+            '🔎 <b>CHI TIẾT ĐƠN HÀNG</b>\n\n🔸 <b>Mã đơn:</b> <code>{code}</code>\n✍️ <b>Thời gian:</b> {time}\n🏷 <b>Thanh toán:</b> {amount:,} VNĐ\n📊 <b>Trạng thái:</b> {status}\n',
+            '🔎 <b>ORDER DETAILS</b>\n\n🔸 <b>Order code:</b> <code>{code}</code>\n✍️ <b>Time:</b> {time}\n🏷 <b>Payment:</b> {amount:,} VND\n📊 <b>Status:</b> {status}\n',
+            '🔎 <b>订单详情</b>\n\n🔸 <b>订单号：</b> <code>{code}</code>\n✍️ <b>时间：</b> {time}\n🏷 <b>付款：</b> {amount:,} VND\n📊 <b>状态：</b> {status}\n',
             code=order_code, time=time_str, amount=amount, status=status,
         )
 
@@ -1251,46 +1251,46 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             supplier_charge = str(order.get("ctt_supplier_charge") or "").strip()
             refresh_error = str(order.get("ctt_status_refresh_error") or "").strip()
             supplier_progress_text = ctt_build_supplier_progress_text(order)
-            detail_msg += '\n<tg-emoji emoji-id="6059654836918423763">ðŸ“Š</tg-emoji> <b>Tráº¡ng thÃ¡i nguá»“n social</b>\n'
+            detail_msg += '\n<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> <b>Trạng thái nguồn social</b>\n'
             if supplier_order_id:
-                detail_msg += f'<tg-emoji emoji-id="5373251851074415873">ðŸ“</tg-emoji> <b>MÃ£ supplier:</b> <code>{html.escape(supplier_order_id)}</code>\n'
+                detail_msg += f'<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>Mã supplier:</b> <code>{html.escape(supplier_order_id)}</code>\n'
             if supplier_status:
-                detail_msg += f'<tg-emoji emoji-id="5231200819986047254">ðŸ“Š</tg-emoji> <b>Tráº¡ng thÃ¡i nguá»“n:</b> {html.escape(supplier_status)}\n'
+                detail_msg += f'<tg-emoji emoji-id="5231200819986047254">📊</tg-emoji> <b>Trạng thái nguồn:</b> {html.escape(supplier_status)}\n'
             if supplier_remains:
-                detail_msg += f'<tg-emoji emoji-id="5334890573281114250">ðŸ”¢</tg-emoji> <b>Remains:</b> {html.escape(supplier_remains)}\n'
+                detail_msg += f'<tg-emoji emoji-id="5334890573281114250">🔢</tg-emoji> <b>Remains:</b> {html.escape(supplier_remains)}\n'
             if supplier_progress_text:
-                detail_msg += f'<tg-emoji emoji-id="5334890573281114250">ðŸ”¢</tg-emoji> <b>{html.escape(supplier_progress_text)}</b>\n'
+                detail_msg += f'<tg-emoji emoji-id="5334890573281114250">🔢</tg-emoji> <b>{html.escape(supplier_progress_text)}</b>\n'
             if supplier_charge:
-                detail_msg += f'<tg-emoji emoji-id="5278467510604160626">ðŸ’°</tg-emoji> <b>Charge:</b> {html.escape(supplier_charge)}\n'
+                detail_msg += f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Charge:</b> {html.escape(supplier_charge)}\n'
             if refresh_error:
-                detail_msg += f'<tg-emoji emoji-id="5447644880824181073">âš ï¸</tg-emoji> <b>Refresh:</b> {html.escape(refresh_error)}\n'
+                detail_msg += f'<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>Refresh:</b> {html.escape(refresh_error)}\n'
 
         if is_api_order:
-            detail_msg += lt(user_id, 'ðŸ”Œ <b>Nguá»“n:</b> API Partner\n', 'ðŸ”Œ <b>Source:</b> API Partner\n', 'ðŸ”Œ <b>æ¥æºï¼š</b> API Partner\n')
+            detail_msg += lt(user_id, '🔌 <b>Nguồn:</b> API Partner\n', '🔌 <b>Source:</b> API Partner\n', '🔌 <b>来源：</b> API Partner\n')
 
         item_name = get_order_item_name(order)
-        if item_name != "GÃ³i iCloud 2TB":
-            detail_msg += lt(user_id, '\nðŸ· <b>Sáº£n pháº©m:</b> {item}\n0ï¸âƒ£ <b>Sá»‘ lÆ°á»£ng:</b> {quantity}\n', '\nðŸ· <b>Product:</b> {item}\n0ï¸âƒ£ <b>Quantity:</b> {quantity}\n', '\nðŸ· <b>å•†å“ï¼š</b> {item}\n0ï¸âƒ£ <b>æ•°é‡ï¼š</b> {quantity}\n', item=html.escape(item_name), quantity=order.get('quantity', 1))
+        if item_name != "Gói iCloud 2TB":
+            detail_msg += lt(user_id, '\n🏷 <b>Sản phẩm:</b> {item}\n0️⃣ <b>Số lượng:</b> {quantity}\n', '\n🏷 <b>Product:</b> {item}\n0️⃣ <b>Quantity:</b> {quantity}\n', '\n🏷 <b>商品：</b> {item}\n0️⃣ <b>数量：</b> {quantity}\n', item=html.escape(item_name), quantity=order.get('quantity', 1))
             if order.get('email') and order.get('email') != "N/A":
-                detail_msg += f'ðŸŒ <b>Email:</b> <code>{html.escape(str(order.get("email")))}</code>\n'
+                detail_msg += f'🌐 <b>Email:</b> <code>{html.escape(str(order.get("email")))}</code>\n'
         else:
-            detail_msg += lt(user_id, '\nðŸ· <b>GÃ³i:</b> iCloud 2TB\nðŸŒ <b>Email:</b> {email}\n', '\nðŸ· <b>Package:</b> iCloud 2TB\nðŸŒ <b>Email:</b> {email}\n', '\nðŸ· <b>å¥—é¤ï¼š</b> iCloud 2TB\nðŸŒ <b>é‚®ç®±ï¼š</b> {email}\n', email=html.escape(str(order.get('email', 'N/A'))))
+            detail_msg += lt(user_id, '\n🏷 <b>Gói:</b> iCloud 2TB\n🌐 <b>Email:</b> {email}\n', '\n🏷 <b>Package:</b> iCloud 2TB\n🌐 <b>Email:</b> {email}\n', '\n🏷 <b>套餐：</b> iCloud 2TB\n🌐 <b>邮箱：</b> {email}\n', email=html.escape(str(order.get('email', 'N/A'))))
             
         link_value = str(order.get("link") or "")
         delivery_mode = str(order.get("delivery_method") or "")
-        placeholder_links = {"Store Product", "Resell Product", "Resell Product (Pending Source)", "Sáº£n pháº©m khÃ¡c"}
+        placeholder_links = {"Store Product", "Resell Product", "Resell Product (Pending Source)", "Sản phẩm khác"}
         should_show_link = bool(link_value) and (
             delivery_mode == "instant_link"
             or (link_value not in placeholder_links and not link_value.startswith("Manual - "))
         )
         if should_show_link:
-             detail_msg += f'\n<tg-emoji emoji-id=\"5447410659077661506\">ðŸŒ</tg-emoji> <b>Link:</b> <code>{html.escape(link_value)}</code>\n'
+             detail_msg += f'\n<tg-emoji emoji-id=\"5447410659077661506\">🌐</tg-emoji> <b>Link:</b> <code>{html.escape(link_value)}</code>\n'
 
         delivered_items = order.get("items")
         delivered_count = len(delivered_items) if isinstance(delivered_items, list) else 0
         if delivered_count:
             detail_msg += (
-                f'<tg-emoji emoji-id="5854908544712707500">ðŸ“¦</tg-emoji> <b>Ná»™i dung Ä‘Ã£ lÆ°u:</b> {delivered_count} item\n'
+                f'<tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Nội dung đã lưu:</b> {delivered_count} item\n'
             )
 
         if is_api_order:
@@ -1300,14 +1300,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             api_note = str(order.get("api_note") or "")
             delivery_mode = str(order.get("delivery_method") or "unknown")
             if partner_ref:
-                detail_msg += f'<tg-emoji emoji-id="5972022360025336988">ðŸ”¸</tg-emoji> <b>Partner ref:</b> <code>{html.escape(partner_ref)}</code>\n'
+                detail_msg += f'<tg-emoji emoji-id="5972022360025336988">🔸</tg-emoji> <b>Partner ref:</b> <code>{html.escape(partner_ref)}</code>\n'
             if customer_email and customer_email != "N/A":
-                detail_msg += f'<tg-emoji emoji-id="5447410659077661506">ðŸŒ</tg-emoji> <b>KhÃ¡ch API:</b> <code>{html.escape(customer_email)}</code>\n'
+                detail_msg += f'<tg-emoji emoji-id="5447410659077661506">🌐</tg-emoji> <b>Khách API:</b> <code>{html.escape(customer_email)}</code>\n'
             if customer_id:
-                detail_msg += f'<tg-emoji emoji-id="5334890573281114250">ðŸ†”</tg-emoji> <b>Customer ID:</b> <code>{html.escape(customer_id)}</code>\n'
-            detail_msg += f'ðŸ”Œ <b>Delivery:</b> <code>{html.escape(delivery_mode)}</code>\n'
+                detail_msg += f'<tg-emoji emoji-id="5334890573281114250">🆔</tg-emoji> <b>Customer ID:</b> <code>{html.escape(customer_id)}</code>\n'
+            detail_msg += f'🔌 <b>Delivery:</b> <code>{html.escape(delivery_mode)}</code>\n'
             if api_note:
-                detail_msg += f'<tg-emoji emoji-id="5460753627817723162">ðŸ’¡</tg-emoji> <b>Ghi chÃº:</b> {html.escape(api_note)}\n'
+                detail_msg += f'<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> <b>Ghi chú:</b> {html.escape(api_note)}\n'
              
         # Check warranty expiry
         warranty_info = resolve_order_warranty_info(order)
@@ -1317,31 +1317,31 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if warranty_expires:
             if time.time() > warranty_expires:
                 is_expired = True
-                detail_msg += lt(user_id, "\nâš ï¸ <b>Báº£o hÃ nh:</b> ÄÃ£ háº¿t háº¡n", "\nâš ï¸ <b>Warranty:</b> Expired", "\nâš ï¸ <b>ä¿ä¿®ï¼š</b> å·²è¿‡æœŸ")
+                detail_msg += lt(user_id, "\n⚠️ <b>Bảo hành:</b> Đã hết hạn", "\n⚠️ <b>Warranty:</b> Expired", "\n⚠️ <b>保修：</b> 已过期")
             else:
                 exp_date = datetime.fromtimestamp(warranty_expires).strftime('%d/%m/%Y')
-                detail_msg += lt(user_id, "\nðŸ›¡ï¸ <b>Báº£o hÃ nh:</b> Äáº¿n {date}", "\nðŸ›¡ï¸ <b>Warranty:</b> Until {date}", "\nðŸ›¡ï¸ <b>ä¿ä¿®ï¼š</b> è‡³ {date}", date=exp_date)
+                detail_msg += lt(user_id, "\n🛡️ <b>Bảo hành:</b> Đến {date}", "\n🛡️ <b>Warranty:</b> Until {date}", "\n🛡️ <b>保修：</b> 至 {date}", date=exp_date)
         elif warranty_info.get("known") and is_expired:
-            detail_msg += lt(user_id, "\nâš ï¸ <b>Báº£o hÃ nh:</b> ÄÃ£ háº¿t háº¡n", "\nâš ï¸ <b>Warranty:</b> Expired", "\nâš ï¸ <b>ä¿ä¿®ï¼š</b> å·²è¿‡æœŸ")
+            detail_msg += lt(user_id, "\n⚠️ <b>Bảo hành:</b> Đã hết hạn", "\n⚠️ <b>Warranty:</b> Expired", "\n⚠️ <b>保修：</b> 已过期")
         elif warranty_info.get("reason") == "lifetime_warranty":
-            detail_msg += lt(user_id, "\nðŸ›¡ï¸ <b>Báº£o hÃ nh:</b> KhÃ´ng giá»›i háº¡n", "\nðŸ›¡ï¸ <b>Warranty:</b> Lifetime", "\nðŸ›¡ï¸ <b>ä¿ä¿®ï¼š</b> ç»ˆèº«")
+            detail_msg += lt(user_id, "\n🛡️ <b>Bảo hành:</b> Không giới hạn", "\n🛡️ <b>Warranty:</b> Lifetime", "\n🛡️ <b>保修：</b> 终身")
 
         btns = []
-        if order.get('items') and 'HoÃ n thÃ nh' in str(status):
-            btns.append([_btn(lt(user_id, "Láº¥y láº¡i thÃ´ng tin Ä‘Æ¡n hÃ ng", "Retrieve Order Details", "é‡æ–°èŽ·å–è®¢å•ä¿¡æ¯"), icon_id="5373059489568205167", callback_data=f"resend_order_items:{order_code}:{history_page}")])
+        if order.get('items') and 'Hoàn thành' in str(status):
+            btns.append([_btn(lt(user_id, "Lấy lại thông tin đơn hàng", "Retrieve Order Details", "重新获取订单信息"), icon_id="5373059489568205167", callback_data=f"resend_order_items:{order_code}:{history_page}")])
         repurchase_product_id, repurchase_product = _resolve_repurchase_product(order)
         if repurchase_product_id and isinstance(repurchase_product, dict):
             btns.append([
                 _btn(
-                    lt(user_id, "Mua láº¡i sáº£n pháº©m nÃ y", "Buy This Product Again", "å†æ¬¡è´­ä¹°æ­¤å•†å“"),
+                    lt(user_id, "Mua lại sản phẩm này", "Buy This Product Again", "再次购买此商品"),
                     icon_id="5402186569006210455",
                     callback_data=f"buy_again:{order_code}:{history_page}",
                     style="success",
                 )
             ])
         if not is_expired and not is_api_order and not is_refunded:
-            btns.append([_btn(lt(user_id, "BÃ¡o lá»—i Ä‘Æ¡n nÃ y", "Report This Order", "æŠ¥å‘Šæ­¤è®¢å•"), icon_id="5273914604752216432", callback_data=f"report_specific_order:{order_code}")])
-        btns.append([_btn(lt(user_id, "Quay láº¡i danh sÃ¡ch", "Back to List", "è¿”å›žåˆ—è¡¨"), icon_id="6206032691075223572", callback_data=f"lichsu_page:{history_page}")])
+            btns.append([_btn(lt(user_id, "Báo lỗi đơn này", "Report This Order", "报告此订单"), icon_id="5273914604752216432", callback_data=f"report_specific_order:{order_code}")])
+        btns.append([_btn(lt(user_id, "Quay lại danh sách", "Back to List", "返回列表"), icon_id="6206032691075223572", callback_data=f"lichsu_page:{history_page}")])
         
         await safe_edit_message(
             query,
@@ -1351,12 +1351,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
     elif command.startswith('use_last_email:'):
         email = command.split(':', 1)[1]; context.user_data['purchase_email'] = email; context.user_data['state'] = 'awaiting_coupon_choice'
-        keyboard = [[_btn(lt(user_id, "CÃ³", "Yes", "æœ‰"), callback_data='coupon_yes'), _btn(lt(user_id, "KhÃ´ng", "No", "æ²¡æœ‰"), callback_data='coupon_no')]]
-        await query.message.edit_text(lt(user_id, "Tuyá»‡t vá»i! Báº¡n cÃ³ mÃ£ giáº£m giÃ¡ khÃ´ng?", "Great! Do you have a coupon code?", "å¾ˆå¥½ï¼æ‚¨æœ‰ä¼˜æƒ ç å—ï¼Ÿ"), reply_markup=InlineKeyboardMarkup(keyboard))
+        keyboard = [[_btn(lt(user_id, "Có", "Yes", "有"), callback_data='coupon_yes'), _btn(lt(user_id, "Không", "No", "没有"), callback_data='coupon_no')]]
+        await query.message.edit_text(lt(user_id, "Tuyệt vời! Bạn có mã giảm giá không?", "Great! Do you have a coupon code?", "很好！您有优惠码吗？"), reply_markup=InlineKeyboardMarkup(keyboard))
     elif command == 'enter_new_email':
-        context.user_data['state'] = 'awaiting_email'; await query.message.edit_text(lt(user_id, "ðŸ“§ Vui lÃ²ng nháº­p email nháº­n link kÃ­ch hoáº¡t.", "ðŸ“§ Enter the email that will receive the activation link.", "ðŸ“§ è¯·è¾“å…¥æŽ¥æ”¶æ¿€æ´»é“¾æŽ¥çš„é‚®ç®±ã€‚"), reply_markup=create_back_button_menu(lt(user_id, "Há»§y", "Cancel", "å–æ¶ˆ"), "back_to_main"))
+        context.user_data['state'] = 'awaiting_email'; await query.message.edit_text(lt(user_id, "📧 Vui lòng nhập email nhận link kích hoạt.", "📧 Enter the email that will receive the activation link.", "📧 请输入接收激活链接的邮箱。"), reply_markup=create_back_button_menu(lt(user_id, "Hủy", "Cancel", "取消"), "back_to_main"))
     elif command == 'coupon_yes':
-        context.user_data['state'] = 'awaiting_coupon_code'; await query.message.edit_text(lt(user_id, "ðŸ“ Vui lÃ²ng nháº­p mÃ£ giáº£m giÃ¡.", "ðŸ“ Enter your coupon code.", "ðŸ“ è¯·è¾“å…¥ä¼˜æƒ ç ã€‚"))
+        context.user_data['state'] = 'awaiting_coupon_code'; await query.message.edit_text(lt(user_id, "📝 Vui lòng nhập mã giảm giá.", "📝 Enter your coupon code.", "📝 请输入优惠码。"))
     elif command == 'coupon_no':
         email = context.user_data.get('purchase_email')
         await show_icloud_payment_method_menu(update, context, email)
@@ -1387,7 +1387,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await safe_send_message(
             context,
             user_id,
-            "<b>BÃ¡o cÃ¡o lá»—i & YÃªu cáº§u há»— trá»£</b>\n\nBáº¯t Ä‘áº§u báº±ng cÃ¡ch nháº­p <b>MÃ£ Ä‘Æ¡n hÃ ng</b> cá»§a báº¡n (vÃ­ dá»¥: ICLD123456).\n\nGÃµ /cancel Ä‘á»ƒ há»§y.",
+            "<b>Báo cáo lỗi & Yêu cầu hỗ trợ</b>\n\nBắt đầu bằng cách nhập <b>Mã đơn hàng</b> của bạn (ví dụ: ICLD123456).\n\nGõ /cancel để hủy.",
             parse_mode=ParseMode.HTML
         )
     elif command.startswith('resend_order_items:'):
@@ -1398,20 +1398,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         except ValueError:
             history_page = 0
         back_to_history_callback = f"lichsu_page:{history_page}"
-        await safe_answer(query, "<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> Äang gá»­i láº¡i thÃ´ng tin...")
+        await safe_answer(query, "<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Đang gửi lại thông tin...")
         
-        # TÃ¬m order trong DB
+        # Tìm order trong DB
         order = db_get_order(order_code)
         if not order:
             await safe_edit_message(
                 query,
-                text=f"âŒ KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng <code>{html.escape(order_code)}</code>",
+                text=f"❌ Không tìm thấy đơn hàng <code>{html.escape(order_code)}</code>",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay láº¡i", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
             return
         
-        # Kiá»ƒm tra quyá»n. ÄÆ¡n API lÆ°u user_id theo PARTNER_<name>, khÃ´ng pháº£i Telegram user_id tháº­t.
+        # Kiểm tra quyền. Đơn API lưu user_id theo PARTNER_<name>, không phải Telegram user_id thật.
         if _api_is_order_record(order):
             has_access = _api_user_can_access_order(user_id, order)
         else:
@@ -1419,9 +1419,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if not has_access:
             await safe_edit_message(
                 query,
-                text=f"âŒ Báº¡n khÃ´ng cÃ³ quyá»n xem láº¡i Ä‘Æ¡n <code>{html.escape(order_code)}</code>",
+                text=f"❌ Bạn không có quyền xem lại đơn <code>{html.escape(order_code)}</code>",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay láº¡i", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
             return
 
@@ -1429,9 +1429,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if order.get('refunded_at'):
             await safe_edit_message(
                 query,
-                text=f"âŒ ÄÆ¡n hÃ ng <code>{html.escape(order_code)}</code> Ä‘Ã£ Ä‘Æ°á»£c hoÃ n tiá»n vÃ  khÃ´ng thá»ƒ gá»­i láº¡i thÃ´ng tin",
+                text=f"❌ Đơn hàng <code>{html.escape(order_code)}</code> đã được hoàn tiền và không thể gửi lại thông tin",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay láº¡i", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
             return
 
@@ -1440,19 +1440,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await safe_edit_message(
                 query,
                 text=(
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> ÄÆ¡n hÃ ng <code>{html.escape(order_code)}</code> khÃ´ng cÃ³ thÃ´ng tin tÃ i khoáº£n Ä‘Æ°á»£c lÆ°u.\n\n"
-                    "Vui lÃ²ng liÃªn há»‡ admin Ä‘á»ƒ Ä‘Æ°á»£c há»— trá»£."
+                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng <code>{html.escape(order_code)}</code> không có thông tin tài khoản được lưu.\n\n"
+                    "Vui lòng liên hệ admin để được hỗ trợ."
                 ),
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay láº¡i", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
             return
         
-        # Gá»­i láº¡i items dÆ°á»›i dáº¡ng file .txt
-        product_name = order.get('product_name') or order.get('product', 'Sáº£n pháº©m')
-        file_content = f"ÄÆ N HÃ€NG: {order_code}\n"
-        file_content += f"Sáº£n pháº©m: {product_name}\n"
-        file_content += f"Sá»‘ lÆ°á»£ng: {len(items)}\n"
+        # Gửi lại items dưới dạng file .txt
+        product_name = order.get('product_name') or order.get('product', 'Sản phẩm')
+        file_content = f"ĐƠN HÀNG: {order_code}\n"
+        file_content += f"Sản phẩm: {product_name}\n"
+        file_content += f"Số lượng: {len(items)}\n"
         file_content += "=" * 40 + "\n\n"
         for idx, item in enumerate(items, 1):
             file_content += f"[{idx}] {item}\n"
@@ -1462,10 +1462,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             file_content=file_content,
             file_prefix="GuiLai",
             caption_html=(
-                f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> <b>Gá»¬I Láº I THÃ”NG TIN ÄÆ N HÃ€NG</b>\n\n"
-                f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ†”</tg-emoji> MÃ£ Ä‘Æ¡n: <code>{html.escape(order_code)}</code>\n"
-                f"<tg-emoji emoji-id=\"6260059243605398502\">ðŸ“Œ</tg-emoji> Sáº£n pháº©m: <b>{html.escape(str(product_name))}</b>\n"
-                f"<tg-emoji emoji-id=\"6059654836918423763\">ðŸ“Š</tg-emoji> Sá»‘ lÆ°á»£ng: {len(items)}\n"
+                f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>GỬI LẠI THÔNG TIN ĐƠN HÀNG</b>\n\n"
+                f"<tg-emoji emoji-id=\"5334890573281114250\">🆔</tg-emoji> Mã đơn: <code>{html.escape(order_code)}</code>\n"
+                f"<tg-emoji emoji-id=\"6260059243605398502\">📌</tg-emoji> Sản phẩm: <b>{html.escape(str(product_name))}</b>\n"
+                f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> Số lượng: {len(items)}\n"
             )
         )
         
@@ -1473,18 +1473,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await safe_edit_message(
                 query,
                 text=(
-                    f"<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> ÄÃ£ gá»­i láº¡i thÃ´ng tin Ä‘Æ¡n hÃ ng <code>{html.escape(order_code)}</code> thÃ nh cÃ´ng!\n\n"
-                    "Kiá»ƒm tra file phÃ­a trÃªn nhÃ©."
+                    f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã gửi lại thông tin đơn hàng <code>{html.escape(order_code)}</code> thành công!\n\n"
+                    "Kiểm tra file phía trên nhé."
                 ),
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay láº¡i danh sÃ¡ch", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại danh sách", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
         else:
             await safe_edit_message(
                 query,
-                text=f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> KhÃ´ng thá»ƒ gá»­i láº¡i thÃ´ng tin. Vui lÃ²ng thá»­ láº¡i sau hoáº·c liÃªn há»‡ admin.",
+                text=f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Không thể gửi lại thông tin. Vui lòng thử lại sau hoặc liên hệ admin.",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay láº¡i danh sÃ¡ch", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại danh sách", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
         return
     elif command.startswith('report_specific_order:'):
@@ -1492,17 +1492,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         order = db_get_order(order_code)
 
         if not order:
-            await safe_answer(query, "âŒ KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n hÃ ng nÃ y.", show_alert=True)
+            await safe_answer(query, "❌ Không tìm thấy đơn hàng này.", show_alert=True)
             return
 
         if not _api_user_can_access_order(user_id, order):
-            await safe_answer(query, "âŒ Báº¡n khÃ´ng cÃ³ quyá»n bÃ¡o lá»—i Ä‘Æ¡n nÃ y.", show_alert=True)
+            await safe_answer(query, "❌ Bạn không có quyền báo lỗi đơn này.", show_alert=True)
             return
 
         if order.get('refunded_at'):
             await safe_answer(
                 query,
-                "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> ÄÆ¡n hÃ ng nÃ y Ä‘Ã£ Ä‘Æ°á»£c hoÃ n tiá»n nÃªn khÃ´ng thá»ƒ bÃ¡o lá»—i ná»¯a.",
+                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng này đã được hoàn tiền nên không thể báo lỗi nữa.",
                 show_alert=True,
             )
             return
@@ -1513,7 +1513,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         
         try:
             await query.message.edit_text(
-                f"Äang xá»­ lÃ½ yÃªu cáº§u bÃ¡o lá»—i cho Ä‘Æ¡n hÃ ng <code>{order_code}</code>...", 
+                f"Đang xử lý yêu cầu báo lỗi cho đơn hàng <code>{order_code}</code>...", 
                 parse_mode=ParseMode.HTML, 
                 reply_markup=None
             )
@@ -1526,12 +1526,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data.pop('report_photo_chat_id', None)
         context.user_data.pop('report_photo_message_id', None)
         await query.message.reply_text(
-            "Tiáº¿p theo, vui lÃ²ng gá»­i <b>má»™t áº£nh chá»¥p mÃ n hÃ¬nh</b> vá» lá»—i báº¡n Ä‘ang gáº·p pháº£i.",
+            "Tiếp theo, vui lòng gửi <b>một ảnh chụp màn hình</b> về lỗi bạn đang gặp phải.",
             parse_mode=ParseMode.HTML
         )
     elif command == 'ask_ai_confirm':
 
-        await query.edit_message_text("Äang káº¿t ná»‘i vá»›i Trá»£ lÃ½ AI, vui lÃ²ng chá» trong giÃ¢y lÃ¡t...")
+        await query.edit_message_text("Đang kết nối với Trợ lý AI, vui lòng chờ trong giây lát...")
 
         question = context.user_data.get('support_query')
 
@@ -1547,9 +1547,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
             ai_answer = await ask_ai(question)
 
-            await query.edit_message_text(f'<tg-emoji emoji-id="6271362510901747485">ðŸ¤–</tg-emoji> <b>Trá»£ lÃ½ AI Dino tráº£ lá»i:</b>\n\n{ai_answer}', parse_mode=ParseMode.HTML)  # FIX: ask_gemini -> ask_ai
+            await query.edit_message_text(f'<tg-emoji emoji-id="6271362510901747485">🤖</tg-emoji> <b>Trợ lý AI Dino trả lời:</b>\n\n{ai_answer}', parse_mode=ParseMode.HTML)  # FIX: ask_gemini -> ask_ai
 
-        else: await query.edit_message_text("ÄÃ£ cÃ³ lá»—i xáº£y ra. Vui lÃ²ng báº¯t Ä‘áº§u láº¡i.")
+        else: await query.edit_message_text("Đã có lỗi xảy ra. Vui lòng bắt đầu lại.")
 
         await clear_user_state(context)
 
@@ -1559,19 +1559,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         ticket_id = f"TICKET-{random.randint(1000, 9999)}"
 
-        admin_message_text = (f'<tg-emoji emoji-id="5377624166436445368">ðŸŽŸï¸</tg-emoji> <b>PHIáº¾U Há»– TRá»¢ Má»šI</b> ({ticket_id}) <tg-emoji emoji-id="5377624166436445368">ðŸŽŸï¸</tg-emoji>\n\n'
+        admin_message_text = (f'<tg-emoji emoji-id="5377624166436445368">🎟️</tg-emoji> <b>PHIẾU HỖ TRỢ MỚI</b> ({ticket_id}) <tg-emoji emoji-id="5377624166436445368">🎟️</tg-emoji>\n\n'
 
-                              f'<b>Tá»«:</b> {format_user_mention_html(user)} (ID: <code>{user.id}</code>)\n'
+                              f'<b>Từ:</b> {format_user_mention_html(user)} (ID: <code>{user.id}</code>)\n'
 
-                              f'<b>Username:</b> @{user.username or "KhÃ´ng cÃ³"}\n\n'
+                              f'<b>Username:</b> @{user.username or "Không có"}\n\n'
 
-                              f'<b>Ná»™i dung:</b>\n<i>{query_text}</i>')
+                              f'<b>Nội dung:</b>\n<i>{query_text}</i>')
 
-        reply_button = InlineKeyboardButton('<tg-emoji emoji-id="5350752364246606166">âœï¸</tg-emoji> Pháº£n há»“i User', callback_data=f"reply_to_ticket:{user.id}")
+        reply_button = InlineKeyboardButton('<tg-emoji emoji-id="5350752364246606166">✍️</tg-emoji> Phản hồi User', callback_data=f"reply_to_ticket:{user.id}")
 
         await safe_send_admin(context.bot, admin_message_text, reply_markup=InlineKeyboardMarkup([[reply_button]]))
 
-        await query.edit_message_text(f'<tg-emoji emoji-id="6269163801178804220">âœ…</tg-emoji> ÄÃ£ táº¡o phiáº¿u há»— trá»£ vá»›i mÃ£ <b>{ticket_id}</b>. Admin sáº½ sá»›m pháº£n há»“i. Cáº£m Æ¡n báº¡n!', parse_mode=ParseMode.HTML)
+        await query.edit_message_text(f'<tg-emoji emoji-id="6269163801178804220">✅</tg-emoji> Đã tạo phiếu hỗ trợ với mã <b>{ticket_id}</b>. Admin sẽ sớm phản hồi. Cảm ơn bạn!', parse_mode=ParseMode.HTML)
 
         await clear_user_state(context)
 
@@ -1583,7 +1583,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
             query.message,
 
-            text=get_query_message_html(query) + "\n\n<i>(Äang chá» pháº£n há»“i...)</i>",
+            text=get_query_message_html(query) + "\n\n<i>(Đang chờ phản hồi...)</i>",
 
             parse_mode=ParseMode.HTML,
 
@@ -1591,7 +1591,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         )
 
-        await safe_answer(query); await safe_send_admin(context.bot, f'<tg-emoji emoji-id="5458382591121964689">âœï¸</tg-emoji> Vui lÃ²ng nháº­p ná»™i dung pháº£n há»“i cho ngÆ°á»i dÃ¹ng ID: <code>{target_user_id}</code>')
+        await safe_answer(query); await safe_send_admin(context.bot, f'<tg-emoji emoji-id="5458382591121964689">✍️</tg-emoji> Vui lòng nhập nội dung phản hồi cho người dùng ID: <code>{target_user_id}</code>')
 
 
 

@@ -156,130 +156,130 @@ ADMIN_WEB_OPS_CSS = (Path(__file__).parent / "static" / "admin_ops_2026.css").re
 
 ADMIN_WEB_COMMAND_GROUPS = [
     {
-        "group": "Tá»•ng quan há»‡ thá»‘ng",
+        "group": "Tổng quan hệ thống",
         "commands": [
-            ("admin", "/admin", "Má»Ÿ báº£ng Ä‘iá»u khiá»ƒn admin trÃªn Telegram.", "readonly"),
-            ("helpadmin", "/helpadmin", "Alias cá»§a /admin.", "readonly"),
-            ("uptime", "/uptime", "Xem uptime, thÃ´ng tin há»‡ thá»‘ng.", "readonly"),
-            ("status", "/status", "Alias cá»§a /uptime.", "readonly"),
-            ("backup", "/backup", "Táº¡o vÃ  gá»­i backup dá»¯ liá»‡u.", "danger"),
-            ("nhapdata", "/nhapdata", "Restore dá»¯ liá»‡u tá»« file backup zip.", "danger"),
-            ("testing", "/testing", "Lá»‡nh test ná»™i bá»™.", "danger"),
+            ("admin", "/admin", "Mở bảng điều khiển admin trên Telegram.", "readonly"),
+            ("helpadmin", "/helpadmin", "Alias của /admin.", "readonly"),
+            ("uptime", "/uptime", "Xem uptime, thông tin hệ thống.", "readonly"),
+            ("status", "/status", "Alias của /uptime.", "readonly"),
+            ("backup", "/backup", "Tạo và gửi backup dữ liệu.", "danger"),
+            ("nhapdata", "/nhapdata", "Restore dữ liệu từ file backup zip.", "danger"),
+            ("testing", "/testing", "Lệnh test nội bộ.", "danger"),
         ],
     },
     {
         "group": "Kho link legacy",
         "commands": [
             ("kho", "/kho", "Xem kho link legacy.", "readonly"),
-            ("addlink", "/addlink <link>", "ThÃªm link vÃ o kho legacy.", "write"),
-            ("dellink", "/dellink <link>", "XÃ³a link kho legacy.", "write"),
-            ("guilink", "/guilink <user_id> <link>", "Gá»­i link thá»§ cÃ´ng cho user.", "danger"),
+            ("addlink", "/addlink <link>", "Thêm link vào kho legacy.", "write"),
+            ("dellink", "/dellink <link>", "Xóa link kho legacy.", "write"),
+            ("guilink", "/guilink <user_id> <link>", "Gửi link thủ công cho user.", "danger"),
         ],
     },
     {
-        "group": "Sáº£n pháº©m vÃ  tá»“n kho",
+        "group": "Sản phẩm và tồn kho",
         "commands": [
-            ("products", "/products", "Danh sÃ¡ch sáº£n pháº©m store.", "readonly"),
-            ("newproduct", "/newproduct", "Conversation táº¡o sáº£n pháº©m má»›i.", "conversation"),
-            ("editproduct", "/editproduct", "Conversation sá»­a sáº£n pháº©m.", "conversation"),
-            ("delproduct", "/delproduct <product_id>", "XÃ³a sáº£n pháº©m.", "danger"),
-            ("addstock", "/addstock", "Conversation thÃªm stock local.", "conversation"),
+            ("products", "/products", "Danh sách sản phẩm store.", "readonly"),
+            ("newproduct", "/newproduct", "Conversation tạo sản phẩm mới.", "conversation"),
+            ("editproduct", "/editproduct", "Conversation sửa sản phẩm.", "conversation"),
+            ("delproduct", "/delproduct <product_id>", "Xóa sản phẩm.", "danger"),
+            ("addstock", "/addstock", "Conversation thêm stock local.", "conversation"),
             ("viewstock", "/viewstock", "Xem stock local.", "readonly"),
-            ("delstock", "/delstock", "Conversation xÃ³a stock local.", "conversation"),
-            ("setlimit", "/setlimit <product_id> <so_luong>", "Äáº·t giá»›i háº¡n pending/manual.", "write"),
+            ("delstock", "/delstock", "Conversation xóa stock local.", "conversation"),
+            ("setlimit", "/setlimit <product_id> <so_luong>", "Đặt giới hạn pending/manual.", "write"),
         ],
     },
     {
-        "group": "ÄÆ¡n hÃ ng vÃ  thanh toÃ¡n",
+        "group": "Đơn hàng và thanh toán",
         "commands": [
-            ("duyet", "/duyet <ma_don>", "Duyá»‡t Ä‘Æ¡n thá»§ cÃ´ng/manual.", "write"),
-            ("pending", "/pending", "Xem Ä‘Æ¡n manual Ä‘ang chá».", "readonly"),
-            ("clearpending", "/clearpending", "XÃ³a pending manual.", "danger"),
-            ("refund", "/refund <ma_don>", "HoÃ n tiá»n Ä‘Æ¡n hÃ ng user/API partner.", "danger"),
-            ("find", "/find <ma_don|user_id>", "TÃ¬m Ä‘Æ¡n hÃ ng.", "readonly"),
-            ("doanhthu", "/doanhthu", "Thá»‘ng kÃª doanh thu.", "readonly"),
-            ("setemail", "/setemail <ma_don> <email>", "Gáº¯n email nháº­n hÃ ng cho Ä‘Æ¡n.", "write"),
-            ("transactions", "/transactions", "Xem lá»‹ch sá»­ giao dá»‹ch vÃ­.", "readonly"),
-            ("lichsugiaodich", "/lichsugiaodich", "Alias cá»§a /transactions.", "readonly"),
+            ("duyet", "/duyet <ma_don>", "Duyệt đơn thủ công/manual.", "write"),
+            ("pending", "/pending", "Xem đơn manual đang chờ.", "readonly"),
+            ("clearpending", "/clearpending", "Xóa pending manual.", "danger"),
+            ("refund", "/refund <ma_don>", "Hoàn tiền đơn hàng user/API partner.", "danger"),
+            ("find", "/find <ma_don|user_id>", "Tìm đơn hàng.", "readonly"),
+            ("doanhthu", "/doanhthu", "Thống kê doanh thu.", "readonly"),
+            ("setemail", "/setemail <ma_don> <email>", "Gắn email nhận hàng cho đơn.", "write"),
+            ("transactions", "/transactions", "Xem lịch sử giao dịch ví.", "readonly"),
+            ("lichsugiaodich", "/lichsugiaodich", "Alias của /transactions.", "readonly"),
         ],
     },
     {
-        "group": "User vÃ  vÃ­",
+        "group": "User và ví",
         "commands": [
-            ("users", "/users", "Danh sÃ¡ch user.", "readonly"),
-            ("info", "/info <user_id>", "Xem thÃ´ng tin user.", "readonly"),
-            ("ban", "/ban <user_id>", "Cáº¥m user.", "danger"),
-            ("unban", "/unban <user_id>", "Gá»¡ cáº¥m user.", "write"),
-            ("bc", "/bc <noi_dung>", "Broadcast tin nháº¯n.", "danger"),
-            ("addmoney", "/addmoney <user_id> <so_tien>", "Cá»™ng tiá»n vÃ o vÃ­ user/API.", "danger"),
-            ("submoney", "/submoney <user_id> <so_tien>", "Trá»« tiá»n vÃ­ user/API.", "danger"),
-            ("pending_withdrawals", "/pending_withdrawals", "Xem yÃªu cáº§u rÃºt tiá»n.", "readonly"),
+            ("users", "/users", "Danh sách user.", "readonly"),
+            ("info", "/info <user_id>", "Xem thông tin user.", "readonly"),
+            ("ban", "/ban <user_id>", "Cấm user.", "danger"),
+            ("unban", "/unban <user_id>", "Gỡ cấm user.", "write"),
+            ("bc", "/bc <noi_dung>", "Broadcast tin nhắn.", "danger"),
+            ("addmoney", "/addmoney <user_id> <so_tien>", "Cộng tiền vào ví user/API.", "danger"),
+            ("submoney", "/submoney <user_id> <so_tien>", "Trừ tiền ví user/API.", "danger"),
+            ("pending_withdrawals", "/pending_withdrawals", "Xem yêu cầu rút tiền.", "readonly"),
         ],
     },
     {
-        "group": "Coupon, khuyáº¿n mÃ£i, game",
+        "group": "Coupon, khuyến mãi, game",
         "commands": [
-            ("sale", "/sale <noi_dung>", "Gá»­i thÃ´ng bÃ¡o sale.", "danger"),
-            ("addcoupon", "/addcoupon ...", "ThÃªm coupon.", "write"),
-            ("delcoupon", "/delcoupon <code>", "XÃ³a coupon.", "write"),
-            ("listcoupons", "/listcoupons", "Danh sÃ¡ch coupon.", "readonly"),
-            ("rewardtop", "/rewardtop", "ThÆ°á»Ÿng top buyer/referral.", "danger"),
-            ("promobudget", "/promobudget", "Xem ngÃ¢n sÃ¡ch khuyáº¿n mÃ£i.", "readonly"),
-            ("ngansachkm", "/ngansachkm", "Alias cá»§a /promobudget.", "readonly"),
-            ("flashsale", "/flashsale ...", "Quáº£n lÃ½ flash sale.", "write"),
-            ("combo", "/combo ...", "Quáº£n lÃ½ combo deal.", "write"),
-            ("create_ga", "/create_ga", "Conversation táº¡o giveaway.", "conversation"),
-            ("list_ga", "/list_ga", "Danh sÃ¡ch giveaway.", "readonly"),
-            ("listga", "/listga", "Alias cá»§a /list_ga.", "readonly"),
-            ("endga", "/endga <ga_id>", "Káº¿t thÃºc giveaway.", "write"),
-            ("end_ga", "/end_ga <ga_id>", "Alias cá»§a /endga.", "write"),
+            ("sale", "/sale <noi_dung>", "Gửi thông báo sale.", "danger"),
+            ("addcoupon", "/addcoupon ...", "Thêm coupon.", "write"),
+            ("delcoupon", "/delcoupon <code>", "Xóa coupon.", "write"),
+            ("listcoupons", "/listcoupons", "Danh sách coupon.", "readonly"),
+            ("rewardtop", "/rewardtop", "Thưởng top buyer/referral.", "danger"),
+            ("promobudget", "/promobudget", "Xem ngân sách khuyến mãi.", "readonly"),
+            ("ngansachkm", "/ngansachkm", "Alias của /promobudget.", "readonly"),
+            ("flashsale", "/flashsale ...", "Quản lý flash sale.", "write"),
+            ("combo", "/combo ...", "Quản lý combo deal.", "write"),
+            ("create_ga", "/create_ga", "Conversation tạo giveaway.", "conversation"),
+            ("list_ga", "/list_ga", "Danh sách giveaway.", "readonly"),
+            ("listga", "/listga", "Alias của /list_ga.", "readonly"),
+            ("endga", "/endga <ga_id>", "Kết thúc giveaway.", "write"),
+            ("end_ga", "/end_ga <ga_id>", "Alias của /endga.", "write"),
         ],
     },
     {
         "group": "API partner",
         "commands": [
-            ("api", "/api", "Danh sÃ¡ch API key partner.", "readonly"),
-            ("addapi", "/addapi <ten> <so_du>", "Táº¡o API key partner.", "danger"),
-            ("delapi", "/delapi <key>", "XÃ³a/vÃ´ hiá»‡u API key.", "danger"),
-            ("napi", "/napi ...", "Náº¡p vÃ­ API partner.", "write"),
-            ("helpapi", "/helpapi", "HÆ°á»›ng dáº«n API.", "readonly"),
-            ("dkyapi", "/dkyapi", "User Ä‘Äƒng kÃ½ API partner.", "user"),
-            ("dkapi", "/dkapi", "Alias Ä‘Äƒng kÃ½ API.", "user"),
-            ("dangkyapi", "/dangkyapi", "Alias Ä‘Äƒng kÃ½ API.", "user"),
-            ("regapi", "/regapi", "Alias Ä‘Äƒng kÃ½ API.", "user"),
-            ("napapi", "/napapi", "User náº¡p vÃ­ API.", "user"),
-            ("topupapi", "/topupapi", "Alias náº¡p vÃ­ API.", "user"),
+            ("api", "/api", "Danh sách API key partner.", "readonly"),
+            ("addapi", "/addapi <ten> <so_du>", "Tạo API key partner.", "danger"),
+            ("delapi", "/delapi <key>", "Xóa/vô hiệu API key.", "danger"),
+            ("napi", "/napi ...", "Nạp ví API partner.", "write"),
+            ("helpapi", "/helpapi", "Hướng dẫn API.", "readonly"),
+            ("dkyapi", "/dkyapi", "User đăng ký API partner.", "user"),
+            ("dkapi", "/dkapi", "Alias đăng ký API.", "user"),
+            ("dangkyapi", "/dangkyapi", "Alias đăng ký API.", "user"),
+            ("regapi", "/regapi", "Alias đăng ký API.", "user"),
+            ("napapi", "/napapi", "User nạp ví API.", "user"),
+            ("topupapi", "/topupapi", "Alias nạp ví API.", "user"),
         ],
     },
     {
-        "group": "Supplier SupplierSource vÃ  SocialSource",
+        "group": "Supplier SupplierSource và SocialSource",
         "commands": [
-            ("add_resell", "/add_resell ...", "ThÃªm sáº£n pháº©m resell SupplierSource.", "write"),
-            ("supplier_catalog_web", "/admin/supplier_catalog", "Web chá»n sáº£n pháº©m SupplierCatalog, tick lÃ  hiá»‡n bot.", "write"),
-            ("list_supplier_catalog_products", "/list_supplier_catalog_products [keyword]", "Xem ID sáº£n pháº©m SupplierCatalog.", "readonly"),
-            ("add_supplier_catalog_resell", "/add_supplier_catalog_resell ...", "ThÃªm resell SupplierCatalog báº±ng ID.", "write"),
-            ("list_resell", "/list_resell", "Danh sÃ¡ch resell SupplierSource.", "readonly"),
-            ("edit_markup", "/edit_markup ...", "Sá»­a markup resell.", "write"),
-            ("del_resell", "/del_resell <product_id>", "XÃ³a resell.", "danger"),
-            ("sync_resell", "/sync_resell", "Äá»“ng bá»™ SupplierSource.", "write"),
-            ("add_ctt", "/add_ctt ...", "ThÃªm dá»‹ch vá»¥ SocialSource.", "write"),
-            ("list_ctt", "/list_ctt", "Danh sÃ¡ch dá»‹ch vá»¥ SocialSource.", "readonly"),
-            ("del_ctt", "/del_ctt <product_id>", "XÃ³a dá»‹ch vá»¥ SocialSource.", "danger"),
-            ("sync_ctt", "/sync_ctt", "Äá»“ng bá»™ SocialSource.", "write"),
-            ("ctt_balance", "/ctt_balance", "Xem sá»‘ dÆ° SocialSource.", "readonly"),
+            ("add_resell", "/add_resell ...", "Thêm sản phẩm resell SupplierSource.", "write"),
+            ("supplier_catalog_web", "/admin/supplier_catalog", "Web chọn sản phẩm SupplierCatalog, tick là hiện bot.", "write"),
+            ("list_supplier_catalog_products", "/list_supplier_catalog_products [keyword]", "Xem ID sản phẩm SupplierCatalog.", "readonly"),
+            ("add_supplier_catalog_resell", "/add_supplier_catalog_resell ...", "Thêm resell SupplierCatalog bằng ID.", "write"),
+            ("list_resell", "/list_resell", "Danh sách resell SupplierSource.", "readonly"),
+            ("edit_markup", "/edit_markup ...", "Sửa markup resell.", "write"),
+            ("del_resell", "/del_resell <product_id>", "Xóa resell.", "danger"),
+            ("sync_resell", "/sync_resell", "Đồng bộ SupplierSource.", "write"),
+            ("add_ctt", "/add_ctt ...", "Thêm dịch vụ SocialSource.", "write"),
+            ("list_ctt", "/list_ctt", "Danh sách dịch vụ SocialSource.", "readonly"),
+            ("del_ctt", "/del_ctt <product_id>", "Xóa dịch vụ SocialSource.", "danger"),
+            ("sync_ctt", "/sync_ctt", "Đồng bộ SocialSource.", "write"),
+            ("ctt_balance", "/ctt_balance", "Xem số dư SocialSource.", "readonly"),
         ],
     },
     {
-        "group": "Há»— trá»£, thÃ´ng bÃ¡o, váº­n hÃ nh",
+        "group": "Hỗ trợ, thông báo, vận hành",
         "commands": [
-            ("notify", "/notify <product_id> <out|back>", "ThÃ´ng bÃ¡o háº¿t/cÃ³ hÃ ng.", "write"),
-            ("resetnotify", "/resetnotify", "Reset cá» thÃ´ng bÃ¡o stock.", "write"),
-            ("analytics", "/analytics", "Thá»‘ng kÃª nÃ¢ng cao.", "readonly"),
-            ("chats", "/chats", "Danh sÃ¡ch live chat.", "readonly"),
-            ("chat", "/chat <user_id>", "Má»Ÿ chat admin vá»›i user.", "conversation"),
-            ("closechat", "/closechat", "ÄÃ³ng chat admin.", "write"),
-            ("baotri", "/baotri", "Báº­t/táº¯t maintenance mode.", "danger"),
-            ("aimode", "/aimode", "Báº­t/táº¯t AI auto reply.", "write"),
+            ("notify", "/notify <product_id> <out|back>", "Thông báo hết/có hàng.", "write"),
+            ("resetnotify", "/resetnotify", "Reset cờ thông báo stock.", "write"),
+            ("analytics", "/analytics", "Thống kê nâng cao.", "readonly"),
+            ("chats", "/chats", "Danh sách live chat.", "readonly"),
+            ("chat", "/chat <user_id>", "Mở chat admin với user.", "conversation"),
+            ("closechat", "/closechat", "Đóng chat admin.", "write"),
+            ("baotri", "/baotri", "Bật/tắt maintenance mode.", "danger"),
+            ("aimode", "/aimode", "Bật/tắt AI auto reply.", "write"),
         ],
     },
 ]
@@ -494,7 +494,7 @@ def _admin_web_item_url(request, entity: str, item_id: str) -> str:
     return _admin_web_page_url(request, "/admin/item", {"entity": entity, "id": item_id})
 
 
-def _admin_web_row_link(request, entity: str, item_id: str, label: str = "Má»Ÿ") -> str:
+def _admin_web_row_link(request, entity: str, item_id: str, label: str = "Mở") -> str:
     return f'<a class="row-link" href="{escape(_admin_web_item_url(request, entity, item_id), quote=True)}">{escape(label)}</a>'
 
 
@@ -591,7 +591,7 @@ def _admin_web_render_products(limit=12):
             f"<td>{escape(str(_admin_web_stock_count(product)))}</td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='4' class='muted'>ChÆ°a cÃ³ sáº£n pháº©m.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='4' class='muted'>Chưa có sản phẩm.</td></tr>"
 
 
 def _admin_web_render_users(limit=12):
@@ -613,7 +613,7 @@ def _admin_web_render_users(limit=12):
             f"<td><span class='tag {'danger' if banned else 'readonly'}'>{'ban' if banned else 'active'}</span></td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='4' class='muted'>ChÆ°a cÃ³ user.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='4' class='muted'>Chưa có user.</td></tr>"
 
 
 def _admin_web_render_api_keys(limit=12):
@@ -629,7 +629,7 @@ def _admin_web_render_api_keys(limit=12):
             f"<td><span class='tag {'readonly' if enabled else 'danger'}'>{'on' if enabled else 'off'}</span></td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='4' class='muted'>ChÆ°a cÃ³ API key.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='4' class='muted'>Chưa có API key.</td></tr>"
 
 
 def _admin_web_render_orders(limit=10):
@@ -645,7 +645,7 @@ def _admin_web_render_orders(limit=10):
             f"<td>{_admin_web_int(order.get('amount'), 0):,} VND</td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='4' class='muted'>ChÆ°a cÃ³ Ä‘Æ¡n hÃ ng.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='4' class='muted'>Chưa có đơn hàng.</td></tr>"
 
 
 def _admin_web_render_audit_log(limit=12):
@@ -665,7 +665,7 @@ def _admin_web_render_audit_log(limit=12):
             f"<td>{escape(str(event.get('message') or ''))}</td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='5' class='muted'>ChÆ°a cÃ³ audit log.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='5' class='muted'>Chưa có audit log.</td></tr>"
 
 
 def _admin_web_render_product_rows(request=None, limit=None):
@@ -711,7 +711,7 @@ def _admin_web_render_product_rows(request=None, limit=None):
             f"<td>{_admin_web_row_link(request, 'product', str(product_id))}</td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='9' class='muted'>ChÆ°a cÃ³ sáº£n pháº©m.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='9' class='muted'>Chưa có sản phẩm.</td></tr>"
 
 
 def _admin_web_render_user_rows(request=None, limit=240):
@@ -743,7 +743,7 @@ def _admin_web_render_user_rows(request=None, limit=240):
             f"<td>{_admin_web_row_link(request, 'user', user_id_text)}</td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='7' class='muted'>ChÆ°a cÃ³ user.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='7' class='muted'>Chưa có user.</td></tr>"
 
 
 def _admin_web_render_order_rows(request=None, limit=240):
@@ -776,7 +776,7 @@ def _admin_web_render_order_rows(request=None, limit=240):
             f"<td>{_admin_web_row_link(request, 'order', order_code)}</td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='8' class='muted'>ChÆ°a cÃ³ Ä‘Æ¡n hÃ ng.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='8' class='muted'>Chưa có đơn hàng.</td></tr>"
 
 
 def _admin_web_render_api_partner_rows(request=None, limit=240):
@@ -802,14 +802,14 @@ def _admin_web_render_api_partner_rows(request=None, limit=240):
             f'<tr class="data-row" data-search="{search}" data-kind="{row_kind}" data-balance="{balance}" data-low="{"1" if is_low else "0"}">'
             f"<td><code>{escape(key_label)}</code><small>{escape(api_public_id)}</small></td>"
             f"<td><b>{escape(_admin_web_short(normalized.get('name') or 'N/A', 60))}</b><div class='api-row-badges'>{role_badge}<span class='tag api'>{ip_count} IP</span></div><small>Owner {escape(str(normalized.get('user_id') or 'none'))}</small></td>"
-            f'<td class="{balance_class}"><b>{_admin_web_money(balance)}</b><small class="{"low-balance" if is_low else ""}">NgÆ°á»¡ng {_admin_web_money(threshold)}</small></td>'
-            f"<td><span class='api-status-dot {'is-on' if enabled else 'is-off'}'></span>{'Äang hoáº¡t Ä‘á»™ng' if enabled else 'ÄÃ£ thu há»“i'}</td>"
-            f"<td><b>{quota}/phÃºt</b><small>{'Telegram ON' if normalized.get('low_balance_alert_enabled') is not False else 'Alert OFF'}</small></td>"
+            f'<td class="{balance_class}"><b>{_admin_web_money(balance)}</b><small class="{"low-balance" if is_low else ""}">Ngưỡng {_admin_web_money(threshold)}</small></td>'
+            f"<td><span class='api-status-dot {'is-on' if enabled else 'is-off'}'></span>{'Đang hoạt động' if enabled else 'Đã thu hồi'}</td>"
+            f"<td><b>{quota}/phút</b><small>{'Telegram ON' if normalized.get('low_balance_alert_enabled') is not False else 'Alert OFF'}</small></td>"
             f"<td>{escape(_admin_web_short(note, 80))}</td>"
-            f'<td><form method="post" action="{action_url}" class="api-quick-wallet"><input type="hidden" name="action" value="api_partner"><input type="hidden" name="mode" value="topup"><input type="hidden" name="target" value="{escape(api_public_id, quote=True)}"><input name="amount" type="number" min="1" placeholder="Sá»‘ tiá»n" aria-label="Sá»‘ tiá»n cá»™ng nhanh"><button type="submit" title="Cá»™ng sá»‘ dÆ°">+</button></form>{_admin_web_row_link(request, "api", api_public_id)}</td>'
+            f'<td><form method="post" action="{action_url}" class="api-quick-wallet"><input type="hidden" name="action" value="api_partner"><input type="hidden" name="mode" value="topup"><input type="hidden" name="target" value="{escape(api_public_id, quote=True)}"><input name="amount" type="number" min="1" placeholder="Số tiền" aria-label="Số tiền cộng nhanh"><button type="submit" title="Cộng số dư">+</button></form>{_admin_web_row_link(request, "api", api_public_id)}</td>'
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='7' class='muted'>ChÆ°a cÃ³ API partner.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='7' class='muted'>Chưa có API partner.</td></tr>"
 
 
 def _admin_web_render_coupon_rows(request=None, limit=180):
@@ -829,7 +829,7 @@ def _admin_web_render_coupon_rows(request=None, limit=180):
             f"<td>{_admin_web_row_link(request, 'coupon', str(code))}</td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='5' class='muted'>ChÆ°a cÃ³ coupon.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='5' class='muted'>Chưa có coupon.</td></tr>"
 
 
 def _admin_web_render_pending_manual_rows(limit=120):
@@ -846,7 +846,7 @@ def _admin_web_render_pending_manual_rows(limit=120):
             f"<td>{escape(_admin_web_format_timestamp(item.get('timestamp')))}</td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='5' class='muted'>KhÃ´ng cÃ³ Ä‘Æ¡n manual pending.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='5' class='muted'>Không có đơn manual pending.</td></tr>"
 
 
 def _admin_web_log_root() -> Path:
@@ -885,7 +885,7 @@ def _admin_web_render_ops_status_rows(request=None) -> str:
         age = max(0, int(time.time() - last_check_time))
         last_check_text = f"{age}s ago"
     else:
-        last_check_text = "chÆ°a cháº¡y"
+        last_check_text = "chưa chạy"
 
     if not bank_configured:
         bank_status = "danger"
@@ -898,18 +898,18 @@ def _admin_web_render_ops_status_rows(request=None) -> str:
         bank_label = "API error"
     elif last_check_time == 0:
         bank_status = "warn"
-        bank_label = "Ä‘ang chá» pending"
+        bank_label = "đang chờ pending"
     else:
         bank_status = "warn"
         bank_label = "stale"
 
-    success_rate = f"{int(total_success * 100 / total_checks)}%" if total_checks > 0 else "â€”"
+    success_rate = f"{int(total_success * 100 / total_checks)}%" if total_checks > 0 else "—"
     bank_note = (
-        f"Account {bank_account} Â· pending: {pending_bank} Â· last check: {last_check_text} Â· "
-        f"tx: {last_tx} Â· success: {total_success}/{total_checks} ({success_rate}) Â· fails: {fail_count}"
+        f"Account {bank_account} · pending: {pending_bank} · last check: {last_check_text} · "
+        f"tx: {last_tx} · success: {total_success}/{total_checks} ({success_rate}) · fails: {fail_count}"
     )
     if last_status == "error" and last_error:
-        bank_note += f" Â· err: {last_error[:120]}"
+        bank_note += f" · err: {last_error[:120]}"
 
     bot_username = str(globals().get("BOT_USERNAME") or "").strip() or "N/A"
     admin_username = str(globals().get("ADMIN_USERNAME") or "").strip() or "N/A"
@@ -921,16 +921,16 @@ def _admin_web_render_ops_status_rows(request=None) -> str:
     mbbank_enabled = getattr(config_env, "ENABLE_PAYMENT_MBBANK", True)
     binance_enabled = getattr(config_env, "ENABLE_PAYMENT_BINANCE_SPOT", True)
     
-    mbbank_btn = f"<form method='post' action='{_admin_web_action_url(request)}' style='display:inline'><input type='hidden' name='action' value='system_toggle'><input type='hidden' name='mode' value='{'mbbank_off' if mbbank_enabled else 'mbbank_on'}'><button class='button small {'danger' if mbbank_enabled else 'success'}'>{'Táº¯t' if mbbank_enabled else 'Báº­t'}</button></form>"
-    binance_btn = f"<form method='post' action='{_admin_web_action_url(request)}' style='display:inline'><input type='hidden' name='action' value='system_toggle'><input type='hidden' name='mode' value='{'binance_off' if binance_enabled else 'binance_on'}'><button class='button small {'danger' if binance_enabled else 'success'}'>{'Táº¯t' if binance_enabled else 'Báº­t'}</button></form>"
+    mbbank_btn = f"<form method='post' action='{_admin_web_action_url(request)}' style='display:inline'><input type='hidden' name='action' value='system_toggle'><input type='hidden' name='mode' value='{'mbbank_off' if mbbank_enabled else 'mbbank_on'}'><button class='button small {'danger' if mbbank_enabled else 'success'}'>{'Tắt' if mbbank_enabled else 'Bật'}</button></form>"
+    binance_btn = f"<form method='post' action='{_admin_web_action_url(request)}' style='display:inline'><input type='hidden' name='action' value='system_toggle'><input type='hidden' name='mode' value='{'binance_off' if binance_enabled else 'binance_on'}'><button class='button small {'danger' if binance_enabled else 'success'}'>{'Tắt' if binance_enabled else 'Bật'}</button></form>"
 
     rows = [
-        (bank_status, f"Cron MBBank ({bank_label})", f"{escape(bank_note)} <br><br><b>Cá»•ng MBBank:</b> <span class='tag {'success' if mbbank_enabled else 'danger'}'>{'Báº¬T' if mbbank_enabled else 'Táº®T'}</span> {mbbank_btn}"),
-        ("live", "Bot user", f"@{escape(bot_username)} Â· users: {len(user_data_db)} Â· uptime: {escape(uptime_text)}"),
-        ("live", "Bot admin", f"@{escape(admin_username)} Â· admin_id: {escape(admin_user_id)}"),
-        ("live" if not MAINTENANCE_MODE else "danger", "Maintenance", f"maintenance {_admin_web_bool_text(MAINTENANCE_MODE)} Â· ai {_admin_web_bool_text(AI_AUTO_REPLY)}"),
-        ("live", "Runtime queues", f"pending pay: {len(pending_orders)} Â· manual pending: {len(pending_manual_orders)} Â· support open: {_admin_web_active_count(live_chats)}"),
-        ("live", "Binance Spot", f"Cá»•ng thanh toÃ¡n USDT tá»± Ä‘á»™ng qua Binance API <br><br><b>Tráº¡ng thÃ¡i:</b> <span class='tag {'success' if binance_enabled else 'danger'}'>{'Báº¬T' if binance_enabled else 'Táº®T'}</span> {binance_btn}"),
+        (bank_status, f"Cron MBBank ({bank_label})", f"{escape(bank_note)} <br><br><b>Cổng MBBank:</b> <span class='tag {'success' if mbbank_enabled else 'danger'}'>{'BẬT' if mbbank_enabled else 'TẮT'}</span> {mbbank_btn}"),
+        ("live", "Bot user", f"@{escape(bot_username)} · users: {len(user_data_db)} · uptime: {escape(uptime_text)}"),
+        ("live", "Bot admin", f"@{escape(admin_username)} · admin_id: {escape(admin_user_id)}"),
+        ("live" if not MAINTENANCE_MODE else "danger", "Maintenance", f"maintenance {_admin_web_bool_text(MAINTENANCE_MODE)} · ai {_admin_web_bool_text(AI_AUTO_REPLY)}"),
+        ("live", "Runtime queues", f"pending pay: {len(pending_orders)} · manual pending: {len(pending_manual_orders)} · support open: {_admin_web_active_count(live_chats)}"),
+        ("live", "Binance Spot", f"Cổng thanh toán USDT tự động qua Binance API <br><br><b>Trạng thái:</b> <span class='tag {'success' if binance_enabled else 'danger'}'>{'BẬT' if binance_enabled else 'TẮT'}</span> {binance_btn}"),
     ]
     status_class_map = {"live": "readonly", "warn": "write", "danger": "danger"}
     return "".join(
@@ -958,7 +958,7 @@ def _admin_web_render_ops_log_panel() -> str:
                 all_lines.append(stripped)
 
     if not all_lines:
-        return "<div class='ecg-monitor'><div class='ecg-header'><span class='ecg-dot'></span> LOG MONITOR</div><div class='ecg-body'><p class='ecg-empty'>ChÆ°a tÃ¬m tháº¥y file log trong thÆ° má»¥c bot.</p></div></div>"
+        return "<div class='ecg-monitor'><div class='ecg-header'><span class='ecg-dot'></span> LOG MONITOR</div><div class='ecg-body'><p class='ecg-empty'>Chưa tìm thấy file log trong thư mục bot.</p></div></div>"
 
     # Keep last 40 lines
     display_lines = all_lines[-40:]
@@ -1000,7 +1000,7 @@ def _admin_web_render_legacy_link_rows(limit=80):
             f"<td><span class='tag readonly'>active</span></td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='3' class='muted'>Kho link legacy Ä‘ang trá»‘ng.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='3' class='muted'>Kho link legacy đang trống.</td></tr>"
 
 
 def _admin_web_render_support_rows(request=None, limit=120):
@@ -1027,7 +1027,7 @@ def _admin_web_render_support_rows(request=None, limit=120):
             )
             if len(rows) >= limit:
                 break
-    return "".join(rows) or "<tr><td colspan='6' class='muted'>ChÆ°a cÃ³ ticket há»— trá»£.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='6' class='muted'>Chưa có ticket hỗ trợ.</td></tr>"
 
 
 def _admin_web_render_audit_rows(limit=120):
@@ -1049,7 +1049,7 @@ def _admin_web_render_audit_rows(limit=120):
             f"<td>{escape(_admin_web_short(event.get('message') or '', 120))}</td>"
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='6' class='muted'>ChÆ°a cÃ³ audit log.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='6' class='muted'>Chưa có audit log.</td></tr>"
 
 
 def _admin_web_render_payment_config(request) -> str:
@@ -1063,14 +1063,14 @@ def _admin_web_render_payment_config(request) -> str:
         ("Binance Pay ID", bool(str(getattr(config_env, "BINANCE_PAY_ID", "")).strip())),
     )
     status_rows = "".join(
-        f"<tr><td>{escape(name)}</td><td><span class='tag {'ok' if configured else 'warn'}'>{'ÄÃ£ cáº¥u hÃ¬nh' if configured else 'ChÆ°a cáº¥u hÃ¬nh'}</span></td></tr>"
+        f"<tr><td>{escape(name)}</td><td><span class='tag {'ok' if configured else 'warn'}'>{'Đã cấu hình' if configured else 'Chưa cấu hình'}</span></td></tr>"
         for name, configured in rows
     )
     return f"""
     <div style="padding:16px;">
-      <h3>Cáº¥u hÃ¬nh Thanh toÃ¡n</h3>
-      <p class="muted">Read-only. Cáº­p nháº­t secret trong deployment environment rá»“i restart bot.</p>
-      <table><thead><tr><th>Dá»‹ch vá»¥</th><th>Tráº¡ng thÃ¡i</th></tr></thead><tbody>{status_rows}</tbody></table>
+      <h3>Cấu hình Thanh toán</h3>
+      <p class="muted">Read-only. Cập nhật secret trong deployment environment rồi restart bot.</p>
+      <table><thead><tr><th>Dịch vụ</th><th>Trạng thái</th></tr></thead><tbody>{status_rows}</tbody></table>
     </div>
     """
 
@@ -1096,7 +1096,7 @@ def _admin_web_overview_pending_items(request, limit: int = 6) -> str:
             f'<div class="overview-meta"><span>User {escape(str(user_id) or "N/A")}</span><b>{escape(amount)}</b></div>'
             "</a>"
         )
-    return "".join(rows) or _admin_web_overview_empty("KhÃ´ng cÃ³ Ä‘Æ¡n manual pending.")
+    return "".join(rows) or _admin_web_overview_empty("Không có đơn manual pending.")
 
 
 def _admin_web_overview_order_items(request, limit: int = 6) -> str:
@@ -1129,7 +1129,7 @@ def _admin_web_overview_order_items(request, limit: int = 6) -> str:
             "</div>"
             "</a>"
         )
-    return "".join(rows) or _admin_web_overview_empty("ChÆ°a cÃ³ Ä‘Æ¡n hÃ ng gáº§n Ä‘Ã¢y.")
+    return "".join(rows) or _admin_web_overview_empty("Chưa có đơn hàng gần đây.")
 
 
 def _admin_web_overview_audit_items(limit: int = 6) -> str:
@@ -1153,7 +1153,7 @@ def _admin_web_overview_audit_items(limit: int = 6) -> str:
             "</div>"
             "</article>"
         )
-    return "".join(rows) or _admin_web_overview_empty("ChÆ°a cÃ³ audit log.")
+    return "".join(rows) or _admin_web_overview_empty("Chưa có audit log.")
 
 
 def _admin_web_revenue_chart(days: int = 30) -> str:
@@ -1208,7 +1208,7 @@ def _admin_web_revenue_chart(days: int = 30) -> str:
         y = H - PAD_B - bar_h
         is_today = (d == today)
         color = "#4ade80" if is_today else "#3b82f6"
-        tip = f"{d.strftime('%d/%m')}: {v:,}Ä‘"
+        tip = f"{d.strftime('%d/%m')}: {v:,}đ"
         bars_svg.append(
             f'<rect x="{x}" y="{y}" width="{bar_w}" height="{bar_h}" fill="{color}" rx="2" opacity="0.85">'
             f'<title>{tip}</title></rect>'
@@ -1245,10 +1245,10 @@ def _admin_web_revenue_chart(days: int = 30) -> str:
     return f"""
 <section class="mini-panel queue-panel" style="grid-column:1/-1;">
   <div class="card-head">
-    <h3>Doanh thu {days} ngÃ y gáº§n nháº¥t</h3>
+    <h3>Doanh thu {days} ngày gần nhất</h3>
     <span class="muted" style="font-size:12px;">
-      Tuáº§n: <b style="color:#4ade80;">{total_week:,}Ä‘</b>
-      &nbsp;|&nbsp; {days} ngÃ y: <b style="color:#3b82f6;">{total_period:,}Ä‘</b>
+      Tuần: <b style="color:#4ade80;">{total_week:,}đ</b>
+      &nbsp;|&nbsp; {days} ngày: <b style="color:#3b82f6;">{total_period:,}đ</b>
     </span>
   </div>
   <div style="padding:8px 4px 0;">{svg}</div>
@@ -1260,15 +1260,15 @@ def _admin_web_overview_board(request) -> str:
 <div class="overview-board">
   {_admin_web_revenue_chart(30)}
   <section class="mini-panel queue-panel">
-    <div class="card-head"><h3>HÃ ng Ä‘á»£i cáº§n xá»­ lÃ½</h3><a class="panel-link" href="#ops">{len(pending_manual_orders)} manual</a></div>
+    <div class="card-head"><h3>Hàng đợi cần xử lý</h3><a class="panel-link" href="#ops">{len(pending_manual_orders)} manual</a></div>
     <div class="overview-list">{_admin_web_overview_pending_items(request)}</div>
   </section>
   <section class="mini-panel queue-panel">
-    <div class="card-head"><h3>ÄÆ¡n má»›i gáº§n Ä‘Ã¢y</h3><a class="panel-link" href="#orders">{len(order_history)} total</a></div>
+    <div class="card-head"><h3>Đơn mới gần đây</h3><a class="panel-link" href="#orders">{len(order_history)} total</a></div>
     <div class="overview-list">{_admin_web_overview_order_items(request)}</div>
   </section>
   <section class="mini-panel queue-panel">
-    <div class="card-head"><h3>Audit gáº§n Ä‘Ã¢y</h3><a class="panel-link" href="#audit">web</a></div>
+    <div class="card-head"><h3>Audit gần đây</h3><a class="panel-link" href="#audit">web</a></div>
     <div class="overview-list">{_admin_web_overview_audit_items()}</div>
   </section>
 </div>
@@ -1293,7 +1293,7 @@ def _admin_web_detail_shell(request, entity: str, item_id: str, title: str, summ
 {alert}
 <div class="detail-shell">
   <div class="detail-topbar">
-    <a class="button" href="{escape(back_url, quote=True)}">Vá» dashboard</a>
+    <a class="button" href="{escape(back_url, quote=True)}">Về dashboard</a>
     <span class="tag">{escape(entity)}</span>
   </div>
   <section class="workspace-head detail-head">
@@ -1321,17 +1321,17 @@ def _admin_web_summary_card(label: str, value, kind: str = "") -> str:
     display_value = _admin_web_plain_display(value)
     label_folded = str(label or "").casefold()
     icon_class = "metric-detail"
-    if any(token in label_folded for token in ("tiá»n", "giÃ¡", "sá»‘ dÆ°", "spent", "amount")):
+    if any(token in label_folded for token in ("tiền", "giá", "số dư", "spent", "amount")):
         icon_class += " metric-detail-money"
-    elif any(token in label_folded for token in ("status", "tráº¡ng thÃ¡i", "records", "orders")):
+    elif any(token in label_folded for token in ("status", "trạng thái", "records", "orders")):
         icon_class += " metric-detail-order"
     elif any(token in label_folded for token in ("user", "owner")):
         icon_class += " metric-detail-user"
-    elif any(token in label_folded for token in ("stock", "loáº¡i", "sync", "partner")):
+    elif any(token in label_folded for token in ("stock", "loại", "sync", "partner")):
         icon_class += " metric-detail-product"
     elif any(token in label_folded for token in ("coupon", "used")):
         icon_class += " metric-detail-promo"
-    elif any(token in label_folded for token in ("báº£o hÃ nh", "bh", "háº¿t háº¡n")):
+    elif any(token in label_folded for token in ("bảo hành", "bh", "hết hạn")):
         icon_class += " metric-detail-support"
     return f'<div class="metric {icon_class} {escape(kind)}"><span>{escape(label)}</span><b title="{escape(display_value, quote=True)}">{escape(display_value)}</b></div>'
 
@@ -1354,16 +1354,16 @@ def _admin_web_recent_order_table_for_user(request, user_id: str, limit: int = 3
         )
         if len(rows) >= limit:
             break
-    body = "".join(rows) or "<tr><td colspan='5' class='muted'>ChÆ°a cÃ³ Ä‘Æ¡n hÃ ng.</td></tr>"
-    return f'<div class="table-scroll"><table class="data-table"><thead><tr><th>MÃ£</th><th>Sáº£n pháº©m</th><th>Tiá»n</th><th>Status</th><th></th></tr></thead><tbody>{body}</tbody></table></div>'
+    body = "".join(rows) or "<tr><td colspan='5' class='muted'>Chưa có đơn hàng.</td></tr>"
+    return f'<div class="table-scroll"><table class="data-table"><thead><tr><th>Mã</th><th>Sản phẩm</th><th>Tiền</th><th>Status</th><th></th></tr></thead><tbody>{body}</tbody></table></div>'
 
 
 def _admin_web_order_warranty_summary_cards(order: dict) -> str:
     if not isinstance(order, dict) or not order:
         return (
-            _admin_web_summary_card("Báº£o hÃ nh", "N/A")
-            + _admin_web_summary_card("Háº¿t háº¡n BH", "N/A", "write")
-            + _admin_web_summary_card("Tráº¡ng thÃ¡i BH", "ChÆ°a rÃµ", "write")
+            _admin_web_summary_card("Bảo hành", "N/A")
+            + _admin_web_summary_card("Hết hạn BH", "N/A", "write")
+            + _admin_web_summary_card("Trạng thái BH", "Chưa rõ", "write")
         )
 
     status_text = _admin_web_plain_display(order.get("status") or "")
@@ -1373,12 +1373,12 @@ def _admin_web_order_warranty_summary_cards(order: dict) -> str:
         refunded_at_value = float(refunded_at or 0)
     except (TypeError, ValueError):
         refunded_at_value = 0
-    if refunded_at_value > 0 or any(token in status_folded for token in ("hoÃ n tiá»n", "hoan tien", "refund", "refunded", "há»§y", "huy", "cancel")):
-        refund_time = _admin_web_format_timestamp(refunded_at_value) if refunded_at_value > 0 else "KhÃ´ng Ã¡p dá»¥ng"
+    if refunded_at_value > 0 or any(token in status_folded for token in ("hoàn tiền", "hoan tien", "refund", "refunded", "hủy", "huy", "cancel")):
+        refund_time = _admin_web_format_timestamp(refunded_at_value) if refunded_at_value > 0 else "Không áp dụng"
         return (
-            _admin_web_summary_card("Báº£o hÃ nh", "KhÃ´ng Ã¡p dá»¥ng", "danger")
-            + _admin_web_summary_card("Káº¿t thÃºc BH", refund_time, "danger")
-            + _admin_web_summary_card("Tráº¡ng thÃ¡i BH", "ÄÃ£ hoÃ n tiá»n", "danger")
+            _admin_web_summary_card("Bảo hành", "Không áp dụng", "danger")
+            + _admin_web_summary_card("Kết thúc BH", refund_time, "danger")
+            + _admin_web_summary_card("Trạng thái BH", "Đã hoàn tiền", "danger")
         )
 
     product = {}
@@ -1419,28 +1419,28 @@ def _admin_web_order_warranty_summary_cards(order: dict) -> str:
     expiry_kind = "write"
 
     if reason == "lifetime_warranty":
-        expiry_text = "KhÃ´ng giá»›i háº¡n"
-        status_text = "CÃ²n báº£o hÃ nh"
+        expiry_text = "Không giới hạn"
+        status_text = "Còn bảo hành"
         expiry_kind = "readonly"
     elif reason == "no_warranty":
-        expiry_text = "KhÃ´ng báº£o hÃ nh"
-        status_text = "KhÃ´ng báº£o hÃ nh"
+        expiry_text = "Không bảo hành"
+        status_text = "Không bảo hành"
         expiry_kind = "danger"
     elif expires_at:
         expiry_text = _admin_web_format_timestamp(expires_at)
-        status_text = "Háº¿t háº¡n" if expired else "CÃ²n báº£o hÃ nh"
+        status_text = "Hết hạn" if expired else "Còn bảo hành"
         expiry_kind = "danger" if expired else "readonly"
     elif known:
-        expiry_text = "KhÃ´ng xÃ¡c Ä‘á»‹nh"
-        status_text = "Theo chÃ­nh sÃ¡ch"
+        expiry_text = "Không xác định"
+        status_text = "Theo chính sách"
     else:
-        expiry_text = "KhÃ´ng xÃ¡c Ä‘á»‹nh"
-        status_text = "ChÆ°a rÃµ"
+        expiry_text = "Không xác định"
+        status_text = "Chưa rõ"
 
     return (
-        _admin_web_summary_card("Báº£o hÃ nh", warranty_text)
-        + _admin_web_summary_card("Háº¿t háº¡n BH", expiry_text, expiry_kind)
-        + _admin_web_summary_card("Tráº¡ng thÃ¡i BH", status_text, expiry_kind)
+        _admin_web_summary_card("Bảo hành", warranty_text)
+        + _admin_web_summary_card("Hết hạn BH", expiry_text, expiry_kind)
+        + _admin_web_summary_card("Trạng thái BH", status_text, expiry_kind)
     )
 
 
@@ -1451,7 +1451,7 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
             request,
             "product",
             product_id,
-            "KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m",
+            "Không tìm thấy sản phẩm",
             _admin_web_summary_card("status", "not found", "danger"),
             "",
             {},
@@ -1473,10 +1473,10 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
     )
     summary = "".join(
         [
-            _admin_web_summary_card("Loáº¡i", product_type),
-            _admin_web_summary_card("GiÃ¡", _admin_web_money(product.get("price"))),
+            _admin_web_summary_card("Loại", product_type),
+            _admin_web_summary_card("Giá", _admin_web_money(product.get("price"))),
             _admin_web_summary_card("Stock", stock_count),
-            _admin_web_summary_card("Báº£o hÃ nh", product.get("warranty") or "KhÃ´ng"),
+            _admin_web_summary_card("Bảo hành", product.get("warranty") or "Không"),
             _admin_web_summary_card("Pending manual", pending_count),
             _admin_web_summary_card("Orders", sold_count),
             _admin_web_summary_card("Sync", product.get("ctt_sync_state") or "active"),
@@ -1492,35 +1492,35 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
             f'alt="Product image" style="max-width:100%;max-height:280px;border-radius:12px;'
             f'border:1px solid var(--glass-line);background:#0b1220;display:block;margin-bottom:10px;">'
             f'<form method="post" action="{action_url}" class="form-grid" '
-            f'data-confirm="XÃ³a áº£nh riÃªng cá»§a sáº£n pháº©m nÃ y?">'
+            f'data-confirm="Xóa ảnh riêng của sản phẩm này?">'
             f'<input type="hidden" name="action" value="product_image_delete">'
             f'{_admin_web_hidden_return("product", product_id)}'
             f'<input type="hidden" name="product_id" value="{escape(product_id, quote=True)}">'
-            f'<button class="wide danger" type="submit">XÃ³a áº£nh riÃªng</button>'
+            f'<button class="wide danger" type="submit">Xóa ảnh riêng</button>'
             f'</form>'
         )
     else:
-        image_preview_html = '<p class="muted" style="margin:0 0 10px;">ChÆ°a cÃ³ áº£nh riÃªng cho sáº£n pháº©m nÃ y.</p>'
+        image_preview_html = '<p class="muted" style="margin:0 0 10px;">Chưa có ảnh riêng cho sản phẩm này.</p>'
 
     if category_name and category_image_path is not None:
         category_image_preview = (
-            f'<p class="muted" style="margin:14px 0 6px;">áº¢nh danh má»¥c <b>{escape(category_name)}</b> '
-            f'(Ã¡p dá»¥ng cho má»i sáº£n pháº©m chÆ°a cÃ³ áº£nh riÃªng):</p>'
+            f'<p class="muted" style="margin:14px 0 6px;">Ảnh danh mục <b>{escape(category_name)}</b> '
+            f'(áp dụng cho mọi sản phẩm chưa có ảnh riêng):</p>'
             f'<img src="{escape(_admin_web_category_image_url(request, category_name), quote=True)}" '
             f'alt="Category image" style="max-width:100%;max-height:200px;border-radius:12px;'
             f'border:1px solid var(--glass-line);background:#0b1220;display:block;margin-bottom:10px;">'
             f'<form method="post" action="{action_url}" class="form-grid" '
-            f'data-confirm="XÃ³a áº£nh chung cá»§a danh má»¥c {escape(category_name, quote=True)}?">'
+            f'data-confirm="Xóa ảnh chung của danh mục {escape(category_name, quote=True)}?">'
             f'<input type="hidden" name="action" value="category_image_delete">'
             f'{_admin_web_hidden_return("product", product_id)}'
             f'<input type="hidden" name="category_name" value="{escape(category_name, quote=True)}">'
-            f'<button class="wide danger" type="submit">XÃ³a áº£nh danh má»¥c</button>'
+            f'<button class="wide danger" type="submit">Xóa ảnh danh mục</button>'
             f'</form>'
         )
     elif category_name:
         category_image_preview = (
-            f'<p class="muted" style="margin:14px 0 6px;">Danh má»¥c <b>{escape(category_name)}</b> '
-            f'chÆ°a cÃ³ áº£nh chung. Tick <i>"Ãp dá»¥ng cho cáº£ danh má»¥c"</i> bÃªn dÆ°á»›i Ä‘á»ƒ upload.</p>'
+            f'<p class="muted" style="margin:14px 0 6px;">Danh mục <b>{escape(category_name)}</b> '
+            f'chưa có ảnh chung. Tick <i>"Áp dụng cho cả danh mục"</i> bên dưới để upload.</p>'
         )
     else:
         category_image_preview = ""
@@ -1528,11 +1528,11 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
     apply_category_checkbox = (
         f'<label class="wide" style="display:flex;align-items:center;gap:8px;font-weight:600;">'
         f'<input type="checkbox" name="apply_to_category" value="1" style="width:auto;margin:0;"> '
-        f'Ãp dá»¥ng cho cáº£ danh má»¥c '
-        f'<span class="muted" style="font-weight:400;">(má»i sáº£n pháº©m cÃ¹ng danh má»¥c chÆ°a cÃ³ áº£nh riÃªng sáº½ dÃ¹ng áº£nh nÃ y)</span>'
+        f'Áp dụng cho cả danh mục '
+        f'<span class="muted" style="font-weight:400;">(mọi sản phẩm cùng danh mục chưa có ảnh riêng sẽ dùng ảnh này)</span>'
         f'</label>'
-        f'<label class="wide">TÃªn danh má»¥c Ã¡p dá»¥ng '
-        f'<span class="muted" style="font-weight:400;">(Ä‘á»ƒ trá»‘ng = dÃ¹ng danh má»¥c hiá»‡n táº¡i cá»§a sáº£n pháº©m)</span>'
+        f'<label class="wide">Tên danh mục áp dụng '
+        f'<span class="muted" style="font-weight:400;">(để trống = dùng danh mục hiện tại của sản phẩm)</span>'
         f'<input name="category_name_override" placeholder="VD: AI Tools (GPT, Copilot...)" '
         f'value="{escape(category_name, quote=True)}"></label>'
     )
@@ -1554,7 +1554,7 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
         for pid, prod in affected[:200]:
             has_own_img = _admin_web_product_image_path(pid) is not None
             tag_class = "tag readonly" if has_own_img else "tag write"
-            tag_text = "cÃ³ áº£nh riÃªng" if has_own_img else "sáº½ dÃ¹ng áº£nh chung"
+            tag_text = "có ảnh riêng" if has_own_img else "sẽ dùng ảnh chung"
             is_self = pid == product_id
             row_style = "background:rgba(99,179,237,0.08);" if is_self else ""
             # Default tick: every product in this category (admin can untick mismatches)
@@ -1562,7 +1562,7 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
                 f'<input type="checkbox" name="selected_products" value="{escape(pid, quote=True)}" '
                 f'class="apply-row-check" checked style="width:auto;margin:0;">'
             )
-            self_badge = ' <span class="tag">Ä‘ang xem</span>' if is_self else ''
+            self_badge = ' <span class="tag">đang xem</span>' if is_self else ''
             short_name = escape(_admin_web_short(str(prod.get("name") or pid), 80))
             row_link = _admin_web_row_link(request, "product", str(pid))
             rows.append(
@@ -1575,11 +1575,11 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
                 f'</tr>'
             )
         if not rows:
-            rows.append('<tr><td colspan="5" class="muted">ChÆ°a cÃ³ sáº£n pháº©m nÃ o trong danh má»¥c nÃ y.</td></tr>')
+            rows.append('<tr><td colspan="5" class="muted">Chưa có sản phẩm nào trong danh mục này.</td></tr>')
 
         more_note = ""
         if len(affected) > 200:
-            more_note = f'<p class="muted" style="margin:6px 0 0;">â€¦ vÃ  {len(affected) - 200} sáº£n pháº©m khÃ¡c (chá»‰ hiá»‡n 200 Ä‘áº§u).</p>'
+            more_note = f'<p class="muted" style="margin:6px 0 0;">… và {len(affected) - 200} sản phẩm khác (chỉ hiện 200 đầu).</p>'
 
         # JS for select-all toggle (small inline helper)
         select_helper_js = """
@@ -1600,25 +1600,25 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
         preview_html = f"""
 <details open style="margin-top:14px;background:rgba(255,255,255,0.02);border:1px solid var(--glass-line);border-radius:10px;padding:10px 14px;">
   <summary style="cursor:pointer;font-weight:600;">
-    ðŸ” Xem trÆ°á»›c {len(affected)} sáº£n pháº©m trong danh má»¥c <b>{escape(category_name)}</b>
-    <span class="muted" style="font-weight:400;">(tick tá»«ng sáº£n pháº©m muá»‘n Ã¡p dá»¥ng áº£nh; bá» tick náº¿u sáº£n pháº©m bá»‹ xáº¿p nháº§m)</span>
+    🔍 Xem trước {len(affected)} sản phẩm trong danh mục <b>{escape(category_name)}</b>
+    <span class="muted" style="font-weight:400;">(tick từng sản phẩm muốn áp dụng ảnh; bỏ tick nếu sản phẩm bị xếp nhầm)</span>
   </summary>
   <div class="apply-preview-box">
   <div style="overflow:auto;margin-top:10px;">
     <table class="data-table" style="width:100%;font-size:13px;">
       <thead><tr>
-        <th style="width:36px;text-align:center;"><input type="checkbox" class="apply-master-check" checked title="Tick/Bá» tick táº¥t cáº£" style="width:auto;margin:0;"></th>
-        <th>Product ID</th><th>TÃªn</th><th>Tráº¡ng thÃ¡i áº£nh</th><th></th>
+        <th style="width:36px;text-align:center;"><input type="checkbox" class="apply-master-check" checked title="Tick/Bỏ tick tất cả" style="width:auto;margin:0;"></th>
+        <th>Product ID</th><th>Tên</th><th>Trạng thái ảnh</th><th></th>
       </tr></thead>
       <tbody>{''.join(rows)}</tbody>
     </table>
   </div>
   {more_note}
   <p class="muted" style="margin:8px 0 0;">
-    <b>CÃ¡ch Ã¡p dá»¥ng:</b><br>
-    â€¢ Tick cÃ¡c sáº£n pháº©m muá»‘n dÃ¹ng <b>chung 1 áº£nh</b> (máº·c Ä‘á»‹nh tick háº¿t) â†’ áº£nh sáº½ Ä‘Æ°á»£c copy cho má»—i sáº£n pháº©m Ä‘Ã£ tick.<br>
-    â€¢ Hoáº·c tick checkbox <i>"Ãp dá»¥ng cho cáº£ danh má»¥c"</i> bÃªn dÆ°á»›i â†’ lÆ°u 1 áº£nh dÃ¹ng chung cho cáº£ danh má»¥c (tiáº¿t kiá»‡m dung lÆ°á»£ng, má»i sáº£n pháº©m chÆ°a cÃ³ áº£nh riÃªng tá»± Ä‘á»™ng dÃ¹ng).<br>
-    â€¢ Sáº£n pháº©m cÃ³ "áº£nh riÃªng" sáº½ luÃ´n Æ°u tiÃªn áº£nh riÃªng â€” báº¡n cáº§n xÃ³a áº£nh riÃªng trÆ°á»›c náº¿u muá»‘n Ä‘Ã¨.
+    <b>Cách áp dụng:</b><br>
+    • Tick các sản phẩm muốn dùng <b>chung 1 ảnh</b> (mặc định tick hết) → ảnh sẽ được copy cho mỗi sản phẩm đã tick.<br>
+    • Hoặc tick checkbox <i>"Áp dụng cho cả danh mục"</i> bên dưới → lưu 1 ảnh dùng chung cho cả danh mục (tiết kiệm dung lượng, mọi sản phẩm chưa có ảnh riêng tự động dùng).<br>
+    • Sản phẩm có "ảnh riêng" sẽ luôn ưu tiên ảnh riêng — bạn cần xóa ảnh riêng trước nếu muốn đè.
   </p>
   </div>{select_helper_js}
 </details>
@@ -1627,12 +1627,12 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
     image_upload_url = f"/admin/product_image_upload{_admin_web_key_query(request)}"
     image_section = f"""
 <section class="action-card">
-  <div class="card-head"><h3>áº¢nh sáº£n pháº©m</h3><span class="tag write">media</span></div>
+  <div class="card-head"><h3>Ảnh sản phẩm</h3><span class="tag write">media</span></div>
   {image_preview_html}
   {category_image_preview}
   <form method="post" action="{escape(image_upload_url, quote=True)}" enctype="multipart/form-data" class="form-grid">
     <input type="hidden" name="product_id" value="{escape(product_id, quote=True)}">
-    <label class="wide">Chá»n áº£nh (jpg/png/webp, â‰¤ 8MB)
+    <label class="wide">Chọn ảnh (jpg/png/webp, ≤ 8MB)
       <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required id="img-file-input">
     </label>
     <div id="img-preview-wrap" style="display:none;margin:6px 0 10px;">
@@ -1653,53 +1653,53 @@ def _admin_web_product_detail_body(request, product_id: str, message: str | None
         var url = URL.createObjectURL(f);
         thumb.onload = function(){{ URL.revokeObjectURL(url); }};
         thumb.src = url;
-        info.textContent = f.name + ' â€” ' + (f.size/1024).toFixed(1) + ' KB';
+        info.textContent = f.name + ' — ' + (f.size/1024).toFixed(1) + ' KB';
         wrap.style.display = 'block';
       }});
     }})();
     </script>
     {preview_html}
     {apply_category_checkbox}
-    <button class="wide" type="submit">Táº£i lÃªn / Thay áº£nh</button>
+    <button class="wide" type="submit">Tải lên / Thay ảnh</button>
   </form>
 </section>
 """
     main = f"""
 {image_section}
 <section class="action-card">
-  <div class="card-head"><h3>Sá»­a sáº£n pháº©m</h3><span class="tag write">editable</span></div>
+  <div class="card-head"><h3>Sửa sản phẩm</h3><span class="tag write">editable</span></div>
   <form method="post" action="{action_url}" class="form-grid">
     <input type="hidden" name="action" value="product_update">
     {_admin_web_hidden_return("product", product_id)}
     <label>Product ID<input name="product_id" value="{escape(product_id, quote=True)}" readonly></label>
-    <label>GiÃ¡ bÃ¡n<input name="price" value="{escape(str(product.get('price') or ''), quote=True)}"></label>
-    <label>GiÃ¡ vá»‘n<input name="cost_price" value="{escape(str(product.get('cost_price') if product.get('cost_price') is not None else ''), quote=True)}" placeholder="Local/manual"></label>
-    <label class="wide">TÃªn<input name="name" value="{escape(str(product.get('name') or ''), quote=True)}"></label>
-    <label class="wide">Danh má»¥c (store_category) <span class="muted" style="font-weight:400;">(Ä‘á»ƒ trá»‘ng = giá»¯ nguyÃªn)</span><input name="store_category" placeholder="VD: AI Tools (GPT, Copilot...)" value="{escape(str(product.get('store_category') or ''), quote=True)}"></label>
-    <label>Thá»i háº¡n<input name="duration" value="{escape(str(product.get('duration') or ''), quote=True)}"></label>
-    <label>Báº£o hÃ nh<input name="warranty" value="{escape(str(product.get('warranty') or ''), quote=True)}" placeholder="VD: 7 ngÃ y, 30 ngÃ y, KhÃ´ng"></label>
-    <label>Giá»›i háº¡n manual<input name="max_pending_orders" value="{escape(str(product.get('max_pending_orders') or ''), quote=True)}"></label>
-    <label class="wide">MÃ´ táº£<textarea name="description">{escape(str(product.get('description') or ''))}</textarea></label>
-    <label class="wide">ThÃªm stock local<textarea name="stock_items" {stock_disabled} placeholder="Má»—i dÃ²ng 1 item"></textarea></label>
-    <button class="wide" type="submit">LÆ°u thay Ä‘á»•i</button>
+    <label>Giá bán<input name="price" value="{escape(str(product.get('price') or ''), quote=True)}"></label>
+    <label>Giá vốn<input name="cost_price" value="{escape(str(product.get('cost_price') if product.get('cost_price') is not None else ''), quote=True)}" placeholder="Local/manual"></label>
+    <label class="wide">Tên<input name="name" value="{escape(str(product.get('name') or ''), quote=True)}"></label>
+    <label class="wide">Danh mục (store_category) <span class="muted" style="font-weight:400;">(để trống = giữ nguyên)</span><input name="store_category" placeholder="VD: AI Tools (GPT, Copilot...)" value="{escape(str(product.get('store_category') or ''), quote=True)}"></label>
+    <label>Thời hạn<input name="duration" value="{escape(str(product.get('duration') or ''), quote=True)}"></label>
+    <label>Bảo hành<input name="warranty" value="{escape(str(product.get('warranty') or ''), quote=True)}" placeholder="VD: 7 ngày, 30 ngày, Không"></label>
+    <label>Giới hạn manual<input name="max_pending_orders" value="{escape(str(product.get('max_pending_orders') or ''), quote=True)}"></label>
+    <label class="wide">Mô tả<textarea name="description">{escape(str(product.get('description') or ''))}</textarea></label>
+    <label class="wide">Thêm stock local<textarea name="stock_items" {stock_disabled} placeholder="Mỗi dòng 1 item"></textarea></label>
+    <button class="wide" type="submit">Lưu thay đổi</button>
   </form>
 </section>
 <section class="action-card">
-  <div class="card-head"><h3>XÃ³a sáº£n pháº©m</h3><span class="tag danger">danger</span></div>
-  <form method="post" action="{action_url}" class="form-grid" data-confirm="XÃ³a vÄ©nh viá»…n sáº£n pháº©m nÃ y khá»i catalog? ÄÆ¡n hÃ ng cÅ© sáº½ váº«n giá»¯ trong lá»‹ch sá»­.">
+  <div class="card-head"><h3>Xóa sản phẩm</h3><span class="tag danger">danger</span></div>
+  <form method="post" action="{action_url}" class="form-grid" data-confirm="Xóa vĩnh viễn sản phẩm này khỏi catalog? Đơn hàng cũ sẽ vẫn giữ trong lịch sử.">
     <input type="hidden" name="action" value="product_delete">
     <input type="hidden" name="product_id" value="{escape(product_id, quote=True)}">
-    <button class="wide danger" type="submit">XÃ³a sáº£n pháº©m</button>
+    <button class="wide danger" type="submit">Xóa sản phẩm</button>
   </form>
 </section>
 <section class="action-card">
   <div class="card-head"><h3>Stock local</h3><span class="tag danger">careful</span></div>
-  <form method="post" action="{action_url}" class="form-grid" data-confirm="XÃ³a toÃ n bá»™ stock local cá»§a sáº£n pháº©m nÃ y?">
+  <form method="post" action="{action_url}" class="form-grid" data-confirm="Xóa toàn bộ stock local của sản phẩm này?">
     <input type="hidden" name="action" value="product_stock">
     {_admin_web_hidden_return("product", product_id)}
     <input type="hidden" name="product_id" value="{escape(product_id, quote=True)}">
     <input type="hidden" name="mode" value="clear_stock">
-    <button class="wide danger" type="submit" {stock_disabled}>XÃ³a toÃ n bá»™ stock local</button>
+    <button class="wide danger" type="submit" {stock_disabled}>Xóa toàn bộ stock local</button>
   </form>
 </section>
 """
@@ -1724,7 +1724,7 @@ def _admin_web_user_detail_body(request, user_id: str, message: str | None = Non
     orders_count = sum(1 for order in order_history if isinstance(order, dict) and str(order.get("user_id") or "") == str(user_id))
     summary = "".join(
         [
-            _admin_web_summary_card("Sá»‘ dÆ°", _admin_web_money(profile.get("balance"))),
+            _admin_web_summary_card("Số dư", _admin_web_money(profile.get("balance"))),
             _admin_web_summary_card("Orders", orders_count),
             _admin_web_summary_card("Status", "ban" if banned else "active", "danger" if banned else "readonly"),
             _admin_web_summary_card("Spent", _admin_web_money(profile.get("total_spent") or profile.get("spent") or 0)),
@@ -1733,39 +1733,39 @@ def _admin_web_user_detail_body(request, user_id: str, message: str | None = Non
     action_url = _admin_web_action_url(request)
     main = f"""
 <section class="action-card">
-  <div class="card-head"><h3>Há»“ sÆ¡ user</h3><span class="tag write">profile</span></div>
+  <div class="card-head"><h3>Hồ sơ user</h3><span class="tag write">profile</span></div>
   <form method="post" action="{action_url}" class="form-grid">
     <input type="hidden" name="action" value="user_profile">
     {_admin_web_hidden_return("user", user_id)}
     <label>User ID<input name="user_id" value="{escape(str(user_id), quote=True)}" readonly></label>
     <label>Username<input name="username" value="{escape(str(profile.get('username') or ''), quote=True)}"></label>
-    <label class="wide">TÃªn<input name="full_name" value="{escape(str(profile.get('full_name') or profile.get('first_name') or ''), quote=True)}"></label>
+    <label class="wide">Tên<input name="full_name" value="{escape(str(profile.get('full_name') or profile.get('first_name') or ''), quote=True)}"></label>
     <label>Email<input name="email" value="{escape(str(profile.get('email') or ''), quote=True)}"></label>
-    <label>Ghi chÃº<input name="admin_note" value="{escape(str(profile.get('admin_note') or ''), quote=True)}"></label>
-    <button class="wide" type="submit">LÆ°u há»“ sÆ¡</button>
+    <label>Ghi chú<input name="admin_note" value="{escape(str(profile.get('admin_note') or ''), quote=True)}"></label>
+    <button class="wide" type="submit">Lưu hồ sơ</button>
   </form>
 </section>
 <section class="action-card">
-  <div class="card-head"><h3>VÃ­ & ban</h3><span class="tag danger">money</span></div>
+  <div class="card-head"><h3>Ví & ban</h3><span class="tag danger">money</span></div>
   <form method="post" action="{action_url}" class="form-grid">
     <input type="hidden" name="action" value="user_balance">
     {_admin_web_hidden_return("user", user_id)}
     <label>User ID<input name="user_id" value="{escape(str(user_id), quote=True)}" readonly></label>
-    <label>Sá»‘ tiá»n<input name="amount" placeholder="100000"></label>
-    <label>Kiá»ƒu<select name="mode"><option value="add">Cá»™ng</option><option value="sub">Trá»«</option><option value="set">Set</option></select></label>
-    <label>LÃ½ do<input name="reason" value="Admin web detail"></label>
-    <button class="wide" type="submit">Cáº­p nháº­t vÃ­</button>
+    <label>Số tiền<input name="amount" placeholder="100000"></label>
+    <label>Kiểu<select name="mode"><option value="add">Cộng</option><option value="sub">Trừ</option><option value="set">Set</option></select></label>
+    <label>Lý do<input name="reason" value="Admin web detail"></label>
+    <button class="wide" type="submit">Cập nhật ví</button>
   </form>
-  <form method="post" action="{action_url}" class="form-grid" data-confirm="Cáº­p nháº­t ban/unban user nÃ y?">
+  <form method="post" action="{action_url}" class="form-grid" data-confirm="Cập nhật ban/unban user này?">
     <input type="hidden" name="action" value="user_ban">
     {_admin_web_hidden_return("user", user_id)}
     <input type="hidden" name="user_id" value="{escape(str(user_id), quote=True)}">
-    <label class="wide">Tráº¡ng thÃ¡i<select name="mode"><option value="ban">Ban</option><option value="unban">Unban</option></select></label>
+    <label class="wide">Trạng thái<select name="mode"><option value="ban">Ban</option><option value="unban">Unban</option></select></label>
     <button class="wide danger" type="submit">Ban / unban</button>
   </form>
 </section>
 <section class="module-section">
-  <div class="section-head"><div><h2>ÄÆ¡n hÃ ng cá»§a user</h2></div></div>
+  <div class="section-head"><div><h2>Đơn hàng của user</h2></div></div>
   {_admin_web_recent_order_table_for_user(request, str(user_id))}
 </section>
 """
@@ -1782,7 +1782,7 @@ def _admin_web_order_detail_body(request, order_code: str, message: str | None =
     summary = "".join(
         [
             _admin_web_summary_card("Records", len(records)),
-            _admin_web_summary_card("Tiá»n", _admin_web_money(primary.get("amount"))),
+            _admin_web_summary_card("Tiền", _admin_web_money(primary.get("amount"))),
             _admin_web_summary_card("Status", primary.get("status") or "N/A"),
             _admin_web_summary_card("User", primary.get("user_id") or ""),
             _admin_web_order_warranty_summary_cards(primary),
@@ -1791,14 +1791,14 @@ def _admin_web_order_detail_body(request, order_code: str, message: str | None =
     raw_payload = {"matches": [{"table": table, "record": record} for table, record in records]}
     main = f"""
 <section class="action-card">
-  <div class="card-head"><h3>CÃ´ng cá»¥ Ä‘Æ¡n hÃ ng</h3><span class="tag write">order</span></div>
+  <div class="card-head"><h3>Công cụ đơn hàng</h3><span class="tag write">order</span></div>
   <form method="post" action="{action_url}" class="form-grid">
     <input type="hidden" name="action" value="order_tools">
     {_admin_web_hidden_return("order", order_code)}
-    <label>MÃ£ Ä‘Æ¡n<input name="order_code" value="{escape(str(order_code), quote=True)}" readonly></label>
-    <label>Thao tÃ¡c<select name="mode"><option value="set_email">Gáº¯n email</option><option value="admin_note">Ghi chÃº admin</option></select></label>
-    <label class="wide">GiÃ¡ trá»‹<input name="value" value="{escape(str(primary.get('email') or primary.get('customer_email') or primary.get('admin_note') or ''), quote=True)}"></label>
-    <button class="wide" type="submit">Cáº­p nháº­t Ä‘Æ¡n</button>
+    <label>Mã đơn<input name="order_code" value="{escape(str(order_code), quote=True)}" readonly></label>
+    <label>Thao tác<select name="mode"><option value="set_email">Gắn email</option><option value="admin_note">Ghi chú admin</option></select></label>
+    <label class="wide">Giá trị<input name="value" value="{escape(str(primary.get('email') or primary.get('customer_email') or primary.get('admin_note') or ''), quote=True)}"></label>
+    <button class="wide" type="submit">Cập nhật đơn</button>
   </form>
 </section>
 """
@@ -1808,7 +1808,7 @@ def _admin_web_order_detail_body(request, order_code: str, message: str | None =
 def _admin_web_api_traffic_chart(analytics: dict) -> str:
     daily = list((analytics or {}).get("daily") or [])
     if not daily:
-        return '<div class="api-empty-state">ChÆ°a cÃ³ request trong 14 ngÃ y.</div>'
+        return '<div class="api-empty-state">Chưa có request trong 14 ngày.</div>'
     maximum = max(1, max(int(item.get("requests") or 0) for item in daily))
     bars = []
     for item in daily:
@@ -1817,7 +1817,7 @@ def _admin_web_api_traffic_chart(analytics: dict) -> str:
         height = max(4, round(total * 100 / maximum))
         error_height = round(errors * 100 / max(1, total))
         bars.append(
-            f'<div class="api-chart-column" title="{escape(str(item.get("day")))}: {total} request, {errors} lá»—i">'
+            f'<div class="api-chart-column" title="{escape(str(item.get("day")))}: {total} request, {errors} lỗi">'
             f'<div class="api-chart-bar" style="height:{height}%"><i style="height:{error_height}%"></i></div>'
             f'<small>{escape(str(item.get("day") or "")[-5:])}</small></div>'
         )
@@ -1838,7 +1838,7 @@ def _admin_web_api_log_rows(fingerprint: str) -> str:
             f'<td><code>{escape(str(item.get("client_ip") or ""))}</code></td>'
             "</tr>"
         )
-    return "".join(rows) or "<tr><td colspan='6' class='muted'>ChÆ°a cÃ³ access log.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='6' class='muted'>Chưa có access log.</td></tr>"
 
 
 def _admin_web_api_ledger_rows(fingerprint: str) -> str:
@@ -1849,12 +1849,12 @@ def _admin_web_api_ledger_rows(fingerprint: str) -> str:
         rows.append(
             f'<tr><td>{escape(_admin_web_format_timestamp(item.get("created_at")))}</td>'
             f'<td><span class="ledger-pill {escape(entry_type)}">{escape(entry_type.title())}</span></td>'
-            f'<td class="{"money-positive" if amount > 0 else "money-negative"}">{amount:+,}Ä‘</td>'
-            f'<td>{int(item.get("balance_after") or 0):,}Ä‘</td>'
-            f'<td><code>{escape(str(item.get("reference") or "â€”"))}</code></td>'
+            f'<td class="{"money-positive" if amount > 0 else "money-negative"}">{amount:+,}đ</td>'
+            f'<td>{int(item.get("balance_after") or 0):,}đ</td>'
+            f'<td><code>{escape(str(item.get("reference") or "—"))}</code></td>'
             f'<td>{escape(_admin_web_short(item.get("reason") or "", 72))}</td></tr>'
         )
-    return "".join(rows) or "<tr><td colspan='6' class='muted'>ChÆ°a cÃ³ giao dá»‹ch trong ledger má»›i.</td></tr>"
+    return "".join(rows) or "<tr><td colspan='6' class='muted'>Chưa có giao dịch trong ledger mới.</td></tr>"
 
 
 def _admin_web_api_detail_body(request, api_key: str, message: str | None = None, is_error: bool = False):
@@ -1874,17 +1874,17 @@ def _admin_web_api_detail_body(request, api_key: str, message: str | None = None
     tier = _api_partner_tier(str(api_key), normalized)
     ledger = db_api_partner_ledger_summary(fingerprint)
     summary = "".join([
-        _admin_web_summary_card("Sá»‘ dÆ°", _admin_web_money(balance)),
-        _admin_web_summary_card("Tier", f'{tier["name"]} Â· -{tier["discount_percent"]}%'),
-        _admin_web_summary_card("Sáº£n lÆ°á»£ng thÃ¡ng", _admin_web_money(tier["monthly_volume"])),
+        _admin_web_summary_card("Số dư", _admin_web_money(balance)),
+        _admin_web_summary_card("Tier", f'{tier["name"]} · -{tier["discount_percent"]}%'),
+        _admin_web_summary_card("Sản lượng tháng", _admin_web_money(tier["monthly_volume"])),
         _admin_web_summary_card("Usage ledger", _admin_web_money(abs(ledger["usage"]))),
         _admin_web_summary_card("Refund", _admin_web_money(ledger["refund"])),
-        _admin_web_summary_card("Requests 14 ngÃ y", analytics.get("total", 0)),
-        _admin_web_summary_card("Tá»· lá»‡ lá»—i", f'{analytics.get("error_rate", 0)}%'),
+        _admin_web_summary_card("Requests 14 ngày", analytics.get("total", 0)),
+        _admin_web_summary_card("Tỷ lệ lỗi", f'{analytics.get("error_rate", 0)}%'),
         _admin_web_summary_card("Latency TB", f'{analytics.get("avg_ms", 0)} ms'),
-        _admin_web_summary_card("Quota", f"{rate_limit}/phÃºt"),
+        _admin_web_summary_card("Quota", f"{rate_limit}/phút"),
     ])
-    warning = '<div class="alert error">Sá»‘ dÆ° vÆ°á»£t ngÆ°á»¡ng kiá»ƒm tra. HÃ£y Ä‘á»‘i soÃ¡t trÆ°á»›c khi báº­t láº¡i key.</div>' if abs(balance) >= ADMIN_WEB_SUSPICIOUS_BALANCE_THRESHOLD else ""
+    warning = '<div class="alert error">Số dư vượt ngưỡng kiểm tra. Hãy đối soát trước khi bật lại key.</div>' if abs(balance) >= ADMIN_WEB_SUSPICIOUS_BALANCE_THRESHOLD else ""
     main = f"""
 {warning}
 <div class="api-detail-grid">
@@ -1893,41 +1893,41 @@ def _admin_web_api_detail_body(request, api_key: str, message: str | None = None
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="api_partner"><input type="hidden" name="mode" value="configure">
       {_admin_web_hidden_return("api", api_public_id)}<input type="hidden" name="target" value="{escape(api_public_id, quote=True)}">
-      <label class="wide">IP whitelist <textarea name="allowed_ips" placeholder="203.0.113.10&#10;2001:db8::/48">{escape(allowed_ips)}</textarea><small>IPv4, IPv6 hoáº·c CIDR; Ä‘á»ƒ trá»‘ng cho phÃ©p má»i IP.</small></label>
-      <label>Quota/phÃºt<input name="rate_limit" type="number" min="1" max="10000" value="{rate_limit}"></label>
-      <label>NgÆ°á»¡ng cáº£nh bÃ¡o<input name="low_balance_threshold" type="number" min="0" value="{alert_threshold}"></label>
-      <label class="toggle-field"><input type="checkbox" name="alert_enabled" value="1" {'checked' if alert_enabled else ''}><span class="switch"></span>Cáº£nh bÃ¡o Telegram</label>
-      <label class="wide">Ghi chÃº admin<input name="admin_note" value="{escape(str(normalized.get('admin_note') or ''), quote=True)}"></label>
-      <label>Cháº¿ Ä‘á»™ cáº¥p báº­c<select name="tier_mode"><option value="auto" {'selected' if tier['mode'] == 'auto' else ''}>Tá»± Ä‘á»™ng theo doanh sá»‘ thÃ¡ng</option><option value="manual" {'selected' if tier['mode'] == 'manual' else ''}>Admin chá»‰ Ä‘á»‹nh</option></select></label>
-      <label>Cáº¥p báº­c API<select name="tier_override">{''.join(f'<option value="{item["id"]}" {"selected" if item["id"] == tier["id"] else ""}>{item["name"]} â€” giáº£m {item["discount_percent"]}%</option>' for item in API_PARTNER_TIERS)}</select></label>
-      <div class="wide tier-progress"><b>{tier['name']} Â· giáº£m {tier['discount_percent']}%</b><small>Doanh sá»‘ thÃ¡ng: {tier['monthly_volume']:,}Ä‘</small>{f'<small>CÃ²n {tier["remaining_to_next"]:,}Ä‘ Ä‘á»ƒ lÃªn {tier["next_tier"]["name"]}</small>' if tier['next_tier'] else '<small>ÄÃ£ Ä‘áº¡t cáº¥p cao nháº¥t</small>'}</div>
-      <button class="wide" type="submit">LÆ°u báº£o máº­t & cáº¥p báº­c</button>
+      <label class="wide">IP whitelist <textarea name="allowed_ips" placeholder="203.0.113.10&#10;2001:db8::/48">{escape(allowed_ips)}</textarea><small>IPv4, IPv6 hoặc CIDR; để trống cho phép mọi IP.</small></label>
+      <label>Quota/phút<input name="rate_limit" type="number" min="1" max="10000" value="{rate_limit}"></label>
+      <label>Ngưỡng cảnh báo<input name="low_balance_threshold" type="number" min="0" value="{alert_threshold}"></label>
+      <label class="toggle-field"><input type="checkbox" name="alert_enabled" value="1" {'checked' if alert_enabled else ''}><span class="switch"></span>Cảnh báo Telegram</label>
+      <label class="wide">Ghi chú admin<input name="admin_note" value="{escape(str(normalized.get('admin_note') or ''), quote=True)}"></label>
+      <label>Chế độ cấp bậc<select name="tier_mode"><option value="auto" {'selected' if tier['mode'] == 'auto' else ''}>Tự động theo doanh số tháng</option><option value="manual" {'selected' if tier['mode'] == 'manual' else ''}>Admin chỉ định</option></select></label>
+      <label>Cấp bậc API<select name="tier_override">{''.join(f'<option value="{item["id"]}" {"selected" if item["id"] == tier["id"] else ""}>{item["name"]} — giảm {item["discount_percent"]}%</option>' for item in API_PARTNER_TIERS)}</select></label>
+      <div class="wide tier-progress"><b>{tier['name']} · giảm {tier['discount_percent']}%</b><small>Doanh số tháng: {tier['monthly_volume']:,}đ</small>{f'<small>Còn {tier["remaining_to_next"]:,}đ để lên {tier["next_tier"]["name"]}</small>' if tier['next_tier'] else '<small>Đã đạt cấp cao nhất</small>'}</div>
+      <button class="wide" type="submit">Lưu bảo mật & cấp bậc</button>
     </form>
   </section>
   <section class="action-card api-wallet-card">
-    <div class="card-head"><h3>VÃ­ & vÃ²ng Ä‘á»i key</h3><span class="tag {'readonly' if normalized.get('enabled') is not False else 'danger'}">{'ON' if normalized.get('enabled') is not False else 'REVOKED'}</span></div>
+    <div class="card-head"><h3>Ví & vòng đời key</h3><span class="tag {'readonly' if normalized.get('enabled') is not False else 'danger'}">{'ON' if normalized.get('enabled') is not False else 'REVOKED'}</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="api_partner">{_admin_web_hidden_return("api", api_public_id)}
       <input type="hidden" name="target" value="{escape(api_public_id, quote=True)}">
-      <label>Thao tÃ¡c<select name="mode"><option value="topup">Cá»™ng</option><option value="subtract">Trá»«</option><option value="set_balance">Set sá»‘ dÆ°</option><option value="enable">Báº­t key</option></select></label>
-      <label>Sá»‘ tiá»n<input name="amount" type="number" min="0" placeholder="500000"></label>
-      <button class="wide" type="submit">Cáº­p nháº­t partner</button>
+      <label>Thao tác<select name="mode"><option value="topup">Cộng</option><option value="subtract">Trừ</option><option value="set_balance">Set số dư</option><option value="enable">Bật key</option></select></label>
+      <label>Số tiền<input name="amount" type="number" min="0" placeholder="500000"></label>
+      <button class="wide" type="submit">Cập nhật partner</button>
     </form>
     <div class="danger-zone">
-      <form method="post" action="{action_url}" data-confirm="Thu há»“i key nÃ y ngay láº­p tá»©c?">
+      <form method="post" action="{action_url}" data-confirm="Thu hồi key này ngay lập tức?">
         <input type="hidden" name="action" value="api_partner"><input type="hidden" name="mode" value="revoke"><input type="hidden" name="target" value="{escape(api_public_id, quote=True)}">{_admin_web_hidden_return("api", api_public_id)}
-        <button class="danger" type="submit">Thu há»“i key</button>
+        <button class="danger" type="submit">Thu hồi key</button>
       </form>
-      <form method="post" action="{action_url}" data-confirm="Táº¡o key má»›i vÃ  vÃ´ hiá»‡u key hiá»‡n táº¡i?">
+      <form method="post" action="{action_url}" data-confirm="Tạo key mới và vô hiệu key hiện tại?">
         <input type="hidden" name="action" value="api_partner"><input type="hidden" name="mode" value="regenerate"><input type="hidden" name="target" value="{escape(api_public_id, quote=True)}">
         <button type="submit">Regenerate key</button>
       </form>
     </div>
   </section>
 </div>
-<section class="module-section ledger-panel"><div class="section-head"><div><h2>Sao kÃª dÃ²ng tiá»n</h2><p>Deposit, Usage vÃ  Refund tÃ¡ch báº¡ch; má»—i dÃ²ng cÃ³ running balance.</p></div><div class="ledger-summary"><span>Deposit <b class="money-positive">+{ledger['deposit']:,}Ä‘</b></span><span>Usage <b class="money-negative">{ledger['usage']:,}Ä‘</b></span><span>Refund <b class="money-positive">+{ledger['refund']:,}Ä‘</b></span></div></div><div class="table-scroll"><table class="data-table api-ledger-table"><thead><tr><th>Thá»i gian</th><th>Loáº¡i</th><th>Biáº¿n Ä‘á»™ng</th><th>Sá»‘ dÆ° sau</th><th>Tham chiáº¿u</th><th>Ná»™i dung</th></tr></thead><tbody>{_admin_web_api_ledger_rows(fingerprint)}</tbody></table></div></section>
-<section class="module-section api-chart-panel"><div class="section-head"><div><h2>LÆ°u lÆ°á»£ng 14 ngÃ y</h2><p>Lá»—i HTTP hiá»ƒn thá»‹ báº±ng pháº§n Ä‘á» trong má»—i cá»™t.</p></div></div>{_admin_web_api_traffic_chart(analytics)}</section>
-<section class="module-section"><div class="section-head"><div><h2>Access logs</h2><p>Tá»‘i Ä‘a 80 request gáº§n nháº¥t; khÃ´ng lÆ°u key, body hoáº·c query string.</p></div></div><div class="table-scroll"><table class="data-table api-log-table"><thead><tr><th>Thá»i gian</th><th>Method</th><th>Endpoint</th><th>Status</th><th>Latency</th><th>IP</th></tr></thead><tbody>{_admin_web_api_log_rows(fingerprint)}</tbody></table></div></section>
+<section class="module-section ledger-panel"><div class="section-head"><div><h2>Sao kê dòng tiền</h2><p>Deposit, Usage và Refund tách bạch; mỗi dòng có running balance.</p></div><div class="ledger-summary"><span>Deposit <b class="money-positive">+{ledger['deposit']:,}đ</b></span><span>Usage <b class="money-negative">{ledger['usage']:,}đ</b></span><span>Refund <b class="money-positive">+{ledger['refund']:,}đ</b></span></div></div><div class="table-scroll"><table class="data-table api-ledger-table"><thead><tr><th>Thời gian</th><th>Loại</th><th>Biến động</th><th>Số dư sau</th><th>Tham chiếu</th><th>Nội dung</th></tr></thead><tbody>{_admin_web_api_ledger_rows(fingerprint)}</tbody></table></div></section>
+<section class="module-section api-chart-panel"><div class="section-head"><div><h2>Lưu lượng 14 ngày</h2><p>Lỗi HTTP hiển thị bằng phần đỏ trong mỗi cột.</p></div></div>{_admin_web_api_traffic_chart(analytics)}</section>
+<section class="module-section"><div class="section-head"><div><h2>Access logs</h2><p>Tối đa 80 request gần nhất; không lưu key, body hoặc query string.</p></div></div><div class="table-scroll"><table class="data-table api-log-table"><thead><tr><th>Thời gian</th><th>Method</th><th>Endpoint</th><th>Status</th><th>Latency</th><th>IP</th></tr></thead><tbody>{_admin_web_api_log_rows(fingerprint)}</tbody></table></div></section>
 """
     safe_raw = dict(normalized)
     safe_raw.pop("rotated_to", None)
@@ -1940,9 +1940,9 @@ def _admin_web_coupon_detail_body(request, code: str, message: str | None = None
     action_url = _admin_web_action_url(request)
     summary = "".join(
         [
-            _admin_web_summary_card("Giáº£m", _admin_web_money(item.get("discount"))),
+            _admin_web_summary_card("Giảm", _admin_web_money(item.get("discount"))),
             _admin_web_summary_card("Used", f"{item.get('used', 0)} / {item.get('quantity', 0)}"),
-            _admin_web_summary_card("Háº¿t háº¡n", item.get("expires") or "N/A"),
+            _admin_web_summary_card("Hết hạn", item.get("expires") or "N/A"),
         ]
     )
     main = f"""
@@ -1951,12 +1951,12 @@ def _admin_web_coupon_detail_body(request, code: str, message: str | None = None
   <form method="post" action="{action_url}" class="form-grid">
     <input type="hidden" name="action" value="coupon">
     {_admin_web_hidden_return("coupon", code)}
-    <label>Thao tÃ¡c<select name="mode"><option value="add">Cáº­p nháº­t</option><option value="delete">XÃ³a</option></select></label>
+    <label>Thao tác<select name="mode"><option value="add">Cập nhật</option><option value="delete">Xóa</option></select></label>
     <label>Code<input name="code" value="{escape(str(code), quote=True)}" readonly></label>
-    <label>Sá»‘ lÆ°á»£ng<input name="quantity" value="{escape(str(item.get('quantity') or ''), quote=True)}"></label>
-    <label>Giáº£m tiá»n<input name="discount" value="{escape(str(item.get('discount') or ''), quote=True)}"></label>
-    <label class="wide">Sá»‘ ngÃ y háº¿t háº¡n má»›i<input name="days" placeholder="30"></label>
-    <button class="wide" type="submit">LÆ°u coupon</button>
+    <label>Số lượng<input name="quantity" value="{escape(str(item.get('quantity') or ''), quote=True)}"></label>
+    <label>Giảm tiền<input name="discount" value="{escape(str(item.get('discount') or ''), quote=True)}"></label>
+    <label class="wide">Số ngày hết hạn mới<input name="days" placeholder="30"></label>
+    <button class="wide" type="submit">Lưu coupon</button>
   </form>
 </section>
 """
@@ -1975,7 +1975,7 @@ def _admin_web_support_detail_body(request, entity: str, item_id: str, message: 
     action_url = _admin_web_action_url(request)
     summary = "".join(
         [
-            _admin_web_summary_card("Loáº¡i", entity),
+            _admin_web_summary_card("Loại", entity),
             _admin_web_summary_card("Status", record.get("status") or "pending"),
             _admin_web_summary_card("User", record.get("user_id") or item_id),
             _admin_web_summary_card("Order", record.get("order_code") or ""),
@@ -1983,15 +1983,15 @@ def _admin_web_support_detail_body(request, entity: str, item_id: str, message: 
     )
     main = f"""
 <section class="action-card">
-  <div class="card-head"><h3>Cáº­p nháº­t ticket</h3><span class="tag write">support</span></div>
+  <div class="card-head"><h3>Cập nhật ticket</h3><span class="tag write">support</span></div>
   <form method="post" action="{action_url}" class="form-grid">
     <input type="hidden" name="action" value="support_update">
     {_admin_web_hidden_return(entity, item_id)}
     <input type="hidden" name="entity" value="{escape(entity, quote=True)}">
     <input type="hidden" name="item_id" value="{escape(item_id, quote=True)}">
     <label>Status<select name="status"><option value="pending">pending</option><option value="active">active</option><option value="resolved">resolved</option><option value="closed">closed</option><option value="rejected">rejected</option></select></label>
-    <label>Ghi chÃº<input name="admin_note" value="{escape(str(record.get('admin_note') or ''), quote=True)}"></label>
-    <button class="wide" type="submit">Cáº­p nháº­t ticket</button>
+    <label>Ghi chú<input name="admin_note" value="{escape(str(record.get('admin_note') or ''), quote=True)}"></label>
+    <button class="wide" type="submit">Cập nhật ticket</button>
   </form>
 </section>
 """
@@ -2031,186 +2031,186 @@ def _admin_web_action_cards(request) -> str:
     return f"""
 <div class="action-stack action-board">
   <div class="action-column">
-    <div class="action-group-label">User & vÃ­ <span>money / profile / risk</span></div>
+    <div class="action-group-label">User & ví <span>money / profile / risk</span></div>
   <section class="action-card is-wallet">
-    <div class="card-head"><h3>VÃ­ user</h3><span class="tag danger">money</span></div>
+    <div class="card-head"><h3>Ví user</h3><span class="tag danger">money</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="user_balance">
       <label>User ID<input name="user_id" placeholder="123456789" required></label>
-      <label>Sá»‘ tiá»n<input name="amount" placeholder="100000" required></label>
-      <label>Kiá»ƒu
+      <label>Số tiền<input name="amount" placeholder="100000" required></label>
+      <label>Kiểu
         <select name="mode">
-          <option value="add">Cá»™ng tiá»n</option>
-          <option value="sub">Trá»« tiá»n</option>
-          <option value="set">Set sá»‘ dÆ°</option>
+          <option value="add">Cộng tiền</option>
+          <option value="sub">Trừ tiền</option>
+          <option value="set">Set số dư</option>
         </select>
       </label>
-      <label class="wide">LÃ½ do<input name="reason" value="Admin web"></label>
-      <button class="wide" type="submit">Thá»±c hiá»‡n</button>
+      <label class="wide">Lý do<input name="reason" value="Admin web"></label>
+      <button class="wide" type="submit">Thực hiện</button>
     </form>
   </section>
   <section class="action-card">
-    <div class="card-head"><h3>Há»“ sÆ¡ user</h3><span class="tag write">profile</span></div>
+    <div class="card-head"><h3>Hồ sơ user</h3><span class="tag write">profile</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="user_profile">
       <label>User ID<input name="user_id" placeholder="123456789" required></label>
       <label>Username<input name="username" placeholder="@username"></label>
-      <label class="wide">TÃªn hiá»ƒn thá»‹<input name="full_name" placeholder="TÃªn khÃ¡ch"></label>
-      <label class="wide">Email<input name="email" placeholder="email nháº­n hÃ ng"></label>
-      <label class="wide">Ghi chÃº admin<textarea name="admin_note" placeholder="Ghi chÃº ná»™i bá»™"></textarea></label>
-      <button class="wide" type="submit">LÆ°u há»“ sÆ¡</button>
+      <label class="wide">Tên hiển thị<input name="full_name" placeholder="Tên khách"></label>
+      <label class="wide">Email<input name="email" placeholder="email nhận hàng"></label>
+      <label class="wide">Ghi chú admin<textarea name="admin_note" placeholder="Ghi chú nội bộ"></textarea></label>
+      <button class="wide" type="submit">Lưu hồ sơ</button>
     </form>
   </section>
   <section class="action-card is-critical">
     <div class="card-head"><h3>Ban / unban</h3><span class="tag danger">risk</span></div>
-  <form method="post" action="{action_url}" class="form-grid" data-confirm="Cáº­p nháº­t tráº¡ng thÃ¡i ban user?">
+  <form method="post" action="{action_url}" class="form-grid" data-confirm="Cập nhật trạng thái ban user?">
       <input type="hidden" name="action" value="user_ban">
       <label>User ID<input name="user_id" required></label>
       <label>Trang thai
         <select name="mode"><option value="ban">Ban</option><option value="unban">Unban</option></select>
       </label>
-      <button class="wide danger" type="submit">Cáº­p nháº­t user</button>
+      <button class="wide danger" type="submit">Cập nhật user</button>
     </form>
   </section>
   </div>
   <div class="action-column action-column-catalog">
     <div class="action-group-label">Catalog <span>products</span></div>
   <section class="action-card is-catalog">
-    <div class="card-head"><h3>Sáº£n pháº©m</h3><span class="tag write">catalog</span></div>
+    <div class="card-head"><h3>Sản phẩm</h3><span class="tag write">catalog</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="product_update">
       <label>Product ID<input name="product_id" required></label>
-      <label>GiÃ¡ bÃ¡n má»›i<input name="price" placeholder="bá» trá»‘ng náº¿u khÃ´ng Ä‘á»•i"></label>
-      <label>GiÃ¡ vá»‘n má»›i<input name="cost_price" placeholder="local/manual"></label>
-      <label class="wide">TÃªn má»›i<input name="name" placeholder="bá» trá»‘ng náº¿u khÃ´ng Ä‘á»•i"></label>
-      <label class="wide">Danh má»¥c<input name="store_category" placeholder="vd: Streaming, Social, Tools"></label>
-      <label>Thá»i háº¡n<input name="duration" placeholder="vd: 30 ngÃ y"></label>
-      <label>Báº£o hÃ nh<input name="warranty" placeholder="vd: 7 ngÃ y, 30 ngÃ y"></label>
-      <label>Giá»›i háº¡n manual<input name="max_pending_orders" placeholder="vd: 10"></label>
-      <label class="wide">MÃ´ táº£<textarea name="description" placeholder="bá» trá»‘ng náº¿u khÃ´ng Ä‘á»•i"></textarea></label>
-      <label class="wide">ThÃªm stock local<textarea name="stock_items" placeholder="Má»—i dÃ²ng 1 item, chá»‰ nÃªn dÃ¹ng vá»›i sáº£n pháº©m local stock"></textarea></label>
-      <button class="wide" type="submit">LÆ°u sáº£n pháº©m</button>
+      <label>Giá bán mới<input name="price" placeholder="bỏ trống nếu không đổi"></label>
+      <label>Giá vốn mới<input name="cost_price" placeholder="local/manual"></label>
+      <label class="wide">Tên mới<input name="name" placeholder="bỏ trống nếu không đổi"></label>
+      <label class="wide">Danh mục<input name="store_category" placeholder="vd: Streaming, Social, Tools"></label>
+      <label>Thời hạn<input name="duration" placeholder="vd: 30 ngày"></label>
+      <label>Bảo hành<input name="warranty" placeholder="vd: 7 ngày, 30 ngày"></label>
+      <label>Giới hạn manual<input name="max_pending_orders" placeholder="vd: 10"></label>
+      <label class="wide">Mô tả<textarea name="description" placeholder="bỏ trống nếu không đổi"></textarea></label>
+      <label class="wide">Thêm stock local<textarea name="stock_items" placeholder="Mỗi dòng 1 item, chỉ nên dùng với sản phẩm local stock"></textarea></label>
+      <button class="wide" type="submit">Lưu sản phẩm</button>
     </form>
   </section>
   <section class="action-card is-catalog">
-    <div class="card-head"><h3>Táº¡o sáº£n pháº©m</h3><span class="tag write">new</span></div>
+    <div class="card-head"><h3>Tạo sản phẩm</h3><span class="tag write">new</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="product_create">
-      <label>Product ID<input name="product_id" placeholder="bá» trá»‘ng Ä‘á»ƒ tá»± táº¡o"></label>
-      <label>GiÃ¡ bÃ¡n<input name="price" placeholder="35000" required></label>
-      <label>GiÃ¡ vá»‘n<input name="cost_price" placeholder="báº¯t buá»™c Ä‘á»ƒ tÃ­nh lÃ£i" required></label>
-      <label class="wide">TÃªn<input name="name" placeholder="TÃªn sáº£n pháº©m" required></label>
-      <label>Loáº¡i<select name="requires_gmail"><option value="0">Local stock</option><option value="1">Manual/Gmail</option></select></label>
-      <label>Thá»i háº¡n<input name="duration" placeholder="30 ngÃ y"></label>
-      <label>Báº£o hÃ nh<input name="warranty" placeholder="7 ngÃ y, 30 ngÃ y, KhÃ´ng"></label>
-      <label class="wide">MÃ´ táº£<textarea name="description" placeholder="MÃ´ táº£ ngáº¯n"></textarea></label>
-      <label class="wide">Stock ban Ä‘áº§u<textarea name="stock_items" placeholder="Má»—i dÃ²ng 1 item, chá»‰ dÃ¹ng vá»›i local stock"></textarea></label>
-      <button class="wide" type="submit">Táº¡o sáº£n pháº©m</button>
+      <label>Product ID<input name="product_id" placeholder="bỏ trống để tự tạo"></label>
+      <label>Giá bán<input name="price" placeholder="35000" required></label>
+      <label>Giá vốn<input name="cost_price" placeholder="bắt buộc để tính lãi" required></label>
+      <label class="wide">Tên<input name="name" placeholder="Tên sản phẩm" required></label>
+      <label>Loại<select name="requires_gmail"><option value="0">Local stock</option><option value="1">Manual/Gmail</option></select></label>
+      <label>Thời hạn<input name="duration" placeholder="30 ngày"></label>
+      <label>Bảo hành<input name="warranty" placeholder="7 ngày, 30 ngày, Không"></label>
+      <label class="wide">Mô tả<textarea name="description" placeholder="Mô tả ngắn"></textarea></label>
+      <label class="wide">Stock ban đầu<textarea name="stock_items" placeholder="Mỗi dòng 1 item, chỉ dùng với local stock"></textarea></label>
+      <button class="wide" type="submit">Tạo sản phẩm</button>
     </form>
   </section>
   <section class="action-card is-critical">
-    <div class="card-head"><h3>Kho sáº£n pháº©m</h3><span class="tag danger">stock</span></div>
-    <form method="post" action="{action_url}" class="form-grid" data-confirm="XÃ³a toÃ n bá»™ stock local cá»§a sáº£n pháº©m nÃ y?">
+    <div class="card-head"><h3>Kho sản phẩm</h3><span class="tag danger">stock</span></div>
+    <form method="post" action="{action_url}" class="form-grid" data-confirm="Xóa toàn bộ stock local của sản phẩm này?">
       <input type="hidden" name="action" value="product_stock">
       <input type="hidden" name="mode" value="clear_stock">
       <label class="wide">Product ID<input name="product_id" placeholder="product_id local stock" required></label>
-      <button class="wide danger" type="submit">XÃ³a stock local</button>
+      <button class="wide danger" type="submit">Xóa stock local</button>
     </form>
-    <form method="post" action="{action_url}" class="form-grid" data-confirm="XÃ³a vÄ©nh viá»…n sáº£n pháº©m khá»i catalog?">
+    <form method="post" action="{action_url}" class="form-grid" data-confirm="Xóa vĩnh viễn sản phẩm khỏi catalog?">
       <input type="hidden" name="action" value="product_delete">
-      <label class="wide">Product ID<input name="product_id" placeholder="product_id cáº§n xÃ³a" required></label>
-      <button class="wide danger" type="submit">XÃ³a sáº£n pháº©m</button>
+      <label class="wide">Product ID<input name="product_id" placeholder="product_id cần xóa" required></label>
+      <button class="wide danger" type="submit">Xóa sản phẩm</button>
     </form>
   </section>
   </div>
   <div class="action-column">
-    <div class="action-group-label">Váº­n hÃ nh <span>api / orders / support</span></div>
+    <div class="action-group-label">Vận hành <span>api / orders / support</span></div>
   <section class="action-card">
     <div class="card-head"><h3>API partner</h3><span class="tag write">partner</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="api_partner">
-      <label>Thao tÃ¡c
-        <select name="mode"><option value="topup">Náº¡p tiá»n key</option><option value="create">Táº¡o key</option><option value="disable">Táº¯t key</option><option value="enable">Báº­t key</option></select>
+      <label>Thao tác
+        <select name="mode"><option value="topup">Nạp tiền key</option><option value="create">Tạo key</option><option value="disable">Tắt key</option><option value="enable">Bật key</option></select>
       </label>
-      <label>Sá»‘ tiá»n<input name="amount" placeholder="500000"></label>
-      <label class="wide">Key hoáº·c tÃªn partner<input name="target" placeholder="DINO... hoáº·c tÃªn"></label>
-      <button class="wide" type="submit">Cáº­p nháº­t API</button>
+      <label>Số tiền<input name="amount" placeholder="500000"></label>
+      <label class="wide">Key hoặc tên partner<input name="target" placeholder="DINO... hoặc tên"></label>
+      <button class="wide" type="submit">Cập nhật API</button>
     </form>
   </section>
   <section class="action-card">
-    <div class="card-head"><h3>ÄÆ¡n hÃ ng</h3><span class="tag write">orders</span></div>
+    <div class="card-head"><h3>Đơn hàng</h3><span class="tag write">orders</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="order_tools">
-      <label>MÃ£ Ä‘Æ¡n<input name="order_code" placeholder="ICLD123456" required></label>
-      <label>Thao tÃ¡c
-        <select name="mode"><option value="set_email">Gáº¯n email</option><option value="admin_note">Ghi chÃº admin</option></select>
+      <label>Mã đơn<input name="order_code" placeholder="ICLD123456" required></label>
+      <label>Thao tác
+        <select name="mode"><option value="set_email">Gắn email</option><option value="admin_note">Ghi chú admin</option></select>
       </label>
-      <label class="wide">GiÃ¡ trá»‹<input name="value" placeholder="email hoáº·c ghi chÃº"></label>
-      <button class="wide" type="submit">Cáº­p nháº­t Ä‘Æ¡n</button>
+      <label class="wide">Giá trị<input name="value" placeholder="email hoặc ghi chú"></label>
+      <button class="wide" type="submit">Cập nhật đơn</button>
     </form>
   </section>
   <section class="action-card">
     <div class="card-head"><h3>Kho link legacy</h3><span class="tag write">legacy</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="legacy_link">
-      <label>Thao tÃ¡c
-        <select name="mode"><option value="replace">Thay link Ä‘ang dÃ¹ng</option><option value="add">ThÃªm link</option><option value="delete">XÃ³a link</option><option value="clear">XÃ³a toÃ n bá»™</option></select>
+      <label>Thao tác
+        <select name="mode"><option value="replace">Thay link đang dùng</option><option value="add">Thêm link</option><option value="delete">Xóa link</option><option value="clear">Xóa toàn bộ</option></select>
       </label>
-      <label class="wide">Link<textarea name="link" placeholder="DÃ¡n link legacy, má»—i dÃ²ng 1 link náº¿u thÃªm nhiá»u"></textarea></label>
-      <button class="wide" type="submit">Cáº­p nháº­t kho link</button>
+      <label class="wide">Link<textarea name="link" placeholder="Dán link legacy, mỗi dòng 1 link nếu thêm nhiều"></textarea></label>
+      <button class="wide" type="submit">Cập nhật kho link</button>
     </form>
   </section>
   <section class="action-card">
     <div class="card-head"><h3>Coupon</h3><span class="tag write">promo</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="coupon">
-      <label>Thao tÃ¡c
-        <select name="mode"><option value="add">ThÃªm / cáº­p nháº­t</option><option value="delete">XÃ³a coupon</option></select>
+      <label>Thao tác
+        <select name="mode"><option value="add">Thêm / cập nhật</option><option value="delete">Xóa coupon</option></select>
       </label>
       <label>Ma coupon<input name="code" placeholder="SALE2026" required></label>
-      <label>Sá»‘ lÆ°á»£ng<input name="quantity" placeholder="100"></label>
-      <label>Giáº£m tiá»n<input name="discount" placeholder="35000"></label>
-      <label class="wide">Sá»‘ ngÃ y háº¿t háº¡n<input name="days" placeholder="30"></label>
-      <button class="wide" type="submit">LÆ°u coupon</button>
+      <label>Số lượng<input name="quantity" placeholder="100"></label>
+      <label>Giảm tiền<input name="discount" placeholder="35000"></label>
+      <label class="wide">Số ngày hết hạn<input name="days" placeholder="30"></label>
+      <button class="wide" type="submit">Lưu coupon</button>
     </form>
   </section>
   <section class="action-card">
     <div class="card-head"><h3>Support ticket</h3><span class="tag write">support</span></div>
     <form method="post" action="{action_url}" class="form-grid">
       <input type="hidden" name="action" value="support_update">
-      <label>Loáº¡i
-        <select name="entity"><option value="live_chat">Live chat</option><option value="warranty">Báº£o hÃ nh</option><option value="withdrawal">RÃºt tiá»n</option></select>
+      <label>Loại
+        <select name="entity"><option value="live_chat">Live chat</option><option value="warranty">Bảo hành</option><option value="withdrawal">Rút tiền</option></select>
       </label>
       <label>ID ticket<input name="item_id" placeholder="ticket/order id" required></label>
       <label>Status<input name="status" placeholder="pending / resolved / rejected"></label>
-      <label class="wide">Ghi chÃº<textarea name="admin_note" placeholder="Ghi chÃº xá»­ lÃ½"></textarea></label>
-      <button class="wide" type="submit">Cáº­p nháº­t support</button>
+      <label class="wide">Ghi chú<textarea name="admin_note" placeholder="Ghi chú xử lý"></textarea></label>
+      <button class="wide" type="submit">Cập nhật support</button>
     </form>
   </section>
   <section class="action-card is-critical">
-    <div class="card-head"><h3>Há»‡ thá»‘ng</h3><span class="tag danger">ops</span></div>
-    <form method="post" action="{action_url}" class="form-grid" data-confirm="Cáº­p nháº­t tráº¡ng thÃ¡i há»‡ thá»‘ng?">
+    <div class="card-head"><h3>Hệ thống</h3><span class="tag danger">ops</span></div>
+    <form method="post" action="{action_url}" class="form-grid" data-confirm="Cập nhật trạng thái hệ thống?">
       <input type="hidden" name="action" value="system_toggle">
-      <label class="wide">Thao tÃ¡c
+      <label class="wide">Thao tác
         <select name="mode">
-          <option value="maintenance_on">Báº­t báº£o trÃ¬</option>
-          <option value="maintenance_off">Táº¯t báº£o trÃ¬</option>
-          <option value="ai_on">Báº­t AI auto reply</option>
-          <option value="ai_off">Táº¯t AI auto reply</option>
+          <option value="maintenance_on">Bật bảo trì</option>
+          <option value="maintenance_off">Tắt bảo trì</option>
+          <option value="ai_on">Bật AI auto reply</option>
+          <option value="ai_off">Tắt AI auto reply</option>
         </select>
       </label>
-      <button class="wide danger" type="submit">Cáº­p nháº­t há»‡ thá»‘ng</button>
+      <button class="wide danger" type="submit">Cập nhật hệ thống</button>
     </form>
   </section>
   <section class="action-card is-critical">
     <div class="card-head"><h3>Pending manual</h3><span class="tag danger">cleanup</span></div>
-    <form method="post" action="{action_url}" class="form-grid" data-confirm="XÃ³a pending manual sáº½ giáº£i phÃ³ng slot. Báº¡n Ä‘Ã£ kiá»ƒm tra hoÃ n tiá»n náº¿u cáº§n?">
+    <form method="post" action="{action_url}" class="form-grid" data-confirm="Xóa pending manual sẽ giải phóng slot. Bạn đã kiểm tra hoàn tiền nếu cần?">
       <input type="hidden" name="action" value="pending_manual">
-      <label>Thao tÃ¡c
-        <select name="mode"><option value="clear_one">XÃ³a 1 Ä‘Æ¡n</option><option value="clear_all">XÃ³a táº¥t cáº£</option></select>
+      <label>Thao tác
+        <select name="mode"><option value="clear_one">Xóa 1 đơn</option><option value="clear_all">Xóa tất cả</option></select>
       </label>
-      <label>MÃ£ Ä‘Æ¡n<input name="order_code" placeholder="bá» trá»‘ng náº¿u xÃ³a táº¥t cáº£"></label>
-      <button class="wide danger" type="submit">Dá»n pending</button>
+      <label>Mã đơn<input name="order_code" placeholder="bỏ trống nếu xóa tất cả"></label>
+      <button class="wide danger" type="submit">Dọn pending</button>
     </form>
   </section>
   </div>
@@ -2223,23 +2223,23 @@ def _admin_web_tables() -> str:
 <div class="action-stack">
   <section>
     <h2>User top balance</h2>
-    <div class="table-scroll"><table class="mini-table"><thead><tr><th>ID</th><th>TÃªn</th><th>Sá»‘ dÆ°</th><th>Tráº¡ng thÃ¡i</th></tr></thead><tbody>{_admin_web_render_users()}</tbody></table></div>
+    <div class="table-scroll"><table class="mini-table"><thead><tr><th>ID</th><th>Tên</th><th>Số dư</th><th>Trạng thái</th></tr></thead><tbody>{_admin_web_render_users()}</tbody></table></div>
   </section>
   <section>
-    <h2>Sáº£n pháº©m</h2>
-    <div class="table-scroll"><table class="mini-table"><thead><tr><th>ID</th><th>TÃªn</th><th>GiÃ¡</th><th>Stock</th></tr></thead><tbody>{_admin_web_render_products()}</tbody></table></div>
+    <h2>Sản phẩm</h2>
+    <div class="table-scroll"><table class="mini-table"><thead><tr><th>ID</th><th>Tên</th><th>Giá</th><th>Stock</th></tr></thead><tbody>{_admin_web_render_products()}</tbody></table></div>
   </section>
   <section>
     <h2>API partner</h2>
-    <div class="table-scroll"><table class="mini-table"><thead><tr><th>Key</th><th>TÃªn</th><th>Sá»‘ dÆ°</th><th>On/off</th></tr></thead><tbody>{_admin_web_render_api_keys()}</tbody></table></div>
+    <div class="table-scroll"><table class="mini-table"><thead><tr><th>Key</th><th>Tên</th><th>Số dư</th><th>On/off</th></tr></thead><tbody>{_admin_web_render_api_keys()}</tbody></table></div>
   </section>
   <section>
     <h2>Don gan day</h2>
-    <div class="table-scroll"><table class="mini-table"><thead><tr><th>MÃ£</th><th>Sáº£n pháº©m</th><th>Status</th><th>Tiá»n</th></tr></thead><tbody>{_admin_web_render_orders()}</tbody></table></div>
+    <div class="table-scroll"><table class="mini-table"><thead><tr><th>Mã</th><th>Sản phẩm</th><th>Status</th><th>Tiền</th></tr></thead><tbody>{_admin_web_render_orders()}</tbody></table></div>
   </section>
   <section>
     <h2>Audit web admin</h2>
-    <div class="table-scroll"><table class="mini-table"><thead><tr><th>LÃºc</th><th>Action</th><th>Target</th><th>Status</th><th>Ghi chÃº</th></tr></thead><tbody>{_admin_web_render_audit_log()}</tbody></table></div>
+    <div class="table-scroll"><table class="mini-table"><thead><tr><th>Lúc</th><th>Action</th><th>Target</th><th>Status</th><th>Ghi chú</th></tr></thead><tbody>{_admin_web_render_audit_log()}</tbody></table></div>
   </section>
 </div>
 """
@@ -2248,25 +2248,25 @@ def _admin_web_tables() -> str:
 def _admin_web_unread_count() -> tuple[int, str]:
     details = []
     c_manual = len(pending_manual_orders) if isinstance(pending_manual_orders, dict) else 0
-    if c_manual: details.append(f"{c_manual} Ä‘Æ¡n manual")
+    if c_manual: details.append(f"{c_manual} đơn manual")
     
     c_chat = sum(1 for v in (live_chats.values() if isinstance(live_chats, dict) else []) if isinstance(v, dict) and v.get("status") in {"active", "open", "pending"})
-    if c_chat: details.append(f"{c_chat} tin nháº¯n live chat")
+    if c_chat: details.append(f"{c_chat} tin nhắn live chat")
     
     c_war = sum(1 for v in (warranty_claims.values() if isinstance(warranty_claims, dict) else []) if isinstance(v, dict) and v.get("status") in {"pending"})
-    if c_war: details.append(f"{c_war} yÃªu cáº§u báº£o hÃ nh")
+    if c_war: details.append(f"{c_war} yêu cầu bảo hành")
     
     c_with = sum(1 for v in (withdrawal_requests.values() if isinstance(withdrawal_requests, dict) else []) if isinstance(v, dict) and v.get("status") in {"pending"})
-    if c_with: details.append(f"{c_with} lá»‡nh rÃºt tiá»n")
+    if c_with: details.append(f"{c_with} lệnh rút tiền")
     
     total = c_manual + c_chat + c_war + c_with
-    msg = "Äang chá» xá»­ lÃ½:\\n- " + "\\n- ".join(details) if total > 0 else "KhÃ´ng cÃ³ thÃ´ng bÃ¡o má»›i."
+    msg = "Đang chờ xử lý:\\n- " + "\\n- ".join(details) if total > 0 else "Không có thông báo mới."
     return total, msg
 
 def _admin_web_layout(title: str, body: str, request=None) -> str:
     key_query = _admin_web_key_query(request) if request is not None else ""
     unread, unread_msg = _admin_web_unread_count()
-    bell_html = f'<a href="javascript:void(0)" onclick="showToast(`{unread_msg}`)" title="ThÃ´ng bÃ¡o pending" style="position:relative;">ðŸ””<span style="position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:bold;line-height:1;">{unread}</span></a>' if unread > 0 else '<a href="javascript:void(0)" onclick="showToast(`KhÃ´ng cÃ³ thÃ´ng bÃ¡o má»›i!`)" style="opacity:0.3;cursor:pointer;">ðŸ””</a>'
+    bell_html = f'<a href="javascript:void(0)" onclick="showToast(`{unread_msg}`)" title="Thông báo pending" style="position:relative;">🔔<span style="position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:bold;line-height:1;">{unread}</span></a>' if unread > 0 else '<a href="javascript:void(0)" onclick="showToast(`Không có thông báo mới!`)" style="opacity:0.3;cursor:pointer;">🔔</a>'
     csrf_token = escape(_admin_web_csrf_token(request)) if request is not None else ""
     csrf_input = f'<input type="hidden" name="csrf_token" value="{csrf_token}">'
     body = re.sub(r'(<form\b(?=[^>]*\bmethod=["\']post["\'])[^>]*>)', rf'\1{csrf_input}', body, flags=re.IGNORECASE)
@@ -2284,12 +2284,12 @@ def _admin_web_layout(title: str, body: str, request=None) -> str:
 </head>
 <body>
   <header class="admin-topbar"><nav>
-    <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Má»Ÿ menu Ä‘iá»u hÆ°á»›ng" aria-controls="adminNavLinks" aria-expanded="false" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
+    <button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Mở menu điều hướng" aria-controls="adminNavLinks" aria-expanded="false" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
     <strong class="admin-brand"><span class="admin-brand-mark">D</span><span>Dino <b>Ops</b><small>Control center</small></span></strong>
-    <div class="topbar-actions">{bell_html}<button id="themeToggle" onclick="toggleTheme()" title="Äá»•i giao diá»‡n" aria-label="Äá»•i giao diá»‡n sÃ¡ng tá»‘i">ðŸŒ™</button></div>
-    <div id="adminNavLinks" class="admin-nav-links"><a href="/admin{key_query}">Dashboard</a><a href="/admin/resell{key_query}">API Resell</a><a href="/admin/supplier_catalog{key_query}">SupplierCatalog</a><a href="/admin/categories{key_query}">Danh má»¥c</a><a href="/admin/commands{key_query}">Lá»‡nh admin</a><form method="post" action="/admin/logout">{csrf_input}<button id="admin-logout" type="submit">ÄÄƒng xuáº¥t</button></form></div>
+    <div class="topbar-actions">{bell_html}<button id="themeToggle" onclick="toggleTheme()" title="Đổi giao diện" aria-label="Đổi giao diện sáng tối">🌙</button></div>
+    <div id="adminNavLinks" class="admin-nav-links"><a href="/admin{key_query}">Dashboard</a><a href="/admin/resell{key_query}">API Resell</a><a href="/admin/supplier_catalog{key_query}">SupplierCatalog</a><a href="/admin/categories{key_query}">Danh mục</a><a href="/admin/commands{key_query}">Lệnh admin</a><form method="post" action="/admin/logout">{csrf_input}<button id="admin-logout" type="submit">Đăng xuất</button></form></div>
   </nav></header>
-  <button id="mobileMenuBackdrop" class="mobile-menu-backdrop" type="button" aria-label="ÄÃ³ng menu" onclick="toggleMobileMenu(false)"></button>
+  <button id="mobileMenuBackdrop" class="mobile-menu-backdrop" type="button" aria-label="Đóng menu" onclick="toggleMobileMenu(false)"></button>
   <div id="toast-container"></div>
   <main>{body}</main>
 <script>
@@ -2311,11 +2311,11 @@ function toggleTheme() {{
   document.documentElement.classList.toggle('dark-mode');
   const isDark = document.documentElement.classList.contains('dark-mode');
   localStorage.setItem('admin_theme', isDark ? 'dark' : 'light');
-  document.getElementById('themeToggle').textContent = isDark ? 'â˜€ï¸' : 'ðŸŒ™';
+  document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
 }}
 if (localStorage.getItem('admin_theme') === 'dark') {{
   document.documentElement.classList.add('dark-mode');
-  document.addEventListener('DOMContentLoaded', () => document.getElementById('themeToggle').textContent = 'â˜€ï¸');
+  document.addEventListener('DOMContentLoaded', () => document.getElementById('themeToggle').textContent = '☀️');
 }}
 function showToast(message, isError = false) {{
   const container = document.getElementById('toast-container');
@@ -2405,22 +2405,22 @@ def _admin_web_dashboard_body(request=None, message: str | None = None, is_error
     else:
         _uptime_text = f"{_uptime_mins}m"
     metrics = [
-        ("Doanh thu hÃ´m nay", f"{today_revenue:,} VND", "revenue"),
-        ("LÃ£i gá»™p hÃ´m nay", f"{finance['today_profit']:,} VND", "revenue"),
-        ("Tá»•ng doanh thu", f"{finance['revenue']:,} VND", "revenue"),
-        ("Tá»•ng lÃ£i cÃ³ snapshot", f"{finance['profit']:,} VND", "revenue"),
-        ("Äá»™ phá»§ giÃ¡ vá»‘n", f"{finance['costed']}/{completed_orders} Ä‘Æ¡n", "revenue"),
-        ("ÄÆ¡n thÃ nh cÃ´ng", completed_orders, "orders"),
+        ("Doanh thu hôm nay", f"{today_revenue:,} VND", "revenue"),
+        ("Lãi gộp hôm nay", f"{finance['today_profit']:,} VND", "revenue"),
+        ("Tổng doanh thu", f"{finance['revenue']:,} VND", "revenue"),
+        ("Tổng lãi có snapshot", f"{finance['profit']:,} VND", "revenue"),
+        ("Độ phủ giá vốn", f"{finance['costed']}/{completed_orders} đơn", "revenue"),
+        ("Đơn thành công", completed_orders, "orders"),
         ("Pending pay", len(pending_orders), "orders"),
-        ("Sáº£n pháº©m", len(products), "products"),
+        ("Sản phẩm", len(products), "products"),
         ("Low stock", _admin_web_low_stock_count(), "products"),
         ("Kho link legacy", len(available_links) if isinstance(available_links, set) else 0, "products"),
         ("Users", len(user_data_db), "users"),
         ("Manual pending", len(pending_manual_orders), "orders"),
         ("API partner on", f"{active_api_keys}/{len(api_keys)}", "api"),
-        ("Sá»‘ dÆ° API", f"{api_balance:,} VND", "api metric-wide"),
+        ("Số dư API", f"{api_balance:,} VND", "api metric-wide"),
         ("Coupon", len(coupons) if isinstance(coupons, dict) else 0, "promo"),
-        ("Promo hÃ´m nay", f"{promo_spent_today:,} VND", "promo"),
+        ("Promo hôm nay", f"{promo_spent_today:,} VND", "promo"),
         ("Support open", open_support, "support"),
         ("Bot uptime", _uptime_text, "support"),
     ]
@@ -2430,16 +2430,16 @@ def _admin_web_dashboard_body(request=None, message: str | None = None, is_error
         for p in products.values() if isinstance(p, dict)
     )
     _cats_with_img = sum(1 for c in _all_cats if c and _admin_web_category_image_path(c) is not None)
-    metrics.append(("áº¢nh danh má»¥c", f"{_cats_with_img}/{len(_all_cats)}", "products"))
+    metrics.append(("Ảnh danh mục", f"{_cats_with_img}/{len(_all_cats)}", "products"))
     cards = "".join(
-        f'<a class="metric metric-{escape(kind)}" href="#{escape(_admin_web_metric_target(k, kind), quote=True)}" data-page-link="{escape(_admin_web_metric_target(k, kind), quote=True)}" aria-label="Má»Ÿ {escape(k, quote=True)}">'
+        f'<a class="metric metric-{escape(kind)}" href="#{escape(_admin_web_metric_target(k, kind), quote=True)}" data-page-link="{escape(_admin_web_metric_target(k, kind), quote=True)}" aria-label="Mở {escape(k, quote=True)}">'
         f'<span>{escape(k)}</span><b>{escape(str(v))}</b></a>'
         for k, v, kind in metrics
     )
     plan_rows = [
-        ("live", "Dashboard module", "Tá»•ng quan, products, orders, users, API, promo, support, ops, audit."),
-        ("live", "Action web", "VÃ­ user, ban/unban, product update, stock add, API partner, coupon, system toggle, clear pending."),
-        ("live", "Audit log", "Ghi riÃªng data_admin_action_log.json cho má»—i action web."),
+        ("live", "Dashboard module", "Tổng quan, products, orders, users, API, promo, support, ops, audit."),
+        ("live", "Action web", "Ví user, ban/unban, product update, stock add, API partner, coupon, system toggle, clear pending."),
+        ("live", "Audit log", "Ghi riêng data_admin_action_log.json cho mỗi action web."),
         ("next", "RBAC + 2-step confirm", "Tach viewer/operator/finance/owner va yeu cau confirm rieng cho tien/refund/restore."),
         ("next", "Deep CRUD", "Trang detail rieng cho order/product/user, refund co preview, backup restore co preview."),
     ]
@@ -2461,30 +2461,30 @@ def _admin_web_dashboard_body(request=None, message: str | None = None, is_error
       <b>Dino Admin</b>
       <span>MMO ops center</span>
     </div>
-    <a href="#overview" data-page-link="overview">Tá»•ng quan</a>
+    <a href="#overview" data-page-link="overview">Tổng quan</a>
     <a href="#actions" data-page-link="actions">Actions</a>
-    <a href="#products" data-page-link="products">Sáº£n pháº©m</a>
+    <a href="#products" data-page-link="products">Sản phẩm</a>
     <a href="#legacy" data-page-link="legacy">Kho link</a>
-    <a href="#orders" data-page-link="orders">ÄÆ¡n hÃ ng</a>
+    <a href="#orders" data-page-link="orders">Đơn hàng</a>
     <a href="#users" data-page-link="users">Users</a>
     <a href="#api" data-page-link="api">API partner</a>
     <a href="/admin/resell{_admin_web_key_query(request) if request is not None else ''}">API Resell</a>
     <a href="/admin/supplier_catalog{_admin_web_key_query(request) if request is not None else ''}">SupplierCatalog</a>
-    <a href="#promo" data-page-link="promo">Khuyáº¿n mÃ£i</a>
-    <a href="#support" data-page-link="support">Há»— trá»£</a>
-    <a href="#ops" data-page-link="ops">Váº­n hÃ nh</a>
+    <a href="#promo" data-page-link="promo">Khuyến mãi</a>
+    <a href="#support" data-page-link="support">Hỗ trợ</a>
+    <a href="#ops" data-page-link="ops">Vận hành</a>
     <a href="#audit" data-page-link="audit">Audit</a>
-    <a href="/admin/commands{_admin_web_key_query(request) if request is not None else ''}">Lá»‡nh admin</a>
+    <a href="/admin/commands{_admin_web_key_query(request) if request is not None else ''}">Lệnh admin</a>
   </aside>
   <section class="workspace">
     <div class="workspace-head">
       <div>
         <span class="eyebrow">MMO admin app</span>
         <h1>Dino Control Center</h1>
-        <p>Báº£ng Ä‘iá»u khiá»ƒn táº­p trung cho sáº£n pháº©m, kho, Ä‘Æ¡n hÃ ng, user, vÃ­, API partner, coupon, support vÃ  váº­n hÃ nh.</p>
+        <p>Bảng điều khiển tập trung cho sản phẩm, kho, đơn hàng, user, ví, API partner, coupon, support và vận hành.</p>
       </div>
       <div class="console-tools">
-        <input id="globalSearch" placeholder="TÃ¬m trong module hiá»‡n táº¡i..." oninput="filterAdminTables()">
+        <input id="globalSearch" placeholder="Tìm trong module hiện tại..." oninput="filterAdminTables()">
         <div class="status-cluster">
           <span class="tag {'danger' if MAINTENANCE_MODE else 'readonly'}">maintenance {_admin_web_bool_text(MAINTENANCE_MODE)}</span>
           <span class="tag {'readonly' if AI_AUTO_REPLY else 'write'}">ai {_admin_web_bool_text(AI_AUTO_REPLY)}</span>
@@ -2500,99 +2500,99 @@ def _admin_web_dashboard_body(request=None, message: str | None = None, is_error
 
     <section class="module-section admin-page active" id="overview">
       <div class="section-head">
-        <div><h2>Tá»•ng quan</h2><p>Chá»‰ sá»‘ váº­n hÃ nh hiá»‡n táº¡i, cáº­p nháº­t trá»±c tiáº¿p tá»« runtime.</p></div>
+        <div><h2>Tổng quan</h2><p>Chỉ số vận hành hiện tại, cập nhật trực tiếp từ runtime.</p></div>
       </div>
       <div class="grid">{cards}</div>
       {_admin_web_overview_board(request)}
     </section>
 
     <section class="module-section admin-page" id="actions">
-      <div class="section-head"><div><h2>Actions</h2><p>Thao tÃ¡c ghi trá»±c tiáº¿p vÃ o database/runtime, cÃ³ audit log báº¯t buá»™c.</p></div></div>
+      <div class="section-head"><div><h2>Actions</h2><p>Thao tác ghi trực tiếp vào database/runtime, có audit log bắt buộc.</p></div></div>
       <div class="actions-grid">{actions}</div>
     </section>
 
     <section class="module-section admin-page" id="products">
       <div class="section-head">
-        <div><h2>Sáº£n pháº©m & tá»“n kho</h2><p>Quáº£n lÃ½ catalog local, manual, SupplierSource vÃ  SocialSource. Äang hiá»ƒn thá»‹ {min(len(products), ADMIN_WEB_PRODUCT_TABLE_LIMIT):,}/{len(products):,} sáº£n pháº©m má»›i nháº¥t Ä‘á»ƒ dashboard táº£i nhanh.</p></div>
-        <select onchange="filterTableKind('productsTable', this.value)"><option value="">Táº¥t cáº£ loáº¡i</option><option value="local">local</option><option value="manual">manual</option><option value="supplier_source">supplier_source</option><option value="ctt">ctt</option></select>
+        <div><h2>Sản phẩm & tồn kho</h2><p>Quản lý catalog local, manual, SupplierSource và SocialSource. Đang hiển thị {min(len(products), ADMIN_WEB_PRODUCT_TABLE_LIMIT):,}/{len(products):,} sản phẩm mới nhất để dashboard tải nhanh.</p></div>
+        <select onchange="filterTableKind('productsTable', this.value)"><option value="">Tất cả loại</option><option value="local">local</option><option value="manual">manual</option><option value="supplier_source">supplier_source</option><option value="ctt">ctt</option></select>
       </div>
-      <div class="table-scroll"><table class="data-table" id="productsTable"><thead><tr><th>ID</th><th>TÃªn</th><th>Loáº¡i</th><th>GiÃ¡</th><th>Stock</th><th>Pending</th><th>Sold</th><th>Sync</th><th></th></tr></thead><tbody>{_admin_web_render_product_rows(request, limit=ADMIN_WEB_PRODUCT_TABLE_LIMIT)}</tbody></table></div>
+      <div class="table-scroll"><table class="data-table" id="productsTable"><thead><tr><th>ID</th><th>Tên</th><th>Loại</th><th>Giá</th><th>Stock</th><th>Pending</th><th>Sold</th><th>Sync</th><th></th></tr></thead><tbody>{_admin_web_render_product_rows(request, limit=ADMIN_WEB_PRODUCT_TABLE_LIMIT)}</tbody></table></div>
     </section>
 
     <section class="module-section admin-page" id="legacy">
-      <div class="section-head"><div><h2>Kho link legacy</h2><p>Link dÃ¹ng cho flow iCloud/API legacy. CÃ³ thá»ƒ thay, thÃªm, xÃ³a trá»±c tiáº¿p á»Ÿ Actions.</p></div></div>
+      <div class="section-head"><div><h2>Kho link legacy</h2><p>Link dùng cho flow iCloud/API legacy. Có thể thay, thêm, xóa trực tiếp ở Actions.</p></div></div>
       <div class="table-scroll"><table class="data-table" id="legacyLinksTable"><thead><tr><th>#</th><th>Link</th><th>Status</th></tr></thead><tbody>{_admin_web_render_legacy_link_rows()}</tbody></table></div>
     </section>
 
     <section class="module-section admin-page" id="orders">
-      <div class="section-head"><div><h2>ÄÆ¡n hÃ ng</h2><p>Recent orders vÃ  tráº¡ng thÃ¡i thanh toÃ¡n/giao hÃ ng. Äang hiá»ƒn thá»‹ {min(len(order_history), ADMIN_WEB_ORDER_TABLE_LIMIT):,}/{len(order_history):,} Ä‘Æ¡n má»›i nháº¥t.</p></div></div>
-      <div class="table-scroll"><table class="data-table" id="ordersTable"><thead><tr><th>MÃ£</th><th>Sáº£n pháº©m</th><th>User</th><th>Status</th><th>Tiá»n</th><th>Qty</th><th>LÃºc</th><th></th></tr></thead><tbody>{_admin_web_render_order_rows(request, limit=ADMIN_WEB_ORDER_TABLE_LIMIT)}</tbody></table></div>
+      <div class="section-head"><div><h2>Đơn hàng</h2><p>Recent orders và trạng thái thanh toán/giao hàng. Đang hiển thị {min(len(order_history), ADMIN_WEB_ORDER_TABLE_LIMIT):,}/{len(order_history):,} đơn mới nhất.</p></div></div>
+      <div class="table-scroll"><table class="data-table" id="ordersTable"><thead><tr><th>Mã</th><th>Sản phẩm</th><th>User</th><th>Status</th><th>Tiền</th><th>Qty</th><th>Lúc</th><th></th></tr></thead><tbody>{_admin_web_render_order_rows(request, limit=ADMIN_WEB_ORDER_TABLE_LIMIT)}</tbody></table></div>
     </section>
 
     <section class="module-section admin-page" id="users">
       <div class="section-head">
-        <div><h2>Users & vÃ­</h2><p>Top users theo sá»‘ dÆ°, Ä‘Æ¡n hÃ ng vÃ  tráº¡ng thÃ¡i ban. Äang hiá»ƒn thá»‹ {min(len(user_data_db), ADMIN_WEB_USER_TABLE_LIMIT):,}/{len(user_data_db):,} user.</p></div>
-        <select onchange="filterTableKind('usersTable', this.value)"><option value="">Táº¥t cáº£</option><option value="active">active</option><option value="banned">banned</option></select>
+        <div><h2>Users & ví</h2><p>Top users theo số dư, đơn hàng và trạng thái ban. Đang hiển thị {min(len(user_data_db), ADMIN_WEB_USER_TABLE_LIMIT):,}/{len(user_data_db):,} user.</p></div>
+        <select onchange="filterTableKind('usersTable', this.value)"><option value="">Tất cả</option><option value="active">active</option><option value="banned">banned</option></select>
       </div>
-      <div class="table-scroll"><table class="data-table" id="usersTable"><thead><tr><th>ID</th><th>User</th><th>Sá»‘ dÆ°</th><th>Orders</th><th>Total spent</th><th>Status</th><th></th></tr></thead><tbody>{_admin_web_render_user_rows(request, limit=ADMIN_WEB_USER_TABLE_LIMIT)}</tbody></table></div>
+      <div class="table-scroll"><table class="data-table" id="usersTable"><thead><tr><th>ID</th><th>User</th><th>Số dư</th><th>Orders</th><th>Total spent</th><th>Status</th><th></th></tr></thead><tbody>{_admin_web_render_user_rows(request, limit=ADMIN_WEB_USER_TABLE_LIMIT)}</tbody></table></div>
     </section>
 
     <section class="module-section admin-page api-operations-page" id="api">
       <div class="api-hero">
-        <div><span class="eyebrow">Partner infrastructure</span><h2>API Operations Center</h2><p>Báº£o máº­t key, kiá»ƒm soÃ¡t lÆ°u lÆ°á»£ng, váº­n hÃ nh vÃ­ vÃ  theo dÃµi sá»©c khá»e API táº¡i má»™t nÆ¡i.</p></div>
-        <a class="button dark" href="/admin/api-partners/export.csv{_admin_web_key_query(request) if request is not None else ''}">Xuáº¥t CSV</a>
+        <div><span class="eyebrow">Partner infrastructure</span><h2>API Operations Center</h2><p>Bảo mật key, kiểm soát lưu lượng, vận hành ví và theo dõi sức khỏe API tại một nơi.</p></div>
+        <a class="button dark" href="/admin/api-partners/export.csv{_admin_web_key_query(request) if request is not None else ''}">Xuất CSV</a>
       </div>
       <div class="api-kpi-grid">
-        <article><span>Tá»•ng partner</span><b>{len(api_keys):,}</b><small>ÄÃ£ Ä‘Äƒng kÃ½</small></article>
-        <article><span>Äang hoáº¡t Ä‘á»™ng</span><b>{sum(1 for d in api_keys.values() if not isinstance(d, dict) or d.get('enabled') is not False):,}</b><small>Key Ä‘ang ON</small></article>
-        <article><span>Sá»‘ dÆ° tháº¥p</span><b>{sum(1 for d in api_keys.values() if isinstance(d, dict) and _admin_web_int(d.get('balance'), 0) <= max(0, _admin_web_int(d.get('low_balance_threshold'), 100000))):,}</b><small>Cáº§n theo dÃµi</small></article>
-        <article><span>Requests 14 ngÃ y</span><b>{db_api_analytics('', 14).get('total', 0):,}</b><small>{db_api_analytics('', 14).get('error_rate', 0)}% lá»—i</small></article>
+        <article><span>Tổng partner</span><b>{len(api_keys):,}</b><small>Đã đăng ký</small></article>
+        <article><span>Đang hoạt động</span><b>{sum(1 for d in api_keys.values() if not isinstance(d, dict) or d.get('enabled') is not False):,}</b><small>Key đang ON</small></article>
+        <article><span>Số dư thấp</span><b>{sum(1 for d in api_keys.values() if isinstance(d, dict) and _admin_web_int(d.get('balance'), 0) <= max(0, _admin_web_int(d.get('low_balance_threshold'), 100000))):,}</b><small>Cần theo dõi</small></article>
+        <article><span>Requests 14 ngày</span><b>{db_api_analytics('', 14).get('total', 0):,}</b><small>{db_api_analytics('', 14).get('error_rate', 0)}% lỗi</small></article>
       </div>
       <div class="api-filter-bar">
-        <select id="apiStatusFilter" onchange="filterApiPartners()"><option value="">Má»i tráº¡ng thÃ¡i</option><option value="active">Äang hoáº¡t Ä‘á»™ng</option><option value="disabled">ÄÃ£ thu há»“i</option><option value="admin">Admin</option></select>
-        <select id="apiBalanceFilter" onchange="filterApiPartners()"><option value="">Má»i sá»‘ dÆ°</option><option value="low">DÆ°á»›i ngÆ°á»¡ng</option></select>
-        <span class="tag {'danger' if suspicious_api_balances else 'readonly'}">{suspicious_api_balances} báº¥t thÆ°á»ng</span>
+        <select id="apiStatusFilter" onchange="filterApiPartners()"><option value="">Mọi trạng thái</option><option value="active">Đang hoạt động</option><option value="disabled">Đã thu hồi</option><option value="admin">Admin</option></select>
+        <select id="apiBalanceFilter" onchange="filterApiPartners()"><option value="">Mọi số dư</option><option value="low">Dưới ngưỡng</option></select>
+        <span class="tag {'danger' if suspicious_api_balances else 'readonly'}">{suspicious_api_balances} bất thường</span>
       </div>
-      <div class="table-scroll"><table class="data-table api-partner-table" id="apiTable"><thead><tr><th>Key / Public ID</th><th>Partner</th><th>Sá»‘ dÆ°</th><th>Tráº¡ng thÃ¡i</th><th>Quota & Alert</th><th>Ghi chÃº</th><th>Thao tÃ¡c nhanh</th></tr></thead><tbody>{_admin_web_render_api_partner_rows(request, limit=ADMIN_WEB_API_TABLE_LIMIT)}</tbody></table></div>
+      <div class="table-scroll"><table class="data-table api-partner-table" id="apiTable"><thead><tr><th>Key / Public ID</th><th>Partner</th><th>Số dư</th><th>Trạng thái</th><th>Quota & Alert</th><th>Ghi chú</th><th>Thao tác nhanh</th></tr></thead><tbody>{_admin_web_render_api_partner_rows(request, limit=ADMIN_WEB_API_TABLE_LIMIT)}</tbody></table></div>
     </section>
 
     <section class="module-section admin-page" id="promo">
-      <div class="section-head"><div><h2>Khuyáº¿n mÃ£i</h2><p>Coupon hiá»‡n cÃ³, flash sale vÃ  combo sáº½ má»Ÿ rá»™ng á»Ÿ phase sau.</p></div></div>
+      <div class="section-head"><div><h2>Khuyến mãi</h2><p>Coupon hiện có, flash sale và combo sẽ mở rộng ở phase sau.</p></div></div>
       <div class="split-grid">
-        <div class="table-scroll"><table class="data-table" id="couponTable"><thead><tr><th>Code</th><th>Giáº£m</th><th>Used</th><th>Háº¿t háº¡n</th><th></th></tr></thead><tbody>{_admin_web_render_coupon_rows(request)}</tbody></table></div>
+        <div class="table-scroll"><table class="data-table" id="couponTable"><thead><tr><th>Code</th><th>Giảm</th><th>Used</th><th>Hết hạn</th><th></th></tr></thead><tbody>{_admin_web_render_coupon_rows(request)}</tbody></table></div>
         <div class="mini-panel">
           <h3>Promo snapshot</h3>
           <p><b>{len(flash_sales) if isinstance(flash_sales, dict) else 0}</b> flash sale</p>
           <p><b>{len(combo_deals) if isinstance(combo_deals, dict) else 0}</b> combo deal</p>
           <p><b>{len(active_giveaways) if isinstance(active_giveaways, dict) else 0}</b> giveaway</p>
-          <p><b>{_admin_web_money(promo_spent_today)}</b> promo spent hÃ´m nay</p>
+          <p><b>{_admin_web_money(promo_spent_today)}</b> promo spent hôm nay</p>
         </div>
       </div>
     </section>
 
     <section class="module-section admin-page" id="support">
-      <div class="section-head"><div><h2>Há»— trá»£</h2><p>Live chat, báº£o hÃ nh vÃ  rÃºt tiá»n gom chung Ä‘á»ƒ admin khÃ´ng bá» sÃ³t ticket.</p></div></div>
-      <div class="table-scroll"><table class="data-table" id="supportTable"><thead><tr><th>Loáº¡i</th><th>ID</th><th>User</th><th>Status</th><th>Ná»™i dung</th><th></th></tr></thead><tbody>{_admin_web_render_support_rows(request)}</tbody></table></div>
+      <div class="section-head"><div><h2>Hỗ trợ</h2><p>Live chat, bảo hành và rút tiền gom chung để admin không bỏ sót ticket.</p></div></div>
+      <div class="table-scroll"><table class="data-table" id="supportTable"><thead><tr><th>Loại</th><th>ID</th><th>User</th><th>Status</th><th>Nội dung</th><th></th></tr></thead><tbody>{_admin_web_render_support_rows(request)}</tbody></table></div>
     </section>
 
     <section class="module-section admin-page" id="ops">
-      <div class="section-head"><div><h2>Váº­n hÃ nh</h2><p>Tráº¡ng thÃ¡i cron MBBank, bot user/admin, log runtime vÃ  manual pending.</p></div></div>
+      <div class="section-head"><div><h2>Vận hành</h2><p>Trạng thái cron MBBank, bot user/admin, log runtime và manual pending.</p></div></div>
       <div class="split-grid">
-        <div class="table-scroll"><table class="data-table"><thead><tr><th>Status</th><th>Module</th><th>Ghi chÃº</th></tr></thead><tbody>{_admin_web_render_ops_status_rows(request)}</tbody></table></div>
+        <div class="table-scroll"><table class="data-table"><thead><tr><th>Status</th><th>Module</th><th>Ghi chú</th></tr></thead><tbody>{_admin_web_render_ops_status_rows(request)}</tbody></table></div>
         <div class="ops-log-panel">{_admin_web_render_ops_log_panel()}</div>
       </div>
       <div class="split-grid">
-        <div class="table-scroll"><table class="data-table" id="pendingManualTable"><thead><tr><th>MÃ£</th><th>Sáº£n pháº©m</th><th>User</th><th>Tiá»n</th><th>LÃºc</th></tr></thead><tbody>{_admin_web_render_pending_manual_rows()}</tbody></table></div>
+        <div class="table-scroll"><table class="data-table" id="pendingManualTable"><thead><tr><th>Mã</th><th>Sản phẩm</th><th>User</th><th>Tiền</th><th>Lúc</th></tr></thead><tbody>{_admin_web_render_pending_manual_rows()}</tbody></table></div>
         <div class="table-scroll">
           {_admin_web_render_payment_config(request)}
-          <table class="data-table" style="margin-top:20px;"><thead><tr><th>Status</th><th>Module</th><th>Ghi chÃº</th></tr></thead><tbody>{plan_html}</tbody></table>
+          <table class="data-table" style="margin-top:20px;"><thead><tr><th>Status</th><th>Module</th><th>Ghi chú</th></tr></thead><tbody>{plan_html}</tbody></table>
         </div>
       </div>
     </section>
 
     <section class="module-section admin-page" id="audit">
-      <div class="section-head"><div><h2>Audit</h2><p>Lá»‹ch sá»­ thao tÃ¡c tá»« web admin.</p></div></div>
-      <div class="table-scroll"><table class="data-table" id="auditTable"><thead><tr><th>LÃºc</th><th>Action</th><th>Target</th><th>Status</th><th>IP</th><th>Message</th></tr></thead><tbody>{_admin_web_render_audit_rows()}</tbody></table></div>
+      <div class="section-head"><div><h2>Audit</h2><p>Lịch sử thao tác từ web admin.</p></div></div>
+      <div class="table-scroll"><table class="data-table" id="auditTable"><thead><tr><th>Lúc</th><th>Action</th><th>Target</th><th>Status</th><th>IP</th><th>Message</th></tr></thead><tbody>{_admin_web_render_audit_rows()}</tbody></table></div>
     </section>
   </section>
 </div>
@@ -2711,7 +2711,7 @@ function setAdminPage() {{
     }});
   }}
   const search = document.getElementById('globalSearch');
-  if (search) search.placeholder = target === 'overview' ? 'TÃ¬m trong cÃ¡c báº£ng...' : 'TÃ¬m trong module hiá»‡n táº¡i...';
+  if (search) search.placeholder = target === 'overview' ? 'Tìm trong các bảng...' : 'Tìm trong module hiện tại...';
   applyAdminFilters(document.getElementById(target));
   window.setTimeout(() => window.scrollTo({{ top: 0, left: 0, behavior: 'auto' }}), 0);
 }}
@@ -2758,16 +2758,16 @@ def _admin_web_commands_body() -> str:
 <section class="hero">
   <span class="eyebrow">command catalog</span>
   <h1>All admin commands.</h1>
-  <p>Danh sÃ¡ch toÃ n bá»™ lá»‡nh admin Ä‘ang cÃ³ trong bot, lá»c theo tá»« khÃ³a vÃ  má»©c rá»§i ro Ä‘á»ƒ quáº£n lÃ½ váº­n hÃ nh nhanh hÆ¡n trÃªn web.</p>
+  <p>Danh sách toàn bộ lệnh admin đang có trong bot, lọc theo từ khóa và mức rủi ro để quản lý vận hành nhanh hơn trên web.</p>
   <div class="hero-actions">
     <a class="button dark" href="/admin" onclick="this.href='/admin'+location.search">Dashboard</a>
     <a class="button" href="/api/admin/commands" onclick="this.href='/api/admin/commands'+location.search">JSON catalog</a>
   </div>
 </section>
 <div class="toolbar">
-  <input id="q" placeholder="TÃ¬m lá»‡nh, nhÃ³m, mÃ´ táº£..." oninput="filterCommands()">
+  <input id="q" placeholder="Tìm lệnh, nhóm, mô tả..." oninput="filterCommands()">
   <select id="risk" onchange="filterCommands()">
-    <option value="">Táº¥t cáº£ risk</option>
+    <option value="">Tất cả risk</option>
     <option value="readonly">readonly</option>
     <option value="write">write</option>
     <option value="danger">danger</option>
@@ -2854,7 +2854,7 @@ def _admin_web_api_wallet_note(data: dict, balance: int) -> str:
     if owner:
         parts.append(f"owner {owner}")
     if abs(int(balance or 0)) >= ADMIN_WEB_SUSPICIOUS_BALANCE_THRESHOLD and str(data.get("user_id") or "").strip() != str(ADMIN_USER_ID).strip():
-        parts.append("Sá»‘ dÆ° báº¥t thÆ°á»ng")
+        parts.append("Số dư bất thường")
     note = str(data.get("note") or "").strip()
     if note:
         parts.append(note)
@@ -2887,20 +2887,20 @@ def _admin_web_notify_details_text(details: dict) -> str:
 
 def _admin_web_action_label(action: str) -> str:
     return {
-        "user_balance": "Cáº­p nháº­t vÃ­ user",
+        "user_balance": "Cập nhật ví user",
         "user_ban": "Ban/unban user",
-        "user_profile": "Sá»­a há»“ sÆ¡ user",
-        "product_create": "ThÃªm sáº£n pháº©m",
-        "product_update": "Sá»­a sáº£n pháº©m",
-        "product_stock": "Tá»“n kho sáº£n pháº©m",
-        "product_delete": "XÃ³a sáº£n pháº©m",
+        "user_profile": "Sửa hồ sơ user",
+        "product_create": "Thêm sản phẩm",
+        "product_update": "Sửa sản phẩm",
+        "product_stock": "Tồn kho sản phẩm",
+        "product_delete": "Xóa sản phẩm",
         "api_partner": "API partner",
-        "order_tools": "CÃ´ng cá»¥ Ä‘Æ¡n hÃ ng",
+        "order_tools": "Công cụ đơn hàng",
         "coupon": "Coupon",
-        "system_toggle": "Há»‡ thá»‘ng",
+        "system_toggle": "Hệ thống",
         "pending_manual": "Pending manual",
         "support_update": "Support",
-        "web_login": "ÄÄƒng nháº­p web admin",
+        "web_login": "Đăng nhập web admin",
     }.get(str(action or ""), str(action or "unknown"))
 
 
@@ -2917,7 +2917,7 @@ def _admin_web_notify_message(event: dict, title: str) -> str:
         lines.append(f"<b>Target:</b> <code>{escape(target)}</code>")
     message = _admin_web_plain_display(event.get("message") or "")
     if message:
-        lines.append(f"<b>Káº¿t quáº£:</b> {escape(_admin_web_short(message, 220))}")
+        lines.append(f"<b>Kết quả:</b> {escape(_admin_web_short(message, 220))}")
     if details:
         lines.append(f"<b>Details:</b> <code>{escape(details)}</code>")
     lines.extend(
@@ -2975,7 +2975,7 @@ async def _admin_web_notify_login(request) -> bool:
         "action": "web_login",
         "target": "admin_dashboard",
         "status": "ok",
-        "message": "Admin Ä‘Ã£ má»Ÿ dashboard web.",
+        "message": "Admin đã mở dashboard web.",
         "ip": ip,
         "user_agent": user_agent,
         "details": {"path": str(getattr(request, "url", "") or "/admin")[:160]},
@@ -3147,10 +3147,10 @@ def _admin_web_find_order_records(order_code: str):
 async def _admin_web_action_user_balance(form):
     user_id = _admin_web_form_text(form, "user_id")
     if not user_id.isdigit():
-        return False, "User ID khÃ´ng há»£p lá»‡."
+        return False, "User ID không hợp lệ."
     amount = _admin_web_int(_admin_web_form_text(form, "amount"), None)
     if amount is None or amount < 0:
-        return False, "Sá»‘ tiá»n khÃ´ng há»£p lá»‡."
+        return False, "Số tiền không hợp lệ."
     mode = _admin_web_form_text(form, "mode") or "add"
     reason = _admin_web_form_text(form, "reason") or "Admin web"
     profile = user_data_db.get(user_id)
@@ -3165,7 +3165,7 @@ async def _admin_web_action_user_balance(form):
     elif mode == "set":
         new_balance = amount
     else:
-        return False, "Kiá»ƒu cáº­p nháº­t vÃ­ khÃ´ng há»£p lá»‡."
+        return False, "Kiểu cập nhật ví không hợp lệ."
     db_update_balance(int(user_id), int(new_balance), reason=f"{reason} ({mode})")
     await save_data(force=True, tables=[USERS_FILE, TRANSACTION_HISTORY_FILE])
     return True, f"Da cap nhat vi user {user_id}: {current:,} -> {new_balance:,} VND."
@@ -3174,7 +3174,7 @@ async def _admin_web_action_user_balance(form):
 async def _admin_web_action_user_ban(form):
     user_id = _admin_web_form_text(form, "user_id")
     if not user_id.isdigit():
-        return False, "User ID khÃ´ng há»£p lá»‡."
+        return False, "User ID không hợp lệ."
     target_id = int(user_id)
     mode = _admin_web_form_text(form, "mode") or "ban"
     if mode == "ban":
@@ -3184,7 +3184,7 @@ async def _admin_web_action_user_ban(form):
         banned_users.discard(target_id)
         msg = f"Da unban user {target_id}."
     else:
-        return False, "Thao tÃ¡c ban/unban khÃ´ng há»£p lá»‡."
+        return False, "Thao tác ban/unban không hợp lệ."
     await save_data(force=True, tables=[BANNED_USERS_FILE])
     return True, msg
 
@@ -3192,7 +3192,7 @@ async def _admin_web_action_user_ban(form):
 async def _admin_web_action_user_profile(form):
     user_id = _admin_web_form_text(form, "user_id")
     if not user_id.isdigit():
-        return False, "User ID khÃ´ng há»£p lá»‡."
+        return False, "User ID không hợp lệ."
     profile = user_data_db.get(user_id)
     if not isinstance(profile, dict):
         profile = {"user_id": int(user_id), "balance": 0}
@@ -3209,7 +3209,7 @@ async def _admin_web_action_user_profile(form):
             profile[field_name] = value
             changed.append(field_name)
     if not changed:
-        return False, "ChÆ°a cÃ³ thay Ä‘á»•i há»“ sÆ¡ user."
+        return False, "Chưa có thay đổi hồ sơ user."
     await save_data(force=True, tables=[USERS_FILE])
     return True, f"Da cap nhat user {user_id}: {', '.join(changed)}."
 
@@ -3222,13 +3222,13 @@ async def _admin_web_action_product_create(form):
         return False, "Product ID da ton tai."
     name = _admin_web_form_text(form, "name")
     if not name:
-        return False, "TÃªn sáº£n pháº©m khÃ´ng Ä‘Æ°á»£c rá»—ng."
+        return False, "Tên sản phẩm không được rỗng."
     price = _admin_web_int(_admin_web_form_text(form, "price"), None)
     if price is None or price < 0:
-        return False, "GiÃ¡ sáº£n pháº©m khÃ´ng há»£p lá»‡."
+        return False, "Giá sản phẩm không hợp lệ."
     cost_price = _admin_web_int(_admin_web_form_text(form, "cost_price"), None)
     if cost_price is None or cost_price < 0:
-        return False, "GiÃ¡ vá»‘n khÃ´ng há»£p lá»‡."
+        return False, "Giá vốn không hợp lệ."
     requires_gmail = _admin_web_form_text(form, "requires_gmail") in {"1", "true", "yes", "on"}
     stock_items = [
         line.strip()
@@ -3242,7 +3242,7 @@ async def _admin_web_action_product_create(form):
         "cost_price": int(cost_price),
         "description": _admin_web_form_text(form, "description"),
         "duration": _admin_web_form_text(form, "duration"),
-        "warranty": warranty or "KhÃ´ng",
+        "warranty": warranty or "Không",
         "requires_gmail": requires_gmail,
         "stock": [] if requires_gmail else stock_items,
         "created_by": "admin_web",
@@ -3281,13 +3281,13 @@ async def _admin_web_action_product_update(form):
     if price_text:
         price = _admin_web_int(price_text, None)
         if price is None or price < 0:
-            return False, "GiÃ¡ má»›i khÃ´ng há»£p lá»‡."
+            return False, "Giá mới không hợp lệ."
         product["price"] = int(price)
         changes.append("gia ban")
     if cost_price_text:
         cost_price = _admin_web_int(cost_price_text, None)
         if cost_price is None or cost_price < 0:
-            return False, "GiÃ¡ vá»‘n má»›i khÃ´ng há»£p lá»‡."
+            return False, "Giá vốn mới không hợp lệ."
         product["cost_price"] = int(cost_price)
         changes.append("gia von")
     if description:
@@ -3303,7 +3303,7 @@ async def _admin_web_action_product_update(form):
     if max_pending_text:
         max_pending = _admin_web_int(max_pending_text, None)
         if max_pending is None or max_pending < 1:
-            return False, "Giá»›i háº¡n manual khÃ´ng há»£p lá»‡."
+            return False, "Giới hạn manual không hợp lệ."
         product["max_pending_orders"] = int(max_pending)
         changes.append("gioi han manual")
     if stock_text:
@@ -3318,7 +3318,7 @@ async def _admin_web_action_product_update(form):
         product["stock"] = current_stock + items
         changes.append(f"stock +{len(items)}")
     if not changes:
-        return False, "ChÆ°a cÃ³ thay Ä‘á»•i nÃ o Ä‘á»ƒ lÆ°u."
+        return False, "Chưa có thay đổi nào để lưu."
     await save_data(force=True, tables=[PRODUCTS_FILE])
     return True, f"Da cap nhat {product_id}: {', '.join(changes)}."
 
@@ -3336,7 +3336,7 @@ async def _admin_web_action_product_stock(form):
         product["stock"] = []
         await save_data(force=True, tables=[PRODUCTS_FILE])
         return True, f"Da xoa {count} stock local cua {product_id}."
-    return False, "Thao tÃ¡c stock khÃ´ng há»£p lá»‡."
+    return False, "Thao tác stock không hợp lệ."
 
 
 async def _admin_web_action_product_delete(form):
@@ -3405,21 +3405,21 @@ async def _admin_web_action_api_partner(form):
             "created_at": int(time.time()),
         }
         await save_data(force=True, tables=[API_KEYS_FILE])
-        return True, f"ÄÃ£ táº¡o API partner {partner_name}. Key má»›i (chá»‰ hiá»ƒn thá»‹ láº§n nÃ y): {new_key}"
+        return True, f"Đã tạo API partner {partner_name}. Key mới (chỉ hiển thị lần này): {new_key}"
 
     api_key = _admin_web_find_api_key(target)
     if not api_key:
-        return False, "KhÃ´ng tÃ¬m tháº¥y API key/partner."
+        return False, "Không tìm thấy API key/partner."
     data = _api_normalize_partner_key(api_key)
     if not isinstance(data, dict):
-        return False, "Dá»¯ liá»‡u API key khÃ´ng há»£p lá»‡."
+        return False, "Dữ liệu API key không hợp lệ."
 
     partner_name = data.get("name") or api_key
     if mode in {"topup", "subtract", "set_balance"}:
         if mode != "set_balance" and amount <= 0:
-            return False, "Sá»‘ tiá»n pháº£i lá»›n hÆ¡n 0."
+            return False, "Số tiền phải lớn hơn 0."
         if mode == "set_balance" and amount < 0:
-            return False, "Sá»‘ dÆ° khÃ´ng Ä‘Æ°á»£c Ã¢m."
+            return False, "Số dư không được âm."
         if mode == "set_balance":
             adjusted, new_balance, _ = await safe_api_set_balance(
                 api_key, amount, save=True, reason=f"Admin web set {partner_name}",
@@ -3429,14 +3429,14 @@ async def _admin_web_action_api_partner(form):
             delta = amount if mode == "topup" else -amount
             current = _api_get_partner_display_balance(api_key, data)
             if current + delta < 0:
-                return False, "Sá»‘ dÆ° khÃ´ng Ä‘á»§ Ä‘á»ƒ trá»«."
+                return False, "Số dư không đủ để trừ."
             adjusted, new_balance, _ = await safe_api_adjust_balance(
                 api_key, delta, save=True, reason=f"Admin web {mode} {partner_name}",
                 ledger_type="deposit" if mode == "topup" else "adjustment", admin_actor="admin_web",
             )
         if not adjusted:
-            return False, "KhÃ´ng cáº­p nháº­t Ä‘Æ°á»£c sá»‘ dÆ° partner."
-        return True, f"ÄÃ£ cáº­p nháº­t {partner_name}: sá»‘ dÆ° má»›i {int(new_balance):,} VND."
+            return False, "Không cập nhật được số dư partner."
+        return True, f"Đã cập nhật {partner_name}: số dư mới {int(new_balance):,} VND."
 
     if mode == "configure":
         try:
@@ -3453,27 +3453,27 @@ async def _admin_web_action_api_partner(form):
         data["tier_override"] = tier_override if tier_override in {tier["id"] for tier in API_PARTNER_TIERS} else "standard"
         data["updated_at"] = int(time.time())
         await save_data(force=True, tables=[API_KEYS_FILE])
-        return True, f"ÄÃ£ lÆ°u báº£o máº­t, quota vÃ  tier pricing cho {partner_name}."
+        return True, f"Đã lưu bảo mật, quota và tier pricing cho {partner_name}."
 
     if mode in {"disable", "revoke"}:
         data["enabled"] = False
         data["revoked_at"] = int(time.time())
         await save_data(force=True, tables=[API_KEYS_FILE])
-        return True, f"ÄÃ£ thu há»“i API key cá»§a {partner_name}."
+        return True, f"Đã thu hồi API key của {partner_name}."
     if mode == "enable":
         if data.get("rotated_to"):
-            return False, "Key cÅ© Ä‘Ã£ regenerate, khÃ´ng thá»ƒ báº­t láº¡i. HÃ£y dÃ¹ng key má»›i."
+            return False, "Key cũ đã regenerate, không thể bật lại. Hãy dùng key mới."
         data["enabled"] = True
         data.pop("revoked_at", None)
         await save_data(force=True, tables=[API_KEYS_FILE])
-        return True, f"ÄÃ£ báº­t API key cá»§a {partner_name}."
+        return True, f"Đã bật API key của {partner_name}."
     if mode == "regenerate":
         result = await _api_rotate_partner_key(api_key)
         if not result:
-            return False, "KhÃ´ng regenerate Ä‘Æ°á»£c API key."
+            return False, "Không regenerate được API key."
         new_key, new_data = result
-        return True, f"ÄÃ£ regenerate {new_data.get('name') or partner_name}. Key má»›i (chá»‰ hiá»ƒn thá»‹ láº§n nÃ y): {new_key}"
-    return False, "Thao tÃ¡c API partner khÃ´ng há»£p lá»‡."
+        return True, f"Đã regenerate {new_data.get('name') or partner_name}. Key mới (chỉ hiển thị lần này): {new_key}"
+    return False, "Thao tác API partner không hợp lệ."
 
 
 async def _admin_web_action_order_tools(form):
@@ -3486,14 +3486,14 @@ async def _admin_web_action_order_tools(form):
     mode = _admin_web_form_text(form, "mode") or "set_email"
     value = _admin_web_form_text(form, "value")
     if not value:
-        return False, "GiÃ¡ trá»‹ cáº­p nháº­t khÃ´ng Ä‘Æ°á»£c rá»—ng."
+        return False, "Giá trị cập nhật không được rỗng."
     if mode == "set_email":
         try:
             is_valid_email = bool(EMAIL_REGEX.match(value))
         except Exception:
             is_valid_email = "@" in value and "." in value
         if not is_valid_email:
-            return False, "Email khÃ´ng há»£p lá»‡."
+            return False, "Email không hợp lệ."
         for _, record in records:
             record["email"] = value
             record["customer_email"] = value
@@ -3504,7 +3504,7 @@ async def _admin_web_action_order_tools(form):
             record["admin_note"] = value[:1000]
         label = "ghi chu"
     else:
-        return False, "Thao tÃ¡c Ä‘Æ¡n hÃ ng khÃ´ng há»£p lá»‡."
+        return False, "Thao tác đơn hàng không hợp lệ."
     tables = sorted({table_name for table_name, _ in records})
     await save_data(force=True, tables=tables)
     return True, f"Da cap nhat {label} cho {order_code} ({len(records)} record)."
@@ -3512,7 +3512,7 @@ async def _admin_web_action_order_tools(form):
 
 async def _admin_web_action_coupon(form):
     if not isinstance(coupons, dict):
-        return False, "Dá»¯ liá»‡u coupon khÃ´ng há»£p lá»‡."
+        return False, "Dữ liệu coupon không hợp lệ."
     mode = _admin_web_form_text(form, "mode") or "add"
     code = _admin_web_form_text(form, "code").upper()
     if not code:
@@ -3524,7 +3524,7 @@ async def _admin_web_action_coupon(form):
         await save_data(force=True, tables=[COUPONS_FILE])
         return True, f"Da xoa coupon {code}."
     if mode != "add":
-        return False, "Thao tÃ¡c coupon khÃ´ng há»£p lá»‡."
+        return False, "Thao tác coupon không hợp lệ."
     quantity = _admin_web_int(_admin_web_form_text(form, "quantity"), 0)
     discount = _admin_web_int(_admin_web_form_text(form, "discount"), 0)
     days = _admin_web_int(_admin_web_form_text(form, "days"), 30)
@@ -3587,7 +3587,7 @@ async def _admin_web_action_system_toggle(form):
         _admin_web_update_env("ENABLE_PAYMENT_BINANCE_SPOT", "true" if val else "false")
         message = f"Da {'bat' if val else 'tat'} Binance Spot."
     else:
-        return False, "Thao tÃ¡c há»‡ thá»‘ng khÃ´ng há»£p lá»‡."
+        return False, "Thao tác hệ thống không hợp lệ."
     try:
         from app.core.runtime_loader import sync_runtime_bindings
 
@@ -3605,7 +3605,7 @@ async def _admin_web_action_pending_manual(form):
         await save_data(force=True, tables=[PENDING_MANUAL_ORDERS_FILE])
         return True, f"Da xoa {count} don manual pending."
     if mode != "clear_one":
-        return False, "Thao tÃ¡c pending manual khÃ´ng há»£p lá»‡."
+        return False, "Thao tác pending manual không hợp lệ."
     order_code = _admin_web_form_text(form, "order_code").upper()
     if not order_code:
         return False, "Can nhap ma don de xoa 1 pending manual."
@@ -3643,7 +3643,7 @@ async def _admin_web_action_support_update(form):
 
 
 async def _admin_web_action_ops_config_update(form):
-    return False, "Cáº¥u hÃ¬nh thanh toÃ¡n lÃ  read-only trÃªn web. HÃ£y cáº­p nháº­t secret trong deployment environment rá»“i restart bot."
+    return False, "Cấu hình thanh toán là read-only trên web. Hãy cập nhật secret trong deployment environment rồi restart bot."
 
 
 def _admin_web_category_exists(category_name: str) -> bool:
@@ -3678,25 +3678,25 @@ def _admin_web_category_form_config(form, current=None) -> dict:
 async def _admin_web_action_category_create(form):
     name = _admin_web_form_text(form, "category_name")
     if not name:
-        return False, "TÃªn danh má»¥c khÃ´ng Ä‘Æ°á»£c rá»—ng."
+        return False, "Tên danh mục không được rỗng."
     if len(name) > 100:
-        return False, "TÃªn danh má»¥c quÃ¡ dÃ i."
+        return False, "Tên danh mục quá dài."
     if _admin_web_category_exists(name):
-        return False, "Danh má»¥c Ä‘Ã£ tá»“n táº¡i."
+        return False, "Danh mục đã tồn tại."
     store_categories[name] = _admin_web_category_form_config(form)
     await save_data(force=True, tables=[STORE_CATEGORIES_FILE])
-    return True, f"ÄÃ£ thÃªm danh má»¥c {name}."
+    return True, f"Đã thêm danh mục {name}."
 
 
 async def _admin_web_action_category_update(form):
     old_name = _admin_web_form_text(form, "category_name")
     new_name = _admin_web_form_text(form, "new_name") or old_name
     if not old_name or not _admin_web_category_exists(old_name):
-        return False, "KhÃ´ng tÃ¬m tháº¥y danh má»¥c."
+        return False, "Không tìm thấy danh mục."
     if len(new_name) > 100:
-        return False, "TÃªn danh má»¥c quÃ¡ dÃ i."
+        return False, "Tên danh mục quá dài."
     if new_name != old_name and _admin_web_category_exists(new_name):
-        return False, "TÃªn danh má»¥c má»›i Ä‘Ã£ tá»“n táº¡i."
+        return False, "Tên danh mục mới đã tồn tại."
     config = _admin_web_category_form_config(form, _admin_web_category_config(old_name))
     moved_products = 0
     if new_name != old_name:
@@ -3713,32 +3713,32 @@ async def _admin_web_action_category_update(form):
         store_categories.pop(old_name, None)
     store_categories[new_name] = config
     await save_data(force=True, tables=[STORE_CATEGORIES_FILE, PRODUCTS_FILE])
-    return True, f"ÄÃ£ cáº­p nháº­t danh má»¥c {new_name} ({moved_products} sáº£n pháº©m Ä‘Æ°á»£c chuyá»ƒn)."
+    return True, f"Đã cập nhật danh mục {new_name} ({moved_products} sản phẩm được chuyển)."
 
 
 async def _admin_web_action_category_visibility(form):
     name = _admin_web_form_text(form, "category_name")
     if not _admin_web_category_exists(name):
-        return False, "KhÃ´ng tÃ¬m tháº¥y danh má»¥c."
+        return False, "Không tìm thấy danh mục."
     mode = _admin_web_form_text(form, "mode")
     if mode not in {"hide", "show"}:
-        return False, "Tráº¡ng thÃ¡i danh má»¥c khÃ´ng há»£p lá»‡."
+        return False, "Trạng thái danh mục không hợp lệ."
     config = dict(_admin_web_category_config(name))
     config["hidden"] = mode == "hide"
     config.setdefault("sort_order", len(store_categories) + 1)
     config["updated_at"] = int(time.time())
     store_categories[name] = config
     await save_data(force=True, tables=[STORE_CATEGORIES_FILE])
-    return True, f"ÄÃ£ {'áº©n' if mode == 'hide' else 'hiá»‡n'} danh má»¥c {name}."
+    return True, f"Đã {'ẩn' if mode == 'hide' else 'hiện'} danh mục {name}."
 
 
 async def _admin_web_action_category_delete(form):
     name = _admin_web_form_text(form, "category_name")
-    fallback = "Sáº£n Pháº©m KhÃ¡c"
+    fallback = "Sản Phẩm Khác"
     if not _admin_web_category_exists(name):
-        return False, "KhÃ´ng tÃ¬m tháº¥y danh má»¥c."
+        return False, "Không tìm thấy danh mục."
     if name == fallback:
-        return False, "KhÃ´ng thá»ƒ xÃ³a danh má»¥c máº·c Ä‘á»‹nh."
+        return False, "Không thể xóa danh mục mặc định."
     moved = 0
     for product in products.values():
         if isinstance(product, dict) and _admin_web_product_category(product) == name:
@@ -3750,7 +3750,7 @@ async def _admin_web_action_category_delete(form):
     if image_path is not None:
         image_path.unlink()
     await save_data(force=True, tables=[STORE_CATEGORIES_FILE, PRODUCTS_FILE])
-    return True, f"ÄÃ£ xÃ³a danh má»¥c {name}; chuyá»ƒn {moved} sáº£n pháº©m sang {fallback}."
+    return True, f"Đã xóa danh mục {name}; chuyển {moved} sản phẩm sang {fallback}."
 
 
 def _admin_web_action_registry():
@@ -3785,7 +3785,7 @@ async def _admin_web_dispatch_action(form, request=None):
     try:
         handler = _admin_web_action_registry().get(action)
         if handler is None:
-            ok, message = False, "Action khÃ´ng há»£p lá»‡."
+            ok, message = False, "Action không hợp lệ."
         else:
             ok, message = await handler(form)
     except Exception as exc:
@@ -3885,9 +3885,9 @@ async def admin_web_category_image_upload(request: Request):
     image = form.get("image")
     ok, message = False, ""
     if not _admin_web_category_exists(category_name):
-        message = "KhÃ´ng tÃ¬m tháº¥y danh má»¥c."
+        message = "Không tìm thấy danh mục."
     elif image is None or not hasattr(image, "read"):
-        message = "ChÆ°a chá»n file áº£nh."
+        message = "Chưa chọn file ảnh."
     else:
         filename = str(getattr(image, "filename", "") or "").lower()
         ext = filename.rsplit(".", 1)[-1] if "." in filename else ""
@@ -3899,13 +3899,13 @@ async def admin_web_category_image_upload(request: Request):
         elif content_type == "image/webp":
             ext = "webp"
         if ext not in ADMIN_WEB_PRODUCT_IMAGE_EXTS:
-            message = "Äá»‹nh dáº¡ng khÃ´ng há»— trá»£; chá»‰ nháº­n JPG, PNG hoáº·c WEBP."
+            message = "Định dạng không hỗ trợ; chỉ nhận JPG, PNG hoặc WEBP."
         else:
             data = await image.read()
             if not data:
-                message = "File áº£nh rá»—ng."
+                message = "File ảnh rỗng."
             elif len(data) > ADMIN_WEB_PRODUCT_IMAGE_MAX_BYTES:
-                message = "áº¢nh quÃ¡ lá»›n; tá»‘i Ä‘a 8 MB."
+                message = "Ảnh quá lớn; tối đa 8 MB."
             else:
                 slug = _admin_web_category_slug(category_name)
                 for old_ext in ADMIN_WEB_PRODUCT_IMAGE_EXTS:
@@ -3917,10 +3917,10 @@ async def admin_web_category_image_upload(request: Request):
                     if isinstance(product, dict) and _admin_web_product_category(product) == category_name:
                         product.pop("category_image_file_id", None)
                 await save_data(force=True, tables=[PRODUCTS_FILE])
-                ok, message = True, f"ÄÃ£ táº£i áº£nh cho danh má»¥c {category_name}."
+                ok, message = True, f"Đã tải ảnh cho danh mục {category_name}."
     notice_class = "success" if ok else "danger"
     body = f'<div class="notice {notice_class}">{escape(message)}</div>' + _admin_web_categories_body(request)
-    return HTMLResponse(_admin_web_layout("Dino Admin â€” Danh Má»¥c", body, request))
+    return HTMLResponse(_admin_web_layout("Dino Admin — Danh Mục", body, request))
 
 
 @app.post("/admin/product_image_upload", include_in_schema=False)
@@ -4019,7 +4019,7 @@ async def admin_web_product_image_upload(request: Request):
         body = _admin_web_product_detail_body(request, product_id, message=f"Da tai anh cho danh muc {category_name}.", is_error=False)
         return HTMLResponse(_admin_web_layout("Dino Admin Web", body, request))
 
-    # Per-product upload â€” copies the same image to each selected product.
+    # Per-product upload — copies the same image to each selected product.
     # selected_products is a list of product_ids ticked in the preview table.
     # If the list is empty, fall back to applying only to the current product.
     targets = [pid for pid in selected_products if pid in products and isinstance(products.get(pid), dict)]
@@ -4120,7 +4120,7 @@ async def _admin_web_action_supplier_catalog_resell(form):
     selling_price = int(source_price * (1 + markup / 100))
     api_description = str(data.get("description") or "").strip()
     custom_description = _admin_web_form_text(form, "custom_description")
-    final_description = custom_description or api_description or "<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> TÃ i khoáº£n chÃ­nh hÃ£ng\n<tg-emoji emoji-id=\"6129860303619363484\">ðŸ“§</tg-emoji> Giao hÃ ng tá»± Ä‘á»™ng qua Telegram"
+    final_description = custom_description or api_description or "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Tài khoản chính hãng\n<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Giao hàng tự động qua Telegram"
 
     if existing_id:
         product_id = existing_id
@@ -4142,8 +4142,8 @@ async def _admin_web_action_supplier_catalog_resell(form):
             "name": custom_name or data.get("productTitle") or f"SupplierCatalog #{shop_product_id}",
             "price": selling_price,
             "description": final_description,
-            "duration": "Theo thÃ´ng tin sáº£n pháº©m",
-            "warranty": "Báº£o hÃ nh theo quy Ä‘á»‹nh",
+            "duration": "Theo thông tin sản phẩm",
+            "warranty": "Bảo hành theo quy định",
             "requires_gmail": False,
             "stock": [],
             "is_supplier_source_resell": True,
@@ -4182,8 +4182,8 @@ def _admin_web_resell_body(request):
 <section class="module-section">
   <div class="section-head">
     <div>
-      <h2>Quáº£n lÃ½ API Resell</h2>
-      <p>Chá»n nguá»“n API cáº§n quáº£n lÃ½. Báº¥m vÃ o Ä‘Ã¢u ra Ä‘Ãºng khu Ä‘Ã³, khá»i lá»¥c command rá»‘i máº¯t.</p>
+      <h2>Quản lý API Resell</h2>
+      <p>Chọn nguồn API cần quản lý. Bấm vào đâu ra đúng khu đó, khỏi lục command rối mắt.</p>
     </div>
     <span class="tag write">resell hub</span>
   </div>
@@ -4191,26 +4191,26 @@ def _admin_web_resell_body(request):
     <a class="stat-card" href="/admin/supplier_catalog{key_query}" style="text-decoration:none;color:inherit;">
       <small>SUPPLIER_CATALOG</small>
       <strong>{supplier_catalog_count}</strong>
-      <span>Tick sáº£n pháº©m, chá»‰nh %, tÃªn, mÃ´ táº£, báº­t/táº¯t khá»i bot.</span>
+      <span>Tick sản phẩm, chỉnh %, tên, mô tả, bật/tắt khỏi bot.</span>
     </a>
     <a class="stat-card" href="/admin/commands{key_query}#add_resell" style="text-decoration:none;color:inherit;">
       <small>SUPPLIER_SOURCE</small>
       <strong>{supplier_source_count}</strong>
-      <span>Quáº£n lÃ½ lá»‡nh SupplierSource: add/list/edit markup/sync/xÃ³a.</span>
+      <span>Quản lý lệnh SupplierSource: add/list/edit markup/sync/xóa.</span>
     </a>
     <a class="stat-card" href="/admin/commands{key_query}#add_ctt" style="text-decoration:none;color:inherit;">
       <small>SOCIAL_SOURCE</small>
       <strong>{ctt_count}</strong>
-      <span>Quáº£n lÃ½ dá»‹ch vá»¥ SOCIAL_SOURCE: add/list/sync/balance/xÃ³a.</span>
+      <span>Quản lý dịch vụ SOCIAL_SOURCE: add/list/sync/balance/xóa.</span>
     </a>
   </div>
 </section>
 <section class="module-section">
-  <div class="section-head"><div><h2>Lá»‘i táº¯t thao tÃ¡c</h2><p>CÃ¡c nÃºt nhanh Ä‘á»ƒ nháº£y Ä‘Ãºng trang quáº£n trá»‹ API.</p></div></div>
+  <div class="section-head"><div><h2>Lối tắt thao tác</h2><p>Các nút nhanh để nhảy đúng trang quản trị API.</p></div></div>
   <div class="toolbar" style="gap:10px;flex-wrap:wrap;">
-    <a class="button" href="/admin/supplier_catalog{key_query}">Má»Ÿ SupplierCatalog picker</a>
-    <a class="button" href="/admin/commands{key_query}">Má»Ÿ lá»‡nh SupplierSource/SOCIAL_SOURCE</a>
-    <a class="button" href="/admin{key_query}#api-partner">Vá» API partner</a>
+    <a class="button" href="/admin/supplier_catalog{key_query}">Mở SupplierCatalog picker</a>
+    <a class="button" href="/admin/commands{key_query}">Mở lệnh SupplierSource/SOCIAL_SOURCE</a>
+    <a class="button" href="/admin{key_query}#api-partner">Về API partner</a>
   </div>
 </section>
 """
@@ -4220,7 +4220,7 @@ def _admin_web_resell_body(request):
 async def admin_web_resell(request: Request):
     _admin_web_require(request)
     await _admin_web_notify_login(request)
-    return HTMLResponse(_admin_web_layout("Dino Admin â€” API Resell", _admin_web_resell_body(request), request))
+    return HTMLResponse(_admin_web_layout("Dino Admin — API Resell", _admin_web_resell_body(request), request))
 
 
 def _admin_web_supplier_catalog_body(request, message: str | None = None, is_error: bool = False):
@@ -4244,7 +4244,7 @@ def _admin_web_supplier_catalog_body(request, message: str | None = None, is_err
     .supplier_catalog-content {{ position:relative; z-index:1; padding:20px; }}
     .supplier_catalog-toolbar {{ display:flex; gap:12px; align-items:center; margin-bottom:16px; padding:12px; border:1px solid rgba(255,255,255,.12); border-radius:20px; background:rgba(255,255,255,.08); backdrop-filter:blur(14px); }}
     .supplier_catalog-search-wrap {{ position:relative; flex:1; }}
-    .supplier_catalog-search-wrap::before {{ content:"ðŸ”Ž"; position:absolute; left:16px; top:50%; transform:translateY(-50%); opacity:.72; z-index:1; }}
+    .supplier_catalog-search-wrap::before {{ content:"🔎"; position:absolute; left:16px; top:50%; transform:translateY(-50%); opacity:.72; z-index:1; }}
     .supplier_catalog-toolbar input {{ width:100%; min-height:48px; padding:0 16px 0 46px; border-radius:16px; border:1px solid rgba(255,255,255,.16); background:rgba(15,23,42,.58); color:#fff; outline:none; box-sizing:border-box; box-shadow:inset 0 1px 0 rgba(255,255,255,.08); }}
     .supplier_catalog-toolbar input::placeholder {{ color:rgba(226,232,240,.62); }}
     .supplier_catalog-grid {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(335px,1fr)); gap:16px; }}
@@ -4289,22 +4289,22 @@ def _admin_web_supplier_catalog_body(request, message: str | None = None, is_err
   <div class="supplier_catalog-hero">
     <div class="supplier_catalog-hero-top">
       <div>
-        <span class="supplier_catalog-kicker">âš¡ one-click supplier control</span>
+        <span class="supplier_catalog-kicker">⚡ one-click supplier control</span>
         <h2>SupplierCatalog Resell</h2>
-        <p>Chá»n sáº£n pháº©m tá»« API nguá»“n, chá»‰nh markup, tÃªn bÃ¡n vÃ  mÃ´ táº£ trong má»™t giao diá»‡n card xá»‹n hÆ¡n â€” dÃ¹ng ngon trÃªn PC láº«n mobile, khÃ´ng cÃ²n máº¥t nÃºt khÃ³ chá»‹u ná»¯a.</p>
+        <p>Chọn sản phẩm từ API nguồn, chỉnh markup, tên bán và mô tả trong một giao diện card xịn hơn — dùng ngon trên PC lẫn mobile, không còn mất nút khó chịu nữa.</p>
         <div class="supplier_catalog-pills">
-          <span class="supplier_catalog-pill">Auto sync giÃ¡</span>
+          <span class="supplier_catalog-pill">Auto sync giá</span>
           <span class="supplier_catalog-pill">Responsive mobile</span>
-          <span class="supplier_catalog-pill">Báº­t / táº¯t tá»©c thÃ¬</span>
+          <span class="supplier_catalog-pill">Bật / tắt tức thì</span>
         </div>
       </div>
-      <div class="supplier_catalog-status-orb">ðŸ¦–</div>
+      <div class="supplier_catalog-status-orb">🦖</div>
     </div>
   </div>
   <div class="supplier_catalog-content">
     {return_msg}
-    <div class="supplier_catalog-toolbar"><div class="supplier_catalog-search-wrap"><input id="supplier_catalog-filter" placeholder="TÃ¬m Grok, Gmail, Netflix, Capcut..." oninput="filterShopbotRows()"></div></div>
-    <div id="supplier_catalog-list"><p class="muted">Äang táº£i SupplierCatalog API...</p></div>
+    <div class="supplier_catalog-toolbar"><div class="supplier_catalog-search-wrap"><input id="supplier_catalog-filter" placeholder="Tìm Grok, Gmail, Netflix, Capcut..." oninput="filterShopbotRows()"></div></div>
+    <div id="supplier_catalog-list"><p class="muted">Đang tải SupplierCatalog API...</p></div>
   </div>
 </section>
 <script>
@@ -4320,13 +4320,13 @@ async function loadShopbotProducts() {{
     if (!data.ok) throw new Error(data.error || 'API error');
     const cards = data.products.map(p => {{
       const mode = p.enabled ? 'update' : 'enable';
-      const btn = p.enabled ? 'LÆ°u chá»‰nh sá»­a' : 'Báº­t lÃªn bot';
+      const btn = p.enabled ? 'Lưu chỉnh sửa' : 'Bật lên bot';
       const dangerForm = p.enabled ? `
         <form method="post" action="${{supplier_catalogActionUrl}}">
           <input type="hidden" name="action" value="supplier_catalog_resell">
           <input type="hidden" name="mode" value="disable">
           <input type="hidden" name="shop_product_id" value="${{esc(p.id)}}">
-          <button type="submit" class="danger">Táº¯t khá»i bot</button>
+          <button type="submit" class="danger">Tắt khỏi bot</button>
         </form>` : '';
       const markup = Number(p.markup_percent || 30);
       const sourcePrice = Number(p.price_vnd || 0);
@@ -4335,14 +4335,14 @@ async function loadShopbotProducts() {{
       return `<article class="supplier_catalog-card data-row" data-search="${{esc((p.name || '') + ' ' + p.id + ' ' + description)}}">
         <div class="supplier_catalog-card-head">
           <div class="supplier_catalog-title">
-            <b>${{esc(p.name || 'KhÃ´ng tÃªn')}}</b>
-            <small>${{p.local_product_id ? 'Äang bÃ¡n: ' + esc(p.local_product_id) : 'ChÆ°a báº­t trong bot'}}</small>
+            <b>${{esc(p.name || 'Không tên')}}</b>
+            <small>${{p.local_product_id ? 'Đang bán: ' + esc(p.local_product_id) : 'Chưa bật trong bot'}}</small>
           </div>
           <code class="supplier_catalog-id">#${{esc(p.id)}}</code>
         </div>
         <div class="supplier_catalog-metrics">
-          <div class="supplier_catalog-metric"><small>GiÃ¡ nguá»“n</small><span>${{money(sourcePrice)}}</span></div>
-          <div class="supplier_catalog-metric"><small>GiÃ¡ bÃ¡n</small><strong class="supplier_catalog-sell-price">${{money(sellPrice)}}</strong><small>Ä‚n ${{markup}}%</small></div>
+          <div class="supplier_catalog-metric"><small>Giá nguồn</small><span>${{money(sourcePrice)}}</span></div>
+          <div class="supplier_catalog-metric"><small>Giá bán</small><strong class="supplier_catalog-sell-price">${{money(sellPrice)}}</strong><small>Ăn ${{markup}}%</small></div>
           <div class="supplier_catalog-metric"><small>Kho</small><span class="tag readonly">${{esc(p.stock)}}</span></div>
         </div>
         <form method="post" action="${{supplier_catalogActionUrl}}" class="supplier_catalog-form">
@@ -4351,12 +4351,12 @@ async function loadShopbotProducts() {{
           <input type="hidden" name="shop_product_id" value="${{esc(p.id)}}">
           <label>Markup %</label>
           <input name="markup" value="${{esc(markup)}}" title="Markup %" inputmode="decimal" oninput="updateShopbotSellPrice(this, ${{sourcePrice}})">
-          <label>TÃªn bÃ¡n</label>
-          <input name="custom_name" value="${{esc(p.local_name || p.name || '')}}" title="TÃªn bÃ¡n trong bot">
+          <label>Tên bán</label>
+          <input name="custom_name" value="${{esc(p.local_name || p.name || '')}}" title="Tên bán trong bot">
           <details class="supplier_catalog-desc">
-            <summary>MÃ´ táº£ API / sá»­a mÃ´ táº£ bÃ¡n</summary>
+            <summary>Mô tả API / sửa mô tả bán</summary>
             <textarea name="custom_description">${{esc(description)}}</textarea>
-            <small class="muted">Äá»ƒ nguyÃªn = dÃ¹ng mÃ´ táº£ API. Sá»­a á»Ÿ Ä‘Ã¢y rá»“i báº¥m lÆ°u.</small>
+            <small class="muted">Để nguyên = dùng mô tả API. Sửa ở đây rồi bấm lưu.</small>
           </details>
           <div class="supplier_catalog-actions">
             <button type="submit">${{btn}}</button>
@@ -4367,7 +4367,7 @@ async function loadShopbotProducts() {{
     }}).join('');
     box.innerHTML = `<div class="supplier_catalog-grid">${{cards}}</div>`;
   }} catch (err) {{
-    box.innerHTML = '<div class="alert error">KhÃ´ng táº£i Ä‘Æ°á»£c SupplierCatalog API: ' + esc(err.message || err) + '</div>';
+    box.innerHTML = '<div class="alert error">Không tải được SupplierCatalog API: ' + esc(err.message || err) + '</div>';
   }}
 }}
 function updateShopbotSellPrice(input, sourcePrice) {{
@@ -4377,7 +4377,7 @@ function updateShopbotSellPrice(input, sourcePrice) {{
   const priceEl = row && row.querySelector('.supplier_catalog-sell-price');
   const smallEl = priceEl && priceEl.nextElementSibling;
   if (priceEl) priceEl.textContent = money(sell);
-  if (smallEl) smallEl.textContent = 'Ä‚n ' + markup + '%';
+  if (smallEl) smallEl.textContent = 'Ăn ' + markup + '%';
 }}
 function filterShopbotRows() {{
   const q = document.getElementById('supplier_catalog-filter').value.toLowerCase();
@@ -4394,7 +4394,7 @@ loadShopbotProducts();
 async def admin_web_supplier_catalog(request: Request):
     _admin_web_require(request)
     await _admin_web_notify_login(request)
-    return HTMLResponse(_admin_web_layout("Dino Admin â€” SupplierCatalog Resell", _admin_web_supplier_catalog_body(request), request))
+    return HTMLResponse(_admin_web_layout("Dino Admin — SupplierCatalog Resell", _admin_web_supplier_catalog_body(request), request))
 
 
 @app.get("/api/admin/supplier_catalog/products", tags=["Admin"])
@@ -4448,7 +4448,7 @@ def _admin_web_categories_media_body_legacy(request):
     get_cat = globals().get("get_product_category")
     products_data = globals().get("products", {})
 
-    # Build category â†’ product list map
+    # Build category → product list map
     cat_map: dict = {}
     for pid, prod in (products_data.items() if isinstance(products_data, dict) else []):
         cat = str(prod.get("store_category") or "").strip()
@@ -4457,7 +4457,7 @@ def _admin_web_categories_media_body_legacy(request):
                 cat = str(get_cat(prod.get("name") or "") or "")
             except Exception:
                 cat = ""
-        cat = cat or "Sáº£n Pháº©m KhÃ¡c"
+        cat = cat or "Sản Phẩm Khác"
         cat_map.setdefault(cat, []).append((pid, prod))
 
     rows_html = ""
@@ -4472,10 +4472,10 @@ def _admin_web_categories_media_body_legacy(request):
         if has_img:
             img_url = _admin_web_category_image_url(request, cat_name)
             thumb = f'<img src="{_esc(img_url, quote=True)}" style="height:48px;width:64px;object-fit:cover;border-radius:6px;border:1px solid var(--glass-line);">'
-            status_badge = '<span class="tag success" style="font-size:11px;">âœ… CÃ³ áº£nh</span>'
+            status_badge = '<span class="tag success" style="font-size:11px;">✅ Có ảnh</span>'
         else:
-            thumb = '<div style="height:48px;width:64px;border-radius:6px;border:1px dashed #555;display:flex;align-items:center;justify-content:center;color:#555;font-size:18px;">ðŸ–¼</div>'
-            status_badge = '<span class="tag danger" style="font-size:11px;">âŒ ChÆ°a cÃ³</span>'
+            thumb = '<div style="height:48px;width:64px;border-radius:6px;border:1px dashed #555;display:flex;align-items:center;justify-content:center;color:#555;font-size:18px;">🖼</div>'
+            status_badge = '<span class="tag danger" style="font-size:11px;">❌ Chưa có</span>'
 
         key_qs = _admin_web_key_query(request)
         sample_pid = prods[0][0] if prods else ""
@@ -4485,7 +4485,7 @@ def _admin_web_categories_media_body_legacy(request):
             f'<form method="post" action="/admin/action{key_qs}" style="display:inline;">'
             f'<input type="hidden" name="action" value="category_image_delete">'
             f'<input type="hidden" name="category_name" value="{_esc(cat_name, quote=True)}">'
-            f'<button type="submit" class="btn-xs danger" onclick="return confirm(\'XoÃ¡ áº£nh danh má»¥c {_esc(cat_name)}?\')">ðŸ—‘</button>'
+            f'<button type="submit" class="btn-xs danger" onclick="return confirm(\'Xoá ảnh danh mục {_esc(cat_name)}?\')">🗑</button>'
             f'</form>'
         ) if has_img else ""
         row_id = f"cat-row-{slug}"
@@ -4495,7 +4495,7 @@ def _admin_web_categories_media_body_legacy(request):
             f'<input type="hidden" name="apply_to_category" value="1">'
             f'<input type="hidden" name="category_name_override" value="{_esc(cat_name, quote=True)}">'
             f'<input type="file" name="image" accept="image/jpeg,image/png,image/webp" required style="font-size:11px;max-width:140px;">'
-            f'<button type="submit" class="btn-xs">â¬† Upload</button>'
+            f'<button type="submit" class="btn-xs">⬆ Upload</button>'
             f'</form>'
         ) if sample_pid else ""
 
@@ -4508,7 +4508,7 @@ def _admin_web_categories_media_body_legacy(request):
   <td style="padding:8px 6px;text-align:center;">{status_badge}</td>
   <td style="padding:8px 6px;text-align:center;">
     {delete_form}
-    <a href="{_esc(detail_url, quote=True)}" class="btn-xs" style="margin-left:4px;">ðŸ“¦</a>
+    <a href="{_esc(detail_url, quote=True)}" class="btn-xs" style="margin-left:4px;">📦</a>
   </td>
 </tr>"""
 
@@ -4518,27 +4518,27 @@ def _admin_web_categories_media_body_legacy(request):
     body = f"""
 <section class="action-card">
   <div class="card-head">
-    <h3>Quáº£n lÃ½ áº£nh danh má»¥c</h3>
+    <h3>Quản lý ảnh danh mục</h3>
     <span class="tag">media</span>
   </div>
   <p class="muted" style="margin:4px 0 12px;">
-    Tá»•ng: <b>{total_cats}</b> danh má»¥c â€”
-    <span style="color:#4ade80;">âœ… {cats_with_img} cÃ³ áº£nh</span> &nbsp;|&nbsp;
-    <span style="color:#f87171;">âŒ {total_cats - cats_with_img} chÆ°a cÃ³</span>
+    Tổng: <b>{total_cats}</b> danh mục —
+    <span style="color:#4ade80;">✅ {cats_with_img} có ảnh</span> &nbsp;|&nbsp;
+    <span style="color:#f87171;">❌ {total_cats - cats_with_img} chưa có</span>
   </p>
   <p class="muted" style="font-size:12px;margin-bottom:10px;">
-    Äá»ƒ upload áº£nh danh má»¥c: vÃ o trang chi tiáº¿t sáº£n pháº©m thuá»™c danh má»¥c Ä‘Ã³ â†’ pháº§n <b>áº¢nh sáº£n pháº©m</b> â†’ tick <i>"Ãp dá»¥ng cho toÃ n bá»™ danh má»¥c"</i>.
+    Để upload ảnh danh mục: vào trang chi tiết sản phẩm thuộc danh mục đó → phần <b>Ảnh sản phẩm</b> → tick <i>"Áp dụng cho toàn bộ danh mục"</i>.
   </p>
   <div style="overflow-x:auto;">
   <table style="width:100%;border-collapse:collapse;font-size:13px;">
     <thead>
       <tr style="border-bottom:1px solid var(--glass-line);color:#aaa;font-size:11px;text-transform:uppercase;">
-        <th style="padding:6px;text-align:left;">áº¢nh</th>
-        <th style="padding:6px;text-align:left;">Danh má»¥c</th>
+        <th style="padding:6px;text-align:left;">Ảnh</th>
+        <th style="padding:6px;text-align:left;">Danh mục</th>
         <th style="padding:6px;text-align:center;">SP</th>
-        <th style="padding:6px;text-align:center;">áº¢nh riÃªng</th>
-        <th style="padding:6px;text-align:center;">Tráº¡ng thÃ¡i</th>
-        <th style="padding:6px;text-align:center;">HÃ nh Ä‘á»™ng</th>
+        <th style="padding:6px;text-align:center;">Ảnh riêng</th>
+        <th style="padding:6px;text-align:center;">Trạng thái</th>
+        <th style="padding:6px;text-align:center;">Hành động</th>
       </tr>
     </thead>
     <tbody>
@@ -4556,7 +4556,7 @@ def _admin_web_categories_body(request):
     cat_map = {str(name): [] for name in category_data if str(name).strip()}
     for pid, product in products_data.items():
         if isinstance(product, dict):
-            name = _admin_web_product_category(product) or "Sáº£n Pháº©m KhÃ¡c"
+            name = _admin_web_product_category(product) or "Sản Phẩm Khác"
             cat_map.setdefault(name, []).append((pid, product))
 
     def sort_key(name):
@@ -4574,7 +4574,7 @@ def _admin_web_categories_body(request):
             if isinstance((stock := _admin_web_stock_count(product)), int)
         )
         hidden = config.get("hidden") is True
-        status = '<span class="tag danger">áº¨n</span>' if hidden else '<span class="tag success">Hiá»ƒn thá»‹</span>'
+        status = '<span class="tag danger">Ẩn</span>' if hidden else '<span class="tag success">Hiển thị</span>'
         if _admin_web_category_image_path(category_name):
             preview = (
                 f'<img src="{escape(_admin_web_category_image_url(request, category_name), quote=True)}" '
@@ -4585,29 +4585,29 @@ def _admin_web_categories_body(request):
                 'alt="" class="category-media-preview">'
             )
         else:
-            preview = '<span style="font-size:20px">ðŸ“¦</span>'
-            media_preview = '<span class="category-media-placeholder">ðŸ“¦</span>'
+            preview = '<span style="font-size:20px">📦</span>'
+            media_preview = '<span class="category-media-placeholder">📦</span>'
         detail_url = (
             _admin_web_page_url(request, "/admin/item", {"entity": "product", "id": category_products[0][0]})
             if category_products else ""
         )
         detail_link = (
             f'<a class="btn-xs secondary category-action-link" href="{escape(detail_url, quote=True)}">'
-            f'{"Má»Ÿ sáº£n pháº©m" if len(category_products) == 1 else "Má»Ÿ SP Ä‘áº§u tiÃªn"}</a>'
-            if detail_url else '<span class="category-empty-label">ChÆ°a cÃ³ sáº£n pháº©m</span>'
+            f'{"Mở sản phẩm" if len(category_products) == 1 else "Mở SP đầu tiên"}</a>'
+            if detail_url else '<span class="category-empty-label">Chưa có sản phẩm</span>'
         )
-        toggle_mode, toggle_label = ("show", "Hiá»‡n") if hidden else ("hide", "áº¨n")
+        toggle_mode, toggle_label = ("show", "Hiện") if hidden else ("hide", "Ẩn")
         editor_id = f"category-editor-{index}"
         delete_control = (
-            '<span class="category-system-note">Danh má»¥c há»‡ thá»‘ng, khÃ´ng thá»ƒ xÃ³a</span>'
-            if category_name == "Sáº£n Pháº©m KhÃ¡c"
+            '<span class="category-system-note">Danh mục hệ thống, không thể xóa</span>'
+            if category_name == "Sản Phẩm Khác"
             else f"""
               <form method="post" action="{escape(action_url, quote=True)}"
-                    data-confirm="XÃ³a danh má»¥c nÃ y? Sáº£n pháº©m sáº½ Ä‘Æ°á»£c chuyá»ƒn sang Sáº£n Pháº©m KhÃ¡c.">
+                    data-confirm="Xóa danh mục này? Sản phẩm sẽ được chuyển sang Sản Phẩm Khác.">
                 <input type="hidden" name="action" value="category_delete">
                 <input type="hidden" name="return_page" value="categories">
                 <input type="hidden" name="category_name" value="{escape(category_name, quote=True)}">
-                <button class="btn-xs danger" type="submit">XÃ³a danh má»¥c</button>
+                <button class="btn-xs danger" type="submit">Xóa danh mục</button>
               </form>"""
         )
         rows.append(f"""
@@ -4615,17 +4615,17 @@ def _admin_web_categories_body(request):
   <td>
     <div class="category-identity">
       <span class="category-icon">{preview}</span>
-      <span><b>{escape(category_name)}</b><small>{escape(str(config.get("icon_url") or "ChÆ°a Ä‘áº·t icon web"))}</small></span>
+      <span><b>{escape(category_name)}</b><small>{escape(str(config.get("icon_url") or "Chưa đặt icon web"))}</small></span>
     </div>
   </td>
   <td><span class="category-order">#{escape(str(config.get("sort_order", index)))}</span></td>
-  <td><b class="category-number">{total_stock}</b><small>Ä‘Æ¡n vá»‹ tá»“n</small></td>
-  <td><b class="category-number">{len(category_products)}</b><small>sáº£n pháº©m</small></td>
+  <td><b class="category-number">{total_stock}</b><small>đơn vị tồn</small></td>
+  <td><b class="category-number">{len(category_products)}</b><small>sản phẩm</small></td>
   <td>{status}</td>
   <td>
     <div class="category-row-actions">
       <button type="button" class="btn-xs secondary category-edit-toggle"
-              data-category-editor="{editor_id}" aria-expanded="false">Sá»­a</button>
+              data-category-editor="{editor_id}" aria-expanded="false">Sửa</button>
       <form method="post" action="{escape(action_url, quote=True)}">
         <input type="hidden" name="action" value="category_visibility">
         <input type="hidden" name="return_page" value="categories">
@@ -4642,37 +4642,37 @@ def _admin_web_categories_body(request):
     <div class="category-editor-shell">
       <div class="category-editor-main">
         <div class="category-editor-heading">
-          <div><span>Chá»‰nh sá»­a danh má»¥c</span><strong>{escape(category_name)}</strong></div>
-          <button type="button" class="category-editor-close" data-category-close="{editor_id}" aria-label="ÄÃ³ng">Ã—</button>
+          <div><span>Chỉnh sửa danh mục</span><strong>{escape(category_name)}</strong></div>
+          <button type="button" class="category-editor-close" data-category-close="{editor_id}" aria-label="Đóng">×</button>
         </div>
         <form method="post" action="{escape(action_url, quote=True)}" class="category-edit-form">
           <input type="hidden" name="action" value="category_update">
           <input type="hidden" name="return_page" value="categories">
           <input type="hidden" name="category_name" value="{escape(category_name, quote=True)}">
-          <label>TÃªn danh má»¥c
+          <label>Tên danh mục
             <input name="new_name" value="{escape(category_name, quote=True)}" required>
           </label>
-          <label>Thá»© tá»±
+          <label>Thứ tự
             <input type="number" name="sort_order" value="{escape(str(config.get("sort_order", index)), quote=True)}">
           </label>
           <label>Premium Emoji ID
-            <input name="emoji_id" value="{escape(str(config.get("emoji_id") or ""), quote=True)}" placeholder="KhÃ´ng báº¯t buá»™c">
+            <input name="emoji_id" value="{escape(str(config.get("emoji_id") or ""), quote=True)}" placeholder="Không bắt buộc">
           </label>
           <label class="category-field-icon">Icon web URL/path
-            <input name="icon_url" value="{escape(str(config.get("icon_url") or ""), quote=True)}" placeholder="/static/... hoáº·c https://...">
+            <input name="icon_url" value="{escape(str(config.get("icon_url") or ""), quote=True)}" placeholder="/static/... hoặc https://...">
           </label>
           <div class="category-save-bar">
-            <span>Äá»•i tÃªn sáº½ cáº­p nháº­t toÃ n bá»™ sáº£n pháº©m trong danh má»¥c.</span>
-            <button type="submit">LÆ°u thay Ä‘á»•i</button>
+            <span>Đổi tên sẽ cập nhật toàn bộ sản phẩm trong danh mục.</span>
+            <button type="submit">Lưu thay đổi</button>
           </div>
         </form>
       </div>
       <aside class="category-media-card">
-        <div class="category-media-top">{media_preview}<div><b>áº¢nh danh má»¥c</b><small>PNG, JPG hoáº·c WebP</small></div></div>
+        <div class="category-media-top">{media_preview}<div><b>Ảnh danh mục</b><small>PNG, JPG hoặc WebP</small></div></div>
         <form method="post" action="{escape(upload_url, quote=True)}" enctype="multipart/form-data" class="category-upload-form">
           <input type="hidden" name="category_name" value="{escape(category_name, quote=True)}">
           <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
-          <button class="btn-xs" type="submit">Táº£i áº£nh má»›i</button>
+          <button class="btn-xs" type="submit">Tải ảnh mới</button>
         </form>
         <div class="category-danger-zone">{delete_control}</div>
       </aside>
@@ -4687,34 +4687,34 @@ def _admin_web_categories_body(request):
     return f"""
 <section class="action-card category-manager">
   <div class="category-page-head">
-    <div><span class="category-eyebrow">Quáº£n lÃ½ cá»­a hÃ ng</span><h3>Danh má»¥c sáº£n pháº©m</h3>
-      <p class="muted">Sáº¯p xáº¿p menu, quáº£n lÃ½ hiá»ƒn thá»‹ vÃ  hÃ¬nh áº£nh Ä‘áº¡i diá»‡n cho tá»«ng nhÃ³m sáº£n pháº©m.</p>
+    <div><span class="category-eyebrow">Quản lý cửa hàng</span><h3>Danh mục sản phẩm</h3>
+      <p class="muted">Sắp xếp menu, quản lý hiển thị và hình ảnh đại diện cho từng nhóm sản phẩm.</p>
     </div>
     <div class="category-summary">
-      <span><b>{category_count}</b> danh má»¥c</span>
-      <span><b>{total_products}</b> sáº£n pháº©m</span>
-      <span><b>{hidden_count}</b> Ä‘ang áº©n</span>
+      <span><b>{category_count}</b> danh mục</span>
+      <span><b>{total_products}</b> sản phẩm</span>
+      <span><b>{hidden_count}</b> đang ẩn</span>
     </div>
   </div>
   <details class="category-create-panel">
-    <summary><span><b>ï¼‹ ThÃªm danh má»¥c má»›i</b><small>Táº¡o má»™t nhÃ³m sáº£n pháº©m má»›i trong menu cá»­a hÃ ng</small></span><i>âŒ„</i></summary>
+    <summary><span><b>＋ Thêm danh mục mới</b><small>Tạo một nhóm sản phẩm mới trong menu cửa hàng</small></span><i>⌄</i></summary>
     <form method="post" action="{escape(action_url, quote=True)}" class="category-create-form">
       <input type="hidden" name="action" value="category_create">
       <input type="hidden" name="return_page" value="categories">
-      <label>TÃªn danh má»¥c<input name="category_name" placeholder="VÃ­ dá»¥: CÃ´ng cá»¥ AI" required></label>
-      <label>Thá»© tá»±<input type="number" name="sort_order" placeholder="Tá»± Ä‘á»™ng"></label>
-      <label>Icon web<input name="icon_url" placeholder="/static/... hoáº·c URL"></label>
-      <label>Premium Emoji ID<input name="emoji_id" placeholder="KhÃ´ng báº¯t buá»™c"></label>
-      <label class="check-label"><input type="checkbox" name="hidden" value="1"> Táº¡o á»Ÿ tráº¡ng thÃ¡i áº©n</label>
-      <button type="submit">ThÃªm danh má»¥c</button>
+      <label>Tên danh mục<input name="category_name" placeholder="Ví dụ: Công cụ AI" required></label>
+      <label>Thứ tự<input type="number" name="sort_order" placeholder="Tự động"></label>
+      <label>Icon web<input name="icon_url" placeholder="/static/... hoặc URL"></label>
+      <label>Premium Emoji ID<input name="emoji_id" placeholder="Không bắt buộc"></label>
+      <label class="check-label"><input type="checkbox" name="hidden" value="1"> Tạo ở trạng thái ẩn</label>
+      <button type="submit">Thêm danh mục</button>
     </form>
   </details>
-  <div class="category-table-head"><div><b>Danh sÃ¡ch danh má»¥c</b><small>Nháº¥n â€œSá»­aâ€ Ä‘á»ƒ má»Ÿ báº£ng chá»‰nh sá»­a riÃªng</small></div>
-    <span class="category-safe-note">XÃ³a danh má»¥c khÃ´ng xÃ³a sáº£n pháº©m</span>
+  <div class="category-table-head"><div><b>Danh sách danh mục</b><small>Nhấn “Sửa” để mở bảng chỉnh sửa riêng</small></div>
+    <span class="category-safe-note">Xóa danh mục không xóa sản phẩm</span>
   </div>
   <div class="table-scroll"><table class="data-table category-table">
-    <thead><tr><th>Danh má»¥c</th><th>Thá»© tá»±</th><th>Tá»•ng tá»“n</th><th>Sáº£n pháº©m</th><th>Tráº¡ng thÃ¡i</th><th>Thao tÃ¡c</th></tr></thead>
-    <tbody>{''.join(rows) or '<tr><td colspan="6" class="muted">ChÆ°a cÃ³ danh má»¥c.</td></tr>'}</tbody>
+    <thead><tr><th>Danh mục</th><th>Thứ tự</th><th>Tổng tồn</th><th>Sản phẩm</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+    <tbody>{''.join(rows) or '<tr><td colspan="6" class="muted">Chưa có danh mục.</td></tr>'}</tbody>
   </table></div>
 </section>
 <style>
@@ -4743,12 +4743,12 @@ document.querySelectorAll('[data-category-editor]').forEach(button => {{
     document.querySelectorAll('.category-editor-row').forEach(row => {{ row.hidden = true; }});
     document.querySelectorAll('[data-category-editor]').forEach(toggle => {{
       toggle.setAttribute('aria-expanded', 'false');
-      toggle.textContent = 'Sá»­a';
+      toggle.textContent = 'Sửa';
     }});
     if (shouldOpen) {{
       target.hidden = false;
       button.setAttribute('aria-expanded', 'true');
-      button.textContent = 'ÄÃ³ng';
+      button.textContent = 'Đóng';
       target.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
     }}
   }});
@@ -4760,7 +4760,7 @@ document.querySelectorAll('[data-category-close]').forEach(button => {{
     const toggle = document.querySelector(`[data-category-editor="${{button.dataset.categoryClose}}"]`);
     if (toggle) {{
       toggle.setAttribute('aria-expanded', 'false');
-      toggle.textContent = 'Sá»­a';
+      toggle.textContent = 'Sửa';
     }}
   }});
 }});
@@ -4772,7 +4772,7 @@ async def admin_web_categories(request: Request):
     _admin_web_require(request)
     await _admin_web_notify_login(request)
     body = _admin_web_categories_body(request)
-    return HTMLResponse(_admin_web_layout("Dino Admin â€” Danh Má»¥c", body, request))
+    return HTMLResponse(_admin_web_layout("Dino Admin — Danh Mục", body, request))
 
 
 @app.get("/admin/login", include_in_schema=False)
@@ -4781,24 +4781,24 @@ async def admin_web_login_page(request: Request):
         return RedirectResponse("/admin", status_code=303)
     telegram_error_code = str(request.query_params.get("telegram_error") or "")
     telegram_error_message = {
-        "config": "ÄÄƒng nháº­p Telegram chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh Ä‘áº§y Ä‘á»§.",
-        "denied": "Báº¡n Ä‘Ã£ há»§y hoáº·c tá»« chá»‘i Ä‘Äƒng nháº­p Telegram.",
-        "state": "PhiÃªn xÃ¡c thá»±c Telegram khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ háº¿t háº¡n.",
-        "token": "KhÃ´ng thá»ƒ xÃ¡c minh pháº£n há»“i tá»« Telegram.",
-        "identity": "ID Token Telegram khÃ´ng há»£p lá»‡.",
-        "forbidden": "TÃ i khoáº£n Telegram nÃ y khÃ´ng cÃ³ quyá»n quáº£n trá»‹.",
-    }.get(telegram_error_code, "ÄÄƒng nháº­p Telegram khÃ´ng thÃ nh cÃ´ng." if telegram_error_code else "")
+        "config": "Đăng nhập Telegram chưa được cấu hình đầy đủ.",
+        "denied": "Bạn đã hủy hoặc từ chối đăng nhập Telegram.",
+        "state": "Phiên xác thực Telegram không hợp lệ hoặc đã hết hạn.",
+        "token": "Không thể xác minh phản hồi từ Telegram.",
+        "identity": "ID Token Telegram không hợp lệ.",
+        "forbidden": "Tài khoản Telegram này không có quyền quản trị.",
+    }.get(telegram_error_code, "Đăng nhập Telegram không thành công." if telegram_error_code else "")
     telegram_button = ""
     if _admin_web_telegram_login_enabled():
         telegram_button = """
         <a class="telegram-login-button" href="/admin/login/telegram">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 3.2 18.4 19c-.2 1.1-.9 1.4-1.8.9l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6 12.8 1.2 11.3c-1-.3-1.1-1 .2-1.5L20 2.6c.9-.3 1.8.2 1.6.6Z"/></svg>
-          <span>ÄÄƒng nháº­p báº±ng Telegram</span>
+          <span>Đăng nhập bằng Telegram</span>
         </a>
         """
     return HTMLResponse(f"""<!doctype html>
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#07110d"><title>ÄÄƒng nháº­p â€” Dino Ops</title>
+<meta name="theme-color" content="#07110d"><title>Đăng nhập — Dino Ops</title>
 <style>{ADMIN_WEB_OPS_CSS}
 .telegram-login-button{{display:flex;align-items:center;justify-content:center;gap:11px;width:100%;box-sizing:border-box;padding:14px 18px;margin:18px 0 14px;border-radius:13px;background:#229ed9;color:#fff!important;text-decoration:none;font-weight:800;box-shadow:0 10px 28px rgba(34,158,217,.24);transition:.2s ease}}
 .telegram-login-button:hover{{background:#168dcc;transform:translateY(-1px)}}.telegram-login-button svg{{width:23px;height:23px;fill:currentColor}}
@@ -4810,22 +4810,22 @@ async def admin_web_login_page(request: Request):
       <a class="login-brand" href="/docs"><span class="admin-brand-mark">D</span><span>Dino <b>Ops</b></span></a>
       <div class="login-copy">
         <span class="login-eyebrow"><i></i> ADMIN OPERATIONS</span>
-        <h1>Má»i hoáº¡t Ä‘á»™ng.<br><em>Má»™t trung tÃ¢m.</em></h1>
-        <p>Theo dÃµi doanh thu, Ä‘Æ¡n hÃ ng, tá»“n kho, sáº£n pháº©m manual vÃ  API partner trong thá»i gian thá»±c.</p>
+        <h1>Mọi hoạt động.<br><em>Một trung tâm.</em></h1>
+        <p>Theo dõi doanh thu, đơn hàng, tồn kho, sản phẩm manual và API partner trong thời gian thực.</p>
         <div class="login-signals">
-          <div><span>01</span><b>Commerce</b><small>ÄÆ¡n hÃ ng & doanh thu</small></div>
-          <div><span>02</span><b>Inventory</b><small>Kho & sáº£n pháº©m manual</small></div>
-          <div><span>03</span><b>Partners</b><small>API & váº­n hÃ nh vÃ­</small></div>
+          <div><span>01</span><b>Commerce</b><small>Đơn hàng & doanh thu</small></div>
+          <div><span>02</span><b>Inventory</b><small>Kho & sản phẩm manual</small></div>
+          <div><span>03</span><b>Partners</b><small>API & vận hành ví</small></div>
         </div>
       </div>
       <footer><i></i> Dino Store secured workspace</footer>
     </section>
     <section class="login-panel">
       <div class="login-card">
-        <div class="login-card-head"><span class="login-lock">âŒ</span><div><h2>ChÃ o má»«ng trá»Ÿ láº¡i</h2><p>ÄÄƒng nháº­p Ä‘á»ƒ tiáº¿p tá»¥c vÃ o Control Center.</p></div></div>
-        {f'<div class="login-error"><b>KhÃ´ng thá»ƒ Ä‘Äƒng nháº­p Telegram</b><span>{telegram_error_message}</span></div>' if telegram_error_message else ''}
+        <div class="login-card-head"><span class="login-lock">⌁</span><div><h2>Chào mừng trở lại</h2><p>Đăng nhập để tiếp tục vào Control Center.</p></div></div>
+        {f'<div class="login-error"><b>Không thể đăng nhập Telegram</b><span>{telegram_error_message}</span></div>' if telegram_error_message else ''}
         {telegram_button}
-        <div class="login-security"><i></i><span>PhiÃªn Ä‘Äƒng nháº­p Ä‘Æ°á»£c báº£o vá»‡ vÃ  tá»± Ä‘á»™ng háº¿t háº¡n.</span></div>
+        <div class="login-security"><i></i><span>Phiên đăng nhập được bảo vệ và tự động hết hạn.</span></div>
       </div>
     </section>
   </main>

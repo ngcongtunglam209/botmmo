@@ -86,7 +86,7 @@ async def _api_create_order(
             charset=string.ascii_uppercase + string.digits,
         )
         if is_legacy_link_order:
-            # FIX BUG 1+2: DÃ¹ng global_stock_lock chá»‘ng race condition + xÃ³a link khá»i available_links
+            # FIX BUG 1+2: Dùng global_stock_lock chống race condition + xóa link khỏi available_links
             async with global_stock_lock:
                 if not available_links:
                     raise HTTPException(status_code=404, detail="dino_out_of_stock")
@@ -97,7 +97,7 @@ async def _api_create_order(
                 "order_code": order_code,
                 "email": email_value or "api_partner@ref",
                 "amount": sale_price,
-                "status": "<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> API SOLD",
+                "status": "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> API SOLD",
                 "link": link,
                 "timestamp": time.time(),
                 "coupon_used": f"API-{current_partner_name}",
@@ -132,7 +132,7 @@ async def _api_create_order(
         is_resell = bool(product_data.get("is_supplier_source_resell", False))
         is_ctt_service = bool(product_data.get("is_social_source_service"))
         items_bought = []
-        status_text_value = "<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> HoÃ n thÃ nh (API Product)"
+        status_text_value = "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Hoàn thành (API Product)"
         delivery_method = "instant_items"
         link_value = "Store Product"
         payment_reference_code = ""
@@ -142,7 +142,7 @@ async def _api_create_order(
         charged_amount = sale_price
 
         if requires_gmail:
-            status_text_value = "<tg-emoji emoji-id=\"5213349767672769194\">â³</tg-emoji> Chá» xá»­ lÃ½ manual (API)"
+            status_text_value = "<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Chờ xử lý manual (API)"
             delivery_method = "manual_pending"
             link_value = f"Manual - {product_name}"
         elif is_ctt_service:
@@ -209,7 +209,7 @@ async def _api_create_order(
                 delivery_method = "resell_items"
                 link_value = "Resell Product"
             else:
-                status_text_value = "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Chá» giao tá»« nguá»“n (API Resell)"
+                status_text_value = "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Chờ giao từ nguồn (API Resell)"
                 delivery_method = "pending_source"
                 link_value = "Resell Product (Pending Source)"
         else:
@@ -401,7 +401,7 @@ async def _api_create_order(
                 try:
                     await save_data(force=True)
                 except (ValueError, TypeError, KeyError, IndexError) as rollback_error:
-                    logger.error(f"âŒ CRITICAL: Cannot rollback partner balance after HTTP error: {rollback_error}")
+                    logger.error(f"❌ CRITICAL: Cannot rollback partner balance after HTTP error: {rollback_error}")
                 raise create_http_error
             except (ValueError, TypeError, KeyError, IndexError) as create_error:
                 db_release_partner_ref(actor_lock_scope, partner_ref_key)
@@ -409,7 +409,7 @@ async def _api_create_order(
                 try:
                     await save_data(force=True)
                 except (ValueError, TypeError, KeyError, IndexError) as rollback_error:
-                    logger.error(f"âŒ CRITICAL: Cannot rollback partner balance after create fail: {rollback_error}")
+                    logger.error(f"❌ CRITICAL: Cannot rollback partner balance after create fail: {rollback_error}")
                 logger.error(f"API V2 Error (partner create): {create_error}", exc_info=True)
                 raise HTTPException(status_code=500, detail="Internal Server Error")
 
@@ -437,7 +437,7 @@ async def get_status(
     x_api_token: str = Header(None),
     authorization: str = Header(None),
 ):
-    """Kiá»ƒm tra tráº¡ng thÃ¡i bot vÃ  kho hÃ ng"""
+    """Kiểm tra trạng thái bot và kho hàng"""
     actor = _api_require_actor(
         x_api_key=x_api_key,
         x_api_token=x_api_token,
@@ -455,10 +455,10 @@ async def get_status(
 @app.post(
     "/api/buy",
     tags=["Legacy"],
-    summary="Legacy: mua link trá»±c tiáº¿p",
+    summary="Legacy: mua link trực tiếp",
     description=(
-        "Endpoint cÅ© Ä‘á»ƒ mua 1 link trá»±c tiáº¿p. Vá»›i API V2, partner nÃªn dÃ¹ng `POST /api/v2/orders`; "
-        "chá»‰ endpoint legacy nÃ y má»›i xem `link` lÃ  ná»™i dung giao hÃ ng chÃ­nh."
+        "Endpoint cũ để mua 1 link trực tiếp. Với API V2, partner nên dùng `POST /api/v2/orders`; "
+        "chỉ endpoint legacy này mới xem `link` là nội dung giao hàng chính."
     ),
 )
 async def buy_link(
@@ -467,7 +467,7 @@ async def buy_link(
     x_api_token: str = Header(None),
     authorization: str = Header(None),
 ):
-    """Mua link (Láº¥y 1 link tá»« kho)"""
+    """Mua link (Lấy 1 link từ kho)"""
     actor = _api_require_actor(
         x_api_key=x_api_key,
         x_api_token=x_api_token,
@@ -494,8 +494,8 @@ async def buy_link(
 @app.get(
     "/api/v2/status",
     tags=["Partner"],
-    summary="Kiá»ƒm tra tráº¡ng thÃ¡i há»‡ thá»‘ng",
-    description="Tráº£ tráº¡ng thÃ¡i online, maintenance mode, sá»‘ sáº£n pháº©m hiá»ƒn thá»‹, pending orders vÃ  sá»‘ dÆ° cá»§a partner.",
+    summary="Kiểm tra trạng thái hệ thống",
+    description="Trả trạng thái online, maintenance mode, số sản phẩm hiển thị, pending orders và số dư của partner.",
 )
 async def api_v2_status(
     x_api_key: str = Header(None),

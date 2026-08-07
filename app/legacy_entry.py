@@ -1,19 +1,19 @@
 def main() -> None:
     if not TELEGRAM_TOKEN or (ENABLE_PAYMENT_MBBANK and not API_PASSWORD):
-        logger.critical("!!! Cáº¢NH BÃO: Thiáº¿u biáº¿n cáº¥u hÃ¬nh cáº§n thiáº¿t !!!")
+        logger.critical("!!! CẢNH BÁO: Thiếu biến cấu hình cần thiết !!!")
         return
 
     if not acquire_single_instance_lock():
         logger.critical(
-            "âŒ Bot instance lock is active. CÃ³ thá»ƒ Ä‘ang cÃ³ 1 process local khÃ¡c cháº¡y bot nÃ y."
+            "❌ Bot instance lock is active. Có thể đang có 1 process local khác chạy bot này."
         )
         logger.critical(
-            "<tg-emoji emoji-id=\"6186252635805323641\">ðŸ‘‰</tg-emoji> HÃ£y táº¯t instance cÅ© trÆ°á»›c khi cháº¡y láº¡i Ä‘á»ƒ trÃ¡nh conflict getUpdates."
+            "<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Hãy tắt instance cũ trước khi chạy lại để tránh conflict getUpdates."
         )
         return
 
     load_data()
-    # FIX: ThÃªm post_shutdown Ä‘á»ƒ cleanup resources Ä‘Ãºng cÃ¡ch
+    # FIX: Thêm post_shutdown để cleanup resources đúng cách
     # FIX: Increase connection timeout to avoid ConnectTimeout error
     request = HTTPXRequest(
         connection_pool_size=8, 
@@ -24,11 +24,11 @@ def main() -> None:
     )
     application = Application.builder().token(TELEGRAM_TOKEN).request(request).post_init(post_init).post_shutdown(pre_shutdown).build()
 
-    # ÄÄƒng kÃ½ trÃ¬nh xá»­ lÃ½ lá»—i toÃ n cá»¥c
+    # Đăng ký trình xử lý lỗi toàn cục
     application.add_error_handler(error_handler_callback)
 
-    # <tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> FIX: Priority Email Handler (Group -1) - Cháº¡y TRÆ¯á»šC má»i thá»© Ä‘á»ƒ báº¯t email
-    # Äáº£m báº£o bot luÃ´n pháº£n há»“i email dÃ¹ Ä‘ang á»Ÿ state nÃ o
+    # <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> FIX: Priority Email Handler (Group -1) - Chạy TRƯỚC mọi thứ để bắt email
+    # Đảm bảo bot luôn phản hồi email dù đang ở state nào
     application.add_handler(
         MessageHandler(filters.ALL & filters.ChatType.GROUPS, chinese_language_guard_handler),
         group=-2,
@@ -39,7 +39,7 @@ def main() -> None:
     )
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, priority_email_handler), group=-1)
 
-    # --- STORE CONVERSATION HANDLERS (UPDATED: ThÃªm states má»›i) ---
+    # --- STORE CONVERSATION HANDLERS (UPDATED: Thêm states mới) ---
     add_prod_handler = ConversationHandler(
         entry_points=[CommandHandler('newproduct', add_product_start)],
         states={
@@ -122,7 +122,7 @@ def main() -> None:
     application.add_handler(create_ga_handler)
     
     # NEW: GA Comment & Edit Handlers (Before other handlers)
-    # FIX: ThÃªm ~filters.ChatType.PRIVATE Ä‘á»ƒ khÃ´ng cháº·n email replies trong private chat
+    # FIX: Thêm ~filters.ChatType.PRIVATE để không chặn email replies trong private chat
     application.add_handler(MessageHandler(filters.TEXT & filters.REPLY & ~filters.COMMAND & ~filters.ChatType.PRIVATE, ga_comment_handler))
     application.add_handler(MessageHandler(filters.UpdateType.EDITED_MESSAGE, ga_edit_handler))
     
@@ -165,7 +165,7 @@ def main() -> None:
 
     application.add_handler(CallbackQueryHandler(priority_button_handler), group=-3)
     
-    # FIX 1: DÃ²ng gÃ¢y lá»—i NameError Ä‘Ã£ Ä‘Æ°á»£c vÃ´ hiá»‡u hÃ³a.
+    # FIX 1: Dòng gây lỗi NameError đã được vô hiệu hóa.
     # application.add_handler(MessageHandler(filters.REPLY & ~filters.COMMAND, ticket_reply_handler))
     
     # Use text_message_handler as the main handler (it calls chat_with_ai internally)
@@ -207,14 +207,14 @@ def main() -> None:
         "endga": endga_command, # Manual End GA command
         "end_ga": endga_command,
 
-        # --- COUPON & KHUYáº¾N MÃƒI ---
+        # --- COUPON & KHUYẾN MÃI ---
         "sale": sale_command,
         "addcoupon": addcoupon_command,
         "delcoupon": delcoupon_command, 
         "listcoupons": listcoupons_command,
         "rewardtop": rewardtop_command,
         
-        # --- QUáº¢N LÃ USER ---
+        # --- QUẢN LÝ USER ---
         "users": listusers_command,
         "info": userinfo_command, 
         "ban": ban_command, 
@@ -223,7 +223,7 @@ def main() -> None:
         "bcsp": bcsp_command,
         "broadcastsp": bcsp_command, 
         
-        # --- ÄÆ N HÃ€NG & DOANH THU ---
+        # --- ĐƠN HÀNG & DOANH THU ---
         "duyet": duyet_command,
         "pending": pending_manual_command,
         "clearpending": clearpending_command,
@@ -234,7 +234,7 @@ def main() -> None:
         "ngansachkm": promobudget_command,
         "setemail": setemail_command, # NEW
         
-        # --- Há»† THá»NG & API ADMIN ---
+        # --- HỆ THỐNG & API ADMIN ---
         "baotri": baotri_command,
         "xacminh": xacminh_command,
         "verify": xacminh_command,
@@ -288,27 +288,27 @@ def main() -> None:
         # NEW: Auto-Backup Job (Telegram 6h, Email 3d)
         # job_queue.run_repeating(auto_backup_job, interval=BACKUP_INTERVAL_TELEGRAM, first=60, name="auto_backup")
         
-        # NEW: Payment Reminder Job (check má»—i 3 phÃºt)
+        # NEW: Payment Reminder Job (check mỗi 3 phút)
         job_queue.run_repeating(payment_reminder_job, interval=180, first=60, name="payment_reminder")
         
         # Batch Error Reporting Job (1h)
         job_queue.run_repeating(send_batched_error_reports, interval=3600, first=60, name="batch_error_report")
         
-        # Tá»‘i Æ°u: Background task Ä‘á»ƒ debounced save
+        # Tối ưu: Background task để debounced save
         job_queue.run_repeating(save_data_debounced, interval=_cache["save_debounce"], first=5)
     else:
-        logger.warning("<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Job queue khÃ´ng kháº£ dá»¥ng, bá» qua Ä‘Äƒng kÃ½ cron jobs.")
+        logger.warning("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Job queue không khả dụng, bỏ qua đăng ký cron jobs.")
 
     # ============================================
     #  STARTUP BANNER (TYRANT EDITION)
     # ============================================
     startup_banner = r"""
-â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— â–ˆâ–ˆâ•—â–ˆâ–ˆâ–ˆâ•—   â–ˆâ–ˆâ•— â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—     â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—  â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— 
-â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ–ˆâ•—  â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•”â•â•â•â–ˆâ–ˆâ•—    â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—â–ˆâ–ˆâ•”â•â•â•â–ˆâ–ˆâ•—
-â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•”â–ˆâ–ˆâ•— â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘    â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘
-â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘â•šâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘    â–ˆâ–ˆâ•”â•â•â•â• â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘   â–ˆâ–ˆâ•‘
-â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘ â•šâ–ˆâ–ˆâ–ˆâ–ˆâ•‘â•šâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•    â–ˆâ–ˆâ•‘     â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘â•šâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•
-â•šâ•â•â•â•â•â• â•šâ•â•â•šâ•â•  â•šâ•â•â•â• â•šâ•â•â•â•â•â•     â•šâ•â•     â•šâ•â•  â•šâ•â• â•šâ•â•â•â•â•â• 
+██████╗ ██╗███╗   ██╗ ██████╗     ██████╗ ██████╗  ██████╗ 
+██╔══██╗██║████╗  ██║██╔═══██╗    ██╔══██╗██╔══██╗██╔═══██╗
+██║  ██║██║██╔██╗ ██║██║   ██║    ██████╔╝██████╔╝██║   ██║
+██║  ██║██║██║╚██╗██║██║   ██║    ██╔═══╝ ██╔══██╗██║   ██║
+██████╔╝██║██║ ╚████║╚██████╔╝    ██║     ██║  ██║╚██████╔╝
+╚═════╝ ╚═╝╚═╝  ╚═══╝ ╚═════╝     ╚═╝     ╚═╝  ╚═╝ ╚═════╝ 
                                                          
                __
               / _)
@@ -322,44 +322,44 @@ def main() -> None:
     except UnicodeEncodeError:
         print("[DINO] DINO BOT STARTING...")
     
-    logger.info(f"<tg-emoji emoji-id=\"5303145396254563405\">ðŸ¦–</tg-emoji> AI Model:      {AI_MODEL}")
-    logger.info(f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> Products:      {len(products)}")
-    logger.info(f"<tg-emoji emoji-id=\"5350778980158956492\">ðŸ‘¥</tg-emoji> Users:         {len(user_data_db)}")
-    logger.info(f"<tg-emoji emoji-id=\"5247134066322447995\">ðŸ›’</tg-emoji> Orders:        {len(order_history)}")
-    logger.info(f"<tg-emoji emoji-id=\"5350481781306958339\">ðŸ’¾</tg-emoji> Database:      SQLite KV Store (WAL)")
-    logger.info(f"<tg-emoji emoji-id=\"5436359785534466562\">ðŸ”Œ</tg-emoji> API Port:      {API_SERVER_PORT}")
-    logger.info(f"<tg-emoji emoji-id=\"5213349767672769194\">â±</tg-emoji> Bank Cron:     {BANK_CHECK_INTERVAL_SECONDS}s")
-    logger.info(f"<tg-emoji emoji-id=\"5231489647946768652\">ðŸŒ</tg-emoji> USDT BEP20:    {'ON' if is_usdt_trc20_enabled() else 'OFF'}")
-    logger.info(f"<tg-emoji emoji-id=\"5303145396254563405\">ðŸ¤–</tg-emoji> AI Auto-Reply: {'ON' if AI_AUTO_REPLY else 'OFF'}")
+    logger.info(f"<tg-emoji emoji-id=\"5303145396254563405\">🦖</tg-emoji> AI Model:      {AI_MODEL}")
+    logger.info(f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Products:      {len(products)}")
+    logger.info(f"<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> Users:         {len(user_data_db)}")
+    logger.info(f"<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Orders:        {len(order_history)}")
+    logger.info(f"<tg-emoji emoji-id=\"5350481781306958339\">💾</tg-emoji> Database:      SQLite KV Store (WAL)")
+    logger.info(f"<tg-emoji emoji-id=\"5436359785534466562\">🔌</tg-emoji> API Port:      {API_SERVER_PORT}")
+    logger.info(f"<tg-emoji emoji-id=\"5213349767672769194\">⏱</tg-emoji> Bank Cron:     {BANK_CHECK_INTERVAL_SECONDS}s")
+    logger.info(f"<tg-emoji emoji-id=\"5231489647946768652\">🌍</tg-emoji> USDT BEP20:    {'ON' if is_usdt_trc20_enabled() else 'OFF'}")
+    logger.info(f"<tg-emoji emoji-id=\"5303145396254563405\">🤖</tg-emoji> AI Auto-Reply: {'ON' if AI_AUTO_REPLY else 'OFF'}")
     
-    logger.info("<tg-emoji emoji-id=\"6269163801178804220\">âœ…</tg-emoji> DINO SYSTEM: Bot started successfully! Ready to serve... <tg-emoji emoji-id=\"5303145396254563405\">ðŸ¦–</tg-emoji>")
+    logger.info("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> DINO SYSTEM: Bot started successfully! Ready to serve... <tg-emoji emoji-id=\"5303145396254563405\">🦖</tg-emoji>")
     
-    # Tá»‘i Æ°u: Cáº¥u hÃ¬nh polling Ä‘á»ƒ pháº£n há»“i nhanh hÆ¡n
+    # Tối ưu: Cấu hình polling để phản hồi nhanh hơn
     try:
         application.run_polling(
-            poll_interval=0.5,  # Giáº£m xuá»‘ng 0.5s Ä‘á»ƒ pháº£n há»“i nhanh hÆ¡n
-            timeout=10,  # Giáº£m timeout Ä‘á»ƒ khÃ´ng chá» lÃ¢u
+            poll_interval=0.5,  # Giảm xuống 0.5s để phản hồi nhanh hơn
+            timeout=10,  # Giảm timeout để không chờ lâu
             bootstrap_retries=5,
-            drop_pending_updates=True  # Bá» qua updates cÅ©
+            drop_pending_updates=True  # Bỏ qua updates cũ
         )
     except Conflict as e:
         conflict_text = str(e or "")
         conflict_text_lower = conflict_text.lower()
         if "terminated by other getupdates request" in conflict_text_lower:
-            logger.critical("âŒ Conflict: getUpdates bá»‹ tranh cháº¥p. Sáº½ tá»± restart Ä‘á»ƒ thá»­ láº¡i...")
+            logger.critical("❌ Conflict: getUpdates bị tranh chấp. Sẽ tự restart để thử lại...")
         elif "webhook is active" in conflict_text_lower or "can't use getupdates method while webhook is active" in conflict_text_lower:
-            logger.critical("âŒ Conflict: Token Ä‘ang á»Ÿ cháº¿ Ä‘á»™ webhook. ÄÃ£ xÃ³a webhook, sáº½ retry...")
+            logger.critical("❌ Conflict: Token đang ở chế độ webhook. Đã xóa webhook, sẽ retry...")
         else:
-            logger.critical(f"âŒ Conflict khÃ´ng xÃ¡c Ä‘á»‹nh: {conflict_text}")
+            logger.critical(f"❌ Conflict không xác định: {conflict_text}")
         raise
     except (ValueError, TypeError, KeyError, IndexError) as e:
-        logger.critical(f"âŒ Bot crash báº¥t ngá»: {e}", exc_info=True)
+        logger.critical(f"❌ Bot crash bất ngờ: {e}", exc_info=True)
         raise
     finally:
         release_single_instance_lock()
 
 if __name__ == "__main__":
-    # NOTE: Retry loop Ä‘Ã£ Ä‘Æ°á»£c xá»­ lÃ½ bá»Ÿi app/main.py â†’ run().
-    # Block nÃ y chá»‰ dÃ¹ng náº¿u cháº¡y trá»±c tiáº¿p file legacy_entry.py.
+    # NOTE: Retry loop đã được xử lý bởi app/main.py → run().
+    # Block này chỉ dùng nếu chạy trực tiếp file legacy_entry.py.
     main()
 

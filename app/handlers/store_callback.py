@@ -14,9 +14,9 @@ def _format_store_description_text(value) -> str:
 
 def _checkout_labels(user_id):
     return {
-        "vi": {"choose_qty": "CHá»ŒN Sá» LÆ¯á»¢NG MUá»N MUA", "product": "Sáº£n pháº©m", "unit_price": "ÄÆ¡n giÃ¡", "stock": "Tá»“n kho kháº£ dá»¥ng", "quantity": "Sá»‘ lÆ°á»£ng", "enter_qty": "Nháº­p sá»‘ lÆ°á»£ng", "back": "Quay láº¡i", "confirm": "XÃC NHáº¬N MUA HÃ€NG", "total": "Tá»•ng tiá»n", "choose_payment": "Vui lÃ²ng chá»n phÆ°Æ¡ng thá»©c thanh toÃ¡n", "balance": "Sá»‘ dÆ°", "insufficient": "KhÃ´ng Ä‘á»§", "bank": "Chuyá»ƒn khoáº£n (QR)", "coupon": "Nháº­p mÃ£ giáº£m giÃ¡", "use_combo": "DÃ¹ng {balance:,}Ä‘ + QR {remaining:,}Ä‘", "out": "Sáº£n pháº©m hiá»‡n Ä‘ang háº¿t hÃ ng!", "missing": "Sáº£n pháº©m khÃ´ng tá»“n táº¡i!"},
-        "en": {"choose_qty": "CHOOSE QUANTITY", "product": "Product", "unit_price": "Unit price", "stock": "Available stock", "quantity": "Quantity", "enter_qty": "Enter quantity", "back": "Back", "confirm": "CONFIRM PURCHASE", "total": "Total", "choose_payment": "Choose a payment method", "balance": "Balance", "insufficient": "Insufficient", "bank": "Bank transfer (QR)", "coupon": "Enter coupon", "use_combo": "Use {balance:,}Ä‘ + QR {remaining:,}Ä‘", "out": "This product is out of stock!", "missing": "Product not found!"},
-        "zh": {"choose_qty": "é€‰æ‹©è´­ä¹°æ•°é‡", "product": "å•†å“", "unit_price": "å•ä»·", "stock": "å¯ç”¨åº“å­˜", "quantity": "æ•°é‡", "enter_qty": "è¾“å…¥æ•°é‡", "back": "è¿”å›ž", "confirm": "ç¡®è®¤è´­ä¹°", "total": "æ€»è®¡", "choose_payment": "è¯·é€‰æ‹©ä»˜æ¬¾æ–¹å¼", "balance": "ä½™é¢", "insufficient": "ä½™é¢ä¸è¶³", "bank": "é“¶è¡Œè½¬è´¦ï¼ˆQRï¼‰", "coupon": "è¾“å…¥ä¼˜æƒ ç ", "use_combo": "ä½¿ç”¨ {balance:,}Ä‘ + QR {remaining:,}Ä‘", "out": "è¯¥å•†å“å·²ç¼ºè´§ï¼", "missing": "å•†å“ä¸å­˜åœ¨ï¼"},
+        "vi": {"choose_qty": "CHỌN SỐ LƯỢNG MUỐN MUA", "product": "Sản phẩm", "unit_price": "Đơn giá", "stock": "Tồn kho khả dụng", "quantity": "Số lượng", "enter_qty": "Nhập số lượng", "back": "Quay lại", "confirm": "XÁC NHẬN MUA HÀNG", "total": "Tổng tiền", "choose_payment": "Vui lòng chọn phương thức thanh toán", "balance": "Số dư", "insufficient": "Không đủ", "bank": "Chuyển khoản (QR)", "coupon": "Nhập mã giảm giá", "use_combo": "Dùng {balance:,}đ + QR {remaining:,}đ", "out": "Sản phẩm hiện đang hết hàng!", "missing": "Sản phẩm không tồn tại!"},
+        "en": {"choose_qty": "CHOOSE QUANTITY", "product": "Product", "unit_price": "Unit price", "stock": "Available stock", "quantity": "Quantity", "enter_qty": "Enter quantity", "back": "Back", "confirm": "CONFIRM PURCHASE", "total": "Total", "choose_payment": "Choose a payment method", "balance": "Balance", "insufficient": "Insufficient", "bank": "Bank transfer (QR)", "coupon": "Enter coupon", "use_combo": "Use {balance:,}đ + QR {remaining:,}đ", "out": "This product is out of stock!", "missing": "Product not found!"},
+        "zh": {"choose_qty": "选择购买数量", "product": "商品", "unit_price": "单价", "stock": "可用库存", "quantity": "数量", "enter_qty": "输入数量", "back": "返回", "confirm": "确认购买", "total": "总计", "choose_payment": "请选择付款方式", "balance": "余额", "insufficient": "余额不足", "bank": "银行转账（QR）", "coupon": "输入优惠码", "use_combo": "使用 {balance:,}đ + QR {remaining:,}đ", "out": "该商品已缺货！", "missing": "商品不存在！"},
     }[get_user_lang(user_id)]
 
 
@@ -240,7 +240,7 @@ def _filter_entities_to_text(entities, text: str):
 def _trim_caption_with_entities(text: str, entities, limit: int = 1024):
     if _telegram_utf16_len(text) <= limit:
         return text, _filter_entities_to_text(entities, text)
-    trimmed = _telegram_trim_utf16(text, limit - 1).rstrip() + "â€¦"
+    trimmed = _telegram_trim_utf16(text, limit - 1).rstrip() + "…"
     return trimmed, _filter_entities_to_text(entities, trimmed)
 
 
@@ -437,11 +437,11 @@ async def _show_store_product_detail(
     if not already_answered:
         await safe_answer(query)
     lang = get_user_lang(query.from_user.id)
-    curr = "Ä‘" if lang == "vi" else " VND"
+    curr = "đ" if lang == "vi" else " VND"
 
     def _fmt_price(price_vnd: int) -> str:
-        if not price_vnd: return "0Ä‘" if lang == "vi" else "0 USDT"
-        if lang == "vi": return f"{price_vnd:,}Ä‘"
+        if not price_vnd: return "0đ" if lang == "vi" else "0 USDT"
+        if lang == "vi": return f"{price_vnd:,}đ"
         try:
             rate = float(globals().get("_cached_live_usdt_rate") or USDT_TRC20_RATE_VND_PER_USDT)
             return f"{price_vnd / rate:.2f} USDT"
@@ -451,31 +451,31 @@ async def _show_store_product_detail(
 
     labels = {
         "vi": {
-            "description": "MÃ´ táº£", "price": "GiÃ¡", "duration": "Thá»i háº¡n", "warranty": "Báº£o hÃ nh",
-            "auto": "Giao tá»± Ä‘á»™ng", "status": "Tráº¡ng thÃ¡i", "available": "CÃ²n {count} sáº£n pháº©m",
-            "out": "Háº¿t hÃ ng", "how_email": "Thanh toÃ¡n â†’ nháº­p email â†’ admin xá»­ lÃ½ â†’ nháº­n hÃ ng.",
-            "how_auto": "Thanh toÃ¡n â†’ nháº­n tÃ i khoáº£n ngay trÃªn Telegram.", "how": "CÃ¡ch mua",
-            "buy": "Mua ngay", "busy": "Admin Ä‘ang báº­n", "notify": "ThÃ´ng bÃ¡o khi cÃ³ hÃ ng", "back": "Quay láº¡i Danh Má»¥c",
-            "manual": "Dá»‹ch vá»¥ xá»­ lÃ½ thá»§ cÃ´ng", "manual_avail": "CÃ²n {count} lÆ°á»£t Ä‘áº·t",
-            "manual_full": "Táº¡m ngá»«ng nháº­n Ä‘Æ¡n", "suspended": "Táº¡m ngá»«ng bÃ¡n"
+            "description": "Mô tả", "price": "Giá", "duration": "Thời hạn", "warranty": "Bảo hành",
+            "auto": "Giao tự động", "status": "Trạng thái", "available": "Còn {count} sản phẩm",
+            "out": "Hết hàng", "how_email": "Thanh toán → nhập email → admin xử lý → nhận hàng.",
+            "how_auto": "Thanh toán → nhận tài khoản ngay trên Telegram.", "how": "Cách mua",
+            "buy": "Mua ngay", "busy": "Admin đang bận", "notify": "Thông báo khi có hàng", "back": "Quay lại Danh Mục",
+            "manual": "Dịch vụ xử lý thủ công", "manual_avail": "Còn {count} lượt đặt",
+            "manual_full": "Tạm ngừng nhận đơn", "suspended": "Tạm ngừng bán"
         },
         "en": {
             "description": "Description", "price": "Price", "duration": "Duration", "warranty": "Warranty",
             "auto": "Automatic delivery", "status": "Status", "available": "{count} products available",
-            "out": "Out of stock", "how_email": "Pay â†’ enter email â†’ admin processes â†’ receive your order.",
-            "how_auto": "Pay â†’ receive the account instantly on Telegram.", "how": "How to buy",
+            "out": "Out of stock", "how_email": "Pay → enter email → admin processes → receive your order.",
+            "how_auto": "Pay → receive the account instantly on Telegram.", "how": "How to buy",
             "buy": "Buy now", "busy": "Admin is busy", "notify": "Notify me when available", "back": "Back to Categories",
             "manual": "Manual processing service", "manual_avail": "{count} slots remaining",
             "manual_full": "Temporarily stopped taking orders", "suspended": "Suspended"
         },
         "zh": {
-            "description": "æè¿°", "price": "ä»·æ ¼", "duration": "æœ‰æ•ˆæœŸ", "warranty": "ä¿ä¿®",
-            "auto": "è‡ªåŠ¨å‘è´§", "status": "çŠ¶æ€", "available": "å‰©ä½™ {count} ä»¶",
-            "out": "ç¼ºè´§", "how_email": "ä»˜æ¬¾ â†’ è¾“å…¥é‚®ç®± â†’ ç®¡ç†å‘˜å¤„ç† â†’ æ”¶è´§ã€‚",
-            "how_auto": "ä»˜æ¬¾ â†’ ç«‹å³åœ¨ Telegram æŽ¥æ”¶è´¦å·ã€‚", "how": "è´­ä¹°æ–¹å¼",
-            "buy": "ç«‹å³è´­ä¹°", "busy": "ç®¡ç†å‘˜å¿™ç¢Œä¸­", "notify": "åˆ°è´§é€šçŸ¥", "back": "è¿”å›žåˆ†ç±»",
-            "manual": "äººå·¥å¤„ç†æœåŠ¡", "manual_avail": "å‰©ä½™ {count} ä¸ªåé¢",
-            "manual_full": "æš‚åœæŽ¥å•", "suspended": "æš‚åœé”€å”®"
+            "description": "描述", "price": "价格", "duration": "有效期", "warranty": "保修",
+            "auto": "自动发货", "status": "状态", "available": "剩余 {count} 件",
+            "out": "缺货", "how_email": "付款 → 输入邮箱 → 管理员处理 → 收货。",
+            "how_auto": "付款 → 立即在 Telegram 接收账号。", "how": "购买方式",
+            "buy": "立即购买", "busy": "管理员忙碌中", "notify": "到货通知", "back": "返回分类",
+            "manual": "人工处理服务", "manual_avail": "剩余 {count} 个名额",
+            "manual_full": "暂停接单", "suspended": "暂停销售"
         },
     }.get(lang, {})
 
@@ -483,7 +483,7 @@ async def _show_store_product_detail(
     if isinstance(p, dict):
         p["_product_id"] = str(prod_id)
     if not p or not _ctt_is_catalog_visible(p):
-        await safe_answer(query, "Sáº£n pháº©m khÃ´ng tá»“n táº¡i", show_alert=True)
+        await safe_answer(query, "Sản phẩm không tồn tại", show_alert=True)
         return True
 
     requires_gmail = p.get('requires_gmail', False)
@@ -494,16 +494,16 @@ async def _show_store_product_detail(
     effective_category = get_effective_category(p) if callable(get_effective_category) else (p.get("store_category") or get_product_category(raw_name))
     product_icon_id = get_store_icon_id(raw_name, get_store_icon_id(effective_category, "5854908544712707500"))
     product_icon_fallback = {
-        "Netflix": "ðŸŽ¬",
-        "YouTube Premium": "â–¶ï¸",
-        "Spotify & Music": "ðŸŽµ",
-        "Google Drive & One": "â˜ï¸",
-        "CapCut & Edit Video": "ðŸŽžï¸",
-        "Adobe Creative Cloud": "ðŸŽ¨",
-        "TikTok": "ðŸŽµ",
-        "Proxy": "ðŸ›¡ï¸",
-        "AI Tools (GPT, Copilot...)": "ðŸ¤–",
-    }.get(str(effective_category or ""), "ðŸ“¦")
+        "Netflix": "🎬",
+        "YouTube Premium": "▶️",
+        "Spotify & Music": "🎵",
+        "Google Drive & One": "☁️",
+        "CapCut & Edit Video": "🎞️",
+        "Adobe Creative Cloud": "🎨",
+        "TikTok": "🎵",
+        "Proxy": "🛡️",
+        "AI Tools (GPT, Copilot...)": "🤖",
+    }.get(str(effective_category or ""), "📦")
     product_icon_markup = f'<tg-emoji emoji-id="{product_icon_id}">{product_icon_fallback}</tg-emoji>'
     can_buy = False
     display_price_text = _fmt_price(p.get("price", 0) or 0)
@@ -515,54 +515,54 @@ async def _show_store_product_detail(
         quantity_error = _ctt_validate_purchase_quantity(p, minimum_quantity)
         required_inputs = _ctt_required_input_fields(p)
         input_labels = {
-            "link": "Link livestream TikTok" if "tiktok" in str(p.get("name") or "").lower() else "Link sáº£n pháº©m",
-            "comments": "Ná»™i dung bÃ¬nh luáº­n",
-            "comment": "Ná»™i dung bÃ¬nh luáº­n",
+            "link": "Link livestream TikTok" if "tiktok" in str(p.get("name") or "").lower() else "Link sản phẩm",
+            "comments": "Nội dung bình luận",
+            "comment": "Nội dung bình luận",
             "username": "Username",
             "user": "Username",
             "uid": "UID",
-            "phone": "Sá»‘ Ä‘iá»‡n thoáº¡i",
+            "phone": "Số điện thoại",
             "email": "Email",
         }
-        input_text = ", ".join(input_labels.get(str(field).lower(), str(field)) for field in required_inputs) if required_inputs else "Link sáº£n pháº©m"
+        input_text = ", ".join(input_labels.get(str(field).lower(), str(field)) for field in required_inputs) if required_inputs else "Link sản phẩm"
         pricing_preview = _get_ctt_store_pricing_preview(query.from_user.id, context, prod_id, p, minimum_quantity)
         base_unit_text = _ctt_format_vnd_decimal(pricing_preview.get("base_unit_price", 0))
         effective_unit_text = _ctt_format_vnd_decimal(pricing_preview.get("chosen_unit_price", 0))
-        display_price_text = f'~{_fmt_price(float(pricing_preview.get("base_unit_price", 0) or 0))} / 1 Ä‘Æ¡n vá»‹'
+        display_price_text = f'~{_fmt_price(float(pricing_preview.get("base_unit_price", 0) or 0))} / 1 đơn vị'
         if pricing_preview.get("discount_percent", 0) > 0:
             discount_line = (
-                f'\n{E_TAG} <b>Giáº£m {int(pricing_preview.get("discount_percent", 0) or 0)}%:</b> '
-                f'<s>{base_unit_text}Ä‘</s> â†’ <b>{effective_unit_text}Ä‘</b> / Ä‘Æ¡n vá»‹\n'
+                f'\n{E_TAG} <b>Giảm {int(pricing_preview.get("discount_percent", 0) or 0)}%:</b> '
+                f'<s>{base_unit_text}đ</s> → <b>{effective_unit_text}đ</b> / đơn vị\n'
             )
         elif pricing_preview.get("coupon_unit_discount", 0) > 0:
             discount_line = (
                 f'\n{E_TAG} <b>Coupon:</b> '
-                f'<s>{base_unit_text}Ä‘</s> â†’ <b>{effective_unit_text}Ä‘</b> / Ä‘Æ¡n vá»‹\n'
+                f'<s>{base_unit_text}đ</s> → <b>{effective_unit_text}đ</b> / đơn vị\n'
             )
         else:
             discount_line = ""
 
         if not SOCIAL_SOURCE_API_KEY:
             stock_info = (
-                f'{E_LOADING} Loáº¡i: Dá»‹ch vá»¥ máº¡ng xÃ£ há»™i\n'
-                f'{E_LIMIT} Tráº¡ng thÃ¡i: Táº¡m ngá»«ng bÃ¡n'
+                f'{E_LOADING} Loại: Dịch vụ mạng xã hội\n'
+                f'{E_LIMIT} Trạng thái: Tạm ngừng bán'
             )
             can_buy = False
         elif quantity_error:
             stock_info = (
-                f'{E_LOADING} Loáº¡i: Dá»‹ch vá»¥ máº¡ng xÃ£ há»™i\n'
-                f'{E_LIMIT} Tráº¡ng thÃ¡i: Táº¡m ngá»«ng bÃ¡n\n'
+                f'{E_LOADING} Loại: Dịch vụ mạng xã hội\n'
+                f'{E_LIMIT} Trạng thái: Tạm ngừng bán\n'
                 f'{E_LIMIT} {html.escape(quantity_error)}'
             )
             can_buy = False
         else:
-            max_text = f"{maximum_quantity:,}" if maximum_quantity > 0 else "KhÃ´ng giá»›i háº¡n"
+            max_text = f"{maximum_quantity:,}" if maximum_quantity > 0 else "Không giới hạn"
             stock_info = (
-                f'{E_LOADING} Loáº¡i: Dá»‹ch vá»¥ máº¡ng xÃ£ há»™i\n'
-                f'{E_SUCCESS} Tráº¡ng thÃ¡i: Sáºµn sÃ ng\n'
-                f'{E_STAT} Mua tá»‘i thiá»ƒu: {minimum_quantity:,} Ä‘Æ¡n vá»‹\n'
-                f'{E_STAT} Mua tá»‘i Ä‘a: {max_text}\n'
-                f'{E_STAT} Cáº§n nháº­p: {html.escape(input_text)}'
+                f'{E_LOADING} Loại: Dịch vụ mạng xã hội\n'
+                f'{E_SUCCESS} Trạng thái: Sẵn sàng\n'
+                f'{E_STAT} Mua tối thiểu: {minimum_quantity:,} đơn vị\n'
+                f'{E_STAT} Mua tối đa: {max_text}\n'
+                f'{E_STAT} Cần nhập: {html.escape(input_text)}'
             )
             can_buy = True
     elif requires_gmail:
@@ -581,7 +581,7 @@ async def _show_store_product_detail(
             supplier_source_stock = _get_supplier_source_stock_count(p)
 
             if _is_supplier_source_purchase_blocked(p):
-                block_reason = html.escape(str(p.get("supplier_source_purchase_blocked_reason") or ("Nguá»“n Ä‘ang táº¡m ngá»«ng bÃ¡n" if lang == "vi" else "Source suspended")))
+                block_reason = html.escape(str(p.get("supplier_source_purchase_blocked_reason") or ("Nguồn đang tạm ngừng bán" if lang == "vi" else "Source suspended")))
                 stock_info = f'{E_ANDROID} {labels["auto"]}\n{E_LIMIT} {labels["status"]}: {labels["suspended"]}\n<i>{block_reason}</i>'
                 can_buy = False
             elif supplier_source_stock > 0:
@@ -604,16 +604,16 @@ async def _show_store_product_detail(
     localized_description = p.get(f"description_{lang}") or p.get("description") or ""
     desc_text = _format_store_description_text(localized_description)
     
-    default_duration = "KhÃ´ng giá»›i háº¡n" if lang == "vi" else ("Unlimited" if lang == "en" else "æ— é™åˆ¶")
-    default_warranty = "KhÃ´ng" if lang == "vi" else ("No" if lang == "en" else "æ— ")
+    default_duration = "Không giới hạn" if lang == "vi" else ("Unlimited" if lang == "en" else "无限制")
+    default_warranty = "Không" if lang == "vi" else ("No" if lang == "en" else "无")
     
     def_dur_val = p.get("duration", default_duration)
-    if def_dur_val == "Theo thÃ´ng tin sáº£n pháº©m":
-        def_dur_val = "Theo thÃ´ng tin sáº£n pháº©m" if lang == "vi" else ("See product info" if lang == "en" else "æŸ¥çœ‹äº§å“ä¿¡æ¯")
+    if def_dur_val == "Theo thông tin sản phẩm":
+        def_dur_val = "Theo thông tin sản phẩm" if lang == "vi" else ("See product info" if lang == "en" else "查看产品信息")
     
     def_war_val = p.get("warranty", default_warranty)
-    if def_war_val == "Báº£o hÃ nh theo quy Ä‘á»‹nh":
-        def_war_val = "Báº£o hÃ nh theo quy Ä‘á»‹nh" if lang == "vi" else ("Standard warranty" if lang == "en" else "æ ‡å‡†ä¿ä¿®")
+    if def_war_val == "Bảo hành theo quy định":
+        def_war_val = "Bảo hành theo quy định" if lang == "vi" else ("Standard warranty" if lang == "en" else "标准保修")
         
     duration_text = html.escape(p.get(f"duration_{lang}") or def_dur_val)
     warranty_text = html.escape(p.get(f"warranty_{lang}") or def_war_val)
@@ -633,21 +633,21 @@ async def _show_store_product_detail(
         else:
             platform_text = html.escape(str(p.get("store_category") or "Social"))
         if "livestream" in raw_search or "live stream" in raw_search or "live" in raw_search:
-            service_text = "TÄƒng tÆ°Æ¡ng tÃ¡c livestream"
+            service_text = "Tăng tương tác livestream"
         elif "like" in raw_search and ("share" in raw_search or "comment" in raw_search):
-            service_text = "TÄƒng tÆ°Æ¡ng tÃ¡c"
+            service_text = "Tăng tương tác"
         elif "like" in raw_search:
-            service_text = "TÄƒng lÆ°á»£t thÃ­ch"
+            service_text = "Tăng lượt thích"
         elif "follow" in raw_search or "follower" in raw_search:
-            service_text = "TÄƒng ngÆ°á»i theo dÃµi"
+            service_text = "Tăng người theo dõi"
         elif "comment" in raw_search:
-            service_text = "TÄƒng bÃ¬nh luáº­n"
+            service_text = "Tăng bình luận"
         elif "share" in raw_search:
-            service_text = "TÄƒng chia sáº»"
+            service_text = "Tăng chia sẻ"
         elif "view" in raw_search:
-            service_text = "TÄƒng lÆ°á»£t xem"
+            service_text = "Tăng lượt xem"
         else:
-            service_text = "Dá»‹ch vá»¥ máº¡ng xÃ£ há»™i"
+            service_text = "Dịch vụ mạng xã hội"
 
         included_parts = []
         if "like" in raw_search:
@@ -657,32 +657,32 @@ async def _show_store_product_detail(
         if "comment" in raw_search:
             included_parts.append("Comments")
         included_text = " + ".join(included_parts) if included_parts else service_text
-        max_text = f"{maximum_quantity:,}" if maximum_quantity > 0 else "KhÃ´ng giá»›i háº¡n theo há»‡ thá»‘ng"
-        refill_text = "CÃ³ báº£o hÃ nh" if bool(p.get("ctt_refill")) else "KhÃ´ng báº£o hÃ nh / KhÃ´ng bÃ¹ tá»¥t"
+        max_text = f"{maximum_quantity:,}" if maximum_quantity > 0 else "Không giới hạn theo hệ thống"
+        refill_text = "Có bảo hành" if bool(p.get("ctt_refill")) else "Không bảo hành / Không bù tụt"
 
         msg = (
             f'{E_TAG} <b>{html.escape(raw_name)}</b>\n'
-            f'<blockquote expandable><b>MÃ´ táº£:</b>\n\n'
-            f'{E_LOADING} <b>ThÃ´ng tin dá»‹ch vá»¥</b>\n'
-            f'{E_TAG} Ná»n táº£ng: {platform_text}\n'
-            f'{E_TAG} Dá»‹ch vá»¥: {service_text}\n'
-            f'{E_TAG} Bao gá»“m: {html.escape(included_text)}\n'
-            f'{E_STAT} Tá»‘i thiá»ƒu: {minimum_quantity:,}\n'
-            f'{E_STAT} Tá»‘i Ä‘a: {max_text}\n'
-            f'{E_TAG} Nháº­p: {html.escape(input_text)}\n'
-            f'{E_SHIELD} Báº£o hÃ nh: {refill_text}\n\n'
-            f'<tg-emoji emoji-id="5278467510604160626">ðŸ’°</tg-emoji> GiÃ¡: <b>{display_price_text}</b>\n'
-            f'{E_TAG} GÃ³i tá»‘i thiá»ƒu: <b>{minimum_quantity:,} Ä‘Æ¡n vá»‹</b>\n'
-            f'{E_SUCCESS} Tá»‘c Ä‘á»™: Tá»± Ä‘á»™ng xá»­ lÃ½ sau khi thanh toÃ¡n\n\n'
-            f'{E_LOADING} <b>Quy trÃ¬nh:</b>\n'
-            f'Nháº­p sá»‘ lÆ°á»£ng â†’ DÃ¡n link cáº§n cháº¡y â†’ Thanh toÃ¡n â†’ Bot táº¡o Ä‘Æ¡n tá»± Ä‘á»™ng</blockquote>\n'
+            f'<blockquote expandable><b>Mô tả:</b>\n\n'
+            f'{E_LOADING} <b>Thông tin dịch vụ</b>\n'
+            f'{E_TAG} Nền tảng: {platform_text}\n'
+            f'{E_TAG} Dịch vụ: {service_text}\n'
+            f'{E_TAG} Bao gồm: {html.escape(included_text)}\n'
+            f'{E_STAT} Tối thiểu: {minimum_quantity:,}\n'
+            f'{E_STAT} Tối đa: {max_text}\n'
+            f'{E_TAG} Nhập: {html.escape(input_text)}\n'
+            f'{E_SHIELD} Bảo hành: {refill_text}\n\n'
+            f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> Giá: <b>{display_price_text}</b>\n'
+            f'{E_TAG} Gói tối thiểu: <b>{minimum_quantity:,} đơn vị</b>\n'
+            f'{E_SUCCESS} Tốc độ: Tự động xử lý sau khi thanh toán\n\n'
+            f'{E_LOADING} <b>Quy trình:</b>\n'
+            f'Nhập số lượng → Dán link cần chạy → Thanh toán → Bot tạo đơn tự động</blockquote>\n'
         )
     else:
         # labels already built at the top
 
         msg = (
             f'{E_TAG} <b>{html.escape(localized_name)}</b>\n'
-            f'<blockquote expandable>ðŸ“ <b>{labels["description"]}:</b>\n{desc_text}</blockquote>\n'
+            f'<blockquote expandable>📝 <b>{labels["description"]}:</b>\n{desc_text}</blockquote>\n'
             f'{E_TAG} {labels["price"]}: <b>{display_price_text}</b>\n'
             f'{E_LOADING} {labels["duration"]}: <b>{duration_text}</b>\n'
             f'{E_SHIELD} {labels["warranty"]}: <b>{warranty_text}</b>\n'
@@ -697,24 +697,24 @@ async def _show_store_product_detail(
         btns.append([_btn(detail_labels.get("buy", "Mua ngay"), icon_id="5402186569006210455", callback_data=f"sel_qty_{prod_id}", style="success")])
     else:
         if requires_gmail:
-            btns.append([_btn(detail_labels.get("busy", "Admin Ä‘ang báº­n"), icon_id="5197288647275071607", callback_data="ignore", style="danger")])
+            btns.append([_btn(detail_labels.get("busy", "Admin đang bận"), icon_id="5197288647275071607", callback_data="ignore", style="danger")])
         else:
-            btns.append([_btn(detail_labels.get("out", "Háº¿t hÃ ng"), icon_id="5273914604752216432", callback_data="ignore", style="danger")])
+            btns.append([_btn(detail_labels.get("out", "Hết hàng"), icon_id="5273914604752216432", callback_data="ignore", style="danger")])
             if not is_ctt_product:
-                btns.append([_btn(detail_labels.get("notify", "ThÃ´ng bÃ¡o khi cÃ³ hÃ ng"), icon_id="5447364299200678034", callback_data=f"waitlist_{prod_id}")])
+                btns.append([_btn(detail_labels.get("notify", "Thông báo khi có hàng"), icon_id="5447364299200678034", callback_data=f"waitlist_{prod_id}")])
 
     from app.core.emoji_runtime import upgrade_text_to_premium_emoji
 
     msg = upgrade_text_to_premium_emoji(
         msg.replace(E_TAG, product_icon_markup)
-        .replace(E_LOADING, '<tg-emoji emoji-id="5373251851074415873">ðŸ“„</tg-emoji>')
-        .replace(E_LIMIT, '<tg-emoji emoji-id="5447644880824181073">âš ï¸</tg-emoji>')
-        .replace(E_ERROR, '<tg-emoji emoji-id="5273914604752216432">âŒ</tg-emoji>')
+        .replace(E_LOADING, '<tg-emoji emoji-id="5373251851074415873">📄</tg-emoji>')
+        .replace(E_LIMIT, '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji>')
+        .replace(E_ERROR, '<tg-emoji emoji-id="5273914604752216432">❌</tg-emoji>')
     )
 
     get_effective_category = globals().get("get_effective_store_category")
     cat = get_effective_category(p) if callable(get_effective_category) else (p.get('store_category') or get_product_category(p['name']))
-    btns.append([_btn(back_button_text or detail_labels.get("back", "Quay láº¡i Danh Má»¥c"), icon_id="6206032691075223572", callback_data=back_callback_data or f"view_cat_{cat}")])
+    btns.append([_btn(back_button_text or detail_labels.get("back", "Quay lại Danh Mục"), icon_id="6206032691075223572", callback_data=back_callback_data or f"view_cat_{cat}")])
     reply_markup = InlineKeyboardMarkup(btns)
     await _show_store_product_panel(query, context, p, msg, reply_markup)
     return True
@@ -936,22 +936,22 @@ async def _complete_ctt_balance_purchase(update: Update, context: ContextTypes.D
     supplier_status = html.escape(str(supplier_result.get("supplier_status") or "Pending"))
     supplier_progress = ctt_build_supplier_progress_text(order_data)
     supplier_progress_line = (
-        f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ”¢</tg-emoji> <b>{html.escape(supplier_progress)}</b>\n"
+        f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>{html.escape(supplier_progress)}</b>\n"
         if supplier_progress
         else ""
     )
     await update.message.reply_text(
-        f"{E_SUCCESS} <b>ÄÆ N SOCIAL ÄÃƒ ÄÆ¯á»¢C Táº O THÃ€NH CÃ”NG</b>\n\n"
-        f"{E_TAG} <b>Sáº£n pháº©m:</b> {html.escape(str(product['name']))}\n"
-        f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ”¢</tg-emoji> <b>Sá»‘ lÆ°á»£ng:</b> {qty}\n"
-        f"<tg-emoji emoji-id=\"5373251851074415873\">ðŸ“</tg-emoji> <b>MÃ£ Ä‘Æ¡n:</b> <code>{html.escape(str(order_code))}</code>\n"
-        f"<tg-emoji emoji-id=\"6059654836918423763\">ðŸ“Š</tg-emoji> <b>Tá»•ng Ä‘Æ¡n vá»‹ nguá»“n:</b> {int(supplier_result.get('supplier_quantity', 0) or 0):,}\n"
-        f"<tg-emoji emoji-id=\"5231489647946768652\">ðŸ”—</tg-emoji> <b>Target:</b> <code>{target_link}</code>\n"
-        f"<tg-emoji emoji-id=\"5373251851074415873\">ðŸ“</tg-emoji> <b>MÃ£ supplier:</b> <code>{supplier_order_id}</code>\n"
-        f"{E_STAT} <b>Tráº¡ng thÃ¡i nguá»“n:</b> {supplier_status}\n"
+        f"{E_SUCCESS} <b>ĐƠN SOCIAL ĐÃ ĐƯỢC TẠO THÀNH CÔNG</b>\n\n"
+        f"{E_TAG} <b>Sản phẩm:</b> {html.escape(str(product['name']))}\n"
+        f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>Số lượng:</b> {qty}\n"
+        f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Mã đơn:</b> <code>{html.escape(str(order_code))}</code>\n"
+        f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>Tổng đơn vị nguồn:</b> {int(supplier_result.get('supplier_quantity', 0) or 0):,}\n"
+        f"<tg-emoji emoji-id=\"5231489647946768652\">🔗</tg-emoji> <b>Target:</b> <code>{target_link}</code>\n"
+        f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Mã supplier:</b> <code>{supplier_order_id}</code>\n"
+        f"{E_STAT} <b>Trạng thái nguồn:</b> {supplier_status}\n"
         f"{supplier_progress_line}"
-        f"<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> <b>ÄÃ£ trá»«:</b> {total_price:,} VNÄ\n"
-        f"<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> <b>Sá»‘ dÆ° cÃ²n láº¡i:</b> {new_balance:,} VNÄ",
+        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Đã trừ:</b> {total_price:,} VNĐ\n"
+        f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Số dư còn lại:</b> {new_balance:,} VNĐ",
         parse_mode=ParseMode.HTML,
         reply_markup=create_success_menu(),
     )
@@ -1054,14 +1054,14 @@ def _get_ctt_search_result_panel_text(search_query: str) -> str:
 def _get_store_category_panel_text(category_name: str, user_id: int, refresh_summary: str = "") -> str:
     lang = get_user_lang(user_id)
     category_copy = {
-        "vi": ("DANH Má»¤C", "Chá»n sáº£n pháº©m chi tiáº¿t:"),
+        "vi": ("DANH MỤC", "Chọn sản phẩm chi tiết:"),
         "en": ("CATEGORY", "Choose a product:"),
-        "zh": ("åˆ†ç±»", "è¯·é€‰æ‹©å•†å“ï¼š"),
+        "zh": ("分类", "请选择商品："),
     }[lang]
     category_icon_id = get_store_icon_id(category_name, "5854908544712707500")
     summary = f"\n\n{refresh_summary}" if refresh_summary else ""
     return (
-        f"<tg-emoji emoji-id=\"{category_icon_id}\">ðŸŽ¬</tg-emoji> "
+        f"<tg-emoji emoji-id=\"{category_icon_id}\">🎬</tg-emoji> "
         f"<b>{category_copy[0]}: {html.escape(category_name)}</b>\n\n"
         f"{category_copy[1]}{summary}"
     )
@@ -1135,12 +1135,12 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
         lang = get_user_lang(query.from_user.id)
         store_copy = {
-            "vi": ("Cá»¬A HÃ€NG Dá»ŠCH Vá»¤", "Chá»n danh má»¥c sáº£n pháº©m báº¡n quan tÃ¢m:"),
+            "vi": ("CỬA HÀNG DỊCH VỤ", "Chọn danh mục sản phẩm bạn quan tâm:"),
             "en": ("SERVICE STORE", "Choose a product category:"),
-            "zh": ("æœåŠ¡å•†åº—", "è¯·é€‰æ‹©å•†å“åˆ†ç±»ï¼š"),
+            "zh": ("服务商店", "请选择商品分类："),
         }[lang]
         store_text = (
-            "<tg-emoji emoji-id=\"5247134066322447995\">ðŸ›ï¸</tg-emoji> "
+            "<tg-emoji emoji-id=\"5247134066322447995\">🛍️</tg-emoji> "
             f"<b>{store_copy[0]}</b>\n\n{store_copy[1]}"
         )
         store_markup = create_store_menu(selected_category=None, user_id=query.from_user.id)
@@ -1199,21 +1199,21 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         combo_id = data.replace("view_combo_", "")
         combo = combo_deals.get(combo_id)
         if not combo:
-            await safe_answer(query, "Combo khÃ´ng tá»“n táº¡i", show_alert=True)
+            await safe_answer(query, "Combo không tồn tại", show_alert=True)
             return True
         combo_prods = [products.get(pid) for pid in combo.get('products', []) if pid in products]
         if len(combo_prods) != 2:
-            await safe_answer(query, "Combo khÃ´ng há»£p lá»‡", show_alert=True)
+            await safe_answer(query, "Combo không hợp lệ", show_alert=True)
             return True
         total = sum(p['price'] for p in combo_prods)
         combo_price = int(total * (100 - combo['discount_percent']) / 100)
         msg = (
-            f"<tg-emoji emoji-id=\"5226711870492126219\">ðŸŽ¯</tg-emoji> <b>COMBO Æ¯U ÄÃƒI</b>\n\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> {html.escape(combo_prods[0]['name'])}\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> {html.escape(combo_prods[1]['name'])}\n\n"
-            f'<tg-emoji emoji-id="5278467510604160626">ðŸ’°</tg-emoji> GiÃ¡ gá»‘c: <s>{total:,}Ä‘</s>\n'
-            f"<tg-emoji emoji-id=\"5863724849851011383\">ðŸ’µ</tg-emoji> GiÃ¡ combo: <b>{combo_price:,}Ä‘</b> (-{combo['discount_percent']}%)\n\n"
-            f"<i>Báº¥m vÃ o tá»«ng sáº£n pháº©m Ä‘á»ƒ mua riÃªng:</i>"
+            f"<tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> <b>COMBO ƯU ĐÃI</b>\n\n"
+            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {html.escape(combo_prods[0]['name'])}\n"
+            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {html.escape(combo_prods[1]['name'])}\n\n"
+            f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> Giá gốc: <s>{total:,}đ</s>\n'
+            f"<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> Giá combo: <b>{combo_price:,}đ</b> (-{combo['discount_percent']}%)\n\n"
+            f"<i>Bấm vào từng sản phẩm để mua riêng:</i>"
         )
         btns = []
         pids = combo['products'] # Assuming combo['products'] is a list of product IDs
@@ -1229,7 +1229,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                         style="success" if is_store_product_available(pid, p) else "danger",
                     )
                 ])
-        btns.append([_btn("Quay láº¡i", icon_id="6206032691075223572", callback_data="store_main")])
+        btns.append([_btn("Quay lại", icon_id="6206032691075223572", callback_data="store_main")])
         await _show_store_panel(query, context, msg, InlineKeyboardMarkup(btns))
         return True
 
@@ -1270,7 +1270,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             query,
             text=_get_ctt_search_prompt_text(),
             reply_markup=InlineKeyboardMarkup([
-                [_btn("Quay láº¡i", icon_id="6206032691075223572", callback_data="view_ctt_root_0")],
+                [_btn("Quay lại", icon_id="6206032691075223572", callback_data="view_ctt_root_0")],
             ]),
             parse_mode='HTML',
         )
@@ -1364,29 +1364,29 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         now = time.time()
         last_refresh = float(context.user_data.get("_last_resell_store_refresh", 0) or 0)
         if now - last_refresh < 3:
-            await safe_answer(query, "Vui lÃ²ng chá» vÃ i giÃ¢y trÆ°á»›c khi lÃ m má»›i láº¡i.", show_alert=True)
+            await safe_answer(query, "Vui lòng chờ vài giây trước khi làm mới lại.", show_alert=True)
             return True
         context.user_data["_last_resell_store_refresh"] = now
 
         category_token = data.split(":", 1)[1]
         category_name = get_store_resell_category_by_token(category_token)
         if not category_name:
-            await safe_answer(query, "Danh má»¥c resell khÃ´ng cÃ²n tá»“n táº¡i.", show_alert=True)
+            await safe_answer(query, "Danh mục resell không còn tồn tại.", show_alert=True)
             return True
 
-        await safe_answer(query, "Äang cáº­p nháº­t giÃ¡ vÃ  tá»“n kho...")
+        await safe_answer(query, "Đang cập nhật giá và tồn kho...")
         category_products = _group_visible_products_by_category().get(category_name, [])
         summary = await _refresh_resell_product_entries(category_products)
         lang = get_user_lang(query.from_user.id)
-        error_suffix_vi = f" Â· Lá»—i: {summary['errors']}" if summary["errors"] else ""
-        error_suffix_en = f" Â· Errors: {summary['errors']}" if summary["errors"] else ""
-        error_suffix_zh = f" Â· é”™è¯¯ï¼š{summary['errors']}" if summary["errors"] else ""
+        error_suffix_vi = f" · Lỗi: {summary['errors']}" if summary["errors"] else ""
+        error_suffix_en = f" · Errors: {summary['errors']}" if summary["errors"] else ""
+        error_suffix_zh = f" · 错误：{summary['errors']}" if summary["errors"] else ""
         refresh_summary = {
-            "vi": f"ðŸ”„ <i>ÄÃ£ lÃ m má»›i: {summary['updated']}/{summary['total']} sáº£n pháº©m"
+            "vi": f"🔄 <i>Đã làm mới: {summary['updated']}/{summary['total']} sản phẩm"
                   f"{error_suffix_vi}</i>",
-            "en": f"ðŸ”„ <i>Refreshed: {summary['updated']}/{summary['total']} products"
+            "en": f"🔄 <i>Refreshed: {summary['updated']}/{summary['total']} products"
                   f"{error_suffix_en}</i>",
-            "zh": f"ðŸ”„ <i>å·²åˆ·æ–°ï¼š{summary['updated']}/{summary['total']} ä¸ªå•†å“"
+            "zh": f"🔄 <i>已刷新：{summary['updated']}/{summary['total']} 个商品"
                   f"{error_suffix_zh}</i>",
         }.get(lang)
         await safe_edit_message(
@@ -1423,7 +1423,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
         if _is_ctt_store_product(p):
             if not SOCIAL_SOURCE_API_KEY:
-                await safe_answer(query, "âŒ Nguá»“n social chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh.", show_alert=True)
+                await safe_answer(query, "❌ Nguồn social chưa được cấu hình.", show_alert=True)
                 return True
 
             minimum_quantity = _ctt_get_package_quantity(p)
@@ -1447,16 +1447,16 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             if row:
                 btns.append(row)
 
-            btns.append([_btn("Nháº­p sá»‘ lÆ°á»£ng", icon_id="5364075889669718872", callback_data=f"custom_qty_{prod_id}")])
-            btns.append([_btn("Quay láº¡i", icon_id="6206032691075223572", callback_data=f"view_prod_{prod_id}")])
+            btns.append([_btn("Nhập số lượng", icon_id="5364075889669718872", callback_data=f"custom_qty_{prod_id}")])
+            btns.append([_btn("Quay lại", icon_id="6206032691075223572", callback_data=f"view_prod_{prod_id}")])
 
             msg_text = (
-                f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ”¢</tg-emoji> <b>CHá»ŒN Sá» LÆ¯á»¢NG MUá»N MUA</b>\n\n"
-                f"{E_TAG} Sáº£n pháº©m: {p['name']}\n"
-                f"{E_TAG} ÄÆ¡n giÃ¡: {p['price']:,} VNÄ / Ä‘Æ¡n vá»‹\n"
-                f"{E_STAT} Tá»‘i thiá»ƒu: {minimum_quantity:,} Ä‘Æ¡n vá»‹\n"
-                f"{E_STAT} Tá»‘i Ä‘a: {max_quantity:,} Ä‘Æ¡n vá»‹\n\n"
-                f"<tg-emoji emoji-id=\"6186252635805323641\">ðŸ‘‡</tg-emoji> Chá»n sá»‘ lÆ°á»£ng:"
+                f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>CHỌN SỐ LƯỢNG MUỐN MUA</b>\n\n"
+                f"{E_TAG} Sản phẩm: {p['name']}\n"
+                f"{E_TAG} Đơn giá: {p['price']:,} VNĐ / đơn vị\n"
+                f"{E_STAT} Tối thiểu: {minimum_quantity:,} đơn vị\n"
+                f"{E_STAT} Tối đa: {max_quantity:,} đơn vị\n\n"
+                f"<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> Chọn số lượng:"
             )
             await _show_store_panel(query, context, msg_text, InlineKeyboardMarkup(btns))
             return True
@@ -1467,13 +1467,13 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             labels = _checkout_labels(query.from_user.id)
             lang = get_user_lang(query.from_user.id)
             manual = {
-                "vi": {"busy": "ADMIN ÄANG Báº¬N!", "processing": "Äang xá»­ lÃ½", "return": "Vui lÃ²ng quay láº¡i sau 10-30 phÃºt", "title": "XÃC NHáº¬N Äáº¶T Dá»ŠCH Vá»¤", "manual": "Dá»‹ch vá»¥ manual", "original": "GiÃ¡ gá»‘c", "payment": "Thanh toÃ¡n", "after": "Sau khi thanh toÃ¡n", "steps": ("Báº¡n sáº½ nháº­p email", "Admin setup trong 1-30 phÃºt", "Nháº­n thÃ´ng bÃ¡o check mail"), "none": "KhÃ´ng"},
+                "vi": {"busy": "ADMIN ĐANG BẬN!", "processing": "Đang xử lý", "return": "Vui lòng quay lại sau 10-30 phút", "title": "XÁC NHẬN ĐẶT DỊCH VỤ", "manual": "Dịch vụ manual", "original": "Giá gốc", "payment": "Thanh toán", "after": "Sau khi thanh toán", "steps": ("Bạn sẽ nhập email", "Admin setup trong 1-30 phút", "Nhận thông báo check mail"), "none": "Không"},
                 "en": {"busy": "ADMIN IS BUSY!", "processing": "Processing", "return": "Please return in 10-30 minutes", "title": "CONFIRM SERVICE ORDER", "manual": "Manual service", "original": "Original price", "payment": "Payment", "after": "After payment", "steps": ("Enter your email", "Admin sets it up within 1-30 minutes", "Receive an email-check notification"), "none": "Unavailable"},
-                "zh": {"busy": "ç®¡ç†å‘˜å¿™ç¢Œä¸­ï¼", "processing": "æ­£åœ¨å¤„ç†", "return": "è¯·åœ¨ 10-30 åˆ†é’ŸåŽé‡è¯•", "title": "ç¡®è®¤æœåŠ¡è®¢å•", "manual": "äººå·¥æœåŠ¡", "original": "åŽŸä»·", "payment": "ä»˜æ¬¾", "after": "ä»˜æ¬¾åŽ", "steps": ("è¾“å…¥é‚®ç®±", "ç®¡ç†å‘˜å°†åœ¨ 1-30 åˆ†é’Ÿå†…è®¾ç½®", "æ”¶åˆ°æŸ¥æ”¶é‚®ä»¶é€šçŸ¥"), "none": "ä¸å¯ç”¨"},
+                "zh": {"busy": "管理员忙碌中！", "processing": "正在处理", "return": "请在 10-30 分钟后重试", "title": "确认服务订单", "manual": "人工服务", "original": "原价", "payment": "付款", "after": "付款后", "steps": ("输入邮箱", "管理员将在 1-30 分钟内设置", "收到查收邮件通知"), "none": "不可用"},
             }[lang]
 
             if pending_count >= max_pending:
-                await safe_answer(query, f"âš ï¸ {manual['busy']}\n\n{manual['processing']}: {pending_count}/{max_pending}\n{manual['return']}", show_alert=True)
+                await safe_answer(query, f"⚠️ {manual['busy']}\n\n{manual['processing']}: {pending_count}/{max_pending}\n{manual['return']}", show_alert=True)
                 return True
 
             user = update.effective_user
@@ -1483,25 +1483,25 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             total_price = unit_price
             product_name = p.get(f"name_{lang}") or p.get("name") or prod_id
 
-            price_line = f"{E_TAG} <b>{labels['total']}:</b> {total_price:,} VNÄ\n"
+            price_line = f"{E_TAG} <b>{labels['total']}:</b> {total_price:,} VNĐ\n"
             if total_price < p['price']:
-                price_line = f"{E_TAG} <b>{manual['original']}:</b> <s>{p['price']:,} VNÄ</s>\n{E_TAG} <b>{manual['payment']}:</b> <b>{total_price:,} VNÄ</b>"
+                price_line = f"{E_TAG} <b>{manual['original']}:</b> <s>{p['price']:,} VNĐ</s>\n{E_TAG} <b>{manual['payment']}:</b> <b>{total_price:,} VNĐ</b>"
                 if discount_type == 'flash_sale':
                     price_line += " (Flash Sale)"
                 price_line += "\n"
 
             msg_text = (
-                f"<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> <b>{manual['title']}</b>\n\n"
+                f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>{manual['title']}</b>\n\n"
                 f"{E_TAG} <b>{labels['product']}:</b> {product_name}\n"
-                f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ”¢</tg-emoji> <b>{labels['quantity']}:</b> 1 ({manual['manual']})\n"
+                f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>{labels['quantity']}:</b> 1 ({manual['manual']})\n"
                 f"{price_line}\n"
-                f"<tg-emoji emoji-id=\"5264919878082509254\">â„¹ï¸</tg-emoji> <b>{manual['after']}:</b>\n"
+                f"<tg-emoji emoji-id=\"5264919878082509254\">ℹ️</tg-emoji> <b>{manual['after']}:</b>\n"
                 f"1. {manual['steps'][0]}\n2. {manual['steps'][1]}\n3. {manual['steps'][2]}\n\n"
-                f"<tg-emoji emoji-id=\"6186252635805323641\">ðŸ‘‡</tg-emoji> {labels['choose_payment']}:"
+                f"<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> {labels['choose_payment']}:"
             )
 
             btns = []
-            bal_text = f"<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> {labels['balance']} ({balance:,}Ä‘)"
+            bal_text = f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> {labels['balance']} ({balance:,}đ)"
             if balance >= total_price:
                 btns.append([_btn(bal_text, callback_data=f"pay_prod_bal_{prod_id}_1", style="success")])
             elif balance > 0:
@@ -1522,8 +1522,8 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await _show_store_panel(query, context, msg_text, InlineKeyboardMarkup(btns))
             return True
         
-        # AUTO PRODUCTS - Cho chá»n sá»‘ lÆ°á»£ng
-        # BUG FIX: Sáº£n pháº©m resell dÃ¹ng supplier_source_stock thay vÃ¬ stock local
+        # AUTO PRODUCTS - Cho chọn số lượng
+        # BUG FIX: Sản phẩm resell dùng supplier_source_stock thay vì stock local
         is_resell = p.get('is_supplier_source_resell', False)
         if is_resell:
             stock_count = _get_supplier_source_stock_count(p)
@@ -1534,7 +1534,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
         labels = _checkout_labels(query.from_user.id)
         if effective_stock <= 0:
-            await safe_answer(query, f"âŒ {labels['out']}", show_alert=True)
+            await safe_answer(query, f"❌ {labels['out']}", show_alert=True)
             return True
 
         _max_buy = min(effective_stock, 100) if effective_stock > 0 else 100
@@ -1542,7 +1542,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         btns = []
         row = []
         
-        # Táº¡o nÃºt 1-5 (dÃ¹ng effective_stock Ä‘á»ƒ resell luÃ´n cÃ³ nÃºt)
+        # Tạo nút 1-5 (dùng effective_stock để resell luôn có nút)
         for q in [1, 2, 3, 4, 5]:
             if q <= effective_stock:
                 row.append(_btn(f"{q}", callback_data=f"buy_prod_confirm_{prod_id}_{q}", style="success"))
@@ -1554,7 +1554,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         if row:
             btns.append(row)
             
-        # NÃºt lá»›n hÆ¡n
+        # Nút lớn hơn
         large_qty = []
         for q in [10, 20]:
             if q <= effective_stock and q > 5:
@@ -1570,11 +1570,11 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         product_name = p.get(f"name_{lang}") or p.get("name") or prod_id
 
         msg_text = (
-            f"<tg-emoji emoji-id=\"5334890573281114250\">ðŸ”¢</tg-emoji> <b>{labels['choose_qty']}</b>\n\n"
+            f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>{labels['choose_qty']}</b>\n\n"
             f"{E_TAG} {labels['product']}: {product_name}\n"
-            f"{E_TAG} {labels['unit_price']}: {p['price']:,} VNÄ\n"
+            f"{E_TAG} {labels['unit_price']}: {p['price']:,} VNĐ\n"
             f"{E_STAT} {labels['stock']}: {stock_display}\n\n"
-            f"<tg-emoji emoji-id=\"6186252635805323641\">ðŸ‘‡</tg-emoji> {labels['quantity']}:"
+            f"<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> {labels['quantity']}:"
         )
 
         await _show_store_panel(query, context, msg_text, InlineKeyboardMarkup(btns))
@@ -1595,12 +1595,12 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         labels = _checkout_labels(query.from_user.id)
         p = products.get(prod_id)
         if not p:
-            await safe_answer(query, f"âŒ {labels['missing']}", show_alert=True)
+            await safe_answer(query, f"❌ {labels['missing']}", show_alert=True)
             return True
 
         if _is_ctt_store_product(p):
             if not SOCIAL_SOURCE_API_KEY:
-                await safe_answer(query, "âŒ Nguá»“n social chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh.", show_alert=True)
+                await safe_answer(query, "❌ Nguồn social chưa được cấu hình.", show_alert=True)
                 return True
             quantity_error = _ctt_validate_purchase_quantity(p, qty)
             if quantity_error:
@@ -1612,7 +1612,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             if available_count < qty:
                 await safe_answer(
                     query,
-                    f"âŒ Nguá»“n SupplierSource chá»‰ cÃ²n {available_count} sáº£n pháº©m!",
+                    f"❌ Nguồn SupplierSource chỉ còn {available_count} sản phẩm!",
                     show_alert=True,
                 )
                 return True
@@ -1626,7 +1626,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         
         btns = []
         
-        bal_text = f"{labels['balance']} ({balance:,}Ä‘)"
+        bal_text = f"{labels['balance']} ({balance:,}đ)"
         if balance >= total_price:
             btns.append([_btn(bal_text, icon_id="5458774648621643551", callback_data=f"pay_prod_bal_{prod_id}_{qty}", style="success")])
         elif balance > 0:
@@ -1651,15 +1651,15 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
         combo_note = ""
         if 0 < balance < total_price:
-            combo_note = f"\n\n<tg-emoji emoji-id=\"5460753627817723162\">ðŸ’¡</tg-emoji> <i>Báº¡n cÃ³ thá»ƒ káº¿t há»£p vÃ­ ({balance:,}Ä‘) + chuyá»ƒn khoáº£n ({total_price - balance:,}Ä‘)</i>"
+            combo_note = f"\n\n<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> <i>Bạn có thể kết hợp ví ({balance:,}đ) + chuyển khoản ({total_price - balance:,}đ)</i>"
 
         supplier_note = ""
         if _is_ctt_store_product(p):
             minimum_quantity = _ctt_get_package_quantity(p)
             supplier_units = _ctt_get_total_supplier_quantity(p, qty)
             supplier_note = (
-                f'\n{E_STAT} ÄÆ¡n vá»‹ nguá»“n: {supplier_units:,}'
-                f'\n{E_STAT} Tá»‘i thiá»ƒu: {minimum_quantity:,} Ä‘Æ¡n vá»‹'
+                f'\n{E_STAT} Đơn vị nguồn: {supplier_units:,}'
+                f'\n{E_STAT} Tối thiểu: {minimum_quantity:,} đơn vị'
             )
 
         lang = get_user_lang(user_id)
@@ -1667,12 +1667,12 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         await _show_store_panel(
             query,
             context,
-            f'<tg-emoji emoji-id="5247134066322447995">ðŸ›</tg-emoji> <b>{labels["confirm"]}</b>\n\n'
-            f'<tg-emoji emoji-id="5240228673738527951">ðŸ·</tg-emoji> {labels["product"]}: {product_name}\n'
-            f'<tg-emoji emoji-id="5305749482170758709">0ï¸âƒ£</tg-emoji> {labels["quantity"]}: {qty}{supplier_note}\n'
-            f'<tg-emoji emoji-id="5240228673738527951">ðŸ·</tg-emoji> {labels["total"]}: {total_price:,} VNÄ{" (-" + str(discount_info["discount_percent"]) + "%)" if discount_type else ""}'
+            f'<tg-emoji emoji-id="5247134066322447995">🛍</tg-emoji> <b>{labels["confirm"]}</b>\n\n'
+            f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> {labels["product"]}: {product_name}\n'
+            f'<tg-emoji emoji-id="5305749482170758709">0️⃣</tg-emoji> {labels["quantity"]}: {qty}{supplier_note}\n'
+            f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> {labels["total"]}: {total_price:,} VNĐ{" (-" + str(discount_info["discount_percent"]) + "%)" if discount_type else ""}'
             f'{combo_note}\n\n'
-            f'<tg-emoji emoji-id="6186252635805323641">ðŸ‘‡</tg-emoji> {labels["choose_payment"]}:',
+            f'<tg-emoji emoji-id="6186252635805323641">👇</tg-emoji> {labels["choose_payment"]}:',
             InlineKeyboardMarkup(btns),
         )
         return True
@@ -1682,26 +1682,26 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         prod_id = data.replace("custom_qty_", "")
         p = products.get(prod_id)
         if not p:
-            await safe_answer(query, "âŒ Sáº£n pháº©m khÃ´ng tá»“n táº¡i!", show_alert=True)
+            await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
 
         if _is_ctt_store_product(p):
             if not SOCIAL_SOURCE_API_KEY:
-                await safe_answer(query, "âŒ Nguá»“n social chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh.", show_alert=True)
+                await safe_answer(query, "❌ Nguồn social chưa được cấu hình.", show_alert=True)
                 return True
             minimum_quantity = _ctt_get_package_quantity(p)
             max_quantity = _ctt_get_max_package_purchase(p)
             quantity_error = _ctt_validate_purchase_quantity(p, minimum_quantity)
             if max_quantity <= 0 or quantity_error:
-                await safe_answer(query, quantity_error or "âŒ Dá»‹ch vá»¥ social hiá»‡n chÆ°a sáºµn sÃ ng.", show_alert=True)
+                await safe_answer(query, quantity_error or "❌ Dịch vụ social hiện chưa sẵn sàng.", show_alert=True)
                 return True
             stock_count = max_quantity
             _max_text = str(max_quantity)
-        # BUG FIX: Sáº£n pháº©m resell dÃ¹ng supplier_source_stock
+        # BUG FIX: Sản phẩm resell dùng supplier_source_stock
         elif p.get('is_supplier_source_resell'):
             stock_count = _get_supplier_source_stock_count(p)
             if stock_count <= 0:
-                await safe_answer(query, "âŒ Sáº£n pháº©m hiá»‡n Ä‘ang háº¿t hÃ ng!", show_alert=True)
+                await safe_answer(query, "❌ Sản phẩm hiện đang hết hàng!", show_alert=True)
                 return True
             _max_text = str(stock_count)
         else:
@@ -1712,19 +1712,19 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         context.user_data['state'] = f'awaiting_custom_qty:{prod_id}'
         social_min_line = ""
         if _is_ctt_store_product(p):
-            social_min_line = f"{E_STAT} <b>Tá»‘i thiá»ƒu:</b> {minimum_quantity:,}\n"
+            social_min_line = f"{E_STAT} <b>Tối thiểu:</b> {minimum_quantity:,}\n"
         
         await _show_store_panel(
             query,
             context,
-            f"<tg-emoji emoji-id=\"5350752364246606166\">âœï¸</tg-emoji> <b>NHáº¬P Sá» LÆ¯á»¢NG Tá»° CHá»ŒN</b>\n\n"
-            f"{E_TAG} <b>Sáº£n pháº©m:</b> {p['name']}\n"
-            f"{E_TAG} <b>ÄÆ¡n giÃ¡:</b> {p['price']:,} VNÄ{' / Ä‘Æ¡n vá»‹' if _is_ctt_store_product(p) else ''}\n"
-            f"{E_STAT} <b>{'Giá»›i háº¡n sá»‘ lÆ°á»£ng' if _is_ctt_store_product(p) else 'Tá»“n kho'}:</b> {stock_count}\n"
+            f"<tg-emoji emoji-id=\"5350752364246606166\">✏️</tg-emoji> <b>NHẬP SỐ LƯỢNG TỰ CHỌN</b>\n\n"
+            f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
+            f"{E_TAG} <b>Đơn giá:</b> {p['price']:,} VNĐ{' / đơn vị' if _is_ctt_store_product(p) else ''}\n"
+            f"{E_STAT} <b>{'Giới hạn số lượng' if _is_ctt_store_product(p) else 'Tồn kho'}:</b> {stock_count}\n"
             f"{social_min_line}"
-            f"<tg-emoji emoji-id=\"6186252635805323641\">ðŸ‘‰</tg-emoji> Vui lÃ²ng <b>nháº­p sá»‘ lÆ°á»£ng</b> muá»‘n mua:\n\n"
-            f"<i>VÃ­ dá»¥: Nháº­p 1000 náº¿u muá»‘n server cháº¡y Ä‘Ãºng 1000 Ä‘Æ¡n vá»‹</i>",
-            InlineKeyboardMarkup([[_btn("Há»§y", icon_id="5273914604752216432", callback_data=f"sel_qty_{prod_id}", style="danger")]]),
+            f"<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Vui lòng <b>nhập số lượng</b> muốn mua:\n\n"
+            f"<i>Ví dụ: Nhập 1000 nếu muốn server chạy đúng 1000 đơn vị</i>",
+            InlineKeyboardMarkup([[_btn("Hủy", icon_id="5273914604752216432", callback_data=f"sel_qty_{prod_id}", style="danger")]]),
         )
         return True
 
@@ -1742,7 +1742,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         
         p = products.get(prod_id)
         if not p:
-            await safe_answer(query, "âŒ Sáº£n pháº©m khÃ´ng tá»“n táº¡i!", show_alert=True)
+            await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
 
         if p.get('is_supplier_source_resell'):
@@ -1750,7 +1750,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             if available_count < qty:
                 await safe_answer(
                     query,
-                    f"âŒ Nguá»“n SupplierSource chá»‰ cÃ²n {available_count} sáº£n pháº©m!",
+                    f"❌ Nguồn SupplierSource chỉ còn {available_count} sản phẩm!",
                     show_alert=True,
                 )
                 return True
@@ -1770,32 +1770,32 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         balance = user_info.get('balance', 0) if user_info else 0
         
         if balance < total_price:
-            await safe_answer(query, "âŒ Sá»‘ dÆ° khÃ´ng Ä‘á»§!", show_alert=True)
+            await safe_answer(query, "❌ Số dư không đủ!", show_alert=True)
             return True
 
         if _is_ctt_store_product(p):
             return await _begin_ctt_checkout_collection(query, context, prod_id, qty, "balance")
 
-        # FIX: Check requires_gmail TRÆ¯á»šC Ä‘á»ƒ bá» qua stock check náº¿u manual
+        # FIX: Check requires_gmail TRƯỚC để bỏ qua stock check nếu manual
         requires_gmail = p.get('requires_gmail', False)
         
         if not requires_gmail:
-            # Chá»‰ check stock cho AUTO products (KHÃ”NG pháº£i resell)
-            # Resell products mua real-time tá»« API, khÃ´ng cáº§n check local stock
+            # Chỉ check stock cho AUTO products (KHÔNG phải resell)
+            # Resell products mua real-time từ API, không cần check local stock
             if not p.get('is_supplier_source_resell'):
                 available_count = int(get_local_stock_available_count(p) or 0)
                 if available_count < qty:
-                    await safe_answer(query, f"âŒ Chá»‰ cÃ²n {available_count} sáº£n pháº©m, khÃ´ng Ä‘á»§ sá»‘ lÆ°á»£ng {qty}!", show_alert=True)
+                    await safe_answer(query, f"❌ Chỉ còn {available_count} sản phẩm, không đủ số lượng {qty}!", show_alert=True)
                     return True
         
         if requires_gmail:
-            # FLOW Má»šI: Há»i email â†’ BÃ¡o Admin â†’ Admin xá»­ lÃ½
+            # FLOW MỚI: Hỏi email → Báo Admin → Admin xử lý
             
-            # Trá»« tiá»n trÆ°á»›c
+            # Trừ tiền trước
             new_balance = balance - total_price
             db_update_balance(user_id, new_balance)
             
-            # LÆ°u thÃ´ng tin táº¡m thá»i & GLOBAL (Persistent)
+            # Lưu thông tin tạm thời & GLOBAL (Persistent)
             order_code = await generate_unique_order_code(
                 prefix="MANUAL",
                 length=8,
@@ -1807,12 +1807,12 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             pending_manual_orders[order_code] = {
                 'order_code': order_code,
                 'user_id': user_id,
-                'email': None, # ChÆ°a cÃ³ email
+                'email': None, # Chưa có email
                 'product_id': prod_id,
                 'product_name': p['name'],
                 'quantity': qty,
                 'amount': total_price,
-                'status': 'awaiting_email', # Tráº¡ng thÃ¡i chá» email
+                'status': 'awaiting_email', # Trạng thái chờ email
                 'timestamp': time.time(),
                 'full_name': update.effective_user.full_name,
                 'coupon_code': store_coupon_code,
@@ -1827,38 +1827,38 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             context.user_data['state'] = 'awaiting_manual_email'
             
             await query.message.reply_text(
-                f"{E_SUCCESS} <b>ÄÃƒ TRá»ª TIá»€N THÃ€NH CÃ”NG!</b>\n\n"
-                f"{E_TAG} <b>Sáº£n pháº©m:</b> {p['name']}\n"
-                f"{E_TAG} <b>ÄÃ£ trá»«:</b> {total_price:,} VNÄ\n"
-                f"<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> <b>Sá»‘ dÆ° cÃ²n:</b> {new_balance:,} VNÄ\n\n"
-                f"{E_GLOBE} <b>Vui lÃ²ng nháº­p email nháº­n dá»‹ch vá»¥:</b>\n"
-                f"<i>(Email nÃ y sáº½ Ä‘Æ°á»£c dÃ¹ng Ä‘á»ƒ setup/gá»­i thÃ´ng tin)</i>",
+                f"{E_SUCCESS} <b>ĐÃ TRỪ TIỀN THÀNH CÔNG!</b>\n\n"
+                f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
+                f"{E_TAG} <b>Đã trừ:</b> {total_price:,} VNĐ\n"
+                f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Số dư còn:</b> {new_balance:,} VNĐ\n\n"
+                f"{E_GLOBE} <b>Vui lòng nhập email nhận dịch vụ:</b>\n"
+                f"<i>(Email này sẽ được dùng để setup/gửi thông tin)</i>",
                 parse_mode='HTML'
             )
             
-            # Edit message vÃ  lÆ°u message_id Ä‘á»ƒ xÃ³a sau
+            # Edit message và lưu message_id để xóa sau
             waiting_msg = await query.edit_message_text(
-                "<tg-emoji emoji-id=\"5213349767672769194\">â³</tg-emoji> <b>CHá»œ NHáº¬P EMAIL...</b>",
+                "<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <b>CHỜ NHẬP EMAIL...</b>",
                 reply_markup=None
             )
             context.user_data['waiting_message_id'] = waiting_msg.message_id
             context.user_data['waiting_chat_id'] = waiting_msg.chat_id
             
-            # Gá»­i thÃ´ng bÃ¡o cho admin ráº±ng Ä‘ang chá» email
+            # Gửi thông báo cho admin rằng đang chờ email
             admin_notif = await context.bot.send_message(
                 ADMIN_USER_ID,
-                f"<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> <b>ÄÃƒ NHáº¬N THANH TOÃN - ÄÆ N MANUAL</b>\n"
-                f"<tg-emoji emoji-id=\"5972022360025336988\">ðŸ”¸</tg-emoji> MÃ£: {order_code}\n"
-                f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> SP: {p['name']}\n"
-                f"<tg-emoji emoji-id=\"5278467510604160626\">ðŸ’°</tg-emoji> {total_price:,} VNÄ\n"
-                f"<tg-emoji emoji-id=\"5213349767672769194\">â³</tg-emoji> Äang chá» khÃ¡ch nháº­p email...",
+                f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>ĐÃ NHẬN THANH TOÁN - ĐƠN MANUAL</b>\n"
+                f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> Mã: {order_code}\n"
+                f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> SP: {p['name']}\n"
+                f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> {total_price:,} VNĐ\n"
+                f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Đang chờ khách nhập email...",
                 parse_mode='HTML'
             )
-            # LÆ°u message_id cá»§a thÃ´ng bÃ¡o admin Ä‘á»ƒ update sau
+            # Lưu message_id của thông báo admin để update sau
             context.user_data['admin_waiting_message_id'] = admin_notif.message_id
             return True
         
-        # FLOW CÅ¨: Giao hÃ ng tá»± Ä‘á»™ng & AUTO RESELL
+        # FLOW CŨ: Giao hàng tự động & AUTO RESELL
         # Check Auto Resell first
         is_resell = p.get('is_supplier_source_resell', False)
         items_bought = []
@@ -1869,27 +1869,27 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         
         if is_resell:
             # === AUTO RESELL FLOW ===
-            # 1. Trá»« tiá»n trÆ°á»›c (Ä‘á»ƒ trÃ¡nh spam)
+            # 1. Trừ tiền trước (để tránh spam)
             new_balance = balance - total_price
             db_update_balance(user_id, new_balance, reason=f"Purchase Resell: {p['name']} x{qty}")
             
-            # 2. Gá»i API nguá»“n qua dispatcher (SupplierSource / SupplierCatalog)
+            # 2. Gọi API nguồn qua dispatcher (SupplierSource / SupplierCatalog)
             supplier_source_product_id = p.get('supplier_source_product_id')
             supplier_source_variant_id = p.get('supplier_source_variant_id')
             
-            # ThÃ´ng bÃ¡o user Ä‘ang xá»­ lÃ½
-            processing_msg = await query.message.reply_text("<tg-emoji emoji-id=\"5213349767672769194\">â³</tg-emoji> Äang káº¿t ná»‘i Ä‘áº¿n kho hÃ ng Ä‘á»‘i tÃ¡c...")
+            # Thông báo user đang xử lý
+            processing_msg = await query.message.reply_text("<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Đang kết nối đến kho hàng đối tác...")
             
             supplier_source_result = await supplier_create_order(p, qty)
             
-            # XÃ³a tin nháº¯n waiting
+            # Xóa tin nhắn waiting
             try:
                 await context.bot.delete_message(chat_id=processing_msg.chat_id, message_id=processing_msg.message_id)
             except (Forbidden, BadRequest) as e:
                 logger.debug(f"Cannot delete supplier processing message: {e}")
 
             if not supplier_source_result.get("success"):
-                # Lá»—i API -> HoÃ n tiá»n ngay láº­p tá»©c
+                # Lỗi API -> Hoàn tiền ngay lập tức
                 db_update_balance(user_id, balance, reason=f"Refund: Supplier API Error {p['name']}")
                 error = supplier_source_result.get("error", "Unknown")
                 failed_order_code = await generate_unique_order_code(
@@ -1902,8 +1902,8 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                     order_code=failed_order_code,
                     user_id=user_id,
                     amount=total_price,
-                    product_name=p.get("name", "Sáº£n pháº©m"),
-                    reason=f"Lá»—i nguá»“n cung cáº¥p: {error}",
+                    product_name=p.get("name", "Sản phẩm"),
+                    reason=f"Lỗi nguồn cung cấp: {error}",
                     order_data={
                         "product_id": prod_id,
                         "quantity": qty,
@@ -1913,27 +1913,27 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                         "delivery_method": "supplier_failed",
                     },
                 )
-                await safe_answer(query, "âŒ Sáº£n pháº©m nguá»“n táº¡m thá»i khÃ´ng thá»ƒ giao dá»‹ch. ÄÃ£ hoÃ n tiá»n vÃ o vÃ­!", show_alert=True)
+                await safe_answer(query, "❌ Sản phẩm nguồn tạm thời không thể giao dịch. Đã hoàn tiền vào ví!", show_alert=True)
                 
                 # Notify Admin
                 await safe_send_admin(
                     context.bot,
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">ðŸš¨</tg-emoji> <b>Lá»–I NGUá»’N CUNG Cáº¤P KHI MUA Báº°NG Sá» DÆ¯</b>\n"
+                    f"<tg-emoji emoji-id=\"5447644880824181073\">🚨</tg-emoji> <b>LỖI NGUỒN CUNG CẤP KHI MUA BẰNG SỐ DƯ</b>\n"
                     f"User: <code>{user_id}</code>\n"
-                    f"ÄÆ¡n: <code>{failed_order_code}</code>\n"
+                    f"Đơn: <code>{failed_order_code}</code>\n"
                     f"SP: {html.escape(p['name'])}\n"
-                    f"Lá»—i: <code>{html.escape(str(error))}</code>",
+                    f"Lỗi: <code>{html.escape(str(error))}</code>",
                 )
                 return True
             
-            # ThÃ nh cÃ´ng -> Parse content
+            # Thành công -> Parse content
             supplier_source_orders = supplier_source_result.get("data", [])
             for dm_order in supplier_source_orders:
                 delivered = dm_order.get("deliveredContent")
                 if delivered:
                     items_bought.extend(normalize_delivered_items(delivered))
             
-            # Náº¿u khÃ´ng cÃ³ content (API tráº£ vá» success nhÆ°ng chÆ°a giao hÃ ng) -> Thá»­ láº¥y detail
+            # Nếu không có content (API trả về success nhưng chưa giao hàng) -> Thử lấy detail
             if not items_bought:
                  # Retry logic or wait logic similar to check_payment_job if needed
                  # For simplicity in balance payment (synchronous feel), we try one more fetch
@@ -1973,12 +1973,12 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             db_update_balance(user_id, new_balance, reason=f"Purchase: {p['name']} x{actual_qty} (refunded {refunded_qty} duplicates)")
 
         
-        # === CHUNG CHO Cáº¢ 2 FLOW (Delivery & Logging) ===
+        # === CHUNG CHO CẢ 2 FLOW (Delivery & Logging) ===
         if not items_bought and is_resell:
-             # TrÆ°á»ng há»£p SupplierSource success mÃ  chÆ°a cÃ³ hÃ ng ngay -> BÃ¡o user chá»
-             # Log order vá»›i status pending? 
+             # Trường hợp SupplierSource success mà chưa có hàng ngay -> Báo user chờ
+             # Log order với status pending? 
              # Here let's assume worst case handled or manual check needed
-             await query.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> ÄÆ¡n hÃ ng Ä‘Ã£ táº¡o nhÆ°ng há»‡ thá»‘ng nguá»“n chÆ°a tráº£ hÃ ng. Vui lÃ²ng liÃªn há»‡ Admin Ä‘á»c MÃ£ ÄÆ¡n HÃ ng.")
+             await query.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng đã tạo nhưng hệ thống nguồn chưa trả hàng. Vui lòng liên hệ Admin đọc Mã Đơn Hàng.")
 
         # Log Order
         order_code = await generate_unique_order_code(
@@ -1991,9 +1991,9 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             "user_id": user_id,
             "email": "N/A",
             "amount": charged_amount,
-            "status": "HoÃ n thÃ nh",
+            "status": "Hoàn thành",
             "type": "store_product",
-            "link": "Resell Product" if is_resell else "Sáº£n pháº©m khÃ¡c",
+            "link": "Resell Product" if is_resell else "Sản phẩm khác",
             "timestamp": time.time(),
             "coupon_used": store_coupon_code or "",
             "refunded_at": 0,
@@ -2009,7 +2009,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         }
         order_data["delivery_method"] = "pending"
         if not items_bought and is_resell:
-            order_data["status"] = "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Chá» giao tá»« nguá»“n (Resell)"
+            order_data["status"] = "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Chờ giao từ nguồn (Resell)"
             order_data["delivery_method"] = "pending_source"
         db_add_order(order_data)
         if store_coupon_code and store_coupon_code in coupons:
@@ -2020,24 +2020,24 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             record_promo_cost(total_discount, 'order_discount')
         await save_data() # Save orders
 
-        # Delivery Message - LuÃ´n gá»­i file .txt
+        # Delivery Message - Luôn gửi file .txt
         delivery_notice = (
-            f"{E_TIP} <b>Há»‡ thá»‘ng Ä‘ang gá»­i thÃ´ng tin tÃ i khoáº£n ngay sau tin nháº¯n nÃ y...</b>"
+            f"{E_TIP} <b>Hệ thống đang gửi thông tin tài khoản ngay sau tin nhắn này...</b>"
             if items_bought
-            else f"{E_TIP} <b>ÄÆ¡n nÃ y Ä‘ang chá» giao hÃ ng. Admin sáº½ há»— trá»£ sá»›m nháº¥t.</b>"
+            else f"{E_TIP} <b>Đơn này đang chờ giao hàng. Admin sẽ hỗ trợ sớm nhất.</b>"
         )
         refund_notice = ""
         if refunded_qty > 0:
-            refund_notice = f"\n<tg-emoji emoji-id=\"5863724849851011383\">ðŸ’¸</tg-emoji> <b>Thiáº¿u sáº£n pháº©m:</b> KhÃ´ng tÃ­nh tiá»n {refunded_qty} sáº£n pháº©m ({refund_amount:,} VNÄ)\n"
+            refund_notice = f"\n<tg-emoji emoji-id=\"5863724849851011383\">💸</tg-emoji> <b>Thiếu sản phẩm:</b> Không tính tiền {refunded_qty} sản phẩm ({refund_amount:,} VNĐ)\n"
         info_msg = (
-            f"{E_SUCCESS} <b>MUA HÃ€NG THÃ€NH CÃ”NG!</b>\n\n"
-            f"{E_TAG} <b>Sáº£n pháº©m:</b> {p['name']}\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">ðŸ“¦</tg-emoji> <b>Sá»‘ lÆ°á»£ng:</b> {actual_qty}"
-            f"{' (Thiáº¿u ' + str(refunded_qty) + ' sáº£n pháº©m)' if refunded_qty > 0 else ''}\n"
-            f"{E_LOADING} <b>Thá»i háº¡n:</b> {p.get('duration', 'N/A')}\n"
-            f"<tg-emoji emoji-id=\"5197288647275071607\">ðŸ›¡ï¸</tg-emoji> <b>Báº£o hÃ nh:</b> {p.get('warranty', 'KhÃ´ng')}\n"
-            f"{E_TAG} <b>Thanh toÃ¡n thá»±c táº¿:</b> {charged_amount:,} VNÄ\n"
-            f"<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> <b>Sá»‘ dÆ° cÃ²n láº¡i:</b> {new_balance:,} VNÄ"
+            f"{E_SUCCESS} <b>MUA HÀNG THÀNH CÔNG!</b>\n\n"
+            f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
+            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Số lượng:</b> {actual_qty}"
+            f"{' (Thiếu ' + str(refunded_qty) + ' sản phẩm)' if refunded_qty > 0 else ''}\n"
+            f"{E_LOADING} <b>Thời hạn:</b> {p.get('duration', 'N/A')}\n"
+            f"<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>Bảo hành:</b> {p.get('warranty', 'Không')}\n"
+            f"{E_TAG} <b>Thanh toán thực tế:</b> {charged_amount:,} VNĐ\n"
+            f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Số dư còn lại:</b> {new_balance:,} VNĐ"
             f"{refund_notice}\n\n"
             f"{delivery_notice}"
         )
@@ -2049,26 +2049,26 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             purchase_date = datetime.fromtimestamp(time.time()).strftime('%d/%m/%Y %H:%M:%S')
             product_description_txt = format_product_description_for_txt(p)
             file_content = "="*60 + "\n"
-            file_content += "           THÃ”NG TIN ÄÆ N HÃ€NG\n"
+            file_content += "           THÔNG TIN ĐƠN HÀNG\n"
             file_content += "="*60 + "\n\n"
-            file_content += f"MÃ£ Ä‘Æ¡n hÃ ng    : {order_code}\n"
-            file_content += f"NgÃ y mua       : {purchase_date}\n"
-            file_content += f"Sáº£n pháº©m       : {p['name']}\n"
-            file_content += f"Sá»‘ lÆ°á»£ng       : {actual_qty}\n"
+            file_content += f"Mã đơn hàng    : {order_code}\n"
+            file_content += f"Ngày mua       : {purchase_date}\n"
+            file_content += f"Sản phẩm       : {p['name']}\n"
+            file_content += f"Số lượng       : {actual_qty}\n"
             if refunded_qty > 0:
-                file_content += f"Thiáº¿u sáº£n pháº©m : {refunded_qty}\n"
-                file_content += f"KhÃ´ng tÃ­nh tiá»n: {refund_amount:,} VND\n"
-            file_content += f"Thanh toÃ¡n     : {charged_amount:,} VND\n"
+                file_content += f"Thiếu sản phẩm : {refunded_qty}\n"
+                file_content += f"Không tính tiền: {refund_amount:,} VND\n"
+            file_content += f"Thanh toán     : {charged_amount:,} VND\n"
             if product_description_txt:
-                file_content += f"\nMÃ´ táº£ sáº£n pháº©m:\n{product_description_txt}\n\n"
-            file_content += f"Thá»i háº¡n       : {p.get('duration', 'N/A')}\n"
-            file_content += f"Báº£o hÃ nh       : {p.get('warranty', 'KhÃ´ng')}\n"
+                file_content += f"\nMô tả sản phẩm:\n{product_description_txt}\n\n"
+            file_content += f"Thời hạn       : {p.get('duration', 'N/A')}\n"
+            file_content += f"Bảo hành       : {p.get('warranty', 'Không')}\n"
             file_content += "\n" + "="*60 + "\n"
-            file_content += "           DANH SÃCH TÃ€I KHOáº¢N\n"
+            file_content += "           DANH SÁCH TÀI KHOẢN\n"
             file_content += "="*60 + "\n\n"
             for idx_f, item_f in enumerate(items_bought, 1):
-                file_content += f"TÃ i khoáº£n {idx_f}:\n{item_f}\n\n"
-            file_content += "Cáº£m Æ¡n quÃ½ khÃ¡ch Ä‘Ã£ mua hÃ ng. ChÃºc quÃ½ khÃ¡ch sá»­ dá»¥ng dá»‹ch vá»¥ vui váº»!\n"
+                file_content += f"Tài khoản {idx_f}:\n{item_f}\n\n"
+            file_content += "Cảm ơn quý khách đã mua hàng. Chúc quý khách sử dụng dịch vụ vui vẻ!\n"
             file_content += "\n" + "="*60 + "\n"
             
             delivery_result = await deliver_items_as_txt(
@@ -2078,44 +2078,44 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 items_bought,
                 file_content=file_content,
                 file_prefix="DonHang",
-                caption_html=f"<tg-emoji emoji-id=\"5373251851074415873\">ðŸ“‹</tg-emoji> <b>File tÃ i khoáº£n</b>\nMÃ£ Ä‘Æ¡n: <code>{order_code}</code>",
+                caption_html=f"<tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> <b>File tài khoản</b>\nMã đơn: <code>{order_code}</code>",
                 reply_markup=create_success_menu(),
             )
             order_data["delivery_method"] = delivery_result.get("method", "failed")
             await save_data(force=True, tables=[HISTORY_FILE])
             if not delivery_result.get("delivered"):
-                order_data["status"] = "<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Chá» gá»­i thá»§ cÃ´ng (Store Balance)"
+                order_data["status"] = "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Chờ gửi thủ công (Store Balance)"
                 await safe_send_admin(
                     context.bot,
                     f"{E_SOS} <b>DELIVERY FAILED (STORE BALANCE)</b>\n"
-                    f"{E_ID} ÄÆ¡n: <code>{order_code}</code>\n"
+                    f"{E_ID} Đơn: <code>{order_code}</code>\n"
                     f"{E_USER} User: <code>{user_id}</code>\n"
                     f"{E_TAG} SP: {html.escape(p['name'])} x{qty}\n"
-                    f"{E_STAT} Fallback gá»­i: {delivery_result.get('sent_items', 0)}/{len(items_bought)} items\n"
+                    f"{E_STAT} Fallback gửi: {delivery_result.get('sent_items', 0)}/{len(items_bought)} items\n"
                     f"{E_ERROR} Errors: <code>{html.escape(' | '.join(delivery_result.get('errors', [])[-3:]) or 'n/a')}</code>",
                 )
                 await safe_send_message(
                     context,
                     user_id,
-                    f"âŒ CÃ³ lá»—i khi gá»­i file tÃ i khoáº£n cho Ä‘Æ¡n <code>{order_code}</code>.\n"
-                    "Admin Ä‘Ã£ nháº­n cáº£nh bÃ¡o vÃ  sáº½ gá»­i thá»§ cÃ´ng sá»›m nháº¥t.",
+                    f"❌ Có lỗi khi gửi file tài khoản cho đơn <code>{order_code}</code>.\n"
+                    "Admin đã nhận cảnh báo và sẽ gửi thủ công sớm nhất.",
                     parse_mode=ParseMode.HTML,
                     reply_markup=create_success_menu(),
                 )
                 await save_data(force=True, tables=[HISTORY_FILE])
         else:
-            await query.message.reply_text("<i>LiÃªn há»‡ Admin Ä‘á»ƒ nháº­n hÃ ng</i>", parse_mode='HTML')
+            await query.message.reply_text("<i>Liên hệ Admin để nhận hàng</i>", parse_mode='HTML')
             await safe_send_admin(
                 context.bot,
-                f"{E_TIP} <b>ÄÆ N CHá»œ GIAO Tá»ª NGUá»’N</b>\n"
-                f"{E_ID} ÄÆ¡n: <code>{order_code}</code>\n"
+                f"{E_TIP} <b>ĐƠN CHỜ GIAO TỪ NGUỒN</b>\n"
+                f"{E_ID} Đơn: <code>{order_code}</code>\n"
                 f"{E_USER} User: <code>{user_id}</code>\n"
                 f"{E_TAG} SP: {html.escape(p['name'])} x{qty}\n"
-                f"{E_STAT} Tráº¡ng thÃ¡i: {html.escape(order_data.get('status', 'pending'))}",
+                f"{E_STAT} Trạng thái: {html.escape(order_data.get('status', 'pending'))}",
             )
         
         await query.edit_message_text(
-            f"{E_SUCCESS} <b>ÄÃƒ THANH TOÃN THÃ€NH CÃ”NG</b>\n\nCáº£m Æ¡n báº¡n Ä‘Ã£ mua hÃ ng!",
+            f"{E_SUCCESS} <b>ĐÃ THANH TOÁN THÀNH CÔNG</b>\n\nCảm ơn bạn đã mua hàng!",
             reply_markup=create_back_button_menu()
         )
         
@@ -2181,14 +2181,14 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
         p = products.get(prod_id)
         if not p:
-            await safe_answer(query, "âŒ Sáº£n pháº©m khÃ´ng tá»“n táº¡i!", show_alert=True)
+            await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
         if p.get('is_supplier_source_resell'):
             available_count = _get_supplier_source_stock_count(p)
             if available_count < qty:
                 await safe_answer(
                     query,
-                    f"âŒ Nguá»“n SupplierSource chá»‰ cÃ²n {available_count} sáº£n pháº©m!",
+                    f"❌ Nguồn SupplierSource chỉ còn {available_count} sản phẩm!",
                     show_alert=True,
                 )
                 return True
@@ -2196,13 +2196,13 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         user_id = update.effective_user.id
         pending_code, pending_detail = await get_user_pending_order(user_id)
         if pending_code:
-            await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Báº¡n Ä‘ang cÃ³ Ä‘Æ¡n {pending_code} chÆ°a hoÃ n thÃ nh! Vui lÃ²ng hoÃ n táº¥t hoáº·c há»§y Ä‘Æ¡n cÅ© trÆ°á»›c.", show_alert=True)
+            await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Bạn đang có đơn {pending_code} chưa hoàn thành! Vui lòng hoàn tất hoặc hủy đơn cũ trước.", show_alert=True)
             return True
         user_info = db_get_user(user_id)
         balance = user_info.get('balance', 0) if user_info else 0
 
         if balance <= 0:
-            await safe_answer(query, "âŒ Sá»‘ dÆ° vÃ­ báº±ng 0!", show_alert=True)
+            await safe_answer(query, "❌ Số dư ví bằng 0!", show_alert=True)
             return True
 
         if _is_ctt_store_product(p):
@@ -2216,7 +2216,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             total_price = unit_price * qty
 
         if balance >= total_price:
-            await safe_answer(query, "<tg-emoji emoji-id=\"5213403875670765022\">ðŸ’³</tg-emoji> Sá»‘ dÆ° Ä‘á»§! HÃ£y chá»n thanh toÃ¡n báº±ng sá»‘ dÆ°.", show_alert=True)
+            await safe_answer(query, "<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư đủ! Hãy chọn thanh toán bằng số dư.", show_alert=True)
             return True
 
         balance_used = balance
@@ -2232,13 +2232,13 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 async with lock:
                     available_count = int(get_local_stock_available_count(products.get(prod_id)) or 0)
                     if available_count < qty:
-                        await safe_answer(query, "âŒ Sá»‘ lÆ°á»£ng yÃªu cáº§u vÆ°á»£t quÃ¡ tá»“n kho!", show_alert=True)
+                        await safe_answer(query, "❌ Số lượng yêu cầu vượt quá tồn kho!", show_alert=True)
                         return True
         else:
             pending_count = sum(1 for o in pending_manual_orders.values() if o.get('product_id') == prod_id)
             max_pending = p.get('max_pending_orders', 10)
             if pending_count >= max_pending:
-                await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Admin Ä‘ang báº­n ({pending_count}/{max_pending})!", show_alert=True)
+                await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Admin đang bận ({pending_count}/{max_pending})!", show_alert=True)
                 return True
 
         db_update_balance(user_id, 0, reason=f"Combo payment: -{balance_used:,} for {prod_id}")
@@ -2265,12 +2265,12 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
         p = products.get(prod_id)
         if not p:
-            await safe_answer(query, "âŒ Sáº£n pháº©m khÃ´ng tá»“n táº¡i!", show_alert=True)
+            await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
         if p.get('is_supplier_source_resell'):
             available_count = _get_supplier_source_stock_count(p)
             if available_count < qty:
-                await safe_answer(query, f"âŒ Nguá»“n SupplierSource chá»‰ cÃ²n {available_count} sáº£n pháº©m!", show_alert=True)
+                await safe_answer(query, f"❌ Nguồn SupplierSource chỉ còn {available_count} sản phẩm!", show_alert=True)
                 return True
 
         from app.handlers.payment_generation import generate_product_payment_usdt_trc20
@@ -2285,7 +2285,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
     elif data.startswith("pay_prod_binance_"):
         await safe_answer(
             query,
-            "Binance Pay Ä‘Ã£ Ä‘Æ°á»£c thay tháº¿ báº±ng USDT. Vui lÃ²ng chá»n USDT (Binance ID / BEP20).",
+            "Binance Pay đã được thay thế bằng USDT. Vui lòng chọn USDT (Binance ID / BEP20).",
             show_alert=True,
         )
         return True
@@ -2303,21 +2303,21 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
         p = products.get(prod_id)
         if not p:
-            await safe_answer(query, "âŒ Sáº£n pháº©m khÃ´ng tá»“n táº¡i!", show_alert=True)
+            await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
         if p.get('is_supplier_source_resell'):
             available_count = _get_supplier_source_stock_count(p)
             if available_count < qty:
                 await safe_answer(
                     query,
-                    f"âŒ Nguá»“n SupplierSource chá»‰ cÃ²n {available_count} sáº£n pháº©m!",
+                    f"❌ Nguồn SupplierSource chỉ còn {available_count} sản phẩm!",
                     show_alert=True,
                 )
                 return True
 
         pending_code, pending_detail = await get_user_pending_order(update.effective_user.id)
         if pending_code:
-            await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Báº¡n Ä‘ang cÃ³ Ä‘Æ¡n {pending_code} chÆ°a hoÃ n thÃ nh! Vui lÃ²ng hoÃ n táº¥t hoáº·c há»§y Ä‘Æ¡n cÅ© trÆ°á»›c.", show_alert=True)
+            await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Bạn đang có đơn {pending_code} chưa hoàn thành! Vui lòng hoàn tất hoặc hủy đơn cũ trước.", show_alert=True)
             return True
 
         if _is_ctt_store_product(p):
@@ -2326,24 +2326,24 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         requires_gmail = p.get('requires_gmail', False)
         
         if not requires_gmail:
-            # Auto product - pháº£i cÃ³ stock vá»›i lock protection
-            # NHÆ¯NG skip cho resell products (mua real-time tá»« API)
+            # Auto product - phải có stock với lock protection
+            # NHƯNG skip cho resell products (mua real-time từ API)
             if not p.get('is_supplier_source_resell'):
                 lock = await get_product_lock(prod_id)
                 async with lock:
                     available_count = int(get_local_stock_available_count(products.get(prod_id)) or 0)
                     if available_count < qty:
-                        await safe_answer(query, "âŒ Sá»‘ lÆ°á»£ng yÃªu cáº§u vÆ°á»£t quÃ¡ tá»“n kho!", show_alert=True)
+                        await safe_answer(query, "❌ Số lượng yêu cầu vượt quá tồn kho!", show_alert=True)
                         return True
                     # Stock check passed - proceed to create QR (stock will be reserved in pending_orders)
-            # Resell products: Skip local stock check, sáº½ mua tá»« SupplierSource khi thanh toÃ¡n
+            # Resell products: Skip local stock check, sẽ mua từ SupplierSource khi thanh toán
         else:
             # Manual product - check pending limit
             pending_count = sum(1 for o in pending_manual_orders.values() if o.get('product_id') == prod_id)
             max_pending = p.get('max_pending_orders', 10)
             
             if pending_count >= max_pending:
-                await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> Admin Ä‘ang báº­n ({pending_count}/{max_pending})!", show_alert=True)
+                await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Admin đang bận ({pending_count}/{max_pending})!", show_alert=True)
                 return True
              
         qr_sent = await generate_product_payment_qr(update, context, prod_id, qty)

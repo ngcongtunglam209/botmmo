@@ -1,5 +1,5 @@
 # ==============================================================================
-#  Cáº¤U HÃŒNH BOT
+#  CẤU HÌNH BOT
 # ==============================================================================
 import os, sys, time, re, logging, json
 from decimal import Decimal, InvalidOperation
@@ -26,25 +26,25 @@ def get_env_float(name: str, default: float, minimum: float = 0.0) -> float:
 
 
 # ==============================================================================
-#  LOAD .ENV FILE â€” Táº¥t cáº£ secrets pháº£i náº±m trong file .env
+#  LOAD .ENV FILE — Tất cả secrets phải nằm trong file .env
 # ==============================================================================
 from dotenv import load_dotenv
 import hashlib as _hashlib
 import secrets as _secrets
-load_dotenv(override=True)  # Load .env tá»« thÆ° má»¥c hiá»‡n táº¡i (override system env)
-load_dotenv(".env.admin", override=True)  # TÃ i khoáº£n web admin riÃªng, khÃ´ng commit Git
+load_dotenv(override=True)  # Load .env từ thư mục hiện tại (override system env)
+load_dotenv(".env.admin", override=True)  # Tài khoản web admin riêng, không commit Git
 
 def _require_env(name: str) -> str:
-    """YÃªu cáº§u biáº¿n mÃ´i trÆ°á»ng báº¯t buá»™c. ThoÃ¡t ngay náº¿u thiáº¿u."""
+    """Yêu cầu biến môi trường bắt buộc. Thoát ngay nếu thiếu."""
     value = os.getenv(name, "").strip()
     if not value:
-        print(f"\nâŒ THIáº¾U BIáº¾N MÃ”I TRÆ¯á»œNG Báº®T BUá»˜C: {name}")
-        print(f"   HÃ£y thÃªm {name}=... vÃ o file .env")
-        print("   Xem .env.example Ä‘á»ƒ biáº¿t cáº¥u hÃ¬nh máº«u.\n")
+        print(f"\n❌ THIẾU BIẾN MÔI TRƯỜNG BẮT BUỘC: {name}")
+        print(f"   Hãy thêm {name}=... vào file .env")
+        print("   Xem .env.example để biết cấu hình mẫu.\n")
         sys.exit(1)
     return value
 
-# --- Secrets (Báº®T BUá»˜C â€” khÃ´ng cÃ³ default) ---
+# --- Secrets (BẮT BUỘC — không có default) ---
 TELEGRAM_TOKEN = _require_env("TELEGRAM_TOKEN")
 ENABLE_PAYMENT_MBBANK = os.getenv("ENABLE_PAYMENT_MBBANK", "true").strip().lower() in {"1", "true", "yes", "on"}
 API_PASSWORD = _require_env("BANK_API_PASSWORD") if ENABLE_PAYMENT_MBBANK else os.getenv("BANK_API_PASSWORD", "").strip()
@@ -82,7 +82,7 @@ TELEGRAM_LOGIN_CLIENT_SECRET = os.getenv("TELEGRAM_LOGIN_CLIENT_SECRET", "").str
 TELEGRAM_LOGIN_REDIRECT_URI = os.getenv("TELEGRAM_LOGIN_REDIRECT_URI", "").strip()
 SENDER_APP_PASSWORD = os.getenv("SENDER_APP_PASSWORD", "").strip()
 
-# --- Config (cÃ³ default an toÃ n) ---
+# --- Config (có default an toàn) ---
 BANK_ID = os.getenv("BANK_ID", "MB").strip()
 BANK_ACCOUNT_NUMBER = os.getenv("BANK_ACCOUNT_NUMBER", "").strip()
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME", "").strip()
@@ -106,7 +106,7 @@ SENDER_EMAIL = os.getenv("SENDER_EMAIL", "").strip()
 if ENABLE_EMAIL_SENDING and not SENDER_APP_PASSWORD:
     SENDER_APP_PASSWORD = _require_env("SENDER_APP_PASSWORD")
 
-# --- FIX Phase 2: Chuyá»ƒn hardcoded values â†’ .env ---
+# --- FIX Phase 2: Chuyển hardcoded values → .env ---
 INSTRUCTION_IMAGE_URL = os.getenv(
     "INSTRUCTION_IMAGE_URL",
     "https://i.imgur.com/un4HpDN.jpeg"
@@ -161,21 +161,21 @@ BACKUP_INTERVAL_EMAIL = 259200 # 3 days (3 * 24 * 3600)
 last_email_backup_time = time.time() # Track last email backup timestamp
 VIP_MONTHLY_MAINTENANCE_MIN_SPEND = 200000
 VIP_RANKS = [
-    {"name": "â­ï¸ Äá»“ng", "min_spend": 0, "discount": 0},
-    {"name": "â­ï¸ Báº¡c", "min_spend": 500000, "discount": 0},
-    {"name": "â­ï¸ VÃ ng", "min_spend": 1000000, "discount": 0},
-    {"name": '<tg-emoji emoji-id="5240228673738527951">ðŸ’Ž</tg-emoji> Kim CÆ°Æ¡ng', "min_spend": 5000000, "discount": 0},
-    {"name": 'â­ï¸ Cao Thá»§', "min_spend": 10000000, "discount": 0},
+    {"name": "⭐️ Đồng", "min_spend": 0, "discount": 0},
+    {"name": "⭐️ Bạc", "min_spend": 500000, "discount": 0},
+    {"name": "⭐️ Vàng", "min_spend": 1000000, "discount": 0},
+    {"name": '<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> Kim Cương', "min_spend": 5000000, "discount": 0},
+    {"name": '⭐️ Cao Thủ', "min_spend": 10000000, "discount": 0},
 ]
 WHEEL_PRIZES = [
-    {"name": "5,000Ä‘", "type": "balance", "value": 5000, "weight": 30, "emoji": '<tg-emoji emoji-id="5278467510604160626">ðŸ’°</tg-emoji>'},
-    {"name": "Giáº£m 10%", "type": "coupon", "value": 10, "weight": 40, "emoji": '<tg-emoji emoji-id="5377624166436445368">ðŸŽŸ</tg-emoji>'},
-    {"name": "ChÃºc may máº¯n láº§n sau!", "type": "nothing", "value": 0, "weight": 850, "emoji": '<tg-emoji emoji-id="5386856460632201117">ðŸ˜¢</tg-emoji>'},
-    {"name": "2,000Ä‘", "type": "balance", "value": 2000, "weight": 35, "emoji": '<tg-emoji emoji-id="5379773896352355687">ðŸª™</tg-emoji>'},
-    {"name": "Giáº£m 20%", "type": "coupon", "value": 20, "weight": 20, "emoji": '<tg-emoji emoji-id="5377624166436445368">ðŸŽŸ</tg-emoji>'},
-    {"name": "20,000Ä‘", "type": "balance", "value": 20000, "weight": 10, "emoji": '<tg-emoji emoji-id="5215239948420003628">ðŸ’µ</tg-emoji>'},
-    {"name": "Giáº£m 50%", "type": "coupon", "value": 50, "weight": 10, "emoji": '<tg-emoji emoji-id="5449800250032143374">ðŸŽ</tg-emoji>'},
-    {"name": "50,000Ä‘", "type": "balance", "value": 50000, "weight": 5, "emoji": '<tg-emoji emoji-id="5240228673738527951">ðŸ’Ž</tg-emoji>'},
+    {"name": "5,000đ", "type": "balance", "value": 5000, "weight": 30, "emoji": '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji>'},
+    {"name": "Giảm 10%", "type": "coupon", "value": 10, "weight": 40, "emoji": '<tg-emoji emoji-id="5377624166436445368">🎟</tg-emoji>'},
+    {"name": "Chúc may mắn lần sau!", "type": "nothing", "value": 0, "weight": 850, "emoji": '<tg-emoji emoji-id="5386856460632201117">😢</tg-emoji>'},
+    {"name": "2,000đ", "type": "balance", "value": 2000, "weight": 35, "emoji": '<tg-emoji emoji-id="5379773896352355687">🪙</tg-emoji>'},
+    {"name": "Giảm 20%", "type": "coupon", "value": 20, "weight": 20, "emoji": '<tg-emoji emoji-id="5377624166436445368">🎟</tg-emoji>'},
+    {"name": "20,000đ", "type": "balance", "value": 20000, "weight": 10, "emoji": '<tg-emoji emoji-id="5215239948420003628">💵</tg-emoji>'},
+    {"name": "Giảm 50%", "type": "coupon", "value": 50, "weight": 10, "emoji": '<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji>'},
+    {"name": "50,000đ", "type": "balance", "value": 50000, "weight": 5, "emoji": '<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji>'},
 ]
 DAILY_PROMO_BUDGET_PERCENT = 15
 DAILY_PROMO_MIN_BUDGET = 20000
@@ -204,7 +204,7 @@ def get_today_revenue():
     today = datetime.now().date()
     revenue = 0
     for o in order_history:
-        if 'HoÃ n thÃ nh' in status_text(o.get('status', '')):
+        if 'Hoàn thành' in status_text(o.get('status', '')):
             if 'timestamp' in o:
                 try:
                     if datetime.fromtimestamp(o['timestamp']).date() == today:
@@ -278,7 +278,7 @@ SOCIAL_SOURCE_BASE_URL = ""
 SOCIAL_SOURCE_AUTO_MANAGED_ROOT_CATEGORY = "Dich Vu Mang Xa Hoi (Tu Dong)"
 
 ## =============================
-#  Cáº¤U HÃŒNH AI (GROQ API)
+#  CẤU HÌNH AI (GROQ API)
 ## =============================
 AI_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 AI_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b").strip()
@@ -336,7 +336,7 @@ class SensitiveDataFilter(logging.Filter):
         return True
 
 # =============================
-#  CÃC THIáº¾T Láº¬P Há»† THá»NG
+#  CÁC THIẾT LẬP HỆ THỐNG
 # =============================
 LINKS_FILE, HISTORY_FILE, PROCESSED_TX_FILE = "data_available_links.json", "data_order_history.json", "data_processed_ids.json"
 USERS_FILE, BANNED_USERS_FILE, COUPONS_FILE, API_KEYS_FILE = "data_users.json", "data_banned_users.json", "data_coupons.json", "data_api_keys.json"
@@ -362,9 +362,9 @@ WHEEL_DATA_FILE = "data_wheel_data.json"
 # Withdrawal Configuration
 TRANSACTION_HISTORY_FILE = "data_transaction_history.json"  # NEW: Balance history
 ADMIN_ACTION_LOG_FILE = "data_admin_action_log.json"
-MIN_WITHDRAWAL_AMOUNT = 200000  # Minimum 200,000 VNÄ
+MIN_WITHDRAWAL_AMOUNT = 200000  # Minimum 200,000 VNĐ
 
-# Há»§y Ä‘Æ¡n sau 10 phÃºt khÃ´ng thanh toÃ¡n | Cron duyá»‡t Ä‘Æ¡n quÃ©t bank máº·c Ä‘á»‹nh má»—i 15 giÃ¢y
+# Hủy đơn sau 10 phút không thanh toán | Cron duyệt đơn quét bank mặc định mỗi 15 giây
 ORDER_EXPIRATION_SECONDS = 600
 BANK_CHECK_INTERVAL_SECONDS = get_env_int("BANK_CHECK_INTERVAL_SECONDS", 15, minimum=5)
 BANK_API_TIMEOUT_SECONDS = get_env_float("BANK_API_TIMEOUT_SECONDS", 6.0, minimum=2.0)
@@ -372,7 +372,7 @@ SEPAY_POLL_LOOKBACK_MINUTES = get_env_int("SEPAY_POLL_LOOKBACK_MINUTES", 180, mi
 RESELL_AUTO_SYNC_INTERVAL_SECONDS = get_env_int("RESELL_AUTO_SYNC_INTERVAL_SECONDS", 60, minimum=30)
 BANK_REFUND_MIN_AMOUNT = get_env_int("BANK_REFUND_MIN_AMOUNT", 200000, minimum=200000)
 
-# Tá»‘i Æ°u: Compile regex trÆ°á»›c Ä‘á»ƒ tÄƒng tá»‘c
+# Tối ưu: Compile regex trước để tăng tốc
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 ORDER_CODE_REGEX = re.compile(r'^ICLD\d{6}$')
 MANUAL_EMAIL_ORDER_CODE_REGEX = re.compile(r'^(?:ICLD\d{6}|MANUAL[A-Z0-9]{6,})$')

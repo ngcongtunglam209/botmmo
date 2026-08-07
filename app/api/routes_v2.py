@@ -53,7 +53,7 @@ def _api_v1_success_response(data, message: str | None = None):
     return payload
 
 
-@app.get("/api/v1/users/profile", tags=["Legacy"], summary="Legacy: kiá»ƒm tra profile partner")
+@app.get("/api/v1/users/profile", tags=["Legacy"], summary="Legacy: kiểm tra profile partner")
 async def api_v1_users_profile(
     x_api_key: str = Header(None),
     x_api_token: str = Header(None),
@@ -78,7 +78,7 @@ async def api_v1_users_profile(
     )
 
 
-@app.get("/api/v1/products/info/{product_id}", tags=["Legacy"], summary="Legacy: láº¥y thÃ´ng tin sáº£n pháº©m")
+@app.get("/api/v1/products/info/{product_id}", tags=["Legacy"], summary="Legacy: lấy thông tin sản phẩm")
 async def api_v1_product_info(
     product_id: str,
     x_api_key: str = Header(None),
@@ -101,7 +101,7 @@ async def api_v1_product_info(
     return _api_v1_success_response(_api_build_v1_product_payload(product_id, product_data, actor=actor))
 
 
-@app.get("/api/v1/products/variant/{variant_id}", tags=["Legacy"], summary="Legacy: láº¥y thÃ´ng tin variant")
+@app.get("/api/v1/products/variant/{variant_id}", tags=["Legacy"], summary="Legacy: lấy thông tin variant")
 async def api_v1_variant_info(
     variant_id: str,
     x_api_key: str = Header(None),
@@ -124,7 +124,7 @@ async def api_v1_variant_info(
     return _api_v1_success_response(_api_build_v1_variant_payload(product_id, product_data, actor=actor))
 
 
-@app.get("/api/v1/orders/buy", tags=["Legacy"], summary="Legacy: táº¡o Ä‘Æ¡n báº±ng query string")
+@app.get("/api/v1/orders/buy", tags=["Legacy"], summary="Legacy: tạo đơn bằng query string")
 async def api_v1_buy_order(
     productId: str | None = None,
     quantity: str | None = None,
@@ -167,7 +167,7 @@ async def api_v1_buy_order(
     )
 
 
-@app.post("/api/v1/orders", tags=["Legacy"], summary="Legacy: táº¡o Ä‘Æ¡n")
+@app.post("/api/v1/orders", tags=["Legacy"], summary="Legacy: tạo đơn")
 async def api_v1_create_order(
     payload: dict | None = Body(default=None),
     x_api_key: str = Header(None),
@@ -211,7 +211,7 @@ async def api_v1_create_order(
     )
 
 
-@app.get("/api/v1/orders/{order_id}", tags=["Legacy"], summary="Legacy: xem chi tiáº¿t Ä‘Æ¡n")
+@app.get("/api/v1/orders/{order_id}", tags=["Legacy"], summary="Legacy: xem chi tiết đơn")
 async def api_v1_order_detail(
     order_id: str,
     x_api_key: str = Header(None),
@@ -238,11 +238,11 @@ async def api_v1_order_detail(
 @app.get(
     "/api/v2/catalog",
     tags=["Partner"],
-    summary="Láº¥y catalog sáº£n pháº©m",
+    summary="Lấy catalog sản phẩm",
     description=(
-        "Tráº£ danh sÃ¡ch sáº£n pháº©m Ä‘ang bÃ¡n. Vá»›i dá»‹ch vá»¥ social, response cÃ³ "
-        "`delivery_mode='social_service'`, `social_input_fields`, giá»›i háº¡n sá»‘ lÆ°á»£ng, "
-        "`supplier_service_id` vÃ  thÃ´ng tin pricing Ä‘á»ƒ partner biáº¿t cáº§n gá»­i `target_link`/`comments`."
+        "Trả danh sách sản phẩm đang bán. Với dịch vụ social, response có "
+        "`delivery_mode='social_service'`, `social_input_fields`, giới hạn số lượng, "
+        "`supplier_service_id` và thông tin pricing để partner biết cần gửi `target_link`/`comments`."
     ),
 )
 async def api_v2_catalog(
@@ -291,8 +291,8 @@ async def api_v2_catalog(
 @app.get(
     "/api/v2/me",
     tags=["Partner"],
-    summary="Kiá»ƒm tra API key vÃ  sá»‘ dÆ° vÃ­ chung",
-    description="DÃ¹ng endpoint nÃ y trÆ°á»›c khi táº¡o Ä‘Æ¡n Ä‘á»ƒ xÃ¡c nháº­n key há»£p lá»‡, sá»‘ dÆ° hiá»‡n táº¡i vÃ  háº¡ng chiáº¿t kháº¥u.",
+    summary="Kiểm tra API key và số dư ví chung",
+    description="Dùng endpoint này trước khi tạo đơn để xác nhận key hợp lệ, số dư hiện tại và hạng chiết khấu.",
 )
 async def api_v2_me(
     x_api_key: str = Header(None),
@@ -324,11 +324,11 @@ async def api_v2_me(
 @app.post(
     "/api/v2/orders",
     tags=["Partner"],
-    summary="Táº¡o Ä‘Æ¡n hÃ ng",
+    summary="Tạo đơn hàng",
     description=(
-        "Táº¡o Ä‘Æ¡n báº±ng `partner_ref` duy nháº¥t. NÃªn gá»­i cÃ¹ng giÃ¡ trá»‹ trong header "
-        "`x-idempotency-key` Ä‘á»ƒ retry khÃ´ng táº¡o trÃ¹ng. Vá»›i social service, gá»­i `target_link` "
-        "vÃ  `comments` theo `social_input_fields` tá»« catalog."
+        "Tạo đơn bằng `partner_ref` duy nhất. Nên gửi cùng giá trị trong header "
+        "`x-idempotency-key` để retry không tạo trùng. Với social service, gửi `target_link` "
+        "và `comments` theo `social_input_fields` từ catalog."
     ),
 )
 async def api_v2_create_order(
@@ -377,10 +377,10 @@ async def api_v2_create_order(
 @app.get(
     "/api/v2/orders",
     tags=["Partner"],
-    summary="Láº¥y lá»‹ch sá»­ Ä‘Æ¡n API",
+    summary="Lấy lịch sử đơn API",
     description=(
-        "Tráº£ danh sÃ¡ch Ä‘Æ¡n cá»§a API key hiá»‡n táº¡i, cÃ³ phÃ¢n trang vÃ  filter. Endpoint list chá»‰ tráº£ tráº¡ng thÃ¡i Ä‘Ã£ lÆ°u; "
-        "khÃ´ng gá»i nguá»“n social hÃ ng loáº¡t Ä‘á»ƒ trÃ¡nh spam API nguá»“n."
+        "Trả danh sách đơn của API key hiện tại, có phân trang và filter. Endpoint list chỉ trả trạng thái đã lưu; "
+        "không gọi nguồn social hàng loạt để tránh spam API nguồn."
     ),
 )
 async def api_v2_list_orders(
@@ -459,10 +459,10 @@ async def api_v2_list_orders(
 @app.get(
     "/api/v2/orders/{order_code}",
     tags=["Partner"],
-    summary="Xem chi tiáº¿t Ä‘Æ¡n theo mÃ£ Ä‘Æ¡n",
+    summary="Xem chi tiết đơn theo mã đơn",
     description=(
-        "Tráº£ chi tiáº¿t Ä‘Æ¡n. Vá»›i Ä‘Æ¡n social, endpoint nÃ y refresh live tráº¡ng thÃ¡i nguá»“n trÆ°á»›c khi tráº£ response "
-        "vÃ  cÃ³ thá»ƒ tra báº±ng cáº£ `order_code` hoáº·c `supplier_order_id`."
+        "Trả chi tiết đơn. Với đơn social, endpoint này refresh live trạng thái nguồn trước khi trả response "
+        "và có thể tra bằng cả `order_code` hoặc `supplier_order_id`."
     ),
 )
 async def api_v2_get_order(
@@ -494,10 +494,10 @@ async def api_v2_get_order(
 @app.get(
     "/api/v2/orders/by-ref/{partner_ref}",
     tags=["Partner"],
-    summary="Xem chi tiáº¿t Ä‘Æ¡n theo partner_ref",
+    summary="Xem chi tiết đơn theo partner_ref",
     description=(
-        "DÃ¹ng khi há»‡ thá»‘ng partner lÆ°u mÃ£ ná»™i bá»™ cá»§a mÃ¬nh. Vá»›i Ä‘Æ¡n social, endpoint nÃ y refresh live tráº¡ng thÃ¡i nguá»“n "
-        "trÆ°á»›c khi tráº£ response."
+        "Dùng khi hệ thống partner lưu mã nội bộ của mình. Với đơn social, endpoint này refresh live trạng thái nguồn "
+        "trước khi trả response."
     ),
 )
 async def api_v2_get_order_by_ref(
@@ -527,8 +527,8 @@ async def api_v2_get_order_by_ref(
 @app.get(
     "/api/v2/admin/local-stock-integrity",
     tags=["Admin"],
-    summary="Admin: kiá»ƒm tra trÃ¹ng kho local",
-    description="Chá»‰ admin API key dÃ¹ng Ä‘Æ°á»£c. Endpoint readonly Ä‘á»ƒ xem bÃ¡o cÃ¡o integrity kho local.",
+    summary="Admin: kiểm tra trùng kho local",
+    description="Chỉ admin API key dùng được. Endpoint readonly để xem báo cáo integrity kho local.",
 )
 async def api_v2_admin_local_stock_integrity(
     x_api_key: str = Header(None),
@@ -574,8 +574,8 @@ def _public_ip_probe_urls() -> list[str]:
     ]
 
 async def auto_detect_public_api_url(force_refresh: bool = False) -> str:
-    """Auto resolve PUBLIC_API_URL tá»« IP public khi chÆ°a cáº¥u hÃ¬nh.
-    force_refresh=True sáº½ bá» qua URL hiá»‡n cÃ³ vÃ  thá»­ detect láº¡i tá»« Ä‘áº§u.
+    """Auto resolve PUBLIC_API_URL từ IP public khi chưa cấu hình.
+    force_refresh=True sẽ bỏ qua URL hiện có và thử detect lại từ đầu.
     """
     global PUBLIC_API_URL
 
@@ -611,7 +611,7 @@ async def auto_detect_public_api_url(force_refresh: bool = False) -> str:
                 host = f"[{ip_text}]" if ip_obj.version == 6 else ip_text
                 scheme = "https" if PUBLIC_API_SCHEME == "https" else "http"
                 PUBLIC_API_URL = f"{scheme}://{host}:{API_SERVER_PORT}"
-                logger.info(f"<tg-emoji emoji-id=\"5231489647946768652\">ðŸŒ</tg-emoji> Auto-detected PUBLIC_API_URL: {PUBLIC_API_URL}")
+                logger.info(f"<tg-emoji emoji-id=\"5231489647946768652\">🌐</tg-emoji> Auto-detected PUBLIC_API_URL: {PUBLIC_API_URL}")
                 return PUBLIC_API_URL
             except (httpx.HTTPError, ValueError, KeyError) as probe_err:
                 logger.debug(f"Public IP probe failed ({probe_url}): {probe_err}")
@@ -623,7 +623,7 @@ async def auto_detect_public_api_url(force_refresh: bool = False) -> str:
             except (httpx.HTTPError, ValueError, KeyError):
                 logger.debug("Suppressed error at L15592")
 
-    logger.warning("<tg-emoji emoji-id=\"5447644880824181073\">âš ï¸</tg-emoji> KhÃ´ng tá»± láº¥y Ä‘Æ°á»£c IP public. HÃ£y set PUBLIC_API_URL hoáº·c cáº¥u hÃ¬nh domain/IP public cho API.")
+    logger.warning("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Không tự lấy được IP public. Hãy set PUBLIC_API_URL hoặc cấu hình domain/IP public cho API.")
     return ""
 
 

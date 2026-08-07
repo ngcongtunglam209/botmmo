@@ -1,8 +1,8 @@
 @app.get(
     "/api/social/catalog",
     tags=["Social Media"],
-    summary="Láº¥y catalog dá»‹ch vá»¥ social",
-    description="Chá»‰ tráº£ dá»‹ch vá»¥ social. Äá»c giá»›i háº¡n sá»‘ lÆ°á»£ng vÃ  `social_input_fields` trÆ°á»›c khi táº¡o Ä‘Æ¡n.",
+    summary="Lấy catalog dịch vụ social",
+    description="Chỉ trả dịch vụ social. Đọc giới hạn số lượng và `social_input_fields` trước khi tạo đơn.",
 )
 async def api_social_catalog(
     x_api_key: str = Header(None),
@@ -45,8 +45,8 @@ async def api_social_catalog(
 @app.post(
     "/api/social/orders",
     tags=["Social Media"],
-    summary="Táº¡o Ä‘Æ¡n social",
-    description="Táº¡o Ä‘Æ¡n social báº±ng `partner_ref` duy nháº¥t. Retry pháº£i giá»¯ nguyÃªn `x-idempotency-key`.",
+    summary="Tạo đơn social",
+    description="Tạo đơn social bằng `partner_ref` duy nhất. Retry phải giữ nguyên `x-idempotency-key`.",
 )
 async def api_social_create_order(
     req: SocialOrderRequest,
@@ -85,8 +85,8 @@ async def api_social_create_order(
 @app.get(
     "/api/social/orders",
     tags=["Social Media"],
-    summary="Láº¥y lá»‹ch sá»­ Ä‘Æ¡n social",
-    description="Chá»‰ tráº£ Ä‘Æ¡n social cá»§a API key hiá»‡n táº¡i. KhÃ´ng refresh hÃ ng loáº¡t tráº¡ng thÃ¡i nguá»“n.",
+    summary="Lấy lịch sử đơn social",
+    description="Chỉ trả đơn social của API key hiện tại. Không refresh hàng loạt trạng thái nguồn.",
 )
 async def api_social_list_orders(
     x_api_key: str = Header(None),
@@ -128,7 +128,7 @@ async def api_social_list_orders(
 @app.get(
     "/api/social/orders/by-ref/{partner_ref}",
     tags=["Social Media"],
-    summary="Tra Ä‘Æ¡n social theo partner_ref",
+    summary="Tra đơn social theo partner_ref",
 )
 async def api_social_get_order_by_ref(
     partner_ref: str,
@@ -147,7 +147,7 @@ async def api_social_get_order_by_ref(
 @app.get(
     "/api/social/orders/{order_code}",
     tags=["Social Media"],
-    summary="Tra vÃ  refresh tráº¡ng thÃ¡i Ä‘Æ¡n social",
+    summary="Tra và refresh trạng thái đơn social",
 )
 async def api_social_get_order(
     order_code: str,

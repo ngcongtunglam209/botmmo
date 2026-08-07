@@ -3,17 +3,17 @@
 # ==============================================================================
 
 def generate_progress_bar(current, total, length=15):
-    """Táº¡o thanh progress bar: [â–ˆâ–ˆâ–ˆâ–ˆâ–‘â–‘â–‘â–‘â–‘â–‘] 40%"""
-    if total == 0: return f"[{'â–‘' * length}] 0%"
+    """Tạo thanh progress bar: [████░░░░░░] 40%"""
+    if total == 0: return f"[{'░' * length}] 0%"
     percent = min(current / total, 1.0)
     filled_length = int(length * percent)
-    bar = 'â–ˆ' * filled_length + 'â–‘' * (length - filled_length)
+    bar = '█' * filled_length + '░' * (length - filled_length)
     return f"[{bar}] {int(percent * 100)}%"
 
 async def process_referral_commission(context, user_id: int, amount: int, order_code: str = None):
     """
-    Xá»­ lÃ½ hoa há»“ng referral khi cÃ³ ngÆ°á»i mua hÃ ng
-    Returns: commission amount náº¿u cÃ³, 0 náº¿u khÃ´ng
+    Xử lý hoa hồng referral khi có người mua hàng
+    Returns: commission amount nếu có, 0 nếu không
     """
     user_id_str = str(user_id)
     
@@ -41,7 +41,7 @@ async def process_referral_commission(context, user_id: int, amount: int, order_
     referrer_user = db_get_user(referrer_id)
     if referrer_user:
         new_balance = referrer_user.get('balance', 0) + commission
-        db_update_balance(referrer_id, new_balance, reason=f"Commission: {commission:,} VNÄ verified user")
+        db_update_balance(referrer_id, new_balance, reason=f"Commission: {commission:,} VNĐ verified user")
         
         # Track commission in referral_data
         if referrer_id_str not in referral_data:
@@ -65,10 +65,10 @@ async def process_referral_commission(context, user_id: int, amount: int, order_
         try:
             await context.bot.send_message(
                 referrer_id,
-                f"{E_TAG} <b>Báº N Vá»ªA NHáº¬N HOA Há»’NG!</b>\n\n"
-                f"{E_TAG} <b>Sá»‘ tiá»n:</b> +{commission:,} VNÄ\n"
-                f"{E_USER} <b>Tá»«:</b> NgÆ°á»i báº¡n giá»›i thiá»‡u vá»«a mua hÃ ng\n"
-                f"{E_TAG} <b>Sá»‘ dÆ° má»›i:</b> {new_balance:,} VNÄ",
+                f"{E_TAG} <b>BẠN VỪA NHẬN HOA HỒNG!</b>\n\n"
+                f"{E_TAG} <b>Số tiền:</b> +{commission:,} VNĐ\n"
+                f"{E_USER} <b>Từ:</b> Người bạn giới thiệu vừa mua hàng\n"
+                f"{E_TAG} <b>Số dư mới:</b> {new_balance:,} VNĐ",
                 parse_mode=ParseMode.HTML
             )
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -141,7 +141,7 @@ def get_rank_maintenance_status(user_id: int, reference_dt=None):
 
 
 def calculate_user_stats(user_id: int):
-    """TÃ­nh toÃ¡n thá»‘ng kÃª user"""
+    """Tính toán thống kê user"""
     orders = _get_user_merged_orders(user_id)
     
     total_spent = 0
@@ -179,68 +179,68 @@ def calculate_user_stats(user_id: int):
     }
 
 def _legacy_calculate_badges(user_id: int):
-    """TÃ­nh toÃ¡n badges cho user"""
+    """Tính toán badges cho user"""
     stats = calculate_user_stats(user_id)
     badges = []
     
     # Order-based badges
     if stats['order_count'] >= 1:
-        badges.append('<tg-emoji emoji-id=\"5334890573281114250\">ðŸ†•</tg-emoji> Newbie')
+        badges.append('<tg-emoji emoji-id=\"5334890573281114250\">🆕</tg-emoji> Newbie')
     if stats['order_count'] >= 5:
-        badges.append('<tg-emoji emoji-id=\"5247134066322447995\">ðŸ›’</tg-emoji> KhÃ¡ch quen')
+        badges.append('<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Khách quen')
     if stats['order_count'] >= 20 or stats['total_spent'] >= 1000000:
-        badges.append('<tg-emoji emoji-id="5240228673738527951">ðŸ’Ž</tg-emoji> VIP')
+        badges.append('<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> VIP')
     if stats['order_count'] >= 50 or stats['total_spent'] >= 5000000:
-        badges.append('<tg-emoji emoji-id=\"6124902618574625426\">ðŸ‘‘</tg-emoji> Legend')
+        badges.append('<tg-emoji emoji-id=\"6124902618574625426\">👑</tg-emoji> Legend')
     
     # Referral badges
     if stats['referral_count'] >= 5:
-        badges.append('<tg-emoji emoji-id=\"5449800250032143374\">ðŸŽ</tg-emoji> Influencer')
+        badges.append('<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> Influencer')
     if stats['referral_count'] >= 20:
-        badges.append('<tg-emoji emoji-id="5449800250032143374">ðŸŽ</tg-emoji> Super Influencer')
+        badges.append('<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji> Super Influencer')
     
     # Deal hunter
     if stats['coupon_savings'] >= 100000:
-        badges.append('<tg-emoji emoji-id=\"5226711870492126219\">ðŸŽ¯</tg-emoji> Deal Hunter')
+        badges.append('<tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> Deal Hunter')
     
     return badges
 
 def calculate_badges(user_id: int):
-    """TÃ­nh toÃ¡n badges cho user vá»›i premium emoji cá»‘ Ä‘á»‹nh."""
+    """Tính toán badges cho user với premium emoji cố định."""
     stats = calculate_user_stats(user_id)
     badges = []
 
     if stats['order_count'] >= 1:
-        badges.append('<tg-emoji emoji-id="5334890573281114250">ðŸ†”</tg-emoji> Newbie')
+        badges.append('<tg-emoji emoji-id="5334890573281114250">🆔</tg-emoji> Newbie')
     if stats['order_count'] >= 5:
-        badges.append('<tg-emoji emoji-id="5247134066322447995">ðŸ›</tg-emoji> KhÃ¡ch quen')
+        badges.append('<tg-emoji emoji-id="5247134066322447995">🛍</tg-emoji> Khách quen')
     if stats['order_count'] >= 20 or stats['total_spent'] >= 1000000:
-        badges.append('<tg-emoji emoji-id="5240228673738527951">ðŸ’Ž</tg-emoji> VIP')
+        badges.append('<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> VIP')
     if stats['order_count'] >= 50 or stats['total_spent'] >= 5000000:
-        badges.append('<tg-emoji emoji-id="6124902618574625426">ðŸ‘‘</tg-emoji> Legend')
+        badges.append('<tg-emoji emoji-id="6124902618574625426">👑</tg-emoji> Legend')
 
     if stats['referral_count'] >= 5:
-        badges.append('<tg-emoji emoji-id="5449800250032143374">ðŸŽ</tg-emoji> Influencer')
+        badges.append('<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji> Influencer')
     if stats['referral_count'] >= 20:
-        badges.append('<tg-emoji emoji-id="5449800250032143374">ðŸŽ</tg-emoji> Super Influencer')
+        badges.append('<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji> Super Influencer')
 
     if stats['coupon_savings'] >= 100000:
-        badges.append('<tg-emoji emoji-id="6260059243605398502">ðŸ·ï¸</tg-emoji> Deal Hunter')
+        badges.append('<tg-emoji emoji-id="6260059243605398502">🏷️</tg-emoji> Deal Hunter')
 
     return badges
 
 
 def _legacy_format_rank_name_premium(rank_name: str) -> str:
     clean_name = re.sub(r'<[^>]+>', '', str(rank_name or '')).strip()
-    if 'Cao Thá»§' in clean_name:
-        return '<tg-emoji emoji-id="6124902618574625426">ðŸ‘‘</tg-emoji> Cao Thá»§'
-    if 'Kim CÆ°Æ¡ng' in clean_name:
-        return '<tg-emoji emoji-id="5240228673738527951">ðŸ’Ž</tg-emoji> Kim CÆ°Æ¡ng'
-    if 'VÃ ng' in clean_name:
-        return 'â­ï¸ VÃ ng'
-    if 'Báº¡c' in clean_name:
-        return 'â­ï¸ Báº¡c'
-    return 'â­ï¸ Äá»“ng'
+    if 'Cao Thủ' in clean_name:
+        return '<tg-emoji emoji-id="6124902618574625426">👑</tg-emoji> Cao Thủ'
+    if 'Kim Cương' in clean_name:
+        return '<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> Kim Cương'
+    if 'Vàng' in clean_name:
+        return '⭐️ Vàng'
+    if 'Bạc' in clean_name:
+        return '⭐️ Bạc'
+    return '⭐️ Đồng'
 
 
 def format_rank_name_premium(rank_name: str) -> str:
@@ -254,33 +254,33 @@ def format_rank_name_premium(rank_name: str) -> str:
     )
 
     if chr(0x1F451) in clean_name or chr(0x1F3C6) in clean_name or "cao thu" in ascii_name:
-        return '<tg-emoji emoji-id="6124902618574625426">ðŸ‘‘</tg-emoji> Cao Thá»§'
+        return '<tg-emoji emoji-id="6124902618574625426">👑</tg-emoji> Cao Thủ'
     if chr(0x1F48E) in clean_name or "kim cuong" in ascii_name or "kim" in ascii_name:
-        return '<tg-emoji emoji-id="5240228673738527951">ðŸ’Ž</tg-emoji> Kim CÆ°Æ¡ng'
+        return '<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> Kim Cương'
     if chr(0x1F947) in clean_name or "vang" in ascii_name:
-        return 'â­ï¸ VÃ ng'
+        return '⭐️ Vàng'
     if chr(0x1F948) in clean_name or "bac" in ascii_name:
-        return 'â­ï¸ Báº¡c'
-    return 'â­ï¸ Äá»“ng'
+        return '⭐️ Bạc'
+    return '⭐️ Đồng'
 
 
 def format_rank_entry_premium(rank: dict) -> str:
     if not isinstance(rank, dict):
-        return 'â­ï¸ Äá»“ng'
+        return '⭐️ Đồng'
 
     min_spent = int(rank.get('min_spent', rank.get('min_spend', 0)) or 0)
     discount = int(rank.get('discount', 0) or 0)
     raw_name = re.sub(r'<[^>]+>', '', str(rank.get('name', '') or '')).strip().lower()
 
     if min_spent >= 10000000 or 'cao' in raw_name or chr(0x1F451) in raw_name or chr(0x1F3C6) in raw_name:
-        return '<tg-emoji emoji-id="6124902618574625426">ðŸ‘‘</tg-emoji> Cao Thá»§'
+        return '<tg-emoji emoji-id="6124902618574625426">👑</tg-emoji> Cao Thủ'
     if min_spent >= 5000000 or discount >= 8 or chr(0x1F48E) in raw_name or 'kim' in raw_name:
-        return '<tg-emoji emoji-id="5240228673738527951">ðŸ’Ž</tg-emoji> Kim CÆ°Æ¡ng'
+        return '<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> Kim Cương'
     if min_spent >= 1000000 or discount >= 5 or chr(0x1F947) in raw_name:
-        return 'â­ï¸ VÃ ng'
+        return '⭐️ Vàng'
     if min_spent >= 500000 or discount >= 2 or chr(0x1F948) in raw_name:
-        return 'â­ï¸ Báº¡c'
-    return 'â­ï¸ Äá»“ng'
+        return '⭐️ Bạc'
+    return '⭐️ Đồng'
 
 
 def get_user_rank(user_id: int):
@@ -376,7 +376,7 @@ def _get_discount_display_line(user_id: int, prod_id: str, base_price: int):
     """Generate discount info line for product detail view"""
     best_price, discount_type, info = get_best_discount(user_id, prod_id, base_price)
     if discount_type == 'flash':
-        return f"\n<tg-emoji emoji-id=\"5303290914041505430\">âš¡</tg-emoji> <b>FLASH SALE -{info['discount_percent']}%:</b> <s>{base_price:,}Ä‘</s> â†’ <b>{best_price:,}Ä‘</b> (CÃ²n {info['countdown']})\n"
+        return f"\n<tg-emoji emoji-id=\"5303290914041505430\">⚡</tg-emoji> <b>FLASH SALE -{info['discount_percent']}%:</b> <s>{base_price:,}đ</s> → <b>{best_price:,}đ</b> (Còn {info['countdown']})\n"
     return ""
 
 def get_user_wheel_data(user_id: int):
@@ -403,28 +403,28 @@ def spin_the_wheel():
 
 def calculate_warranty_expiry(purchase_timestamp: float, warranty_text: str):
     """
-    TÃ­nh thá»i gian háº¿t háº¡n báº£o hÃ nh
-    Returns: timestamp khi háº¿t háº¡n hoáº·c None náº¿u khÃ´ng cÃ³ báº£o hÃ nh
+    Tính thời gian hết hạn bảo hành
+    Returns: timestamp khi hết hạn hoặc None nếu không có bảo hành
     """
-    if not warranty_text or warranty_text.lower() in ['khÃ´ng', 'none', 'n/a']:
+    if not warranty_text or warranty_text.lower() in ['không', 'none', 'n/a']:
         return None
     
-    # Parse warranty text (e.g., "30 ngÃ y", "1 thÃ¡ng", "6 thÃ¡ng")
+    # Parse warranty text (e.g., "30 ngày", "1 tháng", "6 tháng")
     warranty_lower = warranty_text.lower()
     days = 0
     
-    if 'ngÃ y' in warranty_lower:
+    if 'ngày' in warranty_lower:
         try:
             days = int(''.join(filter(str.isdigit, warranty_lower)))
         except (TypeError, ValueError):
             pass
-    elif 'thÃ¡ng' in warranty_lower:
+    elif 'tháng' in warranty_lower:
         try:
             months = int(''.join(filter(str.isdigit, warranty_lower)))
             days = months * 30
         except (TypeError, ValueError):
             pass
-    elif 'nÄƒm' in warranty_lower:
+    elif 'năm' in warranty_lower:
         try:
             years = int(''.join(filter(str.isdigit, warranty_lower)))
             days = years * 365
@@ -439,7 +439,7 @@ def calculate_warranty_expiry(purchase_timestamp: float, warranty_text: str):
 
 def get_top_referrers(limit=10):
     """
-    Láº¥y top ngÆ°á»i giá»›i thiá»‡u theo hoa há»“ng
+    Lấy top người giới thiệu theo hoa hồng
     Returns: List of {user_id, full_name, referral_count, total_commission, rank}
     """
     top_list = []

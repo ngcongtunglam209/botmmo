@@ -20,10 +20,10 @@ def test_cost_snapshots_and_profit_summary():
     db.SOCIAL_SOURCE_RATE_VND_PER_USD = 28000
     web.order_history = history
     try:
-        local = {"order_code": "L1", "product_id": "local", "quantity": 2, "amount": 12000, "status": "HoÃ n thÃ nh", "timestamp": time.time()}
-        dat = {"order_code": "D1", "product_id": "dat", "quantity": 3, "amount": 30000, "status": "HoÃ n thÃ nh", "timestamp": time.time()}
+        local = {"order_code": "L1", "product_id": "local", "quantity": 2, "amount": 12000, "status": "Hoàn thành", "timestamp": time.time()}
+        dat = {"order_code": "D1", "product_id": "dat", "quantity": 3, "amount": 30000, "status": "Hoàn thành", "timestamp": time.time()}
         social = {"order_code": "S1", "delivery_method": "social_service", "ctt_supplier_charge": "0.5", "amount": 20000, "status": "Hoan thanh", "timestamp": time.time()}
-        missing = {"order_code": "M1", "product_id": "missing", "amount": 9000, "status": "HoÃ n thÃ nh", "timestamp": time.time()}
+        missing = {"order_code": "M1", "product_id": "missing", "amount": 9000, "status": "Hoàn thành", "timestamp": time.time()}
         for order in (local, dat, social, missing):
             db.db_add_order(order, schedule_save=False)
 
