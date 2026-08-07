@@ -513,3 +513,45 @@ async def api_v2_status(
     }
 
 
+@app.post("/webhook/sepay", include_in_schema=False)
+async def sepay_webhook(request: Request):
+    """Nhan giao dich ngan hang do SePay push (my.sepay.vn -> Webhooks).
+
+    Xac thuc bang header `Authorization: Apikey <SEPAY_WEBHOOK_API_KEY>`.
+    SePay coi moi response khac 200/201 la that bai va se retry trong vai gio.
+    Vi vay: payload rac / sai key / chua bat SePay -> van tra 200 (retry
+    khong giup gi); chi loi ha tang that su moi de exception bay len thanh 500
+    de SePay thu gui lai. Giao dich hop le chi duoc dua vao hang doi
+    (sepay_webhook_inbox), _scan_sepay_payments trong payment_monitor.py se
+    khop don va cong tien o vong quet ke tiep.
+    """
+    from app.integrations.sepay_api import (
+        sepay_verify_webhook_key,
+        sepay_normalize_webhook_payload,
+        sepay_webhook_inbox,
+    )
+
+    if not sepay_verify_webhook_key(request.headers.get("Authorization")):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=401, content={"success": False})
+
+    if not ENABLE_PAYMENT_SEPAY:
+        logger.warning("SePay webhook: ENABLE_PAYMENT_SEPAY=false -> bo qua payload")
+        return {"success": True}
+
+    try:
+        body = await request.json()
+    except Exception as e:
+        logger.warning(f"SePay webhook: body khong phai JSON hop le: {e}")
+        return {"success": True}
+
+    normalized = sepay_normalize_webhook_payload(body)
+    if normalized:
+        sepay_webhook_inbox.append(normalized)
+        logger.info(
+            f"SePay webhook: nhan giao dich {normalized['transactionID']} "
+            f"so tien {normalized['amount']:,}d"
+        )
+    return {"success": True}
+
+

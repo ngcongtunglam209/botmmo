@@ -472,6 +472,37 @@ async def _scan_binance_spot_payments(synthetic_transactions: list) -> None:
     except Exception as e:
         logger.exception(f"Binance Spot scan failed: {e}", exc_info=e)
 
+
+async def _scan_sepay_payments(synthetic_transactions: list) -> None:
+    """SePay: rut het giao dich webhook da nhan (duong chinh, gan tuc thi),
+    roi doi soat lai bang poll API (du phong khi webhook bi mat/chua bat).
+
+    Ca hai deu nap dung dang {"transactionID","description","amount"} vao
+    `synthetic_transactions`, dung chung pipeline khop-don/cong-tien ben duoi
+    (check_payment_job) - trung tx_id giua webhook va poll van chi cong 1 lan
+    nho db_claim_transaction() khoa theo transactionID.
+    """
+    from app.integrations.sepay_api import sepay_webhook_inbox, sepay_fetch_history
+
+    if not ENABLE_PAYMENT_SEPAY:
+        return
+
+    # 1) Webhook inbox - rut het (khong co await xen giua doc/xoa nen an toan).
+    if sepay_webhook_inbox:
+        drained, sepay_webhook_inbox[:] = list(sepay_webhook_inbox), []
+        synthetic_transactions.extend(drained)
+
+    # 2) Poll du phong - chi chay khi co cau hinh SEPAY_API_TOKEN.
+    try:
+        polled = await sepay_fetch_history()
+        for tx in polled:
+            if db_check_tx_exists(tx["transactionID"]):
+                continue
+            synthetic_transactions.append(tx)
+    except Exception as e:
+        logger.warning(f"SePay poll scan failed: {e}")
+
+
 async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     global _bank_api_fail_count, _bank_api_last_alert_time
     global _bank_api_last_check_time, _bank_api_last_status, _bank_api_last_error, _bank_api_last_tx_count, _bank_api_total_checks, _bank_api_total_success
@@ -493,6 +524,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     await _scan_binance_pay_id_payments(synthetic_transactions)
     await _scan_binance_pay_payments(synthetic_transactions)
     await _scan_binance_spot_payments(synthetic_transactions)
+    await _scan_sepay_payments(synthetic_transactions)
 
     try:
         # Strip whitespace to prevent copy-paste errors
@@ -502,7 +534,11 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         
         transactions = list(synthetic_transactions)
 
-        try:
+        if not ENABLE_PAYMENT_MBBANK:
+            api_data = {"transactions": []}
+            api_key_info = ["transactions"]
+        else:
+         try:
             import mbbank
             import datetime
             import asyncio
@@ -545,8 +581,8 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                     })
             api_data = {"transactions": bank_txs}
             api_key_info = ["transactions"]
-            
-        except Exception as bank_err:
+
+         except Exception as bank_err:
             bank_error_msg = str(bank_err)
             is_temporary_bank_error = True
             log_bank_error = logger.warning if is_temporary_bank_error else logger.error

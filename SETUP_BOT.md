@@ -89,6 +89,37 @@ BANK_ACCOUNT_NUMBER=...
 ACCOUNT_NAME=...
 ```
 
+### Bat SePay (khuyen nghi hon MBBank)
+
+MBBank scrape doi hoi luu mat khau Internet Banking that trong `.env` - rui ro.
+SePay dung webhook chinh thuc (SePay tu push giao dich ve server), khong can
+mat khau ngan hang. Poll chi la du phong khi webhook bi mat (VPS restart,
+mang loi) hoac chua kip cau hinh webhook.
+
+1. Vao `my.sepay.vn` -> lien ket tai khoan ngan hang can nhan tien.
+2. Lay 2 gia tri:
+   - **API Token** (my.sepay.vn -> API Token): dung cho poll du phong.
+   - **Webhook API Key** (my.sepay.vn -> Webhooks -> tao Webhook moi, dat API Key rieng): dung de xac thuc request SePay gui toi bot.
+3. Cau hinh webhook tren dashboard SePay, URL tro ve:
+   ```
+   https://<domain-hoac-subdomain-cua-ban>/webhook/sepay
+   ```
+   (can HTTPS that su - dung Cloudflare proxy hoac Caddy/nginx + certbot truoc VPS).
+4. Dien `.env`:
+   ```env
+   ENABLE_PAYMENT_SEPAY=true
+   SEPAY_WEBHOOK_API_KEY=<API Key webhook o buoc 2>
+   SEPAY_API_TOKEN=<API Token o buoc 2>
+   SEPAY_ACCOUNT_NUMBER=<so tai khoan da lien ket SePay>
+   ```
+5. Sau khi xac nhan webhook nhan on dinh, tat MBBank de khong con luu mat khau ngan hang:
+   ```env
+   ENABLE_PAYMENT_MBBANK=false
+   ```
+
+Ma QR chuyen khoan (`create_vietqr_link`) da dung san endpoint anh mien phi cua
+SePay tu truoc, khong can doi gi them buoc nay.
+
 ### Bat buoc tham gia nhom
 
 Neu khong can ep user vao nhom:

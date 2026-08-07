@@ -86,6 +86,13 @@ SENDER_APP_PASSWORD = os.getenv("SENDER_APP_PASSWORD", "").strip()
 BANK_ID = os.getenv("BANK_ID", "MB").strip()
 BANK_ACCOUNT_NUMBER = os.getenv("BANK_ACCOUNT_NUMBER", "").strip()
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME", "").strip()
+
+# --- SePay (webhook la chinh, poll chi la du phong doi soat lai) ---
+ENABLE_PAYMENT_SEPAY = os.getenv("ENABLE_PAYMENT_SEPAY", "false").strip().lower() in {"1", "true", "yes", "on"}
+SEPAY_WEBHOOK_API_KEY = os.getenv("SEPAY_WEBHOOK_API_KEY", "").strip()
+SEPAY_API_TOKEN = os.getenv("SEPAY_API_TOKEN", "").strip()
+SEPAY_API_BASE_URL = os.getenv("SEPAY_API_BASE_URL", "https://my.sepay.vn").strip().rstrip("/")
+SEPAY_ACCOUNT_NUMBER = os.getenv("SEPAY_ACCOUNT_NUMBER", "").strip() or BANK_ACCOUNT_NUMBER
 ADMIN_USER_ID = int(os.getenv("ADMIN_USER_ID", "0"))
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "").strip()
 SUPPORT_GROUP_LINK = os.getenv("SUPPORT_GROUP_LINK", "").strip()
@@ -282,6 +289,8 @@ def _iter_log_secrets():
         API_PASSWORD,
         API_TOKEN,
         API_SECRET_KEY,
+        SEPAY_WEBHOOK_API_KEY,
+        SEPAY_API_TOKEN,
         ADMIN_WEB_PASSWORD_HASH,
         ADMIN_WEB_SESSION_SECRET,
         SUPPLIER_SOURCE_API_KEY,
@@ -358,6 +367,7 @@ MIN_WITHDRAWAL_AMOUNT = 200000  # Minimum 200,000 VNÄ
 ORDER_EXPIRATION_SECONDS = 600
 BANK_CHECK_INTERVAL_SECONDS = get_env_int("BANK_CHECK_INTERVAL_SECONDS", 15, minimum=5)
 BANK_API_TIMEOUT_SECONDS = get_env_float("BANK_API_TIMEOUT_SECONDS", 6.0, minimum=2.0)
+SEPAY_POLL_LOOKBACK_MINUTES = get_env_int("SEPAY_POLL_LOOKBACK_MINUTES", 180, minimum=15)
 RESELL_AUTO_SYNC_INTERVAL_SECONDS = get_env_int("RESELL_AUTO_SYNC_INTERVAL_SECONDS", 60, minimum=30)
 BANK_REFUND_MIN_AMOUNT = get_env_int("BANK_REFUND_MIN_AMOUNT", 200000, minimum=200000)
 
