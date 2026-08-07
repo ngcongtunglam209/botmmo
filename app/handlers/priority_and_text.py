@@ -167,7 +167,11 @@ async def _auto_reject_expired_support_message(message, context, order: dict, or
     try:
         if message:
             await message.reply_text(
-                build_auto_warranty_rejection_text(order_code, warranty_info),
+                build_auto_warranty_rejection_text(
+                    order_code,
+                    warranty_info,
+                    user_id=getattr(getattr(message, "from_user", None), "id", None),
+                ),
                 parse_mode=ParseMode.HTML,
             )
     except (TelegramError, ValueError, TypeError, KeyError, AttributeError) as e:

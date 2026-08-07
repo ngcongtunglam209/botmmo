@@ -111,21 +111,47 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             try:
                 await context.bot.send_message(
                     user_id,
-                    f"{E_SUCCESS} <b>ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT THỦ CÔNG!</b>\n\n"
-                    f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
-                    f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>Số lượng:</b> {qty}\n"
-                    f"{E_LOADING} <b>Thời hạn:</b> {p.get('duration', 'N/A')}\n"
-                    f"{E_SHIELD} <b>Bảo hành:</b> {p.get('warranty', 'Không')}\n\n"
-                    f"{E_TIP} <b>THÔNG TIN TÀI KHOẢN:</b>",
+                    lt(
+                        user_id,
+                        f"{E_SUCCESS} <b>ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT THỦ CÔNG</b>\n\n"
+                        f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
+                        f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>Số lượng:</b> {qty}\n"
+                        f"{E_LOADING} <b>Thời hạn:</b> {p.get('duration', 'N/A')}\n"
+                        f"{E_SHIELD} <b>Bảo hành:</b> {p.get('warranty', 'Không')}\n\n"
+                        f"{E_TIP} <b>THÔNG TIN TÀI KHOẢN:</b>",
+                        f"{E_SUCCESS} <b>YOUR ORDER HAS BEEN APPROVED MANUALLY</b>\n\n"
+                        f"{E_TAG} <b>Product:</b> {p['name']}\n"
+                        f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>Quantity:</b> {qty}\n"
+                        f"{E_LOADING} <b>Duration:</b> {p.get('duration', 'N/A')}\n"
+                        f"{E_SHIELD} <b>Warranty:</b> {p.get('warranty', 'None')}\n\n"
+                        f"{E_TIP} <b>ACCOUNT DETAILS:</b>",
+                        f"{E_SUCCESS} <b>您的订单已人工审核通过</b>\n\n"
+                        f"{E_TAG} <b>商品：</b>{p['name']}\n"
+                        f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>数量：</b>{qty}\n"
+                        f"{E_LOADING} <b>有效期：</b>{p.get('duration', 'N/A')}\n"
+                        f"{E_SHIELD} <b>质保：</b>{p.get('warranty', '无')}\n\n"
+                        f"{E_TIP} <b>账号信息：</b>",
+                    ),
                     parse_mode=ParseMode.HTML
                 )
             except (TelegramError, ValueError, KeyError, AttributeError):
                 await context.bot.send_message(
                     user_id,
-                    f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT THỦ CÔNG!\n\n"
-                    f"Sản phẩm: {p['name']}\nSố lượng: {qty}\n"
-                    f"Thời hạn: {p.get('duration', 'N/A')}\nBảo hành: {p.get('warranty', 'Không')}\n\n"
-                    f"THÔNG TIN TÀI KHOẢN:"
+                    lt(
+                        user_id,
+                        f"✅ ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT THỦ CÔNG\n\n"
+                        f"Sản phẩm: {p['name']}\nSố lượng: {qty}\n"
+                        f"Thời hạn: {p.get('duration', 'N/A')}\nBảo hành: {p.get('warranty', 'Không')}\n\n"
+                        f"THÔNG TIN TÀI KHOẢN:",
+                        f"✅ YOUR ORDER HAS BEEN APPROVED MANUALLY\n\n"
+                        f"Product: {p['name']}\nQuantity: {qty}\n"
+                        f"Duration: {p.get('duration', 'N/A')}\nWarranty: {p.get('warranty', 'None')}\n\n"
+                        f"ACCOUNT DETAILS:",
+                        f"✅ 您的订单已人工审核通过\n\n"
+                        f"商品：{p['name']}\n数量：{qty}\n"
+                        f"有效期：{p.get('duration', 'N/A')}\n质保：{p.get('warranty', '无')}\n\n"
+                        f"账号信息：",
+                    ),
                 )
             file_content = build_store_order_txt_content(
                 order_code,
@@ -136,6 +162,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 p.get('warranty', 'Không'),
                 items_bought,
                 purchase_ts=current_time,
+                lang=get_user_lang(user_id),
             )
             delivery_result = await deliver_items_as_txt(
                 context,
@@ -144,7 +171,12 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 items_bought,
                 file_content=file_content,
                 file_prefix="TaiKhoan",
-                caption_html=f"<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>Thông tin tài khoản đơn {order_code}</b>\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Vui lòng lưu cẩn thận!",
+                caption_html=lt(
+                    user_id,
+                    f"<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>Thông tin tài khoản đơn {order_code}</b>\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Vui lòng lưu lại cẩn thận.",
+                    f"<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>Account details for order {order_code}</b>\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Please store this file safely.",
+                    f"<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>订单 {order_code} 的账号信息</b>\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> 请妥善保存该文件。",
+                ),
                 reply_markup=create_success_menu(),
             )
             completed_order["delivery_method"] = delivery_result.get("method", "failed")
@@ -162,8 +194,15 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 await safe_send_message(
                     context,
                     user_id,
-                    f"❌ Có lỗi khi gửi tài khoản cho đơn <code>{order_code}</code>.\n"
-                    "Admin đã nhận cảnh báo và sẽ gửi thủ công sớm nhất.",
+                    lt(
+                        user_id,
+                        f"❌ Có lỗi khi gửi tài khoản cho đơn <code>{order_code}</code>.\n"
+                        "Admin đã nhận cảnh báo và sẽ gửi thủ công sớm nhất.",
+                        f"❌ We could not deliver the accounts for order <code>{order_code}</code>.\n"
+                        "The admin has been alerted and will send them manually shortly.",
+                        f"❌ 订单 <code>{order_code}</code> 的账号发送失败。\n"
+                        "管理员已收到提醒，会尽快人工发送。",
+                    ),
                     parse_mode=ParseMode.HTML,
                     reply_markup=create_success_menu(),
                 )

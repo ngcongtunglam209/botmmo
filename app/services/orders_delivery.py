@@ -2,9 +2,17 @@ import re
 import unicodedata
 
 
+# Markers are compared against text folded by _fold_delivery_text(), which strips
+# diacritics and lowercases. Keep every entry accent-free, and keep the English and
+# Chinese spellings in sync with build_store_order_txt_content() so a file we
+# generated ourselves is still recognised as a summary template when re-delivered.
 _DELIVERY_ACCOUNT_SECTION_MARKERS = (
     "tai khoan cua ban",
     "danh sach tai khoan",
+    "your accounts",
+    "account list",
+    "您的账号",
+    "账号列表",
 )
 _DELIVERY_METADATA_PREFIXES = (
     "ma don hang",
@@ -15,11 +23,76 @@ _DELIVERY_METADATA_PREFIXES = (
     "thoi han",
     "bao hanh",
     "luu y",
+    "order code",
+    "purchase date",
+    "product",
+    "quantity",
+    "payment",
+    "duration",
+    "warranty",
+    "note",
+    "订单号",
+    "购买日期",
+    "商品",
+    "数量",
+    "付款",
+    "有效期",
+    "质保",
+    "注意",
 )
+_DELIVERY_ORDER_HEADERS = ("thong tin don hang", "order information", "订单信息")
+
+# Labels for the .txt file handed to the buyer. Written with diacritics: the file
+# is UTF-8, and _fold_delivery_text() strips accents before comparing, so the
+# accent-free markers above still match these headers when a file is re-parsed.
+_DELIVERY_TXT_LABELS = {
+    "vi": {
+        "order_header": "THÔNG TIN ĐƠN HÀNG",
+        "account_header": "DANH SÁCH TÀI KHOẢN",
+        "order_code": "Mã đơn hàng",
+        "purchase_date": "Ngày mua",
+        "product": "Sản phẩm",
+        "quantity": "Số lượng",
+        "payment": "Thanh toán",
+        "duration": "Thời hạn",
+        "warranty": "Bảo hành",
+        "description": "Mô tả",
+    },
+    "en": {
+        "order_header": "ORDER INFORMATION",
+        "account_header": "ACCOUNT LIST",
+        "order_code": "Order code",
+        "purchase_date": "Purchase date",
+        "product": "Product",
+        "quantity": "Quantity",
+        "payment": "Payment",
+        "duration": "Duration",
+        "warranty": "Warranty",
+        "description": "Description",
+    },
+    "zh": {
+        "order_header": "订单信息",
+        "account_header": "账号列表",
+        "order_code": "订单号",
+        "purchase_date": "购买日期",
+        "product": "商品",
+        "quantity": "数量",
+        "payment": "付款",
+        "duration": "有效期",
+        "warranty": "质保",
+        "description": "说明",
+    },
+}
+
+
+# NFKD leaves đ/Đ untouched (they are letters of their own, not base + combining
+# mark), so folding "ĐƠN HÀNG" without this map yields "đon hang" and every
+# accent-free marker below misses. Suppliers do send accented text.
+_VIETNAMESE_D_MAP = str.maketrans({"đ": "d", "Đ": "d"})
 
 
 def _fold_delivery_text(value) -> str:
-    plain = _plain_text_preserve_emoji(str(value or ""))
+    plain = _plain_text_preserve_emoji(str(value or "")).translate(_VIETNAMESE_D_MAP)
     normalized = unicodedata.normalize("NFKD", plain)
     return "".join(ch for ch in normalized if not unicodedata.combining(ch)).lower().strip()
 
@@ -74,12 +147,8 @@ def _looks_like_delivery_payload_line(raw_value, cleaned_value=None) -> bool:
 
 def _looks_like_supplier_summary_block(value) -> bool:
     folded = _fold_delivery_text(value)
-    return (
-        "thong tin don hang" in folded
-        and (
-            "tai khoan cua ban" in folded
-            or "danh sach tai khoan" in folded
-        )
+    return any(header in folded for header in _DELIVERY_ORDER_HEADERS) and any(
+        marker in folded for marker in _DELIVERY_ACCOUNT_SECTION_MARKERS
     )
 
 
@@ -111,12 +180,12 @@ def normalize_delivered_items(raw_content) -> list[str]:
                 continue
 
             folded = _fold_delivery_text(cleaned)
-            if "thong tin don hang" in folded:
+            if any(header in folded for header in _DELIVERY_ORDER_HEADERS):
                 continue
             if any(marker in folded for marker in _DELIVERY_ACCOUNT_SECTION_MARKERS):
                 saw_account_section = True
                 continue
-            if folded.startswith("luu y"):
+            if folded.startswith(("luu y", "note", "注意")):
                 if saw_account_section:
                     break
                 continue
@@ -216,32 +285,38 @@ def build_store_order_txt_content(
     items,
     description: str = "",
     purchase_ts: float | None = None,
+    lang: str = "vi",
 ) -> str:
     """Build deterministic .txt content for delivered account items."""
+    labels = _DELIVERY_TXT_LABELS.get(normalize_lang(lang), _DELIVERY_TXT_LABELS["vi"])
     ts = purchase_ts or time.time()
     purchase_date = datetime.fromtimestamp(ts).strftime("%d/%m/%Y %H:%M:%S")
     safe_items = normalize_delivered_items(items)
+
+    def _field(key: str, value) -> str:
+        return f"{labels[key]:<12}: {value}"
+
     lines = [
         "=" * 60,
-        "THONG TIN DON HANG",
+        labels["order_header"],
         "=" * 60,
         "",
-        f"Ma don hang : {order_code}",
-        f"Ngay mua    : {purchase_date}",
-        f"San pham    : {product_name}",
-        f"So luong    : {quantity}",
-        f"Thanh toan  : {amount:,} VND",
+        _field("order_code", order_code),
+        _field("purchase_date", purchase_date),
+        _field("product", product_name),
+        _field("quantity", quantity),
+        _field("payment", f"{amount:,} VND"),
     ]
     clean_description = str(description or "").strip()
     if clean_description:
-        lines.extend(["", "Mo ta:", clean_description])
+        lines.extend(["", f"{labels['description']}:", clean_description])
     lines.extend([
         "",
-        f"Thoi han    : {duration}",
-        f"Bao hanh    : {warranty}",
+        _field("duration", duration),
+        _field("warranty", warranty),
         "",
         "=" * 60,
-        "DANH SACH TAI KHOAN",
+        labels["account_header"],
         "=" * 60,
         "",
     ])
@@ -633,26 +708,51 @@ def _format_warranty_expiry_text(timestamp_value) -> str:
         return "N/A"
 
 
-def build_auto_warranty_rejection_text(order_code: str, warranty_info: dict) -> str:
+def build_auto_warranty_rejection_text(order_code: str, warranty_info: dict, user_id=None) -> str:
     reason = str((warranty_info or {}).get("reason") or "")
     warranty_text = str((warranty_info or {}).get("warranty_text") or "N/A")
     expires_at = (warranty_info or {}).get("expires_at")
     expiry_line = ""
     if expires_at:
-        expiry_line = f"\n{E_CALENDAR} <b>Het han:</b> {_format_warranty_expiry_text(expires_at)}"
+        expiry_line = "\n{emoji} <b>{label}</b> {value}".format(
+            emoji=E_CALENDAR,
+            label=lt(user_id, "Hết hạn:", "Expired on:", "到期时间："),
+            value=_format_warranty_expiry_text(expires_at),
+        )
 
     if reason == "no_warranty":
-        detail = "Don hang nay khong co chinh sach bao hanh."
+        detail = lt(
+            user_id,
+            "Đơn hàng này không có chính sách bảo hành.",
+            "This order does not come with a warranty.",
+            "该订单不含质保服务。",
+        )
     else:
-        detail = "Don hang nay da het han bao hanh."
+        detail = lt(
+            user_id,
+            "Đơn hàng này đã hết hạn bảo hành.",
+            "The warranty for this order has expired.",
+            "该订单的质保已过期。",
+        )
 
     return (
-        f"{E_LIMIT} <b>TU CHOI HO TRO</b>\n\n"
+        f"{E_LIMIT} <b>"
+        + lt(user_id, "TỪ CHỐI HỖ TRỢ", "SUPPORT REQUEST DECLINED", "支持请求已拒绝")
+        + "</b>\n\n"
         f"{detail}\n"
-        f"<b>Ma don:</b> <code>{html.escape(str(order_code or ''))}</code>\n"
-        f"{E_SHIELD} <b>Bao hanh:</b> {html.escape(warranty_text)}"
+        "<b>" + lt(user_id, "Mã đơn:", "Order code:", "订单号：") + "</b> "
+        f"<code>{html.escape(str(order_code or ''))}</code>\n"
+        f"{E_SHIELD} <b>" + lt(user_id, "Bảo hành:", "Warranty:", "质保：") + "</b> "
+        f"{html.escape(warranty_text)}"
         f"{expiry_line}\n\n"
-        "<i>He thong da tu dong tu choi yeu cau nay de tranh gui lap lai cho admin.</i>"
+        "<i>"
+        + lt(
+            user_id,
+            "Hệ thống đã tự động từ chối yêu cầu này để tránh gửi trùng cho admin.",
+            "This request was declined automatically so the admin does not receive duplicates.",
+            "系统已自动拒绝该请求，以免重复发送给管理员。",
+        )
+        + "</i>"
     )
 
 
