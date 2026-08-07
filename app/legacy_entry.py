@@ -1,5 +1,5 @@
 def main() -> None:
-    if not all([TELEGRAM_TOKEN, API_PASSWORD]):
+    if not TELEGRAM_TOKEN or (ENABLE_PAYMENT_MBBANK and not API_PASSWORD):
         logger.critical("!!! Cáº¢NH BÃO: Thiáº¿u biáº¿n cáº¥u hÃ¬nh cáº§n thiáº¿t !!!")
         return
 
