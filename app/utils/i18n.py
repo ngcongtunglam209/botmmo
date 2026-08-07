@@ -23,15 +23,6 @@ STRINGS = {
             '<tg-emoji emoji-id="6124902618574625426">👑</tg-emoji> <b>HỆ THỐNG DỊCH VỤ MMO CAO CẤP</b> '
             '<tg-emoji emoji-id="6124902618574625426">👑</tg-emoji>\n'
             "━━━━━━━━━━━━━━━━━━\n"
-            '<tg-emoji emoji-id="5413614600807528475">🔤</tg-emoji>'
-            '<tg-emoji emoji-id="5413770125868284686">🔤</tg-emoji>'
-            '<tg-emoji emoji-id="5411498324391902647">🔤</tg-emoji>'
-            '<tg-emoji emoji-id="5411600256850738882">🔤</tg-emoji>'
-            '<tg-emoji emoji-id="5420512812206143917">🔤</tg-emoji>'
-            '<tg-emoji emoji-id="5420291728764581871">🌷</tg-emoji>'
-            '<tg-emoji emoji-id="5411600256850738882">🔤</tg-emoji>'
-            '<tg-emoji emoji-id="5411096972582992980">🌹</tg-emoji>'
-            '<tg-emoji emoji-id="5411209822848693977">🔤</tg-emoji>\n'
             '<blockquote><tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> <b>Uy tín - Nhanh gọn - Chuyên nghiệp</b>\n'
             '<tg-emoji emoji-id="5303290914041505430">⚡️</tg-emoji> Hệ thống giao hàng tự động 24/7.</blockquote>\n\n'
             "{success} <i>Lựa chọn dịch vụ bên dưới để bắt đầu:</i>"
