@@ -277,5 +277,5 @@ async def error_handler_callback(update: object, context: ContextTypes.DEFAULT_T
 
 
 # ==============================================================================
-#  SUPPLIER_SOURCE ADMIN COMMANDS (Nhập hàng từ API bên ngoài)
+#  ADMIN COMMANDS
 

@@ -22,7 +22,7 @@ Authorization: Bearer YOUR_API_KEY
 ## Sản phẩm thường — `/api/v2/*`
 
 1. `GET /api/v2/me` — kiểm tra key và số dư dùng chung.
-2. `GET /api/v2/catalog` — lấy account, stock local, manual và resell.
+2. `GET /api/v2/catalog` — lấy account, stock local và manual.
 3. `POST /api/v2/orders` — tạo đơn sản phẩm thường.
 4. Tra đơn bằng `/api/v2/orders/{order_code}` hoặc
    `/api/v2/orders/by-ref/{partner_ref}`.
@@ -48,7 +48,7 @@ curl -X POST "https://api.example.com/api/social/orders" \
   -H "x-idempotency-key: SOCIAL-2026-000001" \
   -d '{
     "partner_ref": "SOCIAL-2026-000001",
-    "product_id": "ctt_8786",
+    "product_id": "prod_8786",
     "quantity": 100,
     "target_link": "https://www.facebook.com/example"
   }'
@@ -176,7 +176,7 @@ class DeveloperOrderRequest(BaseModel):
 
 class SocialOrderRequest(BaseModel):
     partner_ref: str | None = Field(None, description="Mã đơn social duy nhất của partner.", examples=["SOCIAL_20260718_0001"])
-    product_id: str | None = Field(None, description="ID từ `GET /api/social/catalog`.", examples=["ctt_8786"])
+    product_id: str | None = Field(None, description="ID từ `GET /api/v2/catalog`.", examples=["prod_8786"])
     quantity: int = Field(1, description="Số lượng tương tác theo giới hạn catalog.", examples=[100])
     target_link: str | None = Field(None, description="Link mục tiêu; bắt buộc khi `social_input_fields` có `link`.", examples=["https://www.facebook.com/example"])
     comments: str | None = Field(None, description="Danh sách comment, mỗi dòng một nội dung, khi dịch vụ yêu cầu.")

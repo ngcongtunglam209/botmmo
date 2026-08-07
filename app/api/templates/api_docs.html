@@ -45,7 +45,6 @@
         <a href="#endpoints">Danh sách endpoint</a>
         <a href="#create-order">Tạo đơn hàng</a>
         <a href="#delivery">Nhận sản phẩm</a>
-        <a href="#social">Dịch vụ Social</a>
         <p>VẬN HÀNH</p>
         <a href="#idempotency">Chống trùng đơn</a>
         <a href="#errors">Mã lỗi</a>
@@ -70,7 +69,7 @@
         <div class="hero-grid">
           <div><b>REST + JSON</b><span>Chuẩn HTTP, phản hồi dễ xử lý</span></div>
           <div><b>Idempotent</b><span>Retry an toàn, không tạo trùng đơn</span></div>
-          <div><b>2 luồng rõ ràng</b><span>Sản phẩm thường và Social riêng biệt</span></div>
+          <div><b>Một luồng duy nhất</b><span>Catalog và đơn hàng qua API v2</span></div>
         </div>
       </section>
 
@@ -104,13 +103,13 @@
         <h2>Luồng tích hợp chuẩn</h2>
         <div class="timeline">
           <article><span>1</span><div><h3>Kiểm tra kết nối</h3><p><code>GET /api/v2/me</code> để xác nhận key và số dư.</p></div></article>
-          <article><span>2</span><div><h3>Đồng bộ catalog</h3><p>Dùng <code>/api/v2/catalog</code> cho sản phẩm thường, <code>/api/social/catalog</code> cho dịch vụ social.</p></div></article>
+          <article><span>2</span><div><h3>Đồng bộ catalog</h3><p>Dùng <code>/api/v2/catalog</code> để đồng bộ sản phẩm.</p></div></article>
           <article><span>3</span><div><h3>Tạo đơn an toàn</h3><p>Gửi <code>partner_ref</code> và <code>x-idempotency-key</code> giống nhau.</p></div></article>
           <article><span>4</span><div><h3>Giao hoặc theo dõi</h3><p>Có <code>data.items</code> thì giao ngay; chưa có thì poll chi tiết đơn mỗi 5–15 giây.</p></div></article>
         </div>
       </section>
 
-      <section id="endpoints" class="doc-section reveal" data-search="endpoint me status catalog orders history by-ref social">
+      <section id="endpoints" class="doc-section reveal" data-search="endpoint me status catalog orders history by-ref">
         <div class="section-kicker">04 — ENDPOINTS</div>
         <div class="section-title-row"><div><h2>Endpoint cần dùng</h2><p>Tập trung vào V2. API legacy chỉ dành cho hệ thống cũ.</p></div><a href="/reference">Xem toàn bộ reference →</a></div>
         <div class="endpoint-list">
@@ -121,7 +120,7 @@
           <article data-search="GET orders history lịch sử"><span class="method get">GET</span><code>/api/v2/orders</code><p>Lịch sử đơn, hỗ trợ phân trang</p><a href="/reference#/Partner">Thử API</a></article>
           <article data-search="GET order code lookup poll"><span class="method get">GET</span><code>/api/v2/orders/{order_code}</code><p>Chi tiết và trạng thái đơn</p><a href="#delivery">Chi tiết</a></article>
           <article data-search="GET by ref partner reference"><span class="method get">GET</span><code>/api/v2/orders/by-ref/{partner_ref}</code><p>Tra đơn bằng mã của bạn</p><a href="#idempotency">Chi tiết</a></article>
-          <article data-search="social catalog orders"><span class="method social">SOCIAL</span><code>/api/social/*</code><p>Catalog và đơn Social Media</p><a href="#social">Chi tiết</a></article>
+          
         </div>
       </section>
 
@@ -148,7 +147,7 @@
           <div class="field-head"><span>Field</span><span>Kiểu</span><span>Mô tả</span></div>
           <div><code>partner_ref</code><span>string · bắt buộc</span><p>Mã đơn duy nhất của bạn, tối đa 64 ký tự.</p></div>
           <div><code>product_id</code><span>string · bắt buộc</span><p>ID lấy trực tiếp từ catalog tương ứng.</p></div>
-          <div><code>quantity</code><span>integer</span><p>Sản phẩm thường: 1–200; social theo giới hạn trong catalog.</p></div>
+          <div><code>quantity</code><span>integer</span><p>Từ 1 đến 200 cho mỗi đơn.</p></div>
           <div><code>customer_email</code><span>string</span><p>Email khách cuối nếu sản phẩm cần xử lý qua email.</p></div>
           <div><code>customer_id</code><span>string</span><p>ID khách trong hệ thống của bạn, dùng để đối soát.</p></div>
         </div>
@@ -163,20 +162,6 @@
         </div>
         <div class="callout warning"><span>!</span><div><b>Đừng nhầm data.link</b><p>Với API V2, nội dung giao hàng nằm trong <code>data.items</code>. <code>data.link</code> thường chỉ mô tả cách giao. Chỉ endpoint legacy <code>/api/buy</code> dùng link làm nội dung chính.</p></div></div>
         <div class="mini-code"><code>GET /api/v2/orders/{order_code}</code><button class="copy" data-copy="GET https://api.example.com/api/v2/orders/{order_code}">Sao chép</button></div>
-      </section>
-
-      <section id="social" class="doc-section reveal" data-search="social media facebook tiktok target link comments quantity supplier">
-        <div class="section-kicker">07 — SOCIAL API</div>
-        <h2>Luồng riêng cho Social Media</h2>
-        <p>Không trộn catalog social với catalog thường. Luôn đọc <code>minimum_order_quantity</code>, <code>maximum_order_quantity</code> và <code>social_input_fields</code> trước khi tạo đơn.</p>
-        <div class="social-flow">
-          <code>GET /api/social/catalog</code><span>→</span><code>POST /api/social/orders</code><span>→</span><code>GET /api/social/orders/{order_code}</code>
-        </div>
-        <ul class="check-list">
-          <li><span>✓</span><div><b>target_link</b><p>Bắt buộc khi <code>social_input_fields</code> có <code>link</code>.</p></div></li>
-          <li><span>✓</span><div><b>comments</b><p>Gửi mỗi comment một dòng nếu dịch vụ yêu cầu.</p></div></li>
-          <li><span>✓</span><div><b>supplier progress</b><p>Đọc <code>supplier_status</code>, <code>supplier_remains</code> và <code>supplier_progress</code> khi poll.</p></div></li>
-        </ul>
       </section>
 
       <section id="idempotency" class="doc-section reveal" data-search="idempotency chống trùng đơn partner ref retry timeout">

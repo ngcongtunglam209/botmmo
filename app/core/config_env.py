@@ -97,9 +97,6 @@ ADMIN_USER_ID = int(os.getenv("ADMIN_USER_ID", "0"))
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "").strip()
 SUPPORT_GROUP_LINK = os.getenv("SUPPORT_GROUP_LINK", "").strip()
 REQUIRED_GROUP_ID = int(os.getenv("REQUIRED_GROUP_ID", "0") or "0")
-ICLOUD_PACKAGE_PRICE = int(os.getenv("ICLOUD_PACKAGE_PRICE", "35000"))
-API_PACKAGE_PRICE = int(os.getenv("API_PACKAGE_PRICE", "25000"))
-ENABLE_ICLOUD_SALES = os.getenv("ENABLE_ICLOUD_SALES", "true").strip().lower() in {"1", "true", "yes", "on"}
 ENABLE_EMAIL_SENDING = os.getenv("ENABLE_EMAIL_SENDING", "true").strip().lower() in {"1", "true", "yes", "on"}
 REGISTRATION_CHALLENGE_ENABLED = os.getenv("REGISTRATION_CHALLENGE_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
 SENDER_EMAIL = os.getenv("SENDER_EMAIL", "").strip()
@@ -107,10 +104,6 @@ if ENABLE_EMAIL_SENDING and not SENDER_APP_PASSWORD:
     SENDER_APP_PASSWORD = _require_env("SENDER_APP_PASSWORD")
 
 # --- FIX Phase 2: Chuyển hardcoded values → .env ---
-INSTRUCTION_IMAGE_URL = os.getenv(
-    "INSTRUCTION_IMAGE_URL",
-    "https://i.imgur.com/un4HpDN.jpeg"
-).strip()
 REPORT_INSTRUCTION_IMAGE_URL = os.getenv(
     "REPORT_INSTRUCTION_IMAGE_URL",
     "https://sf-static.upanhlaylink.com/img/image_2026012951ccd173a4a5883794367070516a2463.jpg"
@@ -140,7 +133,6 @@ USDT_BEP20_RATE_VND_PER_USDT_RAW = os.getenv("USDT_BEP20_RATE_VND_PER_USDT", BIN
 # Legacy aliases keep older checkout helpers compatible while BEP20 replaces TRC20.
 USDT_TRC20_WALLET_ADDRESS = USDT_BEP20_WALLET_ADDRESS
 USDT_TRC20_RATE_VND_PER_USDT_RAW = USDT_BEP20_RATE_VND_PER_USDT_RAW
-SOCIAL_SOURCE_RATE_VND_PER_USD_RAW = "0"
 BSC_RPC_URL = os.getenv("BSC_RPC_URL", "https://bsc.rpc.blxrbdn.com").strip()
 BSC_USDT_CONTRACT_ADDRESS = os.getenv("BSC_USDT_CONTRACT_ADDRESS", "0x55d398326f99059fF775485246999027B3197955").strip()
 BSC_CONFIRMATIONS = get_env_int("BSC_CONFIRMATIONS", 5, minimum=1)
@@ -190,11 +182,6 @@ try:
     USDT_TRC20_RATE_VND_PER_USDT = Decimal(USDT_TRC20_RATE_VND_PER_USDT_RAW or "0")
 except InvalidOperation:
     USDT_TRC20_RATE_VND_PER_USDT = Decimal("0")
-
-try:
-    SOCIAL_SOURCE_RATE_VND_PER_USD = Decimal(SOCIAL_SOURCE_RATE_VND_PER_USD_RAW or "0")
-except InvalidOperation:
-    SOCIAL_SOURCE_RATE_VND_PER_USD = Decimal("0")
 
 def _get_today_key():
     return datetime.now().strftime('%Y-%m-%d')
@@ -269,14 +256,6 @@ _bank_api_last_tx_count = 0
 _bank_api_total_checks = 0
 _bank_api_total_success = 0
 
-SUPPLIER_SOURCE_API_KEY = ""
-SUPPLIER_SOURCE_BASE_URL = ""
-SUPPLIER_CATALOG_API_KEY = ""
-SUPPLIER_CATALOG_BASE_URL = ""
-SOCIAL_SOURCE_API_KEY = ""
-SOCIAL_SOURCE_BASE_URL = ""
-SOCIAL_SOURCE_AUTO_MANAGED_ROOT_CATEGORY = "Dich Vu Mang Xa Hoi (Tu Dong)"
-
 ## =============================
 #  CẤU HÌNH AI (GROQ API)
 ## =============================
@@ -294,9 +273,6 @@ def _iter_log_secrets():
         SEPAY_API_TOKEN,
         ADMIN_WEB_PASSWORD_HASH,
         ADMIN_WEB_SESSION_SECRET,
-        SUPPLIER_SOURCE_API_KEY,
-        SUPPLIER_CATALOG_API_KEY,
-        SOCIAL_SOURCE_API_KEY,
         AI_API_KEY,
         SENDER_APP_PASSWORD,
         BANK_ACCOUNT_NUMBER,
@@ -338,7 +314,7 @@ class SensitiveDataFilter(logging.Filter):
 # =============================
 #  CÁC THIẾT LẬP HỆ THỐNG
 # =============================
-LINKS_FILE, HISTORY_FILE, PROCESSED_TX_FILE = "data_available_links.json", "data_order_history.json", "data_processed_ids.json"
+HISTORY_FILE, PROCESSED_TX_FILE = "data_order_history.json", "data_processed_ids.json"
 USERS_FILE, BANNED_USERS_FILE, COUPONS_FILE, API_KEYS_FILE = "data_users.json", "data_banned_users.json", "data_coupons.json", "data_api_keys.json"
 PRODUCTS_FILE = "data_products.json"
 CUSTOM_STORE_ICONS_FILE = "data_custom_store_icons.json"
@@ -369,7 +345,6 @@ ORDER_EXPIRATION_SECONDS = 600
 BANK_CHECK_INTERVAL_SECONDS = get_env_int("BANK_CHECK_INTERVAL_SECONDS", 15, minimum=5)
 BANK_API_TIMEOUT_SECONDS = get_env_float("BANK_API_TIMEOUT_SECONDS", 6.0, minimum=2.0)
 SEPAY_POLL_LOOKBACK_MINUTES = get_env_int("SEPAY_POLL_LOOKBACK_MINUTES", 180, minimum=15)
-RESELL_AUTO_SYNC_INTERVAL_SECONDS = get_env_int("RESELL_AUTO_SYNC_INTERVAL_SECONDS", 60, minimum=30)
 BANK_REFUND_MIN_AMOUNT = get_env_int("BANK_REFUND_MIN_AMOUNT", 200000, minimum=200000)
 
 # Tối ưu: Compile regex trước để tăng tốc

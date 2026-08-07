@@ -40,8 +40,6 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
     
     # Tính toán
-    discount_amount = int(ICLOUD_PACKAGE_PRICE * discount_percent / 100)
-    final_price = ICLOUD_PACKAGE_PRICE - discount_amount
     expires_date = datetime.now() + timedelta(days=days)
     expires_str = expires_date.strftime('%d-%m-%Y')
     
@@ -50,7 +48,8 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     
     # Lưu coupon vào database
     coupons[sale_code] = {
-        "discount": discount_amount,
+        "discount": discount_percent,
+        "is_percent": True,
         "quantity": quantity,
         "expires": expires_str,
         "used": 0
@@ -61,10 +60,9 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     admin_preview = (
         f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ TẠO SALE EVENT THÀNH CÔNG!</b>\n\n"
         f"<tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> <b>Mã giảm giá:</b> <code>{sale_code}</code>\n"
-        f"<tg-emoji emoji-id=\"5303290914041505430\">💥</tg-emoji> <b>Giảm:</b> {discount_percent}% ({discount_amount:,} VNĐ)\n"
+        f"<tg-emoji emoji-id=\"5303290914041505430\">💥</tg-emoji> <b>Giảm:</b> {discount_percent}%\n"
         f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Số lượng:</b> {quantity} mã\n"
         f"<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>Hết hạn:</b> {expires_str}\n"
-        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Giá sau giảm:</b> {final_price:,} VNĐ\n\n"
         f"<tg-emoji emoji-id=\"5303290914041505430\">🚀</tg-emoji> <b>Đang broadcast đến {len(user_data_db)} users...</b>\n"
         f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <i>Bot vẫn hoạt động bình thường, broadcast chạy nền!</i>"
     )
@@ -74,10 +72,7 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     sale_message = (
         f"<tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji><tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji><tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji> <b>FLASH SALE - GIẢM GIÁ SỐC!</b> <tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji><tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji><tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji>\n\n"
         f"<tg-emoji emoji-id=\"5303290914041505430\">⚡️</tg-emoji> <b>GIẢM NGAY {discount_percent}%</b> <tg-emoji emoji-id=\"5303290914041505430\">⚡️</tg-emoji>\n"
-        f"Gói iCloud 2TB Vĩnh Viễn\n\n"
-        f"<tg-emoji emoji-id=\"5863724849851011383\">💸</tg-emoji> <b>Giá gốc:</b> <s>{ICLOUD_PACKAGE_PRICE:,} VNĐ</s>\n"
-        f"<tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> <b>Giá SALE:</b> <b><u>{final_price:,} VNĐ</u></b>\n"
-        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Tiết kiệm:</b> {discount_amount:,} VNĐ!\n\n"
+        f"Áp dụng cho toàn bộ sản phẩm trong cửa hàng\n\n"
         f"<tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> <b>MÃ GIẢM GIÁ:</b>\n"
         f"<code>{sale_code}</code>\n"
         f"<i>(Chạm để copy)</i>\n\n"
@@ -142,7 +137,7 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             f"❌ <b>Thất bại:</b> {fail_count}\n"
             f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Tổng users:</b> {len(user_data_db)}\n\n"
             f"<tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> <b>Mã:</b> <code>{sale_code}</code>\n"
-            f"<tg-emoji emoji-id=\"5303290914041505430\">💥</tg-emoji> <b>Giảm:</b> {discount_percent}% ({discount_amount:,} VNĐ)\n"
+            f"<tg-emoji emoji-id=\"5303290914041505430\">💥</tg-emoji> <b>Giảm:</b> {discount_percent}%\n"
             f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Còn lại:</b> {quantity} mã\n\n"
             f"<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> <b>SALE EVENT ĐÃ KHỞI ĐỘNG!</b>"
         )

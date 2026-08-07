@@ -113,7 +113,7 @@ async def clear_user_state(context):
         'pending_manual_order', 'waiting_message_id', 'waiting_chat_id',
         'admin_waiting_message_id', 'api_rotate_source_key', 'api_rotate_source_chat_id',
         'api_rotate_source_message_id', 'api_rotate_confirm_chat_id', 'api_rotate_confirm_message_id',
-        'pending_ctt_checkout', 'pending_ctt_payment_balance_used', 'warranty_claim_order', 'warranty_description',
+        'warranty_claim_order', 'warranty_description',
         'refund_bank_order_code',
     ]
     for key in keys_to_clear: context.user_data.pop(key, None)

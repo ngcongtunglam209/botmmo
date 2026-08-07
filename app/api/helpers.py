@@ -288,15 +288,8 @@ def _api_get_product_completed_sales_count(product_id: str):
     return sold_count
 
 def _api_get_v1_product_stock_count(product_id: str, product_data: dict):
-    if product_data.get("is_social_source_service"):
-        return None
     if product_data.get("requires_gmail"):
         return _api_get_manual_product_available_slots(product_id, product_data)
-    if product_data.get("is_supplier_source_resell"):
-        try:
-            return max(0, int(product_data.get("supplier_source_stock", 0) or 0))
-        except (ValueError, TypeError, KeyError, IndexError):
-            return 0
     return int(get_local_stock_available_count(product_data) or 0)
 
 def _api_build_v1_variant_payload(product_id: str, product_data: dict, actor: dict | None = None):
@@ -326,7 +319,7 @@ def _api_build_v1_product_payload(product_id: str, product_data: dict, actor: di
         "sellerId": "lam_shop",
         "title": str(product_data.get("name") or product_id),
         "shortDescription": str(product_data.get("description") or product_data.get("duration") or ""),
-        "type": "SERVICE" if product_data.get("requires_gmail") or product_data.get("is_social_source_service") else "ACCOUNT",
+        "type": "SERVICE" if product_data.get("requires_gmail") else "ACCOUNT",
         "price": str(int(unit_price or 0)),
         "stock": _api_get_v1_product_stock_count(product_id, product_data),
         "sold": _api_get_product_completed_sales_count(product_id),
@@ -342,16 +335,6 @@ def _api_v1_normalize_order_status(order_data: dict):
         refunded_at = 0
     if refunded_at > 0:
         return "REFUNDED"
-
-    if order_data.get("is_social_source_service"):
-        supplier_status = str(order_data.get("ctt_supplier_status") or "").strip()
-        if supplier_status:
-            normalized_supplier_status = supplier_status.casefold()
-            if normalized_supplier_status in {"canceled", "cancelled"}:
-                return "FAILED"
-            if ctt_is_completed_order_status(supplier_status):
-                return "COMPLETED"
-            return "PENDING"
 
     raw_status = status_text(order_data.get("status")).strip().lower()
     delivery_method = str(order_data.get("delivery_method") or "").strip().lower()
@@ -443,18 +426,8 @@ def _api_v1_humanize_error(detail) -> str:
         return "Request failed"
     if detail_text == "product_not_found":
         return "Product not found"
-    if detail_text == "dino_out_of_stock":
-        return "Out of stock"
     if detail_text == "invalid_product_price":
         return "Invalid product price"
-    if detail_text == "target_link is required for social_service":
-        return "target_link is required for this social service"
-    if detail_text == "comments is required for this social_service":
-        return "comments is required for this social service"
-    if detail_text == "supplier_source_product_id_missing":
-        return "Supplier product configuration is missing"
-    if normalized.startswith("supplier_error:"):
-        return detail_text.split(":", 1)[1].strip() or "Supplier error"
     return detail_text
 
 def _api_json_response(status_code: int, content: dict):
@@ -660,7 +633,6 @@ def _api_get_orders_for_actor(
     offset: int = 0,
     status_filter: str | None = None,
     search: str | None = None,
-    social_only: bool | None = None,
 ):
     safe_offset = max(0, int(offset or 0))
     normalized_status = str(status_filter or "").strip().lower()
@@ -672,10 +644,6 @@ def _api_get_orders_for_actor(
             continue
         if not _api_order_belongs_to_actor(order, actor):
             continue
-        is_social_order = bool(order.get("is_social_source_service"))
-        if social_only is not None and is_social_order != social_only:
-            continue
-
         raw_status = str(order.get("status") or "").strip().lower()
         pretty_status = status_text(order.get("status")).lower()
         if normalized_status and normalized_status not in raw_status and normalized_status not in pretty_status:
@@ -752,32 +720,13 @@ def _api_find_order_by_partner_ref(actor: dict, partner_ref: str):
     return None
 
 def _api_get_product_stock_count(product_data: dict):
-    if product_data.get("is_social_source_service") or product_data.get("requires_gmail"):
+    if product_data.get("requires_gmail"):
         return None
-    if product_data.get("is_supplier_source_resell"):
-        try:
-            raw_stock = int(product_data.get("supplier_source_stock", 0) or 0)
-        except (ValueError, TypeError, KeyError, IndexError):
-            raw_stock = 0
-        return max(0, raw_stock)
     return int(get_local_stock_available_count(product_data) or 0)
 
 def _api_is_product_available_for_catalog(product_data: dict):
-    if product_data.get("is_social_source_service"):
-        try:
-            minimum_quantity = int(product_data.get("ctt_min_quantity", product_data.get("ctt_package_quantity", 1)) or 1)
-        except (ValueError, TypeError, KeyError, IndexError):
-            minimum_quantity = 1
-        return bool(SOCIAL_SOURCE_API_KEY) and not _ctt_validate_purchase_quantity(product_data, minimum_quantity)
     if product_data.get("requires_gmail"):
         return True
-    if product_data.get("is_supplier_source_resell"):
-        if product_data.get("supplier_source_purchase_blocked"):
-            return False
-        try:
-            return int(product_data.get("supplier_source_stock", 0) or 0) > 0
-        except (ValueError, TypeError, KeyError, IndexError):
-            return False
     return int(get_local_stock_available_count(product_data) or 0) > 0
 
 def _api_get_product_stock_status(product_data: dict):
@@ -795,34 +744,13 @@ def _api_store_product_payload(product_id: str, product_data: dict, actor: dict 
         "description": str(product_data.get("description") or ""),
         "duration": str(product_data.get("duration") or ""),
         "warranty": str(product_data.get("warranty") or ""),
-        "delivery_mode": (
-            "social_service"
-            if product_data.get("is_social_source_service")
-            else (
-                "manual_fulfillment"
-                if product_data.get("requires_gmail")
-                else ("resell_source_api" if product_data.get("is_supplier_source_resell") else "instant_items")
-            )
-        ),
+        "delivery_mode": "manual_fulfillment" if product_data.get("requires_gmail") else "instant_items",
         "stock_status": "in_stock" if available else "out_of_stock",
         "stock_count": stock_count,
         "stock": stock_count,
         "available": available,
         "requires_gmail": bool(product_data.get("requires_gmail", False)),
-        "is_supplier_source_resell": bool(product_data.get("is_supplier_source_resell", False)),
-        "is_social_source_service": bool(product_data.get("is_social_source_service", False)),
     }
-    if product_data.get("is_social_source_service"):
-        payload["warranty_supported"] = bool(product_data.get("ctt_refill"))
-        payload["warranty_time"] = str(product_data.get("ctt_warranty_time") or "")
-        minimum_quantity = int(product_data.get("ctt_min_quantity", product_data.get("ctt_package_quantity", 1)) or 1)
-        payload["service_package_quantity"] = minimum_quantity
-        payload["service_units_per_package"] = 1
-        payload["minimum_order_quantity"] = minimum_quantity
-        payload["maximum_order_quantity"] = int(product_data.get("ctt_max_quantity", 0) or 0)
-        payload["pricing_model"] = str(product_data.get("ctt_pricing_model") or "per_unit")
-        payload["social_input_fields"] = list(product_data.get("ctt_input_fields") or [])
-        payload["supplier_service_id"] = str(product_data.get("ctt_service_id") or "")
     if base_price > unit_price:
         payload["list_price"] = base_price
         payload["discount_type"] = str(discount_type or "")
@@ -838,19 +766,16 @@ def _api_store_product_payload(product_id: str, product_data: dict, actor: dict 
 
 
 def _api_is_catalog_visible_product(product_data: dict | None):
-    return bool(isinstance(product_data, dict) and _ctt_is_catalog_visible(product_data))
+    return isinstance(product_data, dict)
 
 _API_CATALOG_CACHE = {}
 _API_CATALOG_CACHE_TTL_SECONDS = 120
 
-def _api_get_cached_catalog_payload(actor: dict | None = None, social_only: bool | None = None):
+def _api_get_cached_catalog_payload(actor: dict | None = None):
     # Stock is mutable; rebuild every request so partners never receive a stale count.
     items = []
     for pid, pdata in products.items():
         if not _api_is_catalog_visible_product(pdata):
-            continue
-        is_social_product = bool(pdata.get("is_social_source_service"))
-        if social_only is not None and is_social_product != social_only:
             continue
         items.append(_api_store_product_payload(pid, pdata, actor=actor))
     return items
@@ -861,9 +786,8 @@ def _api_catalog_payload(
     offset: int = 0,
     search: str | None = None,
     available_only: bool = False,
-    social_only: bool | None = None,
 ):
-    items = _api_get_cached_catalog_payload(actor, social_only=social_only)
+    items = _api_get_cached_catalog_payload(actor)
 
     filtered_items = items
     search_text = str(search or "").strip().casefold()
@@ -902,7 +826,6 @@ def _api_status_payload(actor: dict):
         "version": API_V2_VERSION,
         "status": "online",
         "maintenance_mode": MAINTENANCE_MODE,
-        "stock_count": len(available_links),
         "product_count": visible_product_count,
         "pending_orders": len(pending_orders),
         "your_balance": current_balance,
@@ -968,54 +891,8 @@ def _api_order_payload(order_data: dict, remaining_balance=None, idempotent_repl
         refund_target = str(order_data.get("refund_target") or "").strip()
         if refund_target:
             payload["refund_target"] = refund_target
-    try:
-        auto_refunded_amount = int(order_data.get("ctt_auto_refunded_amount", 0) or 0)
-    except (ValueError, TypeError, KeyError, IndexError):
-        auto_refunded_amount = 0
-    if auto_refunded_amount > 0:
-        payload["partial_refund_amount"] = auto_refunded_amount
-        payload["auto_refund_amount"] = auto_refunded_amount
-        auto_refund_reason = str(order_data.get("ctt_auto_refund_reason") or "").strip()
-        if auto_refund_reason:
-            payload["auto_refund_reason"] = auto_refund_reason
-        auto_refund_target = str(order_data.get("ctt_auto_refund_target") or "").strip()
-        if auto_refund_target:
-            payload["auto_refund_target"] = auto_refund_target
     if remaining_balance is not None:
         payload["remaining_balance"] = remaining_balance
-    if order_data.get("is_social_source_service"):
-        payload["is_social_source_service"] = True
-        payload["target_link"] = str(order_data.get("ctt_target_link") or order_data.get("link") or "")
-        payload["comments"] = str(order_data.get("ctt_comments") or "")
-        payload["supplier_order_id"] = str(order_data.get("ctt_supplier_order_id") or "")
-        payload["supplier_status"] = str(order_data.get("ctt_supplier_status") or "")
-        try:
-            payload["supplier_status_refreshed_at"] = int(order_data.get("ctt_status_refreshed_at", 0) or 0)
-        except (ValueError, TypeError, KeyError, IndexError):
-            payload["supplier_status_refreshed_at"] = 0
-        refresh_error = str(order_data.get("ctt_status_refresh_error") or "").strip()
-        if refresh_error:
-            payload["supplier_status_refresh_error"] = refresh_error
-        if order_data.get("ctt_supplier_charge"):
-            payload["supplier_charge"] = str(order_data.get("ctt_supplier_charge") or "")
-        if order_data.get("ctt_supplier_remains"):
-            payload["supplier_remains"] = str(order_data.get("ctt_supplier_remains") or "")
-        if order_data.get("ctt_supplier_start_count"):
-            payload["supplier_start_count"] = str(order_data.get("ctt_supplier_start_count") or "")
-        try:
-            payload["supplier_quantity"] = int(order_data.get("ctt_supplier_quantity", 0) or 0)
-        except (ValueError, TypeError, KeyError, IndexError):
-            payload["supplier_quantity"] = 0
-        progress_counts = ctt_get_supplier_progress_counts(order_data)
-        if progress_counts:
-            payload["supplier_progress"] = progress_counts
-            for source_key, payload_key in (
-                ("initial_count", "supplier_initial_count"),
-                ("increased_quantity", "supplier_increased_quantity"),
-                ("remaining_quantity", "supplier_remaining_quantity"),
-            ):
-                if source_key in progress_counts:
-                    payload[payload_key] = progress_counts[source_key]
     return payload
 
 async def _api_notify_admin_order(order_data: dict, partner_name: str, remaining_balance):

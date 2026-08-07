@@ -93,7 +93,7 @@ async def api_v1_product_info(
             allow_admin=False,
         )
         product_data = products.get(product_id)
-        if not isinstance(product_data, dict) or not _ctt_is_catalog_visible(product_data):
+        if not isinstance(product_data, dict):
             raise HTTPException(status_code=404, detail="product_not_found")
     except HTTPException as exc:
         return _api_v1_error_response(_api_v1_humanize_error(exc.detail), exc.status_code)
@@ -116,7 +116,7 @@ async def api_v1_variant_info(
             allow_admin=False,
         )
         product_id, product_data = _api_get_product_from_synthetic_variant(variant_id)
-        if not product_id or not isinstance(product_data, dict) or not _ctt_is_catalog_visible(product_data):
+        if not product_id or not isinstance(product_data, dict):
             raise HTTPException(status_code=404, detail="Variant not found")
     except HTTPException as exc:
         return _api_v1_error_response(_api_v1_humanize_error(exc.detail), exc.status_code)
@@ -147,7 +147,7 @@ async def api_v1_buy_order(
         if not product_id:
             raise HTTPException(status_code=400, detail="productId is required")
         product_data = products.get(product_id)
-        if not isinstance(product_data, dict) or not _ctt_is_catalog_visible(product_data):
+        if not isinstance(product_data, dict):
             raise HTTPException(status_code=404, detail="product_not_found")
         _api_v1_validate_variant(product_id, variantId)
         partner_ref = _api_v1_resolve_partner_ref(orderId, order_id, x_idempotency_key)
@@ -187,7 +187,7 @@ async def api_v1_create_order(
         if not product_id:
             raise HTTPException(status_code=400, detail="productId is required")
         product_data = products.get(product_id)
-        if not isinstance(product_data, dict) or not _ctt_is_catalog_visible(product_data):
+        if not isinstance(product_data, dict):
             raise HTTPException(status_code=404, detail="product_not_found")
         _api_v1_validate_variant(product_id, raw_payload.get("variantId"))
         partner_ref = _api_v1_resolve_partner_ref(
@@ -240,9 +240,7 @@ async def api_v1_order_detail(
     tags=["Partner"],
     summary="Lấy catalog sản phẩm",
     description=(
-        "Trả danh sách sản phẩm đang bán. Với dịch vụ social, response có "
-        "`delivery_mode='social_service'`, `social_input_fields`, giới hạn số lượng, "
-        "`supplier_service_id` và thông tin pricing để partner biết cần gửi `target_link`/`comments`."
+        "Trả danh sách sản phẩm đang bán kèm giá, tồn kho và thông tin pricing của partner."
     ),
 )
 async def api_v2_catalog(
@@ -265,7 +263,6 @@ async def api_v2_catalog(
         offset=offset,
         search=search,
         available_only=available_only,
-        social_only=False,
     )
     return {
         "ok": True,
@@ -327,8 +324,7 @@ async def api_v2_me(
     summary="Tạo đơn hàng",
     description=(
         "Tạo đơn bằng `partner_ref` duy nhất. Nên gửi cùng giá trị trong header "
-        "`x-idempotency-key` để retry không tạo trùng. Với social service, gửi `target_link` "
-        "và `comments` theo `social_input_fields` từ catalog."
+        "`x-idempotency-key` để retry không tạo trùng."
     ),
 )
 async def api_v2_create_order(
@@ -358,12 +354,10 @@ async def api_v2_create_order(
         actor=actor,
         partner_ref=partner_ref,
         customer_email=customer_email,
-        send_email=bool(req.send_email),
         customer_id=req.customer_id,
         note=req.note,
         product_id=req.product_id,
         quantity=req.quantity,
-        expected_social=False,
     )
 
     message = "Existing order returned (idempotent replay)." if idempotent_replay else "Order created successfully."
@@ -380,7 +374,7 @@ async def api_v2_create_order(
     summary="Lấy lịch sử đơn API",
     description=(
         "Trả danh sách đơn của API key hiện tại, có phân trang và filter. Endpoint list chỉ trả trạng thái đã lưu; "
-        "không gọi nguồn social hàng loạt để tránh spam API nguồn."
+        "trả về theo thứ tự mới nhất trước."
     ),
 )
 async def api_v2_list_orders(
@@ -405,33 +399,7 @@ async def api_v2_list_orders(
         offset=safe_offset,
         status_filter=status,
         search=search,
-        social_only=False,
     )
-    now_ts = time.time()
-    refreshed_ctt = False
-    for order_data in orders_page:
-        if not isinstance(order_data, dict) or not order_data.get("is_social_source_service"):
-            continue
-        if order_data.get("refunded_at"):
-            continue
-        supplier_status = str(order_data.get("ctt_supplier_status") or "").strip().casefold()
-        if supplier_status in {"completed", "complete"}:
-            continue
-        try:
-            last_refreshed_at = float(order_data.get("ctt_status_refreshed_at") or 0)
-        except (TypeError, ValueError):
-            last_refreshed_at = 0
-        if last_refreshed_at and (now_ts - last_refreshed_at) < 180:
-            continue
-        try:
-            refresh_result = await refresh_ctt_order_status(order_data, persist=False)
-        except Exception:
-            logger.exception("API v2 list SOCIAL_SOURCE status refresh failed")
-            continue
-        if refresh_result.get("changed"):
-            refreshed_ctt = True
-    if refreshed_ctt:
-        await save_data(force=True, tables=[HISTORY_FILE])
     remaining_balance = _api_get_remaining_balance(actor)
     has_more = (safe_offset + len(orders_page)) < total_orders
 
@@ -461,8 +429,7 @@ async def api_v2_list_orders(
     tags=["Partner"],
     summary="Xem chi tiết đơn theo mã đơn",
     description=(
-        "Trả chi tiết đơn. Với đơn social, endpoint này refresh live trạng thái nguồn trước khi trả response "
-        "và có thể tra bằng cả `order_code` hoặc `supplier_order_id`."
+        "Trả chi tiết đơn theo `order_code`."
     ),
 )
 async def api_v2_get_order(
@@ -480,9 +447,6 @@ async def api_v2_get_order(
     order_data = find_order_by_code_or_supplier_id(normalized_order_code)
     if not order_data or not _api_order_belongs_to_actor(order_data, actor):
         raise HTTPException(status_code=404, detail="Order not found")
-    if order_data.get("is_social_source_service"):
-        raise HTTPException(status_code=400, detail="Use /api/social/orders/{order_code} for social orders")
-
     remaining_balance = _api_get_remaining_balance(actor)
 
     return {
@@ -496,8 +460,7 @@ async def api_v2_get_order(
     tags=["Partner"],
     summary="Xem chi tiết đơn theo partner_ref",
     description=(
-        "Dùng khi hệ thống partner lưu mã nội bộ của mình. Với đơn social, endpoint này refresh live trạng thái nguồn "
-        "trước khi trả response."
+        "Dùng khi hệ thống partner lưu mã nội bộ của mình."
     ),
 )
 async def api_v2_get_order_by_ref(
@@ -514,8 +477,6 @@ async def api_v2_get_order_by_ref(
     order_data = _api_find_order_by_partner_ref(actor, partner_ref)
     if not order_data:
         raise HTTPException(status_code=404, detail="Order not found")
-    if order_data.get("is_social_source_service"):
-        raise HTTPException(status_code=400, detail="Use /api/social/orders/by-ref/{partner_ref} for social orders")
     remaining_balance = _api_get_remaining_balance(actor)
 
     return {

@@ -9,8 +9,6 @@ def test_guide_and_policy_are_complete_and_fit_telegram():
     assert len(ui.CHINHSACH_TEXT) < 4096
 
     for required_text in (
-        "Làm mới giá &amp; tồn kho",
-        "Dịch vụ Social Media",
         "Báo lỗi và bảo hành",
         "An toàn tài khoản",
     ):

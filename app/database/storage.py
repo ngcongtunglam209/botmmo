@@ -477,9 +477,7 @@ async def save_data(force=False, tables=None):
                 for pid, p in products.items():
                     if isinstance(p, dict):
                         has_stock = True
-                        if p.get("is_supplier_source_resell"):
-                            has_stock = int(p.get("supplier_source_stock", 0) or 0) > 0
-                        elif not p.get("requires_gmail") and not p.get("ctt_service_type"):
+                        if not p.get("requires_gmail"):
                             has_stock = len(p.get("stock", [])) > 0
 
                         if not has_stock:
@@ -489,7 +487,6 @@ async def save_data(force=False, tables=None):
                             p.pop("out_of_stock_since", None)
                 
             files_to_save = [
-                (LINKS_FILE, list(available_links)), 
                 (HISTORY_FILE, order_history), 
                 (PROCESSED_TX_FILE, list(processed_transaction_ids)), 
                 (USERS_FILE, user_data_db), 
@@ -560,14 +557,11 @@ async def save_data_debounced(context: ContextTypes.DEFAULT_TYPE):
         await save_data(force=True)
 
 def load_data():
-    global available_links, order_history, processed_transaction_ids, user_data_db, banned_users, coupons, pending_orders, api_keys, pending_api_deposits, products, custom_store_icons, store_categories, pending_manual_orders, stock_waitlist, flash_sales, combo_deals, wheel_data
+    global order_history, processed_transaction_ids, user_data_db, banned_users, coupons, pending_orders, api_keys, pending_api_deposits, products, custom_store_icons, store_categories, pending_manual_orders, stock_waitlist, flash_sales, combo_deals, wheel_data
     global warranty_claims, product_ratings, referral_data, live_chats, active_giveaways, dice_game_data, withdrawal_requests, transaction_history, admin_action_log, daily_promo_tracker
     
     init_db()
 
-    available_links = load_from_db(LINKS_FILE, [], LINKS_FILE)
-    available_links = set(available_links) if isinstance(available_links, list) else set()
-    
     order_history = load_from_db(HISTORY_FILE, [], HISTORY_FILE)
     processed_transaction_ids = set(load_from_db(PROCESSED_TX_FILE, [], PROCESSED_TX_FILE))
     _backfill_durable_registries()
@@ -605,7 +599,6 @@ def load_data():
         admin_action_log = []
 
     runtime_binding_names = [
-        "available_links",
         "order_history",
         "processed_transaction_ids",
         "user_data_db",

@@ -64,51 +64,6 @@ async def _mark_pending_payment_message_completed(context, order_details: dict):
         pass
 
 
-def _ctt_inputs_from_pending_order(order_details: dict) -> dict:
-    return {
-        "link": str(order_details.get("ctt_target_link") or "").strip(),
-        "comments": str(order_details.get("ctt_comments") or "").strip(),
-    }
-
-
-def _build_ctt_completed_order(order_code: str, order_details: dict, product_data: dict, total_paid: int, current_time: float, supplier_result: dict) -> dict:
-    customer_order_code = _ctt_customer_order_code(order_code, supplier_result)
-    completed_order = {
-        "user_id": order_details['user_id'],
-        "order_code": customer_order_code,
-        "payment_reference_code": order_code,
-        "amount": total_paid,
-        "balance_used": int(order_details.get("balance_used", 0) or 0),
-        "qr_amount": int(order_details.get("amount", 0) or 0),
-        "status": ctt_build_local_order_status(supplier_result.get("supplier_status") or "Pending"),
-        "timestamp": current_time,
-        "full_name": order_details.get("full_name"),
-        "username": order_details.get("username"),
-        "type": "store_product",
-        "product_id": order_details.get("product_id") or "",
-        "product_name": product_data.get("name") or order_details.get("product_name") or "Social Service",
-        "quantity": int(order_details.get("quantity", 1) or 1),
-        "items": [],
-        "payment_method": order_details.get("payment_method", "bank_transfer"),
-        "delivery_method": "social_service",
-        "email": "N/A",
-        "coupon_used": order_details.get("coupon_code") or "",
-        "is_social_source_service": True,
-        "ctt_supplier_order_id": supplier_result.get("supplier_order_id") or "",
-        "ctt_supplier_status": supplier_result.get("supplier_status") or "Pending",
-        "ctt_supplier_quantity": int(supplier_result.get("supplier_quantity", 0) or 0),
-        "ctt_target_link": supplier_result.get("target_link") or "",
-        "ctt_comments": supplier_result.get("comments") or "",
-    }
-    if supplier_result.get("supplier_charge"):
-        completed_order["ctt_supplier_charge"] = supplier_result.get("supplier_charge")
-    if supplier_result.get("supplier_remains"):
-        completed_order["ctt_supplier_remains"] = supplier_result.get("supplier_remains")
-    if supplier_result.get("supplier_start_count"):
-        completed_order["ctt_supplier_start_count"] = supplier_result.get("supplier_start_count")
-    return completed_order
-
-
 def _find_pending_api_deposit_reference(description: str):
     raw_description = str(description or "")
     no_space_description = raw_description.replace(" ", "")
@@ -251,14 +206,14 @@ async def _cleanup_expired_pending_orders(context: ContextTypes.DEFAULT_TYPE, cu
                     f"Đơn hàng này đã hết hạn thanh toán.\n"
                     f"Vui lòng tạo đơn mới nếu bạn vẫn muốn mua.{refund_text}"
                 )
-                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "muahang_start")
+                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "store_main")
             else:
                 caption = (
                     f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>ĐƠN HÀNG ĐÃ HẾT HẠN</b> <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji>\n\n"
                     f"Đơn hàng cho email <b>{details.get('email', 'N/A')}</b> đã hết hạn thanh toán.\n"
                     f"Vui lòng tạo đơn mới nếu bạn vẫn muốn mua.{refund_text}"
                 )
-                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "muahang_start")
+                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "store_main")
 
             if details.get('message_id'):
                 if details.get("message_kind") == "text":
@@ -671,7 +626,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                     logger.info(f"CRON: So sánh tiền - Mong đợi: {expected_amount}, Thực tế: {actual_amount}")
 
                     if actual_amount == expected_amount:
-                        # Handle Store Product vs iCloud Package
+                        # Handle Store Product
                         if order_details.get("type") == "store_product":
                             prod_id = order_details.get("product_id")
                             qty = order_details.get("quantity", 1)
@@ -803,373 +758,6 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 # Skip phần xử lý stock bên dưới
                                 continue
 
-                            if p.get('is_social_source_service') or order_details.get('is_social_source_service'):
-                                balance_used_order = int(order_details.get("balance_used", 0) or 0)
-                                total_paid_social = actual_amount + balance_used_order
-                                await context.bot.send_message(
-                                    order_details['user_id'],
-                                    f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG!</b>\n\n"
-                                    f"{E_TAG} Sản phẩm: <b>{p['name']}</b>\n"
-                                    f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> Số lượng: {qty}\n"
-                                    f"{E_TAG} Thanh toán: {actual_amount:,} VNĐ\n\n"
-                                    f"{E_LOADING} <b>Đang tạo đơn social trên nguồn...</b>",
-                                    parse_mode=ParseMode.HTML,
-                                )
-
-                                supplier_result = await ctt_submit_local_service_order(
-                                    p,
-                                    qty,
-                                    _ctt_inputs_from_pending_order(order_details),
-                                )
-
-                                if not supplier_result.get("success"):
-                                    refund_amount = _get_store_order_total_refund(order_details, actual_amount)
-                                    current_balance = int(user_data_db.get(str(order_details['user_id']), {}).get('balance', 0) or 0)
-                                    new_balance = current_balance + refund_amount
-                                    db_update_balance(order_details['user_id'], new_balance, reason=f"Refund: Social supplier error {p['name']}")
-                                    await record_wallet_refund(
-                                        context,
-                                        order_code=order_code,
-                                        user_id=order_details['user_id'],
-                                        amount=refund_amount,
-                                        product_name=p.get('name', 'Dịch vụ social'),
-                                        reason="Lỗi nguồn cung cấp dịch vụ social",
-                                        order_data=order_details,
-                                    )
-
-                                    await context.bot.send_message(
-                                        order_details['user_id'],
-                                        f"❌ <b>LỖI NGUỒN CUNG CẤP DỊCH VỤ SOCIAL</b>\n\n"
-                                        f"Đơn social không thể tạo trên nguồn vào lúc này.\n"
-                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã hoàn <b>{refund_amount:,} VNĐ</b> vào ví Bot.\n\n"
-                                        f"Mã đơn: <code>{order_code}</code>",
-                                        parse_mode=ParseMode.HTML,
-                                    )
-                                    await safe_send_admin(
-                                        context.bot,
-                                        f"{E_SOS} <b>SOCIAL_SOURCE PAYMENT ORDER FAILED</b>\n"
-                                        f"{E_ID} Đơn: <code>{order_code}</code>\n"
-                                        f"{E_USER} User: <code>{order_details['user_id']}</code>\n"
-                                        f"{E_TAG} SP: {html.escape(p['name'])} x{qty}\n"
-                                        f"{E_TAG} Hoàn ví: {refund_amount:,} VNĐ\n"
-                                        f"{E_ERROR} Lỗi: <code>{html.escape(str(supplier_result.get('error') or 'unknown_error'))}</code>",
-                                    )
-                                    await pending_pop(order_code)
-                                    db_add_tx(tx_id)
-                                    data_changed = True
-                                    continue
-
-                                completed_order = _build_ctt_completed_order(
-                                    order_code,
-                                    order_details,
-                                    p,
-                                    total_paid_social,
-                                    current_time,
-                                    supplier_result,
-                                )
-
-                                coupon_code_used = order_details.get("coupon_code")
-                                if coupon_code_used:
-                                    coupon_code_used = coupon_code_used.upper()
-                                    if coupon_code_used in coupons:
-                                        coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
-
-                                db_add_order(completed_order)
-                                await _mark_pending_payment_message_completed(context, order_details)
-                                await pending_pop(order_code)
-                                db_add_tx(tx_id)
-                                data_changed = True
-                                await save_critical_tables(HISTORY_FILE, PROCESSED_TX_FILE, PENDING_ORDERS_FILE, USERS_FILE)
-
-                                await context.bot.send_message(
-                                    order_details['user_id'],
-                                    f"{E_SUCCESS} <b>ĐƠN SOCIAL ĐÃ TẠO THÀNH CÔNG</b>\n\n"
-                                    f"{E_TAG} Sản phẩm: {html.escape(str(p['name']))}\n"
-                                    f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> Số lượng: {qty}\n"
-                                    f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> Mã đơn: <code>{html.escape(str(completed_order.get('order_code') or order_code))}</code>\n"
-                                    f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> Tổng đơn vị nguồn: {int(supplier_result.get('supplier_quantity', 0) or 0):,}\n"
-                                    f"<tg-emoji emoji-id=\"5231489647946768652\">🔗</tg-emoji> Target: <code>{html.escape(str(supplier_result.get('target_link') or 'N/A'))}</code>\n"
-                                    f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> Mã supplier: <code>{html.escape(str(supplier_result.get('supplier_order_id') or ''))}</code>\n"
-                                    f"{E_STAT} Trạng thái nguồn: {html.escape(str(supplier_result.get('supplier_status') or 'Pending'))}",
-                                    parse_mode=ParseMode.HTML,
-                                    reply_markup=create_success_menu(),
-                                )
-
-                                await send_live_order_notification(
-                                    context,
-                                    order_details.get("full_name", "Khách hàng"),
-                                    total_paid_social,
-                                    product_name=p['name'],
-                                    quantity=qty,
-                                    order_code=completed_order.get("order_code") or order_code,
-                                )
-                                await notify_admin_store_order(
-                                    context,
-                                    order_code=completed_order.get("order_code") or order_code,
-                                    user_id=order_details['user_id'],
-                                    full_name=order_details.get("full_name"),
-                                    username=order_details.get("username"),
-                                    product_name=p['name'],
-                                    quantity=qty,
-                                    amount=total_paid_social,
-                                    payment_method=order_details.get("payment_method", "bank_transfer"),
-                                    items=[],
-                                    delivery_method="social_service",
-                                    is_resell=False,
-                                )
-                                continue
-                            
-                            # ===== SUPPLIER_SOURCE AUTO RESELL =====
-                            # Nếu là sản phẩm resell từ SupplierSource, mua từ API thay vì lấy từ stock local
-                            if p.get('is_supplier_source_resell'):
-                                supplier_source_product_id = p.get('supplier_source_product_id')
-                                supplier_source_variant_id = p.get('supplier_source_variant_id')
-                                
-                                await context.bot.send_message(
-                                    order_details['user_id'],
-                                    f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG!</b>\n\n"
-                                    f"{E_TAG} Sản phẩm: <b>{p['name']}</b>\n"
-                                    f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> Số lượng: {qty}\n"
-                                    f"{E_TAG} Thanh toán: {actual_amount:,} VNĐ\n\n"
-                                    f"{E_LOADING} <b>Đang lấy tài khoản từ hệ thống...</b>",
-                                    parse_mode=ParseMode.HTML
-                                )
-                                
-                                if not p.get('resell_enabled', True):
-                                    refund_amount = _get_store_order_total_refund(order_details, actual_amount)
-                                    current_balance = int(user_data_db.get(str(order_details['user_id']), {}).get('balance', 0) or 0)
-                                    db_update_balance(order_details['user_id'], current_balance + refund_amount, reason=f"Refund: Resell disabled {p['name']}")
-                                    await record_wallet_refund(
-                                        context,
-                                        order_code=order_code,
-                                        user_id=order_details['user_id'],
-                                        amount=refund_amount,
-                                        product_name=p.get('name', 'Sản phẩm'),
-                                        reason="Sản phẩm tạm tắt resell",
-                                        order_data=order_details,
-                                    )
-                                    await context.bot.send_message(
-                                        order_details['user_id'],
-                                        f"❌ <b>SẢN PHẨM ĐANG TẠM TẮT RESELL</b>\n\n"
-                                        f"Đơn <code>{order_code}</code> đã được hoàn <b>{refund_amount:,} VNĐ</b> vào ví Bot.",
-                                        parse_mode=ParseMode.HTML,
-                                    )
-                                    await pending_pop(order_code)
-                                    db_add_tx(tx_id)
-                                    data_changed = True
-                                    continue
-                                
-                                # Gọi API nguồn ngoài để mua sản phẩm
-                                supplier_source_result = await supplier_create_order(p, qty)
-                                
-                                if not supplier_source_result.get("success"):
-                                    # Lỗi API - Thông báo Admin và hoàn tiền
-                                    error = supplier_source_result.get("error", "Unknown")
-                                    
-                                    balance_used_order = int(order_details.get("balance_used", 0) or 0)
-                                    refund_amount = _get_store_order_total_refund(order_details, actual_amount)
-
-                                    # Auto refund vao balance, including the wallet portion already deducted.
-                                    current_balance = int(user_data_db.get(str(order_details['user_id']), {}).get('balance', 0) or 0)
-                                    new_bal = current_balance + refund_amount
-                                    db_update_balance(order_details['user_id'], new_bal, reason=f"Refund: Supplier API Error {p['name']}")
-                                    await record_wallet_refund(
-                                        context,
-                                        order_code=order_code,
-                                        user_id=order_details['user_id'],
-                                        amount=refund_amount,
-                                        product_name=p.get('name', 'Sản phẩm'),
-                                        reason=f"Lỗi nguồn cung cấp: {error}",
-                                        order_data=order_details,
-                                    )
-                                    refund_breakdown_line = ""
-                                    if balance_used_order > 0:
-                                        refund_breakdown_line = (
-                                            f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> "
-                                            f"Tổng hoàn thực tế: <b>{refund_amount:,} VNĐ</b> "
-                                            f"(gồm {balance_used_order:,} VNĐ đã trừ từ ví)\n"
-                                        )
-                                        
-                                    await context.bot.send_message(
-                                        order_details['user_id'],
-                                        f"❌ <b>LỖI HỆ THỐNG NGUỒN CUNG CẤP</b>\n\n"
-                                        f"Rất xin lỗi, sản phẩm hiện tại tạm không thể giao dịch (có thể do hết hàng hoặc kẹt mạng).\n"
-                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>Đã tự động hoàn {refund_amount:,} VNĐ</b> vào số dư ví Bot của bạn.\n\n"
-                                        f"Mã đơn: <code>{order_code}</code>\n"
-                                        f"Bạn có thể dùng ví để mua lại sau, hoặc mua mặt hàng khác.",
-                                        parse_mode=ParseMode.HTML
-                                    )
-                                    if refund_breakdown_line:
-                                        await context.bot.send_message(
-                                            order_details['user_id'],
-                                            refund_breakdown_line,
-                                            parse_mode=ParseMode.HTML,
-                                        )
-                                    await safe_send_admin(
-                                        context.bot,
-                                        f"{E_SOS} <b>LỖI API NGUỒN CUNG CẤP KHI THANH TOÁN QR/USDT</b>\n\n"
-                                        f"{E_TAG} SP: {html.escape(p['name'])}\n"
-                                        f"{E_ID} Đơn: <code>{order_code}</code>\n"
-                                        f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> User: <code>{order_details['user_id']}</code>\n"
-                                        f"{E_TAG} Tiền: {actual_amount:,} VNĐ\n\n"
-                                        f"{E_LIMIT} Lỗi: <code>{html.escape(str(error))}</code>\n\n"
-                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> ĐÃ TỰ ĐỘNG HOÀN VÀO SỐ DƯ VÍ KHÁCH!",
-                                    )
-                                    if balance_used_order > 0:
-                                        await safe_send_admin(
-                                            context.bot,
-                                            f"{E_TAG} Hoàn thực tế: {refund_amount:,} VNĐ = CK {actual_amount:,} VNĐ + Ví {balance_used_order:,} VNĐ\n"
-                                            f"{E_ID} Đơn: <code>{order_code}</code>",
-                                        )
-                                    await pending_pop(order_code)
-                                    db_add_tx(tx_id)
-                                    data_changed = True
-                                    continue
-                                
-                                # Parse delivered content từ nguồn ngoài
-                                supplier_source_orders = supplier_source_result.get("data", [])
-                                items_bought = []
-                                
-                                for dm_order in supplier_source_orders:
-                                    delivered = dm_order.get("deliveredContent")
-                                    if delivered:
-                                        logger.info(f"DEBUG SUPPLIER CONTENT TYPE: {type(delivered).__name__}")
-                                        items_bought.extend(normalize_delivered_items(delivered))
-                                
-                                # Nếu chưa có content, thử lấy order details
-                                if not items_bought:
-                                    for dm_order in supplier_source_orders:
-                                        dm_order_id = dm_order.get("id")
-                                        if dm_order_id:
-                                            detail = await supplier_get_order_details(p, dm_order_id)
-                                            if detail.get("success"):
-                                                dd = detail.get("data", {})
-                                                delivered = dd.get("deliveredContent")
-                                                if delivered:
-                                                    items_bought.extend(normalize_delivered_items(delivered))
-                                
-                                if not items_bought:
-                                    # Vẫn không có content
-                                    await context.bot.send_message(
-                                        order_details['user_id'],
-                                        f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>ĐANG XỬ LÝ...</b>\n\n"
-                                        f"Đơn hàng đã tạo nhưng đang chờ giao hàng từ nguồn.\n"
-                                        f"Admin sẽ gửi tài khoản sớm nhất.\n\n"
-                                        f"Mã đơn: <code>{order_code}</code>",
-                                        parse_mode=ParseMode.HTML
-                                    )
-                                    await context.bot.send_message(
-                                        ADMIN_USER_ID,
-                                        f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>NGUỒN CUNG CẤP CHƯA TRẢ HÀNG</b>\n\n"
-                                        f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> SP: {p['name']}\n"
-                                        f"<tg-emoji emoji-id=\"5334890573281114250\">🆔</tg-emoji> Đơn: <code>{order_code}</code>\n"
-                                        f"Nguồn cung cấp chưa trả content. Cần check manual.",
-                                        parse_mode=ParseMode.HTML
-                                    )
-                                    await _mark_pending_payment_message_completed(context, order_details)
-                                    await pending_pop(order_code)
-                                    db_add_tx(tx_id)
-                                    data_changed = True
-                                    continue
-                                
-                                # Thành công! Gửi cho khách (code tiếp tục bên dưới với items_bought)
-                                # Không cần xử lý stock local vì đã lấy từ API
-                                
-                                purchase_date = datetime.datetime.fromtimestamp(current_time).strftime('%d/%m/%Y %H:%M:%S')
-                                product_description_txt = format_product_description_for_txt(p)
-                                
-                                file_content = "="*60 + "\n"
-                                file_content += "           THÔNG TIN ĐƠN HÀNG\n"
-                                file_content += "="*60 + "\n\n"
-                                file_content += f"<tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> MÃ ĐƠN HÀNG    : {order_code}\n"
-                                file_content += f"<tg-emoji emoji-id=\"5413879192267805083\">📅</tg-emoji> NGÀY MUA       : {purchase_date}\n"
-                                file_content += f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> SẢN PHẨM       : {p['name']}\n"
-                                file_content += f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> SỐ LƯỢNG       : {qty}\n"
-                                file_content += f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> THANH TOÁN     : {actual_amount:,} VNĐ\n"
-                                if product_description_txt:
-                                    file_content += f"\nMÔ TẢ SẢN PHẨM:\n{product_description_txt}\n\n"
-                                file_content += f"<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> THỜI HẠN       : {p.get('duration', 'N/A')}\n"
-                                file_content += f"<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> BẢO HÀNH       : {p.get('warranty', 'Không')}\n"
-                                file_content += "\n" + "="*60 + "\n"
-                                file_content += "           TÀI KHOẢN CỦA BẠN\n"
-                                file_content += "="*60 + "\n\n"
-                                
-                                for i, item in enumerate(items_bought, 1):
-                                    file_content += f"[{i}] {item}\n"
-                                
-                                file_content += "\n" + "="*60 + "\n"
-                                file_content += "LƯU Ý: Vui lòng đổi mật khẩu sau khi đăng nhập!\n"
-                                file_content += "="*60 + "\n"
-                                
-                                delivery_result = await deliver_items_as_txt(
-                                    context,
-                                    order_details['user_id'],
-                                    order_code,
-                                    items_bought,
-                                    file_content=file_content,
-                                    file_prefix="DonHang",
-                                    caption_html=f"<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>THÔNG TIN TÀI KHOẢN</b>\n\nMã đơn: <code>{order_code}</code>\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {p['name']} x{qty}",
-                                )
-                                delivery_status = OrderStatus.COMPLETED.value if delivery_result.get("delivered") else "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Chờ gửi thủ công (Nguồn ngoài)"
-                                if not delivery_result.get("delivered"):
-                                    await safe_send_message(
-                                        context,
-                                        order_details['user_id'],
-                                        f"❌ Có lỗi khi gửi tài khoản cho đơn <code>{order_code}</code>.\n"
-                                        "Admin đã nhận cảnh báo và sẽ gửi thủ công sớm nhất.",
-                                        parse_mode=ParseMode.HTML,
-                                    )
-                                    await safe_send_admin(
-                                        context.bot,
-                                        f"{E_SOS} <b>DELIVERY FAILED (NGUỒN NGOÀI)</b>\n"
-                                        f"{E_ID} Đơn: <code>{order_code}</code>\n"
-                                        f"{E_USER} User: <code>{order_details['user_id']}</code>\n"
-                                        f"{E_TAG} SP: {html.escape(p['name'])} x{qty}\n"
-                                        f"{E_STAT} Fallback gửi: {delivery_result.get('sent_items', 0)}/{len(items_bought)} items\n"
-                                        f"{E_ERROR} Errors: <code>{html.escape(' | '.join(delivery_result.get('errors', [])[-3:]) or 'n/a')}</code>",
-                                    )
-                                
-                                # Log lịch sử
-                                order_record = {
-                                    'order_code': order_code,
-                                    'timestamp': current_time,
-                                    'product': p['name'],
-                                    'product_name': p['name'],
-                                    'quantity': qty,
-                                    'amount': actual_amount,
-                                    'user_id': order_details['user_id'],
-                                    'items': items_bought,
-                                    'status': delivery_status,
-                                    'is_supplier_source_resell': True,
-                                    'payment_method': order_details.get('payment_method', 'bank_transfer'),
-                                    'delivery_method': delivery_result.get("method", "failed"),
-                                }
-                                db_add_order(order_record, schedule_save=False)
-                                
-                                await _mark_pending_payment_message_completed(context, order_details)
-                                await pending_pop(order_code)
-                                db_add_tx(tx_id)
-                                data_changed = True
-                                await save_critical_tables(HISTORY_FILE, PROCESSED_TX_FILE, PRODUCTS_FILE, PENDING_ORDERS_FILE)
-                                
-                                # Thông báo Admin (sau khi đã save data an toàn)
-                                try:
-                                    supplier_source_cost = p.get('supplier_source_price', 0) * qty
-                                    await context.bot.send_message(
-                                        ADMIN_USER_ID,
-                                        f"{E_SUCCESS} <b>ĐƠN RESELL THÀNH CÔNG!</b>\n\n"
-                                        f"{E_TAG} SP: {p['name']} x{qty}\n"
-                                        f"{E_ID} Mã: <code>{order_code}</code>\n"
-                                        f"{E_TAG} Bán: {actual_amount:,} VNĐ\n"
-                                        f"<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> Gốc: {supplier_source_cost:,} VNĐ\n"
-                                        f"{E_STAT} Lời: {actual_amount - supplier_source_cost:,} VNĐ",
-                                        parse_mode=ParseMode.HTML
-                                    )
-                                except (TelegramError, ValueError, KeyError, AttributeError) as admin_err:
-                                    logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Supplier admin notification failed: {admin_err}")
-                                continue
-                            
-                            # ===== END SUPPLIER_SOURCE AUTO RESELL =====
                             
                             # AUTO PRODUCT: Cần check stock (Sản phẩm có stock local)
                             # FIX BUG #5: Dùng lock để tránh race condition
@@ -1357,75 +945,16 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             # SKIP shared cleanup (đã xử lý ở trên)
                             continue
                         
-                        # Existing iCloud Logic
-                        elif order_details.get("type") != "store_product":
-                            user_id, email = order_details["user_id"], order_details["email"]
-                            completed_order = { "user_id": user_id, "order_code": order_code, "email": email, "amount": actual_amount, "coupon_used": order_details.get("coupon_code"), "link": "", "timestamp": current_time, "full_name": order_details.get("full_name"), "username": order_details.get("username"), "type": "icloud", "product_name": "iCloud 2TB", "payment_method": order_details.get("payment_method", "bank_transfer") }
-                            
-                            async with global_stock_lock:
-                                if available_links:
-                                    link_to_send = next(iter(available_links))
-                                    # REMOVED available_links.discard(link_to_send) for '1-Link Mode'
-                                    completed_order.update({"link": link_to_send, "status": OrderStatus.COMPLETED.value})
-                                    has_link = True
-                                else:
-                                    completed_order["status"] = OrderStatus.PENDING_LINK.value
-                                    has_link = False
-
-                            if has_link:
-                                email_sent, email_error = await send_activation_email(
-                                    email,
-                                    f"Link kích hoạt gói iCloud 2TB - {order_code}",
-                                    order_details.get("full_name", "bạn"),
-                                    link_to_send,
-                                )
-                                if email_sent:
-                                    await context.bot.send_message(
-                                        user_id,
-                                        f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG</b> {E_SUCCESS}\n\n"
-                                        f"Cảm ơn bạn! Link kích hoạt đã được gửi đến email <b>{email}</b>.",
-                                        parse_mode=ParseMode.HTML,
-                                        reply_markup=create_success_menu(),
-                                    )
-                                else:
-                                    await context.bot.send_message(
-                                        user_id,
-                                        f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG</b> {E_SUCCESS}\n\n"
-                                        f"Đơn của bạn đã hoàn tất nhưng gửi email kích hoạt thất bại.\n"
-                                        f"Vui lòng liên hệ Admin và cung cấp mã đơn <code>{order_code}</code>.",
-                                        parse_mode=ParseMode.HTML,
-                                        reply_markup=create_success_menu(),
-                                    )
-                                
-                                await send_live_order_notification(context, order_details.get("full_name", "Khách hàng"), actual_amount, product_name="iCloud 2TB", quantity=1, order_code=order_code)
-                                
-                                try:
-                                    email_status = "Thành công" if email_sent else f"Thất bại ({html.escape(str(email_error or 'Unknown error'))})"
-                                    admin_notification = (
-                                        f"{E_SUCCESS} <b>ĐƠN HÀNG MỚI</b>\n"
-                                        f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n"
-                                        f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Khách:</b> {html.escape(order_details.get('full_name', 'N/A'))} (@{html.escape(order_details.get('username') or 'N/A')})\n"
-                                        f"{E_GLOBE} <b>Email:</b> <code>{html.escape(email)}</code> | {E_TAG} <b>Giá:</b> {actual_amount:,} VNĐ\n"
-                                        f"<tg-emoji emoji-id=\"6129860303619363484\">✉️</tg-emoji> <b>Email:</b> {email_status}"
-                                    )
-                                    await safe_send_admin(context.bot, admin_notification)
-                                except (TelegramError, ValueError, KeyError, AttributeError) as admin_err:
-                                    logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> iCloud admin notification failed: {admin_err}")
-                            else:
-                                await context.bot.send_message(user_id, f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG</b>\n\nTuy nhiên, hệ thống đang tạm hết link. Admin sẽ gửi link cho bạn sớm nhất.", parse_mode=ParseMode.HTML)
-                                await safe_send_admin(context.bot, f"{E_SOS} <b>CẢNH BÁO: HẾT LINK!</b> {E_SOS}\n\nKhách <b>{html.escape(email)}</b> đã thanh toán. Vui lòng <code>/addlink</code>.")
-                            
-                            coupon_code_used = order_details.get("coupon_code")
-                            if coupon_code_used:
-                                coupon_code_used = coupon_code_used.upper()
-                                if coupon_code_used in coupons:
-                                    coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
-                        # FIX BUG #12: Dùng db_add_order để update index
-                        db_add_order(completed_order)
-                        db_add_tx(tx_id)
-                        await _mark_pending_payment_message_completed(context, order_details)
-                        await pending_pop(order_code)
-                        data_changed = True
+                        # Cac loai don khac store_product khong con luong nao tao ra
+                        else:
+                            logger.warning(
+                                f"CRON: Don {order_code} co type khong ho tro "
+                                f"({order_details.get('type')}), chi ghi nhan giao dich"
+                            )
+                            db_add_tx(tx_id)
+                            await _mark_pending_payment_message_completed(context, order_details)
+                            await pending_pop(order_code)
+                            data_changed = True
                     else:
                         logger.warning(f"Giao dịch gần đúng! Code: {order_code}, Mong đợi: {expected_amount}, Thực tế: {actual_amount}")
                         alert_message = ( f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>CẢNH BÁO GIAO DỊCH ĐÁNG NGỜ</b> <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji>\n\n" f"Phát hiện giao dịch có mã đơn hàng đang chờ nhưng sai số tiền.\n\n" f"- <b>Mã đơn hàng:</b> <code>{order_code}</code>\n" f"- <b>Khách hàng:</b> {html.escape(order_details.get('full_name', 'N/A'))} (@{html.escape(order_details.get('username') or 'N/A')})\n" f"- <b>Số tiền đúng:</b> <pre>{expected_amount:,} VNĐ</pre>\n" f"- <b>Số tiền đã chuyển:</b> <pre>{actual_amount:,} VNĐ</pre>\n\n" f"Vui lòng kiểm tra và xử lý thủ công. Giao dịch này chưa được tự động xử lý." )
@@ -1639,11 +1168,11 @@ async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quant
         prefix = "TOPWEEK" if reward_type == "WEEKLY" else "TOPMONTH"
         code = f"{prefix}-{top_user_id}-{random.randint(1000,9999)}"
         
-        discount_amount = int(ICLOUD_PACKAGE_PRICE * discount_percent / 100)
         expires_str = (datetime.now() + timedelta(days=30)).strftime('%d-%m-%Y')
         
         coupons[code] = {
-            "discount": discount_amount,
+            "discount": discount_percent,
+            "is_percent": True,
             "quantity": 1,
             "expires": expires_str,
             "used": 0

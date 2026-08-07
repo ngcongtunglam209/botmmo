@@ -24,7 +24,6 @@ def _callback_requires_manual_answer(command: str) -> bool:
         'api_register_request',
         'ask_ai_confirm',
         'create_ticket_confirm',
-        'icloud_pay_binance',
         'join_ga_action',
         'withdraw_request',
     }
@@ -60,7 +59,6 @@ def _callback_requires_manual_answer(command: str) -> bool:
         'replace_auto:',
         'replace_manual:',
         'reply_to_ticket:',
-        'resend_link:',
         'resend_order_items:',
         'report_specific_order:',
         'warranty_done:',
@@ -168,8 +166,6 @@ def _resolve_repurchase_product(order: dict):
     current_product = products.get(product_id)
     if not product_id or not isinstance(current_product, dict):
         return "", None
-    if not _ctt_is_catalog_visible(current_product):
-        return "", None
     return product_id, current_product
 
 
@@ -189,27 +185,6 @@ def _resolve_order_duration_days(order: dict) -> int:
         if duration_days > 0:
             return duration_days
     return 0
-
-
-def _format_social_service_display_status(order: dict, fallback_status: str) -> str:
-    raw_status = str((order or {}).get("ctt_supplier_status") or "").strip()
-    if not raw_status:
-        return fallback_status
-
-    normalized = raw_status.casefold()
-    if normalized in {"completed", "complete"}:
-        label = "✅ Hoàn thành"
-    elif normalized in {"in progress", "processing", "running"}:
-        label = "🔵 Đang chạy"
-    elif normalized in {"pending", "queued"}:
-        label = "⏳ Đang chờ"
-    elif normalized in {"partial"}:
-        label = "⚠️ Hoàn thành một phần"
-    elif normalized in {"canceled", "cancelled"}:
-        label = "❌ Đã hủy"
-    else:
-        label = raw_status
-    return f"{html.escape(label)} (Social Service)"
 
 
 async def _complete_partner_api_key_rotation(
@@ -388,7 +363,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         'admin_open_chat:',
         'admin_close_chat:',
         'reply_to_ticket:',
-        'resend_link:',
         'replace_auto:',
         'replace_manual:',
         'reject_expired:',
@@ -501,63 +475,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await huongdan_baoloi_command(update, context)
         return
 
-    # iCloud Purchase Start
-    elif command == 'muahang_start':
-        try:
-            from app.core.config_env import ENABLE_ICLOUD_SALES
-        except ImportError:
-            ENABLE_ICLOUD_SALES = True
-
-        if not ENABLE_ICLOUD_SALES:
-            await safe_answer(query, "❌ Dịch vụ iCloud hiện đang tạm đóng.", show_alert=True)
-            return
-
-        # Check stock
-        if not available_links:
-            try:
-                await query.edit_message_text(
-                    "❌ <b>TẠM HẾT HÀNG!</b>\n\n"
-                    "<tg-emoji emoji-id=\"5231489647946768652\">☁️</tg-emoji> Gói iCloud 2TB hiện đang hết link kích hoạt.\n\n"
-                    f"{E_TIP} Vui lòng quay lại sau hoặc liên hệ Admin để được thông báo khi có hàng!",
-                    parse_mode='HTML',
-                    reply_markup=create_back_button_menu()
-                )
-            except BadRequest:
-                await safe_answer(query, "❌ Hết hàng! Vui lòng quay lại sau.", show_alert=True)
-            return
-        
-        # Clear any existing state
-        await clear_user_state(context)
-        
-        # Set state for email purchase
-        context.user_data['state'] = 'awaiting_email'
-        
-        msg = (
-            f"<tg-emoji emoji-id=\"5231489647946768652\">☁️</tg-emoji> <b>MUA GÓI iCLOUD 2TB</b>\n\n"
-            f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Giá:</b> {ICLOUD_PACKAGE_PRICE:,} VNĐ\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Trạng thái:</b> <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Còn hàng\n\n"
-            f"<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> <b>Vui lòng nhập email để nhận link kích hoạt:</b>\n"
-            f"<i>(Email sẽ được dùng để gửi link kích hoạt iCloud)</i>"
-        )
-        
-        await query.edit_message_text(
-            msg,
-            parse_mode='HTML',
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("❌ Hủy", callback_data="back_to_main")]
-            ])
-        )
-    
-
-    # Dice Game Callback
-    
-    # Dice Game Prize Selection Callbacks
-    
-    
-    # Manual Order Admin Callbacks
-    
-        
-    # NEW: Withdrawal Callbacks
     elif command == 'withdraw_request':
         context.user_data.pop('state', None)
         context.user_data.pop('withdrawal_amount', None)
@@ -955,12 +872,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 "• <code>GET /api/v2/catalog</code>\n"
                 "• <code>POST /api/v2/orders</code>\n"
                 "• <code>GET /api/v2/orders/{order_code}</code>\n\n"
-                "<b>Social Media:</b>\n"
-                "• <code>GET /api/social/catalog</code>\n"
-                "• <code>POST /api/social/orders</code>\n"
-                "• <code>GET /api/social/orders?limit=20&amp;offset=0</code>\n"
-                "• <code>GET /api/social/orders/{order_code}</code>\n"
-                "• <code>GET /api/social/orders/by-ref/{partner_ref}</code>\n\n"
                 "<b>Headers dùng chung:</b>\n"
                 f"• <code>x-api-key: {partner_key}</code>\n"
                 "• <code>x-idempotency-key: MA_DON_DOI_TAC</code>\n\n"
@@ -1020,15 +931,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 "<b>Gọi API cần các header:</b>\n"
                 f"• <code>x-api-key: {partner_key}</code>\n"
                 "• <code>x-idempotency-key: MA_DON_DOI_TAC</code> (khuyến nghị)\n\n"
-                "<b>Hai luồng tích hợp:</b>\n"
-                "1. Sản phẩm thường: <code>GET /api/v2/catalog</code> → <code>POST /api/v2/orders</code>\n"
-                "2. Social: <code>GET /api/social/catalog</code> → <code>POST /api/social/orders</code>\n"
-                "3. Đơn thường poll tại <code>/api/v2/orders/{order_code}</code>\n"
-                "4. Đơn social poll tại <code>/api/social/orders/{order_code}</code>\n\n"
+                "<b>Luồng tích hợp:</b>\n"
+                "1. <code>GET /api/v2/catalog</code> → <code>POST /api/v2/orders</code>\n"
+                "3. Đơn poll tại <code>/api/v2/orders/{order_code}</code>\n"
+                "4. Retry phải giữ nguyên partner_ref\n\n"
                 "<b>Ghi nhớ:</b>\n"
-                "• Hai nhóm dùng chung API key và ví partner\n"
                 "• Sản phẩm thường giao ngay nằm trong <code>data.items</code>\n"
-                "• Social đọc <code>supplier_status</code> và <code>supplier_remains</code>\n"
                 "• Retry phải giữ nguyên <code>partner_ref</code> và <code>x-idempotency-key</code>\n"
                 "• Gặp <code>402</code>: nạp ví bằng <code>/napapi [số_tiền]</code>"
             )
@@ -1176,9 +1084,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             return
 
         await safe_answer(query, lt(user_id, "Đang kiểm tra giá và tồn kho mới...", "Checking the latest price and stock...", "正在检查最新价格和库存……"))
-        if current_product.get("is_supplier_source_resell"):
-            await _refresh_resell_product_entries([(product_id, current_product)])
-
         await _show_store_product_detail(
             query,
             context,
@@ -1225,15 +1130,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             return
         
         await safe_answer(query)
-        await refresh_ctt_order_status(order)
             
         # Format details
         ts = order.get('timestamp', 0)
         time_str = datetime.fromtimestamp(ts).strftime('%H:%M %d/%m/%Y') if ts else "N/A"
         amount = order.get('amount', 0)
         status = status_text(order.get('status'))
-        if order.get("is_social_source_service"):
-            status = _format_social_service_display_status(order, status)
         
         detail_msg = lt(
             user_id,
@@ -1244,41 +1146,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
 
         is_api_order = _api_is_order_record(order)
-        if order.get("is_social_source_service"):
-            supplier_order_id = str(order.get("ctt_supplier_order_id") or "").strip()
-            supplier_status = str(order.get("ctt_supplier_status") or "").strip()
-            supplier_remains = str(order.get("ctt_supplier_remains") or "").strip()
-            supplier_charge = str(order.get("ctt_supplier_charge") or "").strip()
-            refresh_error = str(order.get("ctt_status_refresh_error") or "").strip()
-            supplier_progress_text = ctt_build_supplier_progress_text(order)
-            detail_msg += '\n<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> <b>Trạng thái nguồn social</b>\n'
-            if supplier_order_id:
-                detail_msg += f'<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>Mã supplier:</b> <code>{html.escape(supplier_order_id)}</code>\n'
-            if supplier_status:
-                detail_msg += f'<tg-emoji emoji-id="5231200819986047254">📊</tg-emoji> <b>Trạng thái nguồn:</b> {html.escape(supplier_status)}\n'
-            if supplier_remains:
-                detail_msg += f'<tg-emoji emoji-id="5334890573281114250">🔢</tg-emoji> <b>Remains:</b> {html.escape(supplier_remains)}\n'
-            if supplier_progress_text:
-                detail_msg += f'<tg-emoji emoji-id="5334890573281114250">🔢</tg-emoji> <b>{html.escape(supplier_progress_text)}</b>\n'
-            if supplier_charge:
-                detail_msg += f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Charge:</b> {html.escape(supplier_charge)}\n'
-            if refresh_error:
-                detail_msg += f'<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>Refresh:</b> {html.escape(refresh_error)}\n'
-
         if is_api_order:
             detail_msg += lt(user_id, '🔌 <b>Nguồn:</b> API Partner\n', '🔌 <b>Source:</b> API Partner\n', '🔌 <b>来源：</b> API Partner\n')
 
         item_name = get_order_item_name(order)
-        if item_name != "Gói iCloud 2TB":
-            detail_msg += lt(user_id, '\n🏷 <b>Sản phẩm:</b> {item}\n0️⃣ <b>Số lượng:</b> {quantity}\n', '\n🏷 <b>Product:</b> {item}\n0️⃣ <b>Quantity:</b> {quantity}\n', '\n🏷 <b>商品：</b> {item}\n0️⃣ <b>数量：</b> {quantity}\n', item=html.escape(item_name), quantity=order.get('quantity', 1))
-            if order.get('email') and order.get('email') != "N/A":
-                detail_msg += f'🌐 <b>Email:</b> <code>{html.escape(str(order.get("email")))}</code>\n'
-        else:
-            detail_msg += lt(user_id, '\n🏷 <b>Gói:</b> iCloud 2TB\n🌐 <b>Email:</b> {email}\n', '\n🏷 <b>Package:</b> iCloud 2TB\n🌐 <b>Email:</b> {email}\n', '\n🏷 <b>套餐：</b> iCloud 2TB\n🌐 <b>邮箱：</b> {email}\n', email=html.escape(str(order.get('email', 'N/A'))))
+        detail_msg += lt(user_id, '\n🏷 <b>Sản phẩm:</b> {item}\n0️⃣ <b>Số lượng:</b> {quantity}\n', '\n🏷 <b>Product:</b> {item}\n0️⃣ <b>Quantity:</b> {quantity}\n', '\n🏷 <b>商品：</b> {item}\n0️⃣ <b>数量：</b> {quantity}\n', item=html.escape(item_name), quantity=order.get('quantity', 1))
+        if order.get('email') and order.get('email') != "N/A":
+            detail_msg += f'🌐 <b>Email:</b> <code>{html.escape(str(order.get("email")))}</code>\n'
             
         link_value = str(order.get("link") or "")
         delivery_mode = str(order.get("delivery_method") or "")
-        placeholder_links = {"Store Product", "Resell Product", "Resell Product (Pending Source)", "Sản phẩm khác"}
+        placeholder_links = {"Store Product", "Sản phẩm khác"}
         should_show_link = bool(link_value) and (
             delivery_mode == "instant_link"
             or (link_value not in placeholder_links and not link_value.startswith("Manual - "))
@@ -1349,37 +1227,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             reply_markup=InlineKeyboardMarkup(btns),
             parse_mode=ParseMode.HTML
         )
-    elif command.startswith('use_last_email:'):
-        email = command.split(':', 1)[1]; context.user_data['purchase_email'] = email; context.user_data['state'] = 'awaiting_coupon_choice'
-        keyboard = [[_btn(lt(user_id, "Có", "Yes", "有"), callback_data='coupon_yes'), _btn(lt(user_id, "Không", "No", "没有"), callback_data='coupon_no')]]
-        await query.message.edit_text(lt(user_id, "Tuyệt vời! Bạn có mã giảm giá không?", "Great! Do you have a coupon code?", "很好！您有优惠码吗？"), reply_markup=InlineKeyboardMarkup(keyboard))
-    elif command == 'enter_new_email':
-        context.user_data['state'] = 'awaiting_email'; await query.message.edit_text(lt(user_id, "📧 Vui lòng nhập email nhận link kích hoạt.", "📧 Enter the email that will receive the activation link.", "📧 请输入接收激活链接的邮箱。"), reply_markup=create_back_button_menu(lt(user_id, "Hủy", "Cancel", "取消"), "back_to_main"))
-    elif command == 'coupon_yes':
-        context.user_data['state'] = 'awaiting_coupon_code'; await query.message.edit_text(lt(user_id, "📝 Vui lòng nhập mã giảm giá.", "📝 Enter your coupon code.", "📝 请输入优惠码。"))
-    elif command == 'coupon_no':
-        email = context.user_data.get('purchase_email')
-        await show_icloud_payment_method_menu(update, context, email)
-    elif command == 'icloud_pay_bank':
-        email = context.user_data.get('purchase_email')
-        coupon_code = context.user_data.get('purchase_coupon_code')
-        try:
-            await query.delete_message()
-        except BadRequest:
-            pass
-        await clear_user_state(context)
-        await generate_icloud_payment_checkout(update, context, email, coupon_code, payment_provider="bank")
-    elif command == 'icloud_pay_binance':
-        await safe_answer(
-            query,
-            "USDT (TRC20) da duoc tat. Vui long chon Ngan hang (QR).",
-            show_alert=True,
-        )
-        email = context.user_data.get('purchase_email')
-        coupon_code = context.user_data.get('purchase_coupon_code')
-        if email:
-            await show_icloud_payment_method_menu(update, context, email, coupon_code)
-        return
     elif command == 'report_error':
         context.user_data['state'] = 'awaiting_report_order_code'
         try: await query.delete_message()

@@ -191,10 +191,6 @@ def main() -> None:
         "nhapdata": nhapdata_command,
         
         # --- KHO LINK ---
-        "kho": kholink_command, 
-        "addlink": addlink_command,
-        "dellink": removelink_command, 
-        "guilink": guilink_command,
         
         # --- STORE ---
         "products": listproducts_command,

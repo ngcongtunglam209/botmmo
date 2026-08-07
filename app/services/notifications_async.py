@@ -8,10 +8,10 @@ def mask_name(name: str) -> str:
         return " ".join(parts[:-1]) + " " + parts[-1][0] + "***"
     return name[:2] + "***"
 
-async def send_live_order_notification(context: ContextTypes.DEFAULT_TYPE, full_name: str, amount: int, product_name: str = "iCloud 2TB", quantity: int = 1, order_code: str = None):
+async def send_live_order_notification(context: ContextTypes.DEFAULT_TYPE, full_name: str, amount: int, product_name: str = "Sản phẩm", quantity: int = 1, order_code: str = None):
     """
     UPDATED: Gửi thông báo đơn hàng mới đến channel
-    Hỗ trợ cả iCloud package và store products
+    Hỗ trợ store products
     """
     if not LIVE_ORDERS_CHANNEL_ID: return
     try:
@@ -55,7 +55,6 @@ async def notify_admin_store_order(
     payment_method: str = "balance",
     items: list | None = None,
     delivery_method: str | None = None,
-    is_resell: bool = False,
 ):
     payment_labels = {
         "balance": "Số dư",
@@ -77,9 +76,6 @@ async def notify_admin_store_order(
             preview_text += f"\n• ... và {len(valid_items) - len(preview_items)} item khác"
         preview_line = f"\n\n<tg-emoji emoji-id=\"5314638736462966754\">📬</tg-emoji> <b>Nội dung đã gửi:</b>\n{preview_text}"
 
-    resell_line = ""
-    if is_resell:
-        resell_line = "\n<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> <b>Nguồn:</b> Resell"
 
     delivery_line = ""
     if delivery_method:
@@ -92,7 +88,6 @@ async def notify_admin_store_order(
         f"{E_TAG} <b>Sản phẩm:</b> {html.escape(str(product_name))} x{int(quantity or 1)}\n"
         f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Giá:</b> {int(amount or 0):,} VNĐ\n"
         f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Thanh toán:</b> {html.escape(payment_label)}"
-        f"{resell_line}"
         f"{delivery_line}"
         f"{preview_line}"
     )
@@ -568,6 +563,13 @@ async def pending_items_snapshot():
     """Thread-safe snapshot of pending_orders items."""
     async with pending_orders_lock:
         return list(pending_orders.items())
+
+async def get_user_pending_order(user_id: int):
+    """First unpaid order of a user, so we never stack two pending checkouts."""
+    for code, order in await pending_items_snapshot():
+        if order.get('user_id') == user_id and order.get('status') == 'pending_payment':
+            return code, order
+    return None, None
 
 async def release_reserved_order_code(order_code: str):
     if not order_code:

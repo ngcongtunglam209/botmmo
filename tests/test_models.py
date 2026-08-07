@@ -29,7 +29,7 @@ class TestOrder:
         assert order.order_code == "ICLD123456"
         assert order.user_id == 1000000001
         assert order.amount == 35000
-        assert order.product_name == "iCloud 50GB 1 Tháng"
+        assert order.product_name == "ChatGPT Plus 1 Tháng"
         assert order.quantity == 1
 
     def test_roundtrip_to_legacy(self, sample_order_data):
@@ -158,7 +158,7 @@ class TestProduct:
     def test_create_from_dict(self, sample_product_data):
         product = Product.from_dict("prod_001", sample_product_data)
         assert product.product_id == "prod_001"
-        assert product.name == "iCloud 50GB 1 Tháng"
+        assert product.name == "ChatGPT Plus 1 Tháng"
         assert product.price == 35000
         assert product.available_stock_count() == 3
 
@@ -166,14 +166,6 @@ class TestProduct:
         product = Product.from_dict("prod_001", sample_product_data)
         assert product.is_in_stock(quantity=3) is True
         assert product.is_in_stock(quantity=4) is False
-
-    def test_supplier_source_always_in_stock(self):
-        product = Product(name="Resell Product", price=10000, is_supplier_source_resell=True)
-        assert product.is_in_stock(quantity=100) is True
-
-    def test_ctt_always_in_stock(self):
-        product = Product(name="Social Service", price=5000, is_social_source_service=True)
-        assert product.is_in_stock(quantity=1000) is True
 
     def test_negative_price_rejected(self):
         with pytest.raises(ValidationError):

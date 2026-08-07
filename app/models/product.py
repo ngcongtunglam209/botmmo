@@ -33,18 +33,6 @@ class Product(BaseModel):
     requires_gmail: bool = Field(False, description="Needs customer email for manual fulfillment")
     auto_delivery: bool = Field(True, description="Auto-deliver from stock on payment")
 
-    # SupplierSource resell
-    is_supplier_source_resell: bool = Field(False, description="Product sourced from SupplierSource API")
-    supplier_source_product_id: str = Field("", description="SupplierSource external product ID")
-    supplier_source_variant_id: str = Field("", description="SupplierSource variant ID")
-
-    # SocialSource social service
-    is_social_source_service: bool = Field(False, description="Social service product from SOCIAL_SOURCE")
-    ctt_service_id: str = Field("", description="SOCIAL_SOURCE service ID")
-    ctt_min_quantity: int = Field(0, ge=0)
-    ctt_max_quantity: int = Field(0, ge=0)
-    ctt_rate_per_unit: float = Field(0.0, ge=0)
-
     # Product metadata
     warranty_days: int = Field(0, ge=0, description="Warranty period in days")
     daily_limit: int = Field(0, ge=0, description="Max purchases per user per day (0=unlimited)")
@@ -67,8 +55,6 @@ class Product(BaseModel):
 
     def is_in_stock(self, quantity: int = 1) -> bool:
         """Check if enough stock is available."""
-        if self.is_supplier_source_resell or self.is_social_source_service:
-            return True  # External source, always "in stock"
         return self.available_stock_count() >= quantity
 
 

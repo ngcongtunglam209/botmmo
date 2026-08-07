@@ -81,10 +81,6 @@ def _admin_web_row_search(*values) -> str:
 def _admin_web_product_type(product_data) -> str:
     if not isinstance(product_data, dict):
         return "unknown"
-    if product_data.get("is_social_source_service"):
-        return "ctt"
-    if product_data.get("is_supplier_source_resell"):
-        return "supplier_source"
     if product_data.get("requires_gmail"):
         return "manual"
     return "local"

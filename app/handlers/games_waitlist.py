@@ -14,7 +14,7 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     - Quay 3 xúc xắc
     - Chỉ 111 hoặc 222 = CHIẾN THẮNG (nhận 1 sản phẩm miễn phí)
     - Cooldown: 24 giờ/lần chơi
-    - Phần thưởng: Sản phẩm auto hoặc iCloud trong mức giá thưởng
+    - Phần thưởng: Sản phẩm auto trong mức giá thưởng
     """
     if await check_if_banned(update):
         return
@@ -81,14 +81,6 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         
         # Lọc sản phẩm phù hợp theo DICE_PRIZE_MAX_PRICE
         available_prizes = []
-        
-        # Thêm iCloud package nếu còn link
-        if available_links:
-            available_prizes.append({
-                'id': 'icloud_package',
-                'name': f'Gói iCloud 2TB ({ICLOUD_PACKAGE_PRICE:,}đ)',
-                'type': 'icloud'
-            })
         
         # Thêm các sản phẩm auto trong mức giá thưởng
         for pid, p in products.items():

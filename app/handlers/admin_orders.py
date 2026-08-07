@@ -209,138 +209,12 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             await update.message.reply_text(strip_tg_emoji(admin_msg))
         return
 
-    # Handle iCloud Package (Default)
-    async with global_stock_lock:
-        if not available_links:
-            await update.message.reply_html(
-                f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>CẢNH BÁO: HẾT LINK!</b>\n\n"
-                f"Đơn hàng <code>{order_code}</code> đã được xác nhận nhưng hệ thống đang hết link.\n\n"
-                f"Vui lòng <code>/addlink</code> trước khi duyệt!"
-            )
-            return
-        link_to_send = next(iter(available_links))
-        # REMOVED available_links.discard(link_to_send) for '1-Link Mode'
+    await update.message.reply_html(
+        "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>KHÔNG HỖ TRỢ</b>\n\n"
+        f"Đơn <code>{order_code}</code> không phải đơn sản phẩm trong kho nên không thể duyệt tự động."
+    )
+    return
 
-    # Xử lý duyệt đơn iCloud
-    try:
-        
-        # Tạo đơn hàng hoàn thành
-        completed_order = {
-            "user_id": user_id,
-            "order_code": order_code,
-            "email": email,
-            "amount": amount,
-            "coupon_used": order_details.get("coupon_code"),
-            "link": link_to_send,
-            "status": OrderStatus.COMPLETED.value,
-            "timestamp": current_time,
-            "full_name": full_name,
-            "username": order_details.get("username"),
-            "manual_approval": True 
-        }
-        
-        # Gửi email
-        email_sent, email_error = await send_activation_email(
-            email,
-            f"[Duyệt thủ công] Link kích hoạt - {order_code}",
-            full_name,
-            link_to_send
-        )
-
-        if email_sent:
-            try:
-                await context.bot.send_message(
-                    user_id,
-                    f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT THỦ CÔNG!</b>\n\n"
-                    f"Mã đơn: <code>{order_code}</code>\n"
-                    f"Link kích hoạt đã được gửi đến email <b>{email}</b>\n\n"
-                    f"<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Vui lòng kiểm tra hộp thư (kể cả spam).",
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=create_success_menu(),
-                )
-            except (TelegramError, ValueError, KeyError, AttributeError) as notify_err:
-                logger.warning(f"[duyet] Gửi thông báo HTML cho user thất bại ({notify_err}), thử plain text")
-                try:
-                    await context.bot.send_message(
-                        user_id,
-                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT!\n\nMã đơn: {order_code}\nLink kích hoạt đã được gửi đến email {email}\n\n<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Vui lòng kiểm tra hộp thư (kể cả spam).",
-                        reply_markup=create_success_menu(),
-                    )
-                except (TelegramError, ValueError, KeyError, AttributeError):
-                    logger.debug("Suppressed error at L13193")
-        else:
-            try:
-                await context.bot.send_message(
-                    user_id,
-                    f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT THỦ CÔNG!</b>\n\n"
-                    f"Mã đơn: <code>{order_code}</code>\n"
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Gửi email kích hoạt thất bại, vui lòng liên hệ Admin để nhận lại link.",
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=create_success_menu(),
-                )
-            except (TelegramError, ValueError, KeyError, AttributeError) as notify_err:
-                logger.warning(f"[duyet] Gửi thông báo HTML cho user thất bại ({notify_err}), thử plain text")
-                try:
-                    await context.bot.send_message(
-                        user_id,
-                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT!\n\nMã đơn: {order_code}\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Gửi email thất bại, vui lòng liên hệ Admin để nhận lại link.",
-                        reply_markup=create_success_menu(),
-                    )
-                except (TelegramError, ValueError, KeyError, AttributeError):
-                    logger.debug("Suppressed error at L13213")
-        
-        # Gửi thông báo Live Orders
-        await send_live_order_notification(context, full_name, amount, product_name="iCloud 2TB", quantity=1, order_code=order_code)
-        
-        # FIX BUG #12: Xóa khỏi pending và thêm vào history với index update
-        await pending_pop(order_code)
-        db_add_order(completed_order)
-        
-        await process_referral_commission(context, user_id, amount)
-        
-        # Update coupon nếu có
-        if order_details.get("coupon_code"):
-            coupon_code_used = order_details["coupon_code"].upper()
-            if coupon_code_used in coupons:
-                coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
-        
-        await save_data(force=True)
-        
-        # Thông báo cho admin
-        email_status_text = "Thành công <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji>" if email_sent else f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Thất bại ({html.escape(str(email_error or 'Unknown error'))})"
-        success_message = (
-            f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ DUYỆT ĐƠN HÀNG THÀNH CÔNG!</b>\n\n"
-            f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n"
-            f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Khách hàng:</b> {full_name}\n"
-            f"<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> <b>Email:</b> <code>{email}</code>\n"
-            f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số tiền:</b> {amount:,} VNĐ\n"
-            f"<tg-emoji emoji-id=\"5231489647946768652\">🔗</tg-emoji> <b>Link:</b> Đã gửi\n"
-            f"<tg-emoji emoji-id=\"6129860303619363484\">✉️</tg-emoji> <b>Email:</b> {email_status_text}\n\n"
-            f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>Còn {len(pending_orders)} đơn chờ duyệt</b>"
-        )
-        
-        try:
-            await update.message.reply_html(success_message)
-        except (TelegramError, ValueError, KeyError, AttributeError) as admin_notify_err:
-            logger.warning(f"[duyet] Gửi thông báo HTML cho admin thất bại ({admin_notify_err}), thử plain text")
-            await update.message.reply_text(
-                f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> ĐÃ DUYỆT ĐƠN HÀNG THÀNH CÔNG!\n\n"
-                f"Mã đơn: {order_code}\n"
-                f"Khách hàng: {full_name}\n"
-                f"Email: {email}\n"
-                f"Số tiền: {amount:,} VNĐ\n"
-                f"Email gửi: {email_status_text}\n"
-                f"Còn {len(pending_orders)} đơn chờ duyệt"
-            )
-        
-    except (TelegramError, ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Lỗi khi duyệt đơn thủ công: {e}", exc_info=True)
-        await update.message.reply_html(
-            f"❌ <b>LỖI KHI DUYỆT ĐƠN!</b>\n\n"
-            f"Mã đơn: <code>{order_code}</code>\n"
-            f"Lỗi: <code>{str(e)}</code>\n\n"
-            f"Vui lòng thử lại hoặc kiểm tra log."
-        )
 
 async def find_order_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
@@ -435,7 +309,6 @@ async def find_order_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
             source_labels = {
                 "auto_stock": "Auto Stock",
                 "manual": "Thủ công",
-                "icloud_link": "Link",
             }
             replacement_source = source_labels.get(
                 str(latest_warranty.get("source") or ""),
@@ -513,33 +386,12 @@ async def setemail_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             
     await save_data()
     
-    # Auto-Resend Link (If available)
-    resend_status = ""
-    if source == 'history' and target_order.get('link'):
-        try:
-            # Re-use send_activation_email
-            # Need strict params: email, subject, name, link
-            full_name = target_order.get('full_name', 'Khách hàng')
-            link_to_send = target_order.get('link')
-            
-            email_sent, _ = await send_activation_email(
-                new_email,
-                f"[Gửi Lại] Link kích hoạt - {order_code}",
-                full_name,
-                link_to_send
-            )
-            _resend_label = '<tg-emoji emoji-id="6269163801178804220">✅</tg-emoji> Thành công' if email_sent else '<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Thất bại'
-            resend_status = f"\n<tg-emoji emoji-id=\"6129860303619363484\">✉️</tg-emoji> <b>Gửi lại link:</b> {_resend_label}"
-        except (ValueError, TypeError, KeyError, AttributeError) as e:
-            resend_status = f"\n<tg-emoji emoji-id=\"6129860303619363484\">✉️</tg-emoji> <b>Gửi lại link:</b> ❌ Lỗi ({e})"
-    
     await update.message.reply_html(
         f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ CẬP NHẬT EMAIL KHÁCH HÀNG</b>\n\n"
         f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Đơn hàng:</b> <code>{order_code}</code>\n"
         f"<tg-emoji emoji-id=\"5972022360025336988\">🔻</tg-emoji> <b>Cũ:</b> <code>{old_email}</code>\n"
         f"<tg-emoji emoji-id=\"5972022360025336988\">🔺</tg-emoji> <b>Mới:</b> <code>{new_email}</code>\n"
         f"<tg-emoji emoji-id=\"5264919878082509254\">ℹ️</tg-emoji> Email mới sẽ được dùng khi gửi mail Invite/Thông báo."
-        f"{resend_status}"
     )
 
 async def baotri_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

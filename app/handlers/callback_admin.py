@@ -37,7 +37,7 @@ async def handle_admin_callbacks(update, context, command):
         'approve_withdraw:', 'reject_withdraw:',
         'approve_warranty:', 'reject_warranty:',
         'admin_open_chat:', 'admin_close_chat:',
-        'resend_link:', 'reject_expired:', 'reject_policy:',
+        'reject_expired:', 'reject_policy:',
         'warranty_done:', 'dismiss_report:', 'replace_auto:', 'replace_manual:',
         'admrf_f_', 'admrf_p_',
         'api_approve_', 'api_refund_', 'approve_api:', 'reject_api:',
@@ -93,9 +93,6 @@ async def handle_admin_callbacks(update, context, command):
         return True
     if command.startswith('admin_close_chat:'):
         await handle_admin_close_chat(query, context, command)
-        return True
-    if command.startswith('resend_link:'):
-        await handle_resend_link(query, context, command, user_id)
         return True
     if command.startswith(('reject_expired:', 'reject_policy:')):
         await handle_reject_report(query, context, command)

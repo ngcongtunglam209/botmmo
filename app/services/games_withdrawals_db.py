@@ -31,14 +31,6 @@ def get_available_dice_products():
     """Get all products under DICE_MAX_PRODUCT_PRICE with stock available"""
     eligible = []
     
-    # Check iCloud 2TB package (35k < 36k)
-    if ICLOUD_PACKAGE_PRICE < DICE_MAX_PRODUCT_PRICE and available_links:
-        eligible.append({
-            'type': 'icloud',
-            'name': 'iCloud 2TB',
-            'price': ICLOUD_PACKAGE_PRICE
-        })
-    
     # Check store products
     for pid, p in products.items():
         price = p.get('price', 0)
@@ -414,9 +406,6 @@ def _index_order_record(order_data: dict):
     if order_code:
         order_data["order_code"] = order_code
         order_index[order_code] = order_data
-    supplier_order_id = _normalize_order_code(order_data.get("ctt_supplier_order_id"))
-    if supplier_order_id and supplier_order_id not in order_index:
-        order_index[supplier_order_id] = order_data
     uid = str(order_data.get("user_id", "") or "")
     if uid:
         user_order_index.setdefault(uid, []).append(order_data)
@@ -455,7 +444,7 @@ def _snapshot_order_cost(order_data: dict):
     """Capture immutable cost data once; leave unknown costs unset."""
     if not isinstance(order_data, dict) or order_data.get("cost_total") is not None:
         return
-    from decimal import Decimal, InvalidOperation, ROUND_CEILING
+    from decimal import Decimal, InvalidOperation
     try:
         quantity = max(0, int(order_data.get("quantity", 1) or 1))
     except (TypeError, ValueError):
@@ -467,14 +456,8 @@ def _snapshot_order_cost(order_data: dict):
         product = matches[0] if len(matches) == 1 else None
     cost_total = cost_unit = None
     cost_source = ""
-    if order_data.get("is_social_source_service") or order_data.get("delivery_method") == "social_service":
-        try:
-            cost_total = int((Decimal(str(order_data.get("ctt_supplier_charge") or "")) * Decimal(str(SOCIAL_SOURCE_RATE_VND_PER_USD or "0"))).quantize(Decimal("1"), rounding=ROUND_CEILING))
-            cost_source = "ctt_supplier_charge"
-        except (InvalidOperation, TypeError, ValueError):
-            pass
-    elif isinstance(product, dict):
-        source_field = "supplier_source_price" if product.get("is_supplier_source_resell") else "cost_price"
+    if isinstance(product, dict):
+        source_field = "cost_price"
         try:
             cost_unit = int(product[source_field])
             if cost_unit >= 0:
@@ -523,13 +506,7 @@ def find_order_by_code_or_supplier_id(order_code):
     normalized_code = _normalize_order_code(order_code)
     if not normalized_code:
         return None
-    indexed_order = order_index.get(normalized_code)
-    if indexed_order:
-        return indexed_order
-    for order in reversed(order_history):
-        if _normalize_order_code(order.get("ctt_supplier_order_id")) == normalized_code:
-            return order
-    return None
+    return order_index.get(normalized_code)
 
 def db_get_user_orders(user_id, limit=5):
     """Shim: Filters order_history using user_order_index for O(1) lookup."""
@@ -598,16 +575,8 @@ def is_completed_order(order: dict) -> bool:
     return False
 
 def get_order_item_name(order: dict) -> str:
-    """
-    Resolve ten hien thi cho lich su don hang.
-    Uu tien product_name neu co de tranh hien sai "Goi iCloud 2TB"
-    cho cac don store/manual cu thieu truong type.
-    """
+    """Resolve ten hien thi cho lich su don hang."""
     product_name = str(order.get("product_name") or "").strip()
-    if product_name:
-        return product_name
-    if str(order.get("type") or "") in {"store_product", "manual_order"}:
-        return "Sản phẩm"
-    return "Gói iCloud 2TB"
+    return product_name or "Sản phẩm"
 
 

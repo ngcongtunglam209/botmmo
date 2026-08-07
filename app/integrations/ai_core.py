@@ -1,11 +1,7 @@
 # ==============================================================================
 class TicketType(Enum):
-    LINK_NOT_WORKING = "link_not_working"
     EMAIL_NOT_FOUND = "email_not_found"
-    HOW_TO_USE_ICLOUD = "how_to_use_icloud"
     BILLING_QUESTIONS = "billing_questions"
-    PRIVACY_CONCERNS = "privacy_concerns"
-    FAMILY_SHARING = "family_sharing"
     OTHER = "other"
 
 
@@ -252,7 +248,7 @@ async def ask_ai(question: str, user_context: dict = None, user_id: int = 0) -> 
             return fallback_response
         
         # Fallback cuối cùng - Thân thiện, tự nhiên
-        return "Xin chào! Mình là trợ lý Lâm Shop <tg-emoji emoji-id=\"6293853394910057834\">😊</tg-emoji> Bạn cần tư vấn gì về iCloud, Netflix, Spotify hay sản phẩm nào không? Hoặc cứ chat thoải mái, mình trả lời được mọi thứ nha! ⭐️"
+        return "Xin chào! Mình là trợ lý Lâm Shop <tg-emoji emoji-id=\"6293853394910057834\">😊</tg-emoji> Bạn cần tư vấn gì về ChatGPT, Netflix, Spotify hay sản phẩm nào không? Hoặc cứ chat thoải mái, mình trả lời được mọi thứ nha! ⭐️"
     
     current_time = datetime.now()
     
@@ -284,9 +280,6 @@ async def ask_ai(question: str, user_context: dict = None, user_id: int = 0) -> 
             
             products_info += f"- {p['name']}: {p['price']:,}đ | {stock_status}\n"
     
-    # Context về iCloud link
-    icloud_status = "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Còn link" if available_links else "❌ Hết link (chờ admin thêm)"
-    products_info += f"\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> **Gói iCloud 2TB:** {ICLOUD_PACKAGE_PRICE:,}đ | {icloud_status}\n"
     
     # Context về đơn hàng đang chờ
     pending_info = f"""
@@ -351,7 +344,7 @@ Bạn là trợ lý bán hàng của Lâm Shop - chuyên cung cấp dịch vụ 
 {user_info}
 
 <tg-emoji emoji-id=\"5247134066322447995\">🛍️</tg-emoji> SẢN PHẨM NỔI BẬT:
-- Gói iCloud 2TB: {ICLOUD_PACKAGE_PRICE:,}đ - Thanh toán QR tự động, nhận ngay trong 1-3 phút!
+- Tài khoản AI (ChatGPT, Claude, Gemini...) - Thanh toán QR tự động, giao hàng ngay!
 - Bấm /start để xem menu đầy đủ.
 - Hệ thống giao hàng tự động 24/7.
 
@@ -409,22 +402,6 @@ Hãy là trợ lý vui vẻ nhất mà khách hàng từng gặp! <tg-emoji emoj
         "Cần gì cứ nói nhé! <tg-emoji emoji-id=\"6293853394910057834\">😊</tg-emoji>"
     )
 
-async def validate_activation_link(link: str) -> bool:
-    """Kiểm tra tính hợp lệ của link kích hoạt"""
-    # Thêm logic kiểm tra link, ví dụ:
-    if not link or not link.startswith('https://'):
-        return False
-    return True
-
-async def send_activation_email_async(email: str, subject: str, full_name: str, link: str) -> bool:
-    """Gửi email kích hoạt với async"""
-    try:
-        result, _ = await send_activation_email(email, subject, full_name, link)
-        return result
-    except (ValueError, TypeError, KeyError, AttributeError) as e:
-        logger.error(f"Lỗi gửi email: {e}")
-        return False
-
 async def intelligent_ticket_classifier(query: str, user_id: int) -> dict:
     """
     AI-powered ticket classification và auto-resolution
@@ -434,29 +411,13 @@ async def intelligent_ticket_classifier(query: str, user_id: int) -> dict:
     
     # Patterns for each ticket type với confidence scoring
     patterns = {
-        TicketType.LINK_NOT_WORKING: {
-            "keywords": ["link không hoạt động", "link lỗi", "link hỏng", "không vào được link", "link die", "link not work", "link bị lỗi"],
-            "confidence_boost": 0.9
-        },
         TicketType.EMAIL_NOT_FOUND: {
             "keywords": ["không nhận được mail", "chưa nhận mail", "kiểm tra mail", "email chưa tới", "không có email", "chưa có mail"],
             "confidence_boost": 0.85
         },
-        TicketType.HOW_TO_USE_ICLOUD: {
-            "keywords": ["cách sử dụng", "hướng dẫn", "how to", "làm sao", "cài đặt", "kích hoạt", "sử dụng icloud", "dùng icloud"],
-            "confidence_boost": 0.8
-        },
         TicketType.BILLING_QUESTIONS: {
             "keywords": ["thanh toán", "tiền", "giá", "phí", "billing", "cost", "chuyển khoản", "bank", "hoàn tiền", "refund"],
             "confidence_boost": 0.85
-        },
-        TicketType.PRIVACY_CONCERNS: {
-            "keywords": ["riêng tư", "bảo mật", "thấy ảnh", "xem dữ liệu", "privacy", "private", "an toàn"],
-            "confidence_boost": 0.9
-        },
-        TicketType.FAMILY_SHARING: {
-            "keywords": ["rời nhóm", "tự thoát", "family sharing", "gia đình", "leave family", "out group"],
-            "confidence_boost": 0.9
         }
     }
     
@@ -489,22 +450,10 @@ async def intelligent_ticket_classifier(query: str, user_id: int) -> dict:
 async def auto_resolve_ticket(ticket_type: TicketType, query: str, user_id: int) -> dict | None:
     """Auto-resolve ticket dựa trên type"""
     
-    if ticket_type == TicketType.LINK_NOT_WORKING:
-        return await handle_link_not_working(user_id)
-    
-    elif ticket_type == TicketType.EMAIL_NOT_FOUND:
+    if ticket_type == TicketType.EMAIL_NOT_FOUND:
         return handle_email_not_found()
-    
-    elif ticket_type == TicketType.HOW_TO_USE_ICLOUD:
-        return handle_icloud_tutorial()
-    
+
     elif ticket_type == TicketType.BILLING_QUESTIONS:
         return handle_billing_questions(query)
-    
-    elif ticket_type == TicketType.PRIVACY_CONCERNS:
-        return handle_privacy_concerns()
-    
-    elif ticket_type == TicketType.FAMILY_SHARING:
-        return handle_family_sharing()
-    
+
     return None

@@ -33,7 +33,6 @@ class AppState:
     """
 
     # ── Core data stores ──────────────────────────────────────────────
-    available_links: set = field(default_factory=set)
     pending_orders: dict = field(default_factory=dict)
     processed_transaction_ids: set = field(default_factory=set)
     order_history: list = field(default_factory=list)
@@ -108,7 +107,7 @@ class AppState:
 
     # Names of data fields that are persisted to the SQLite KV store
     PERSISTED_FIELDS: tuple = (
-        "available_links", "pending_orders", "processed_transaction_ids",
+        "pending_orders", "processed_transaction_ids",
         "order_history", "user_data_db", "banned_users", "coupons",
         "api_keys", "pending_api_deposits", "products", "custom_store_icons",
         "store_categories",

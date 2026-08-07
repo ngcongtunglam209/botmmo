@@ -104,7 +104,7 @@ async def ask_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         return
 
     if not context.args:
-        await update.message.reply_html(lt(user_id, '💡 <b>Bạn có thể hỏi trực tiếp mà không cần /ask!</b>\n\nVí dụ:\n• iCloud 2TB có gì hay?\n• Cách kích hoạt Netflix?\n• Sản phẩm nào phù hợp với tôi?\n\nHoặc: <code>/ask [câu hỏi]</code>', '💡 <b>You can ask directly without /ask!</b>\n\nExamples:\n• What are the benefits of iCloud 2TB?\n• How do I activate Netflix?\n• Which product suits me?\n\nOr: <code>/ask [question]</code>', '💡 <b>无需 /ask 即可直接提问！</b>\n\n示例：\n• iCloud 2TB 有什么优势？\n• 如何激活 Netflix？\n• 哪款商品适合我？\n\n或者：<code>/ask [问题]</code>'))
+        await update.message.reply_html(lt(user_id, '💡 <b>Bạn có thể hỏi trực tiếp mà không cần /ask!</b>\n\nVí dụ:\n• Tài khoản ChatGPT Plus có gì hay?\n• Cách kích hoạt Netflix?\n• Sản phẩm nào phù hợp với tôi?\n\nHoặc: <code>/ask [câu hỏi]</code>', '💡 <b>You can ask directly without /ask!</b>\n\nExamples:\n• What are the benefits of ChatGPT Plus?\n• How do I activate Netflix?\n• Which product suits me?\n\nOr: <code>/ask [question]</code>', '💡 <b>无需 /ask 即可直接提问！</b>\n\n示例：\n• ChatGPT Plus 有什么优势？\n• 如何激活 Netflix？\n• 哪款商品适合我？\n\n或者：<code>/ask [问题]</code>'))
         return
     question = " ".join(context.args)
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)

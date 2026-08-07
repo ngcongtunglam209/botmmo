@@ -36,7 +36,7 @@ def _get_edit_product_entries():
     return [
         (pid, product)
         for pid, product in products.items()
-        if not (isinstance(product, dict) and product.get("is_social_source_service"))
+        if isinstance(product, dict)
     ]
 
 def _build_edit_product_select_payload(page: int = 0):
@@ -366,15 +366,6 @@ def _is_add_stock_local_product(product: dict | None) -> bool:
         return False
     if product.get('requires_gmail', False):
         return False
-    if product.get('is_supplier_source_resell') or product.get('supplier_source_product_id') or product.get('supplier_source_variant_id'):
-        return False
-    if (
-        product.get('is_social_source_service')
-        or product.get('ctt_auto_managed')
-        or product.get('ctt_service_id')
-        or product.get('ctt_source_category')
-    ):
-        return False
     return isinstance(product.get('stock', []), list)
 
 
@@ -412,7 +403,7 @@ def _build_add_stock_product_menu(page: int = 0):
 
     text = (
         "<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>CHON SAN PHAM LOCAL DE THEM KHO</b>\n\n"
-        "<i>Chi hien thi san pham co kho nhap tay, khong hien hang API/social/resell</i>"
+        "<i>Chi hien thi san pham co kho nhap tay</i>"
     )
     if total_pages > 1:
         text += f"\n\n<b>Trang:</b> {safe_page + 1}/{total_pages} | <b>Tong:</b> {len(entries)} san pham"

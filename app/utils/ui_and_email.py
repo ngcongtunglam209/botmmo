@@ -55,7 +55,6 @@ HUONGDAN_TEXT = (
     '<b>1. Chọn sản phẩm</b>\n'
     '• Vào <b>Mua Hàng</b> → chọn danh mục → chọn sản phẩm.\n'
     '• Đọc kỹ mô tả, giá hiện tại, tồn kho, thời hạn và điều kiện bảo hành.\n'
-    '• Với sản phẩm resell, bấm <b>Làm mới giá &amp; tồn kho</b> trước khi đặt.\n\n'
     '<b>2. Chọn số lượng và thanh toán</b>\n'
     '• Chọn số lượng → kiểm tra tổng tiền → chọn Ví, QR ngân hàng, Binance Pay hoặc USDT nếu đang được hỗ trợ.\n'
     '• Với QR: chuyển <b>đúng số tiền</b> và <b>đúng nội dung</b> trước giờ hết hạn.\n'
@@ -66,15 +65,11 @@ HUONGDAN_TEXT = (
     '• Đơn manual: làm theo yêu cầu nhập email/thông tin và chờ Admin xử lý.\n'
     '• Xem lại nội dung tại <b>Đã Mua</b> → chọn đơn → <b>Lấy lại thông tin đơn hàng</b>.\n'
     '• Có thể dùng <b>Mua lại sản phẩm này</b>; hệ thống luôn áp dụng giá và tồn kho hiện tại.\n\n'
-    '<b>4. Dịch vụ Social Media</b>\n'
-    '• Chọn đúng dịch vụ, nhập số lượng trong giới hạn và dán đúng link cần chạy.\n'
-    '• Không đổi username, xóa bài, khóa tài khoản hoặc sửa link khi đơn đang chạy.\n'
-    '• Trạng thái, số lượng còn lại và tiến độ phụ thuộc dữ liệu từ nhà cung cấp.\n\n'
-    '<b>5. Báo lỗi và bảo hành</b>\n'
+    '<b>4. Báo lỗi và bảo hành</b>\n'
     '• Vào <b>Đã Mua</b> → chọn đơn → <b>Báo lỗi đơn này</b>.\n'
     '• Gửi mã đơn, ảnh/video lỗi và mô tả thao tác đã thử.\n'
     '• Không thay đổi mật khẩu, email khôi phục hoặc chia sẻ tài khoản trước khi được kiểm tra.\n\n'
-    '<b>6. An toàn tài khoản</b>\n'
+    '<b>5. An toàn tài khoản</b>\n'
     '• Lâm Shop không yêu cầu gửi mật khẩu ngân hàng, OTP hoặc mã xác thực ví.\n'
     '• Không chia sẻ API key, mã đơn hoặc nội dung sản phẩm tại nơi công khai.\n\n'
     '<b>Cần hỗ trợ?</b> Chọn <b>Hỗ Trợ &amp; Liên Hệ</b> trong menu chính và gửi đầy đủ mã đơn cùng bằng chứng.'
@@ -91,14 +86,14 @@ CHINHSACH_TEXT = (
     '• Giao dịch sai số tiền, sai nội dung hoặc sau thời hạn có thể cần đối soát thủ công.\n'
     '• QR chỉ dùng cho đơn hàng hợp pháp. Nghiêm cấm gian lận, rửa tiền, chiếm đoạt tài sản và mọi hành vi trái pháp luật.\n\n'
     '<b>3. Giao hàng</b>\n'
-    '• Thời gian giao phụ thuộc loại sản phẩm: tự động, manual, resell hoặc Social Media.\n'
+    '• Thời gian giao phụ thuộc loại sản phẩm: tự động hoặc manual.\n'
     '• Người mua phải kiểm tra sản phẩm ngay sau khi nhận và bảo quản thông tin an toàn.\n'
     '• Không công khai hoặc bán lại nội dung nếu sản phẩm/nhà cung cấp không cho phép.\n\n'
     '<b>4. Bảo hành</b>\n'
     '• Chỉ áp dụng trong thời hạn và phạm vi ghi tại sản phẩm hoặc đơn hàng.\n'
     '• Cần cung cấp mã đơn và bằng chứng lỗi để kiểm tra.\n'
     '• Không bảo hành lỗi do đổi mật khẩu/email khôi phục, chia sẻ nhiều người, sử dụng sai hướng dẫn, vi phạm điều khoản nền tảng hoặc tự ý can thiệp sản phẩm.\n'
-    '• Dịch vụ Social Media chỉ được refill/bù tụt khi dịch vụ có ghi rõ hỗ trợ và người mua giữ nguyên điều kiện cần thiết.\n\n'
+    '\n'
     '<b>5. Hủy đơn và hoàn tiền</b>\n'
     '• Đơn chưa thanh toán có thể hủy trước khi hết hạn. Phần tiền ví đã giữ sẽ được hoàn theo trạng thái hệ thống.\n'
     '• Xem xét hoàn tiền khi hệ thống trừ tiền nhưng không tạo được đơn, giao trùng hoặc nhà cung cấp xác nhận hủy/hoàn một phần.\n'
@@ -332,83 +327,6 @@ def create_guide_policy_menu(active: str = "guide"):
 
 def create_back_button_menu(text="⬅️ Quay Lại Menu Chính", callback="back_to_main"): return InlineKeyboardMarkup([[_btn(text, icon_id="6206032691075223572", callback_data=callback)]])
 def create_success_menu(): return InlineKeyboardMarkup([ [_btn("Cần hỗ trợ / Báo lỗi đơn hàng", icon_id="5273914604752216432", callback_data='report_error')], [_btn("Quay Lại Menu Chính", icon_id="6206032691075223572", callback_data='back_to_main')] ])
-
-# ===================== EMAIL HELPERS =====================
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-def _send_email_sync(recipient_email: str, subject: str, full_name: str, activation_link: str):
-    """
-    FIX BUG #2: Thêm retry logic để đảm bảo email được gửi
-    Retry 3 lần với exponential backoff
-    """
-    if not ENABLE_EMAIL_SENDING:
-        logger.info("<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Tính năng gửi email đang tắt.")
-        return False, "Disabled by config"
-    if not SENDER_EMAIL or not SENDER_APP_PASSWORD:
-        logger.error("❌ Missing SMTP credentials: SENDER_EMAIL/SENDER_APP_PASSWORD")
-        return False, "Missing SMTP credentials"
-    
-    html_body = f'''<html><head><style>body{{font-family:Arial,sans-serif;line-height:1.6;color:#333}}.container{{max-width:600px;margin:20px auto;padding:20px;border:1px solid #ddd;border-radius:10px}}.button{{display:inline-block;background-color:#007aff;color:white!important;padding:15px 25px;text-align:center;text-decoration:none;border-radius:8px;font-size:18px;font-weight:700;margin:20px 0}}h2{{color:#0056b3}}hr{{border:0;border-top:1px solid #eee;margin:20px 0}}.guide{{background-color:#f9f9f9;padding:15px;border-radius:8px;margin-top:20px;border-left:4px solid #007aff}}</style></head><body><div class="container"><h2>{E_SUCCESS} Chúc Mừng Bạn Đã Đăng Ký Thành Công Gói iCloud 2TB!</h2><p>Xin chào <b>{full_name}</b>,</p><p>Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ của me. Link kích hoạt gói dung lượng của bạn đã sẵn sàng.</p><p style="text-align:center">Vui lòng nhấp vào nút bên dưới để kích hoạt ngay lập tức:</p><p style="text-align:center"><a href="{activation_link}" class="button">KÍCH HOẠT NGAY</a></p>
-    
-    <div class="guide">
-        <h3>{E_TIP} HƯỚNG DẪN KIỂM TRA iCLOUD 2TB ĐÃ ĐƯỢC CHIA SẺ</h3>
-        <p>{E_LOADING}{E_LOADING} <b>1.</b> Vào <b>Cài đặt</b> > Nhấn vào tên tài khoản Apple ở trên cùng.</p>
-        <p>{E_LOADING}{E_LOADING} <b>2.</b> Chọn <b>Gia đình</b> > Kiểm tra có tên bạn trong danh sách thành viên.</p>
-        <p>{E_LOADING}{E_LOADING} <b>3.</b> Vào mục <b>Đăng ký</b> > Xem có hiển thị <b>iCloud+ – Được chia sẻ</b>.</p>
-        <p>{E_LOADING}{E_LOADING} <b>4.</b> Quay lại <b>Cài đặt</b> > <b>iCloud</b> > Chọn <b>Sử dụng dung lượng của Gia đình</b> để kiểm tra bạn đã dùng gói <tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji></p>
-        
-        <div style="text-align:center; margin-top:15px">
-             <img src="{INSTRUCTION_IMAGE_URL}" alt="Hình ảnh hướng dẫn" style="max-width:100%; height:auto; border-radius:8px; border:1px solid #ddd;">
-        </div>
-    </div>
-
-    <hr><p>Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ admin qua Telegram hoặc tham gia nhóm hỗ trợ của chúng tôi.</p><p>Trân trọng,<br><b>Lam Shop Team</b></p></div></body></html>'''
-    
-    msg = MIMEText(html_body, 'html', 'utf-8')
-    msg['Subject'], msg['From'], msg['To'] = subject, f"Lam Shop iCloud <{SENDER_EMAIL}>", recipient_email
-    try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-            smtp_server.login(SENDER_EMAIL, SENDER_APP_PASSWORD)
-            smtp_server.sendmail(SENDER_EMAIL, recipient_email, msg.as_string())
-        logger.info(f"{E_SUCCESS} Đã gửi email thành công đến {recipient_email}")
-        return True, "Success"
-    except (ValueError, TypeError, KeyError, AttributeError) as e:
-        logger.error(f"❌ Lỗi không xác định khi gửi email đến {recipient_email}: {e}")
-        return False, str(e)
-
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-def _send_api_email_sync(recipient_email: str, subject: str, link: str):
-    """
-    FIX BUG #2: Gửi email ẩn danh với retry logic
-    """
-    if not ENABLE_EMAIL_SENDING:
-        return False, "Disabled by config"
-    if not SENDER_EMAIL or not SENDER_APP_PASSWORD:
-        logger.error("❌ Missing SMTP credentials: SENDER_EMAIL/SENDER_APP_PASSWORD")
-        return False, "Missing SMTP credentials"
-
-    html_body = f'''<html><head><style>body{{font-family:Arial,sans-serif;line-height:1.6;color:#333;background-color:#f9f9f9;margin:0;padding:20px}}.container{{max-width:600px;margin:0 auto;padding:30px;background:#ffffff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}}.button{{display:inline-block;background-color:#007aff;color:white!important;padding:15px 30px;text-align:center;text-decoration:none;border-radius:8px;font-size:16px;font-weight:bold;margin:20px 0}}.steps{{background-color:#f2f7ff;padding:20px;border-radius:8px;margin-top:20px}}h2{{color:#007aff;margin-top:0}}.note{{font-size:13px;color:#666;font-style:italic}}</style></head><body><div class="container"><h2>{E_SUCCESS} Kích hoạt gói dịch vụ</h2><p>Xin chào,</p><p>Cảm ơn bạn đã tin tưởng sử dụng dịch vụ. Gói dung lượng của bạn đã sẵn sàng.</p><p style="text-align:center"><a href="{link}" class="button">KÍCH HOẠT NGAY</a></p><div class="steps"><h3>{E_TAG} Hướng dẫn kích hoạt:</h3><ol><li>Bấm vào nút <b>KÍCH HOẠT NGAY</b> ở trên.</li><li>Đăng nhập vào tài khoản Icloud của bạn (nếu được yêu cầu).</li><li>Chọn <b>"Tham gia gia đình" (Join Family)</b> để hoàn tất.</li></ol><p class="note">{E_ERROR} Lưu ý: Mỗi link chỉ sử dụng được cho 1 tài khoản.</p></div><hr style="border:0;border-top:1px solid #eee;margin:30px 0"><p>Trân trọng,<br>Service Store</p></div></body></html>'''
-    
-    msg = MIMEText(html_body, 'html', 'utf-8')
-    # Generic sender name
-    msg['Subject'], msg['From'], msg['To'] = subject, f"Service Store <{SENDER_EMAIL}>", recipient_email
-    
-    try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-            smtp_server.login(SENDER_EMAIL, SENDER_APP_PASSWORD)
-            smtp_server.sendmail(SENDER_EMAIL, recipient_email, msg.as_string())
-        logger.info(f"{E_SUCCESS} Đã gửi email API thành công đến {recipient_email}")
-        return True, "Success"
-    except (ValueError, TypeError, KeyError, AttributeError) as e:
-        logger.error(f"❌ Lỗi gửi email API đến {recipient_email}: {e}")
-        return False, str(e)
-
-async def send_activation_email(recipient_email: str, subject: str, full_name: str, activation_link: str):
-    """Wrapper bất đồng bộ để gửi email không chặn bot"""
-    return await asyncio.to_thread(_send_email_sync, recipient_email, subject, full_name, activation_link)
-
-async def send_api_email(recipient_email: str, link: str):
-    """Wrapper gửi email API (Ẩn danh)"""
-    return await asyncio.to_thread(_send_api_email_sync, recipient_email, "Thông tin đơn hàng - Kích hoạt ngay", link)
 
 # ===================== QR CODE HELPERS =====================
 

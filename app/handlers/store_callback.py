@@ -482,12 +482,11 @@ async def _show_store_product_detail(
     p = products.get(prod_id)
     if isinstance(p, dict):
         p["_product_id"] = str(prod_id)
-    if not p or not _ctt_is_catalog_visible(p):
+    if not p or not isinstance(p, dict):
         await safe_answer(query, "Sản phẩm không tồn tại", show_alert=True)
         return True
 
     requires_gmail = p.get('requires_gmail', False)
-    is_ctt_product = _is_ctt_store_product(p)
     
     raw_name = str(p.get("name") or prod_id)
     get_effective_category = globals().get("get_effective_store_category")
@@ -509,63 +508,7 @@ async def _show_store_product_detail(
     display_price_text = _fmt_price(p.get("price", 0) or 0)
     discount_line = _get_discount_display_line(query.from_user.id, prod_id, p["price"])
 
-    if is_ctt_product:
-        minimum_quantity = _ctt_get_package_quantity(p)
-        maximum_quantity = int(p.get("ctt_max_quantity", 0) or 0)
-        quantity_error = _ctt_validate_purchase_quantity(p, minimum_quantity)
-        required_inputs = _ctt_required_input_fields(p)
-        input_labels = {
-            "link": "Link livestream TikTok" if "tiktok" in str(p.get("name") or "").lower() else "Link sản phẩm",
-            "comments": "Nội dung bình luận",
-            "comment": "Nội dung bình luận",
-            "username": "Username",
-            "user": "Username",
-            "uid": "UID",
-            "phone": "Số điện thoại",
-            "email": "Email",
-        }
-        input_text = ", ".join(input_labels.get(str(field).lower(), str(field)) for field in required_inputs) if required_inputs else "Link sản phẩm"
-        pricing_preview = _get_ctt_store_pricing_preview(query.from_user.id, context, prod_id, p, minimum_quantity)
-        base_unit_text = _ctt_format_vnd_decimal(pricing_preview.get("base_unit_price", 0))
-        effective_unit_text = _ctt_format_vnd_decimal(pricing_preview.get("chosen_unit_price", 0))
-        display_price_text = f'~{_fmt_price(float(pricing_preview.get("base_unit_price", 0) or 0))} / 1 đơn vị'
-        if pricing_preview.get("discount_percent", 0) > 0:
-            discount_line = (
-                f'\n{E_TAG} <b>Giảm {int(pricing_preview.get("discount_percent", 0) or 0)}%:</b> '
-                f'<s>{base_unit_text}đ</s> → <b>{effective_unit_text}đ</b> / đơn vị\n'
-            )
-        elif pricing_preview.get("coupon_unit_discount", 0) > 0:
-            discount_line = (
-                f'\n{E_TAG} <b>Coupon:</b> '
-                f'<s>{base_unit_text}đ</s> → <b>{effective_unit_text}đ</b> / đơn vị\n'
-            )
-        else:
-            discount_line = ""
-
-        if not SOCIAL_SOURCE_API_KEY:
-            stock_info = (
-                f'{E_LOADING} Loại: Dịch vụ mạng xã hội\n'
-                f'{E_LIMIT} Trạng thái: Tạm ngừng bán'
-            )
-            can_buy = False
-        elif quantity_error:
-            stock_info = (
-                f'{E_LOADING} Loại: Dịch vụ mạng xã hội\n'
-                f'{E_LIMIT} Trạng thái: Tạm ngừng bán\n'
-                f'{E_LIMIT} {html.escape(quantity_error)}'
-            )
-            can_buy = False
-        else:
-            max_text = f"{maximum_quantity:,}" if maximum_quantity > 0 else "Không giới hạn"
-            stock_info = (
-                f'{E_LOADING} Loại: Dịch vụ mạng xã hội\n'
-                f'{E_SUCCESS} Trạng thái: Sẵn sàng\n'
-                f'{E_STAT} Mua tối thiểu: {minimum_quantity:,} đơn vị\n'
-                f'{E_STAT} Mua tối đa: {max_text}\n'
-                f'{E_STAT} Cần nhập: {html.escape(input_text)}'
-            )
-            can_buy = True
-    elif requires_gmail:
+    if requires_gmail:
         pending_count = sum(1 for o in pending_manual_orders.values() if o.get('product_id') == prod_id)
         max_pending = p.get('max_pending_orders', 10)
         slots_left = max_pending - pending_count
@@ -577,28 +520,14 @@ async def _show_store_product_detail(
             stock_info = f'{E_LOADING} {labels["manual"]}\n{E_LIMIT} {labels["status"]}: {labels["manual_full"]}'
             can_buy = False
     else:
-        if p.get('is_supplier_source_resell'):
-            supplier_source_stock = _get_supplier_source_stock_count(p)
+        stock_count = int(get_local_stock_available_count(p) or 0)
 
-            if _is_supplier_source_purchase_blocked(p):
-                block_reason = html.escape(str(p.get("supplier_source_purchase_blocked_reason") or ("Nguồn đang tạm ngừng bán" if lang == "vi" else "Source suspended")))
-                stock_info = f'{E_ANDROID} {labels["auto"]}\n{E_LIMIT} {labels["status"]}: {labels["suspended"]}\n<i>{block_reason}</i>'
-                can_buy = False
-            elif supplier_source_stock > 0:
-                stock_info = f'{E_ANDROID} {labels["auto"]}\n{E_SUCCESS} {labels["status"]}: {labels["available"].format(count=supplier_source_stock)}'
-                can_buy = True
-            else:
-                stock_info = f'{E_ANDROID} {labels["auto"]}\n{E_ERROR} {labels["status"]}: {labels["out"]}'
-                can_buy = False
+        if stock_count > 0:
+            stock_info = f'{E_ANDROID} {labels["auto"]}\n{E_SUCCESS} {labels["status"]}: {labels["available"].format(count=stock_count)}'
+            can_buy = True
         else:
-            stock_count = int(get_local_stock_available_count(p) or 0)
-
-            if stock_count > 0:
-                stock_info = f'{E_ANDROID} {labels["auto"]}\n{E_SUCCESS} {labels["status"]}: {labels["available"].format(count=stock_count)}'
-                can_buy = True
-            else:
-                stock_info = f'{E_ANDROID} {labels["auto"]}\n{E_ERROR} {labels["status"]}: {labels["out"]}'
-                can_buy = False
+            stock_info = f'{E_ANDROID} {labels["auto"]}\n{E_ERROR} {labels["status"]}: {labels["out"]}'
+            can_buy = False
 
     localized_name = str(p.get(f"name_{lang}") or p.get("name") or prod_id)
     localized_description = p.get(f"description_{lang}") or p.get("description") or ""
@@ -618,78 +547,18 @@ async def _show_store_product_detail(
     duration_text = html.escape(p.get(f"duration_{lang}") or def_dur_val)
     warranty_text = html.escape(p.get(f"warranty_{lang}") or def_war_val)
 
-    if is_ctt_product:
-        raw_search = raw_name.lower()
-        if "tiktok" in raw_search or "tik tok" in raw_search:
-            platform_text = "TikTok"
-        elif "facebook" in raw_search or raw_search.startswith("fb ") or " fb " in raw_search:
-            platform_text = "Facebook"
-        elif "instagram" in raw_search or " ig " in raw_search:
-            platform_text = "Instagram"
-        elif "youtube" in raw_search:
-            platform_text = "YouTube"
-        elif "telegram" in raw_search:
-            platform_text = "Telegram"
-        else:
-            platform_text = html.escape(str(p.get("store_category") or "Social"))
-        if "livestream" in raw_search or "live stream" in raw_search or "live" in raw_search:
-            service_text = "Tăng tương tác livestream"
-        elif "like" in raw_search and ("share" in raw_search or "comment" in raw_search):
-            service_text = "Tăng tương tác"
-        elif "like" in raw_search:
-            service_text = "Tăng lượt thích"
-        elif "follow" in raw_search or "follower" in raw_search:
-            service_text = "Tăng người theo dõi"
-        elif "comment" in raw_search:
-            service_text = "Tăng bình luận"
-        elif "share" in raw_search:
-            service_text = "Tăng chia sẻ"
-        elif "view" in raw_search:
-            service_text = "Tăng lượt xem"
-        else:
-            service_text = "Dịch vụ mạng xã hội"
+    # labels already built at the top
 
-        included_parts = []
-        if "like" in raw_search:
-            included_parts.append("Likes")
-        if "share" in raw_search:
-            included_parts.append("Shares")
-        if "comment" in raw_search:
-            included_parts.append("Comments")
-        included_text = " + ".join(included_parts) if included_parts else service_text
-        max_text = f"{maximum_quantity:,}" if maximum_quantity > 0 else "Không giới hạn theo hệ thống"
-        refill_text = "Có bảo hành" if bool(p.get("ctt_refill")) else "Không bảo hành / Không bù tụt"
-
-        msg = (
-            f'{E_TAG} <b>{html.escape(raw_name)}</b>\n'
-            f'<blockquote expandable><b>Mô tả:</b>\n\n'
-            f'{E_LOADING} <b>Thông tin dịch vụ</b>\n'
-            f'{E_TAG} Nền tảng: {platform_text}\n'
-            f'{E_TAG} Dịch vụ: {service_text}\n'
-            f'{E_TAG} Bao gồm: {html.escape(included_text)}\n'
-            f'{E_STAT} Tối thiểu: {minimum_quantity:,}\n'
-            f'{E_STAT} Tối đa: {max_text}\n'
-            f'{E_TAG} Nhập: {html.escape(input_text)}\n'
-            f'{E_SHIELD} Bảo hành: {refill_text}\n\n'
-            f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> Giá: <b>{display_price_text}</b>\n'
-            f'{E_TAG} Gói tối thiểu: <b>{minimum_quantity:,} đơn vị</b>\n'
-            f'{E_SUCCESS} Tốc độ: Tự động xử lý sau khi thanh toán\n\n'
-            f'{E_LOADING} <b>Quy trình:</b>\n'
-            f'Nhập số lượng → Dán link cần chạy → Thanh toán → Bot tạo đơn tự động</blockquote>\n'
-        )
-    else:
-        # labels already built at the top
-
-        msg = (
-            f'{E_TAG} <b>{html.escape(localized_name)}</b>\n'
-            f'<blockquote expandable>📝 <b>{labels["description"]}:</b>\n{desc_text}</blockquote>\n'
-            f'{E_TAG} {labels["price"]}: <b>{display_price_text}</b>\n'
-            f'{E_LOADING} {labels["duration"]}: <b>{duration_text}</b>\n'
-            f'{E_SHIELD} {labels["warranty"]}: <b>{warranty_text}</b>\n'
-            f'{discount_line}'
-            f'{stock_info}\n'
-            f'<blockquote><b>{labels["how"]}:</b> {labels["how_email"] if requires_gmail else labels["how_auto"]}</blockquote>\n'
-        )
+    msg = (
+        f'{E_TAG} <b>{html.escape(localized_name)}</b>\n'
+        f'<blockquote expandable>📝 <b>{labels["description"]}:</b>\n{desc_text}</blockquote>\n'
+        f'{E_TAG} {labels["price"]}: <b>{display_price_text}</b>\n'
+        f'{E_LOADING} {labels["duration"]}: <b>{duration_text}</b>\n'
+        f'{E_SHIELD} {labels["warranty"]}: <b>{warranty_text}</b>\n'
+        f'{discount_line}'
+        f'{stock_info}\n'
+        f'<blockquote><b>{labels["how"]}:</b> {labels["how_email"] if requires_gmail else labels["how_auto"]}</blockquote>\n'
+    )
 
     btns = []
     detail_labels = locals().get("labels", {})
@@ -700,8 +569,7 @@ async def _show_store_product_detail(
             btns.append([_btn(detail_labels.get("busy", "Admin đang bận"), icon_id="5197288647275071607", callback_data="ignore", style="danger")])
         else:
             btns.append([_btn(detail_labels.get("out", "Hết hàng"), icon_id="5273914604752216432", callback_data="ignore", style="danger")])
-            if not is_ctt_product:
-                btns.append([_btn(detail_labels.get("notify", "Thông báo khi có hàng"), icon_id="5447364299200678034", callback_data=f"waitlist_{prod_id}")])
+            btns.append([_btn(detail_labels.get("notify", "Thông báo khi có hàng"), icon_id="5447364299200678034", callback_data=f"waitlist_{prod_id}")])
 
     from app.core.emoji_runtime import upgrade_text_to_premium_emoji
 
@@ -720,23 +588,6 @@ async def _show_store_product_detail(
     return True
 
 
-def _is_supplier_source_purchase_blocked(product) -> bool:
-    return bool(isinstance(product, dict) and product.get("supplier_source_purchase_blocked"))
-
-
-def _get_supplier_source_stock_count(product) -> int:
-    if _is_supplier_source_purchase_blocked(product):
-        return 0
-    try:
-        return int((product or {}).get('supplier_source_stock', 0) or 0)
-    except (TypeError, ValueError, KeyError, AttributeError):
-        return 0
-
-
-def _is_ctt_store_product(product) -> bool:
-    return _ctt_is_service_product(product)
-
-
 def _get_store_effective_unit_price(user_id: int, context: ContextTypes.DEFAULT_TYPE, prod_id: str, product: dict, qty: int) -> int:
     unit_price, _discount_type, _discount_info = get_best_discount(user_id, prod_id, product['price'])
     store_coupon_discount = 0
@@ -746,309 +597,6 @@ def _get_store_effective_unit_price(user_id: int, context: ContextTypes.DEFAULT_
         coupon_unit_price = max(0, product['price'] - store_coupon_discount)
         unit_price = min(unit_price, coupon_unit_price)
     return int(unit_price or 0)
-
-
-def _get_ctt_store_pricing_preview(user_id: int, context: ContextTypes.DEFAULT_TYPE, prod_id: str, product: dict, qty: int = 1) -> dict:
-    from decimal import Decimal
-
-    base_unit = _ctt_get_base_unit_price_decimal(product)
-    base_total = _ctt_calculate_total_price(product, qty)
-    scenarios = [
-        {
-            "kind": "base",
-            "unit_price": base_unit,
-            "total_price": base_total,
-            "discount_type": None,
-            "discount_percent": 0,
-            "coupon_unit_discount": 0,
-        }
-    ]
-
-    _best_price, discount_type, discount_info = get_best_discount(user_id, prod_id, int(product.get("price", 0) or 0))
-    discount_percent = 0
-    if isinstance(discount_info, dict):
-        try:
-            discount_percent = int(discount_info.get("discount_percent", 0) or 0)
-        except (TypeError, ValueError, KeyError, AttributeError):
-            discount_percent = 0
-    if discount_percent > 0:
-        scenarios.append(
-            {
-                "kind": "discount",
-                "unit_price": base_unit * (Decimal("100") - Decimal(discount_percent)) / Decimal("100"),
-                "total_price": _ctt_calculate_total_price(product, qty, discount_percent=discount_percent),
-                "discount_type": discount_type,
-                "discount_percent": discount_percent,
-                "coupon_unit_discount": 0,
-            }
-        )
-
-    store_coupon_discount = 0
-    if getattr(context, "user_data", None) is not None:
-        _store_coupon_code, store_coupon_discount = get_active_store_coupon_context(context, prod_id, qty)
-    if store_coupon_discount > 0:
-        scenarios.append(
-            {
-                "kind": "coupon",
-                "unit_price": max(Decimal("0"), base_unit - Decimal(str(store_coupon_discount))),
-                "total_price": _ctt_calculate_total_price(product, qty, coupon_unit_discount=store_coupon_discount),
-                "discount_type": "coupon",
-                "discount_percent": 0,
-                "coupon_unit_discount": int(store_coupon_discount or 0),
-            }
-        )
-
-    chosen = min(scenarios, key=lambda item: int(item.get("total_price", 0) or 0))
-    return {
-        "base_unit_price": base_unit,
-        "base_total_price": base_total,
-        "chosen_unit_price": chosen.get("unit_price", base_unit),
-        "chosen_total_price": int(chosen.get("total_price", base_total) or 0),
-        "discount_type": chosen.get("discount_type"),
-        "discount_percent": int(chosen.get("discount_percent", 0) or 0),
-        "coupon_unit_discount": int(chosen.get("coupon_unit_discount", 0) or 0),
-    }
-
-
-def _get_ctt_store_total_price(user_id: int, context: ContextTypes.DEFAULT_TYPE, prod_id: str, product: dict, qty: int) -> int:
-    preview = _get_ctt_store_pricing_preview(user_id, context, prod_id, product, qty)
-    return int(preview.get("chosen_total_price", 0) or 0)
-
-
-async def _begin_ctt_checkout_collection(query, context: ContextTypes.DEFAULT_TYPE, prod_id: str, qty: int, payment_flow: str, *, balance_used: int = 0):
-    product = products.get(prod_id)
-    if not _is_ctt_store_product(product):
-        await safe_answer(query, "San pham nay khong phai dich vu social.", show_alert=True)
-        return True
-
-    quantity_error = _ctt_validate_purchase_quantity(product, qty)
-    if quantity_error:
-        await safe_answer(query, quantity_error, show_alert=True)
-        return True
-
-    fields = _ctt_required_input_fields(product)
-    first_field = fields[0]
-    context.user_data['pending_ctt_checkout'] = {
-        "prod_id": prod_id,
-        "qty": int(qty or 1),
-        "payment_flow": str(payment_flow or "balance"),
-        "balance_used": int(balance_used or 0),
-        "fields": list(fields),
-        "collected_inputs": {},
-    }
-    context.user_data['pending_ctt_payment_balance_used'] = int(balance_used or 0)
-    context.user_data['state'] = f'awaiting_ctt_{first_field}'
-
-    await _show_store_panel(
-        query,
-        context,
-        _ctt_build_checkout_prompt(product, int(qty or 1), first_field),
-        InlineKeyboardMarkup([[_btn("Huy", icon_id="5273914604752216432", callback_data=f"buy_prod_confirm_{prod_id}_{qty}", style="danger")]]),
-    )
-    return True
-
-
-async def _complete_ctt_balance_purchase(update: Update, context: ContextTypes.DEFAULT_TYPE, draft: dict):
-    prod_id = str((draft or {}).get("prod_id") or "").strip()
-    qty = int((draft or {}).get("qty", 1) or 1)
-    product = products.get(prod_id)
-    if not _is_ctt_store_product(product):
-        await update.message.reply_text("San pham social khong con ton tai. Vui long thu lai.")
-        return
-
-    user = update.effective_user
-    user_info = db_get_user(user.id)
-    balance = int((user_info or {}).get('balance', 0) or 0)
-    total_price = _get_ctt_store_total_price(user.id, context, prod_id, product, qty)
-    if balance < total_price:
-        await update.message.reply_text("So du hien tai khong du de tao don social nay.")
-        return
-
-    collected_inputs = dict((draft or {}).get("collected_inputs") or {})
-    supplier_result = await ctt_submit_local_service_order(product, qty, collected_inputs)
-    if not supplier_result.get("success"):
-        await update.message.reply_text(
-            f"Khong the tao don social tu nguon.\nLoi: <code>{html.escape(str(supplier_result.get('error') or 'unknown_error'))}</code>",
-            parse_mode=ParseMode.HTML,
-        )
-        await safe_send_admin(
-            context.bot,
-            f"{E_SOS} <b>SOCIAL_SOURCE BALANCE ORDER FAILED</b>\n"
-            f"{E_USER} User: <code>{user.id}</code>\n"
-            f"{E_TAG} SP: {html.escape(str(product.get('name') or prod_id))} x{qty}\n"
-            f"{E_ERROR} Loi: <code>{html.escape(str(supplier_result.get('error') or 'unknown_error'))}</code>",
-        )
-        return
-
-    new_balance = balance - total_price
-    db_update_balance(user.id, new_balance, reason=f"Purchase Social: {product['name']} x{qty}")
-
-    payment_reference_code = await generate_unique_order_code(
-        prefix="PROD",
-        length=8,
-        charset=string.ascii_uppercase + string.digits,
-    )
-    order_code = _ctt_customer_order_code(payment_reference_code, supplier_result)
-    await release_reserved_order_code(payment_reference_code)
-    order_data = {
-        "order_code": order_code,
-        "payment_reference_code": payment_reference_code,
-        "user_id": user.id,
-        "email": "N/A",
-        "amount": total_price,
-        "status": ctt_build_local_order_status(supplier_result.get("supplier_status") or "Pending"),
-        "type": "store_product",
-        "link": supplier_result.get("target_link") or "",
-        "timestamp": time.time(),
-        "coupon_used": (get_active_store_coupon_context(context, prod_id, qty)[0] or ""),
-        "refunded_at": 0,
-        "full_name": user.full_name,
-        "username": user.username,
-        "product_id": prod_id,
-        "product_name": product['name'],
-        "quantity": qty,
-        "items": [],
-        "delivery_method": "social_service",
-        "is_social_source_service": True,
-        "ctt_supplier_order_id": supplier_result.get("supplier_order_id") or "",
-        "ctt_supplier_status": supplier_result.get("supplier_status") or "Pending",
-        "ctt_supplier_quantity": int(supplier_result.get("supplier_quantity", 0) or 0),
-        "ctt_target_link": supplier_result.get("target_link") or "",
-        "ctt_comments": supplier_result.get("comments") or "",
-    }
-    if supplier_result.get("supplier_charge"):
-        order_data["ctt_supplier_charge"] = supplier_result.get("supplier_charge")
-    if supplier_result.get("supplier_remains"):
-        order_data["ctt_supplier_remains"] = supplier_result.get("supplier_remains")
-    if supplier_result.get("supplier_start_count"):
-        order_data["ctt_supplier_start_count"] = supplier_result.get("supplier_start_count")
-
-    coupon_code_used = order_data.get("coupon_used")
-    if coupon_code_used and coupon_code_used in coupons:
-        coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
-    clear_store_coupon_context(context)
-
-    db_add_order(order_data)
-    await save_data(force=True, tables=[HISTORY_FILE, USERS_FILE])
-
-    target_link = html.escape(str(supplier_result.get("target_link") or "N/A"))
-    supplier_order_id = html.escape(str(supplier_result.get("supplier_order_id") or ""))
-    supplier_status = html.escape(str(supplier_result.get("supplier_status") or "Pending"))
-    supplier_progress = ctt_build_supplier_progress_text(order_data)
-    supplier_progress_line = (
-        f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>{html.escape(supplier_progress)}</b>\n"
-        if supplier_progress
-        else ""
-    )
-    await update.message.reply_text(
-        f"{E_SUCCESS} <b>ĐƠN SOCIAL ĐÃ ĐƯỢC TẠO THÀNH CÔNG</b>\n\n"
-        f"{E_TAG} <b>Sản phẩm:</b> {html.escape(str(product['name']))}\n"
-        f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>Số lượng:</b> {qty}\n"
-        f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Mã đơn:</b> <code>{html.escape(str(order_code))}</code>\n"
-        f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>Tổng đơn vị nguồn:</b> {int(supplier_result.get('supplier_quantity', 0) or 0):,}\n"
-        f"<tg-emoji emoji-id=\"5231489647946768652\">🔗</tg-emoji> <b>Target:</b> <code>{target_link}</code>\n"
-        f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Mã supplier:</b> <code>{supplier_order_id}</code>\n"
-        f"{E_STAT} <b>Trạng thái nguồn:</b> {supplier_status}\n"
-        f"{supplier_progress_line}"
-        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Đã trừ:</b> {total_price:,} VNĐ\n"
-        f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Số dư còn lại:</b> {new_balance:,} VNĐ",
-        parse_mode=ParseMode.HTML,
-        reply_markup=create_success_menu(),
-    )
-
-    await send_live_order_notification(
-        context,
-        user.full_name,
-        total_price,
-        product_name=product['name'],
-        quantity=qty,
-        order_code=order_code,
-    )
-    await notify_admin_store_order(
-        context,
-        order_code=order_code,
-        user_id=user.id,
-        full_name=user.full_name,
-        username=user.username,
-        product_name=product['name'],
-        quantity=qty,
-        amount=total_price,
-        payment_method="balance",
-        items=[],
-        delivery_method="social_service",
-        is_resell=False,
-    )
-
-
-def _ctt_has_source_entries() -> bool:
-    category_name, category_products = get_ctt_source_category_by_index(0)
-    return bool(category_name and category_products)
-
-
-async def _ensure_ctt_catalog_ready():
-    refresh_ctt_runtime_config()
-
-    if _ctt_has_source_entries():
-        return True
-
-    try:
-        load_data()
-    except (OSError, ValueError, KeyError, AttributeError):
-        pass
-
-    if _ctt_has_source_entries():
-        return True
-
-    if not SOCIAL_SOURCE_API_KEY:
-        return False
-
-    sync_result = await ctt_sync_catalog(force_refresh=True, log_error=False)
-    return bool(sync_result.get("success") and _ctt_has_source_entries())
-
-
-def _get_ctt_root_panel_text() -> str:
-    if not SOCIAL_SOURCE_API_KEY:
-        return (
-            f"<b>{html.escape(SOCIAL_SOURCE_AUTO_MANAGED_ROOT_CATEGORY)}</b>\n\n"
-            "Nguon social chua duoc cau hinh."
-        )
-    if not _ctt_has_source_entries():
-        return (
-            f"<b>{html.escape(SOCIAL_SOURCE_AUTO_MANAGED_ROOT_CATEGORY)}</b>\n\n"
-            "Catalog social dang rong hoac chua sync xong."
-        )
-    return (
-        f"<b>DANH MUC: {html.escape(SOCIAL_SOURCE_AUTO_MANAGED_ROOT_CATEGORY)}</b>\n\n"
-        "Chon nhom dich vu social:"
-    )
-
-
-def _clear_ctt_search_state(context: ContextTypes.DEFAULT_TYPE, *, clear_query: bool = True):
-    if getattr(context, "user_data", None) is None:
-        return
-    if context.user_data.get("state") == "awaiting_ctt_catalog_search":
-        context.user_data.pop("state", None)
-    if clear_query:
-        context.user_data.pop("ctt_search_query", None)
-
-
-def _get_ctt_search_prompt_text() -> str:
-    return (
-        "<b>TIM KIEM DICH VU SOCIAL</b>\n\n"
-        "Nhap tu khoa de loc dich vu.\n"
-        "Vi du: <code>facebook</code>, <code>tiktok like</code>, <code>instagram</code>\n\n"
-        "Go <code>huy</code> neu muon quay lai danh muc social."
-    )
-
-
-def _get_ctt_search_result_panel_text(search_query: str) -> str:
-    result_count = len(_get_ctt_search_result_entries(search_query))
-    return (
-        "<b>KET QUA TIM KIEM SOCIAL</b>\n\n"
-        f"Tu khoa: <code>{html.escape(str(search_query or ''))}</code>\n"
-        f"So ket qua: <b>{result_count}</b>\n\n"
-        "Chon dich vu chi tiet:"
-    )
 
 
 def _get_store_category_panel_text(category_name: str, user_id: int, refresh_summary: str = "") -> str:
@@ -1067,63 +615,6 @@ def _get_store_category_panel_text(category_name: str, user_id: int, refresh_sum
     )
 
 
-async def _refresh_resell_product_entries(product_entries) -> dict:
-    summary = {"updated": 0, "errors": 0, "total": 0}
-    for prod_id, product in list(product_entries or []):
-        if not isinstance(product, dict) or not product.get("is_supplier_source_resell"):
-            continue
-        summary["total"] += 1
-        variant_id = str(product.get("supplier_source_variant_id") or "").strip()
-        if not variant_id:
-            summary["errors"] += 1
-            continue
-
-        result = await supplier_get_variant_info(product)
-        if not result.get("success"):
-            error_text = str(result.get("error") or "supplier_refresh_failed")
-            if _supplier_source_is_purchase_unavailable_error(error_text, int(result.get("status_code", 0) or 0)):
-                _supplier_source_update_purchase_block_state(
-                    product_id=product.get("supplier_source_product_id"),
-                    variant_id=variant_id,
-                    blocked=True,
-                    reason=error_text,
-                    force_stock_zero=True,
-                    persist=False,
-                )
-            summary["errors"] += 1
-            continue
-
-        data = result.get("data") if isinstance(result.get("data"), dict) else {}
-        try:
-            source_price = int(float(data.get("price", 0) or 0))
-        except (TypeError, ValueError):
-            source_price = 0
-        try:
-            source_stock = max(0, int(float(data.get("stock", 0) or 0)))
-        except (TypeError, ValueError):
-            source_stock = 0
-        try:
-            markup_percent = float(product.get("markup_percent", 0) or 0)
-        except (TypeError, ValueError):
-            markup_percent = 0
-
-        if source_price > 0:
-            products[prod_id]["supplier_source_price"] = source_price
-            products[prod_id]["price"] = int(source_price * (1 + markup_percent / 100))
-        products[prod_id]["supplier_source_stock"] = source_stock
-        _supplier_source_update_purchase_block_state(
-            product_id=product.get("supplier_source_product_id"),
-            variant_id=variant_id,
-            blocked=False,
-            persist=False,
-        )
-        summary["updated"] += 1
-
-    if summary["total"]:
-        await save_data(force=True)
-    return summary
-
-
 async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     data = query.data
@@ -1131,7 +622,6 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
     if data == "store_main":
         # Acknowledge early to stop Telegram spinner immediately.
         await safe_answer(query)
-        _clear_ctt_search_state(context)
 
         lang = get_user_lang(query.from_user.id)
         store_copy = {
@@ -1233,170 +723,6 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         await _show_store_panel(query, context, msg, InlineKeyboardMarkup(btns))
         return True
 
-    elif data == f"view_cat_{SOCIAL_SOURCE_AUTO_MANAGED_ROOT_CATEGORY}":
-        await safe_answer(query)
-        _clear_ctt_search_state(context)
-        await _ensure_ctt_catalog_ready()
-        await safe_edit_message(
-            query,
-            text=_get_ctt_root_panel_text(),
-            reply_markup=create_ctt_source_category_menu(page=0),
-            parse_mode='HTML'
-        )
-        return True
-
-    elif data.startswith("view_ctt_root_"):
-        await safe_answer(query)
-        _clear_ctt_search_state(context)
-        await _ensure_ctt_catalog_ready()
-        try:
-            page = int(data.replace("view_ctt_root_", ""))
-        except (TypeError, ValueError):
-            page = 0
-        await safe_edit_message(
-            query,
-            text=_get_ctt_root_panel_text(),
-            reply_markup=create_ctt_source_category_menu(page=page),
-            parse_mode='HTML'
-        )
-        return True
-
-    elif data == "ctt_search_prompt":
-        await safe_answer(query)
-        _clear_ctt_search_state(context)
-        await _ensure_ctt_catalog_ready()
-        context.user_data["state"] = "awaiting_ctt_catalog_search"
-        await safe_edit_message(
-            query,
-            text=_get_ctt_search_prompt_text(),
-            reply_markup=InlineKeyboardMarkup([
-                [_btn("Quay lại", icon_id="6206032691075223572", callback_data="view_ctt_root_0")],
-            ]),
-            parse_mode='HTML',
-        )
-        return True
-
-    elif data == "ctt_search_cancel":
-        await safe_answer(query)
-        _clear_ctt_search_state(context)
-        await safe_edit_message(
-            query,
-            text=_get_ctt_root_panel_text(),
-            reply_markup=create_ctt_source_category_menu(page=0),
-            parse_mode='HTML',
-        )
-        return True
-
-    elif data.startswith("view_ctt_search_"):
-        await safe_answer(query)
-        search_query = str(context.user_data.get("ctt_search_query") or "").strip()
-        if not search_query:
-            await safe_answer(query, "Khong tim thay tu khoa dang tim.", show_alert=True)
-            return True
-        try:
-            page = int(data.replace("view_ctt_search_", ""))
-        except (TypeError, ValueError):
-            page = 0
-        await safe_edit_message(
-            query,
-            text=_get_ctt_search_result_panel_text(search_query),
-            reply_markup=create_ctt_search_result_menu(search_query, page=page),
-            parse_mode='HTML',
-        )
-        return True
-
-    elif data.startswith("view_ctt_source_"):
-        await safe_answer(query)
-        _clear_ctt_search_state(context)
-        payload = data.replace("view_ctt_source_", "")
-        try:
-            source_index_raw, page_raw = payload.split("_", 1)
-            source_index = int(source_index_raw)
-            page = int(page_raw)
-        except (AttributeError, TypeError, ValueError):
-            await safe_answer(query, "Danh muc social khong hop le", show_alert=True)
-            return True
-
-        category_name, _ = get_ctt_source_category_by_index(source_index)
-        if not category_name:
-            await safe_answer(query, "Danh muc social khong ton tai", show_alert=True)
-            return True
-
-        await safe_edit_message(
-            query,
-            text=f"<b>DANH MUC SOCIAL: {html.escape(category_name)}</b>\n\nChon dich vu chi tiet:",
-            reply_markup=create_ctt_source_product_menu(source_index, page=page),
-            parse_mode='HTML'
-        )
-        return True
-
-    elif data.startswith("view_prod_search_"):
-        try:
-            page_payload, prod_id = data.replace("view_prod_search_", "", 1).split("|", 1)
-            page = int(page_payload)
-        except (AttributeError, TypeError, ValueError):
-            await safe_answer(query, "San pham khong ton tai", show_alert=True)
-            return True
-        return await _show_store_product_detail(
-            query,
-            context,
-            prod_id,
-            back_callback_data=f"view_ctt_search_{page}",
-        )
-
-    elif data.startswith("view_prod_ctx_"):
-        try:
-            context_payload, prod_id = data.replace("view_prod_ctx_", "", 1).split("|", 1)
-            source_index_raw, page_raw = context_payload.split("_", 1)
-            source_index = int(source_index_raw)
-            page = int(page_raw)
-        except (AttributeError, TypeError, ValueError):
-            await safe_answer(query, "San pham khong ton tai", show_alert=True)
-            return True
-        return await _show_store_product_detail(
-            query,
-            context,
-            prod_id,
-            back_callback_data=f"view_ctt_source_{source_index}_{page}",
-        )
-
-    elif data.startswith("refresh_resell_cat:"):
-        now = time.time()
-        last_refresh = float(context.user_data.get("_last_resell_store_refresh", 0) or 0)
-        if now - last_refresh < 3:
-            await safe_answer(query, "Vui lòng chờ vài giây trước khi làm mới lại.", show_alert=True)
-            return True
-        context.user_data["_last_resell_store_refresh"] = now
-
-        category_token = data.split(":", 1)[1]
-        category_name = get_store_resell_category_by_token(category_token)
-        if not category_name:
-            await safe_answer(query, "Danh mục resell không còn tồn tại.", show_alert=True)
-            return True
-
-        await safe_answer(query, "Đang cập nhật giá và tồn kho...")
-        category_products = _group_visible_products_by_category().get(category_name, [])
-        summary = await _refresh_resell_product_entries(category_products)
-        lang = get_user_lang(query.from_user.id)
-        error_suffix_vi = f" · Lỗi: {summary['errors']}" if summary["errors"] else ""
-        error_suffix_en = f" · Errors: {summary['errors']}" if summary["errors"] else ""
-        error_suffix_zh = f" · 错误：{summary['errors']}" if summary["errors"] else ""
-        refresh_summary = {
-            "vi": f"🔄 <i>Đã làm mới: {summary['updated']}/{summary['total']} sản phẩm"
-                  f"{error_suffix_vi}</i>",
-            "en": f"🔄 <i>Refreshed: {summary['updated']}/{summary['total']} products"
-                  f"{error_suffix_en}</i>",
-            "zh": f"🔄 <i>已刷新：{summary['updated']}/{summary['total']} 个商品"
-                  f"{error_suffix_zh}</i>",
-        }.get(lang)
-        await safe_edit_message(
-            query,
-            text=_get_store_category_panel_text(category_name, query.from_user.id, refresh_summary),
-            reply_markup=create_store_menu(selected_category=category_name, user_id=query.from_user.id),
-            parse_mode="HTML",
-        )
-        return True
-
     elif data.startswith("view_cat_"):
         await safe_answer(query)
         # Show Products in Category
@@ -1421,46 +747,6 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         
         requires_gmail = p.get('requires_gmail', False)
 
-        if _is_ctt_store_product(p):
-            if not SOCIAL_SOURCE_API_KEY:
-                await safe_answer(query, "❌ Nguồn social chưa được cấu hình.", show_alert=True)
-                return True
-
-            minimum_quantity = _ctt_get_package_quantity(p)
-            quantity_error = _ctt_validate_purchase_quantity(p, minimum_quantity)
-            if quantity_error:
-                await safe_answer(query, quantity_error, show_alert=True)
-                return True
-
-            max_quantity = _ctt_get_max_package_purchase(p)
-            quick_quantities = _ctt_get_quick_quantity_options(p)
-
-            btns = []
-            row = []
-            for q in quick_quantities:
-                if q <= max_quantity:
-                    row.append(_btn(f"{q}", callback_data=f"buy_prod_confirm_{prod_id}_{q}", style="success"))
-                if len(row) == 3:
-                    btns.append(row)
-                    row = []
-
-            if row:
-                btns.append(row)
-
-            btns.append([_btn("Nhập số lượng", icon_id="5364075889669718872", callback_data=f"custom_qty_{prod_id}")])
-            btns.append([_btn("Quay lại", icon_id="6206032691075223572", callback_data=f"view_prod_{prod_id}")])
-
-            msg_text = (
-                f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>CHỌN SỐ LƯỢNG MUỐN MUA</b>\n\n"
-                f"{E_TAG} Sản phẩm: {p['name']}\n"
-                f"{E_TAG} Đơn giá: {p['price']:,} VNĐ / đơn vị\n"
-                f"{E_STAT} Tối thiểu: {minimum_quantity:,} đơn vị\n"
-                f"{E_STAT} Tối đa: {max_quantity:,} đơn vị\n\n"
-                f"<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> Chọn số lượng:"
-            )
-            await _show_store_panel(query, context, msg_text, InlineKeyboardMarkup(btns))
-            return True
-        
         if requires_gmail:
             pending_count = sum(1 for o in pending_manual_orders.values() if o.get('product_id') == prod_id)
             max_pending = p.get('max_pending_orders', 10)
@@ -1523,14 +809,8 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             return True
         
         # AUTO PRODUCTS - Cho chọn số lượng
-        # BUG FIX: Sản phẩm resell dùng supplier_source_stock thay vì stock local
-        is_resell = p.get('is_supplier_source_resell', False)
-        if is_resell:
-            stock_count = _get_supplier_source_stock_count(p)
-            effective_stock = stock_count
-        else:
-            stock_count = int(get_local_stock_available_count(p) or 0)
-            effective_stock = stock_count
+        stock_count = int(get_local_stock_available_count(p) or 0)
+        effective_stock = stock_count
 
         labels = _checkout_labels(query.from_user.id)
         if effective_stock <= 0:
@@ -1542,7 +822,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         btns = []
         row = []
         
-        # Tạo nút 1-5 (dùng effective_stock để resell luôn có nút)
+        # Tạo nút 1-5
         for q in [1, 2, 3, 4, 5]:
             if q <= effective_stock:
                 row.append(_btn(f"{q}", callback_data=f"buy_prod_confirm_{prod_id}_{q}", style="success"))
@@ -1598,27 +878,8 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await safe_answer(query, f"❌ {labels['missing']}", show_alert=True)
             return True
 
-        if _is_ctt_store_product(p):
-            if not SOCIAL_SOURCE_API_KEY:
-                await safe_answer(query, "❌ Nguồn social chưa được cấu hình.", show_alert=True)
-                return True
-            quantity_error = _ctt_validate_purchase_quantity(p, qty)
-            if quantity_error:
-                await safe_answer(query, quantity_error, show_alert=True)
-                return True
-
-        if p.get('is_supplier_source_resell'):
-            available_count = _get_supplier_source_stock_count(p)
-            if available_count < qty:
-                await safe_answer(
-                    query,
-                    f"❌ Nguồn SupplierSource chỉ còn {available_count} sản phẩm!",
-                    show_alert=True,
-                )
-                return True
-
         unit_price, discount_type, discount_info = get_best_discount(update.effective_user.id, prod_id, p['price'])
-        total_price = _get_ctt_store_total_price(update.effective_user.id, context, prod_id, p, qty) if _is_ctt_store_product(p) else unit_price * qty
+        total_price = unit_price * qty
         
         user_id = update.effective_user.id
         user_info = db_get_user(user_id)
@@ -1653,15 +914,6 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         if 0 < balance < total_price:
             combo_note = f"\n\n<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> <i>Bạn có thể kết hợp ví ({balance:,}đ) + chuyển khoản ({total_price - balance:,}đ)</i>"
 
-        supplier_note = ""
-        if _is_ctt_store_product(p):
-            minimum_quantity = _ctt_get_package_quantity(p)
-            supplier_units = _ctt_get_total_supplier_quantity(p, qty)
-            supplier_note = (
-                f'\n{E_STAT} Đơn vị nguồn: {supplier_units:,}'
-                f'\n{E_STAT} Tối thiểu: {minimum_quantity:,} đơn vị'
-            )
-
         lang = get_user_lang(user_id)
         product_name = p.get(f"name_{lang}") or p.get("name") or prod_id
         await _show_store_panel(
@@ -1669,7 +921,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             context,
             f'<tg-emoji emoji-id="5247134066322447995">🛍</tg-emoji> <b>{labels["confirm"]}</b>\n\n'
             f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> {labels["product"]}: {product_name}\n'
-            f'<tg-emoji emoji-id="5305749482170758709">0️⃣</tg-emoji> {labels["quantity"]}: {qty}{supplier_note}\n'
+            f'<tg-emoji emoji-id="5305749482170758709">0️⃣</tg-emoji> {labels["quantity"]}: {qty}\n'
             f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> {labels["total"]}: {total_price:,} VNĐ{" (-" + str(discount_info["discount_percent"]) + "%)" if discount_type else ""}'
             f'{combo_note}\n\n'
             f'<tg-emoji emoji-id="6186252635805323641">👇</tg-emoji> {labels["choose_payment"]}:',
@@ -1685,43 +937,19 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
 
-        if _is_ctt_store_product(p):
-            if not SOCIAL_SOURCE_API_KEY:
-                await safe_answer(query, "❌ Nguồn social chưa được cấu hình.", show_alert=True)
-                return True
-            minimum_quantity = _ctt_get_package_quantity(p)
-            max_quantity = _ctt_get_max_package_purchase(p)
-            quantity_error = _ctt_validate_purchase_quantity(p, minimum_quantity)
-            if max_quantity <= 0 or quantity_error:
-                await safe_answer(query, quantity_error or "❌ Dịch vụ social hiện chưa sẵn sàng.", show_alert=True)
-                return True
-            stock_count = max_quantity
-            _max_text = str(max_quantity)
-        # BUG FIX: Sản phẩm resell dùng supplier_source_stock
-        elif p.get('is_supplier_source_resell'):
-            stock_count = _get_supplier_source_stock_count(p)
-            if stock_count <= 0:
-                await safe_answer(query, "❌ Sản phẩm hiện đang hết hàng!", show_alert=True)
-                return True
-            _max_text = str(stock_count)
         else:
             stock_count = int(get_local_stock_available_count(p) or 0)
             _max_text = str(stock_count)
 
         # Set state for text input only after stock validation passes
         context.user_data['state'] = f'awaiting_custom_qty:{prod_id}'
-        social_min_line = ""
-        if _is_ctt_store_product(p):
-            social_min_line = f"{E_STAT} <b>Tối thiểu:</b> {minimum_quantity:,}\n"
-        
         await _show_store_panel(
             query,
             context,
             f"<tg-emoji emoji-id=\"5350752364246606166\">✏️</tg-emoji> <b>NHẬP SỐ LƯỢNG TỰ CHỌN</b>\n\n"
             f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
-            f"{E_TAG} <b>Đơn giá:</b> {p['price']:,} VNĐ{' / đơn vị' if _is_ctt_store_product(p) else ''}\n"
-            f"{E_STAT} <b>{'Giới hạn số lượng' if _is_ctt_store_product(p) else 'Tồn kho'}:</b> {stock_count}\n"
-            f"{social_min_line}"
+            f"{E_TAG} <b>Đơn giá:</b> {p['price']:,} VNĐ\n"
+            f"{E_STAT} <b>Tồn kho:</b> {stock_count}\n"
             f"<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Vui lòng <b>nhập số lượng</b> muốn mua:\n\n"
             f"<i>Ví dụ: Nhập 1000 nếu muốn server chạy đúng 1000 đơn vị</i>",
             InlineKeyboardMarkup([[_btn("Hủy", icon_id="5273914604752216432", callback_data=f"sel_qty_{prod_id}", style="danger")]]),
@@ -1745,26 +973,13 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
 
-        if p.get('is_supplier_source_resell'):
-            available_count = _get_supplier_source_stock_count(p)
-            if available_count < qty:
-                await safe_answer(
-                    query,
-                    f"❌ Nguồn SupplierSource chỉ còn {available_count} sản phẩm!",
-                    show_alert=True,
-                )
-                return True
-
-        if _is_ctt_store_product(p):
-            total_price = _get_ctt_store_total_price(update.effective_user.id, context, prod_id, p, qty)
-        else:
-            unit_price, disc_type, _ = get_best_discount(update.effective_user.id, prod_id, p['price'])
-            store_coupon_code, store_coupon_discount = get_active_store_coupon_context(context, prod_id, qty)
-            if store_coupon_discount > 0:
-                coupon_unit_price = max(0, p['price'] - store_coupon_discount)
-                unit_price = min(unit_price, coupon_unit_price)
-            total_price = unit_price * qty
-        
+        unit_price, disc_type, _ = get_best_discount(update.effective_user.id, prod_id, p['price'])
+        store_coupon_code, store_coupon_discount = get_active_store_coupon_context(context, prod_id, qty)
+        if store_coupon_discount > 0:
+            coupon_unit_price = max(0, p['price'] - store_coupon_discount)
+            unit_price = min(unit_price, coupon_unit_price)
+        total_price = unit_price * qty
+    
         user_id = update.effective_user.id
         user_info = db_get_user(user_id)
         balance = user_info.get('balance', 0) if user_info else 0
@@ -1773,21 +988,15 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await safe_answer(query, "❌ Số dư không đủ!", show_alert=True)
             return True
 
-        if _is_ctt_store_product(p):
-            return await _begin_ctt_checkout_collection(query, context, prod_id, qty, "balance")
-
         # FIX: Check requires_gmail TRƯỚC để bỏ qua stock check nếu manual
         requires_gmail = p.get('requires_gmail', False)
         
         if not requires_gmail:
-            # Chỉ check stock cho AUTO products (KHÔNG phải resell)
-            # Resell products mua real-time từ API, không cần check local stock
-            if not p.get('is_supplier_source_resell'):
-                available_count = int(get_local_stock_available_count(p) or 0)
-                if available_count < qty:
-                    await safe_answer(query, f"❌ Chỉ còn {available_count} sản phẩm, không đủ số lượng {qty}!", show_alert=True)
-                    return True
-        
+            available_count = int(get_local_stock_available_count(p) or 0)
+            if available_count < qty:
+                await safe_answer(query, f"❌ Chỉ còn {available_count} sản phẩm, không đủ số lượng {qty}!", show_alert=True)
+                return True
+    
         if requires_gmail:
             # FLOW MỚI: Hỏi email → Báo Admin → Admin xử lý
             
@@ -1858,128 +1067,40 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             context.user_data['admin_waiting_message_id'] = admin_notif.message_id
             return True
         
-        # FLOW CŨ: Giao hàng tự động & AUTO RESELL
-        # Check Auto Resell first
-        is_resell = p.get('is_supplier_source_resell', False)
+        # FLOW CŨ: Giao hàng tự động
         items_bought = []
         actual_qty = qty
         refunded_qty = 0
         refund_amount = 0
         charged_amount = total_price
         
-        if is_resell:
-            # === AUTO RESELL FLOW ===
-            # 1. Trừ tiền trước (để tránh spam)
-            new_balance = balance - total_price
-            db_update_balance(user_id, new_balance, reason=f"Purchase Resell: {p['name']} x{qty}")
-            
-            # 2. Gọi API nguồn qua dispatcher (SupplierSource / SupplierCatalog)
-            supplier_source_product_id = p.get('supplier_source_product_id')
-            supplier_source_variant_id = p.get('supplier_source_variant_id')
-            
-            # Thông báo user đang xử lý
-            processing_msg = await query.message.reply_text("<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Đang kết nối đến kho hàng đối tác...")
-            
-            supplier_source_result = await supplier_create_order(p, qty)
-            
-            # Xóa tin nhắn waiting
-            try:
-                await context.bot.delete_message(chat_id=processing_msg.chat_id, message_id=processing_msg.message_id)
-            except (Forbidden, BadRequest) as e:
-                logger.debug(f"Cannot delete supplier processing message: {e}")
+        # === REGULAR LOCAL STOCK FLOW ===
+        stock_result = await consume_local_stock_items(
+            prod_id,
+            qty,
+            order_state={
+                "user_id": user_id,
+                "product_id": prod_id,
+            },
+            persist_tables=(PRODUCTS_FILE,),
+            notify_bot=context.bot,
+            source="store_balance",
+        )
+        if stock_result.get("items") is None:
+            await safe_answer(query, f"Het hang! Chi con {int(stock_result.get('available', 0) or 0)} san pham.", show_alert=True)
+            return True
 
-            if not supplier_source_result.get("success"):
-                # Lỗi API -> Hoàn tiền ngay lập tức
-                db_update_balance(user_id, balance, reason=f"Refund: Supplier API Error {p['name']}")
-                error = supplier_source_result.get("error", "Unknown")
-                failed_order_code = await generate_unique_order_code(
-                    prefix="PROD",
-                    length=8,
-                    charset=string.ascii_uppercase + string.digits,
-                )
-                await record_wallet_refund(
-                    context,
-                    order_code=failed_order_code,
-                    user_id=user_id,
-                    amount=total_price,
-                    product_name=p.get("name", "Sản phẩm"),
-                    reason=f"Lỗi nguồn cung cấp: {error}",
-                    order_data={
-                        "product_id": prod_id,
-                        "quantity": qty,
-                        "full_name": getattr(update.effective_user, "full_name", "") or "Unknown",
-                        "username": getattr(update.effective_user, "username", "") or "",
-                        "is_supplier_source_resell": True,
-                        "delivery_method": "supplier_failed",
-                    },
-                )
-                await safe_answer(query, "❌ Sản phẩm nguồn tạm thời không thể giao dịch. Đã hoàn tiền vào ví!", show_alert=True)
-                
-                # Notify Admin
-                await safe_send_admin(
-                    context.bot,
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">🚨</tg-emoji> <b>LỖI NGUỒN CUNG CẤP KHI MUA BẰNG SỐ DƯ</b>\n"
-                    f"User: <code>{user_id}</code>\n"
-                    f"Đơn: <code>{failed_order_code}</code>\n"
-                    f"SP: {html.escape(p['name'])}\n"
-                    f"Lỗi: <code>{html.escape(str(error))}</code>",
-                )
-                return True
-            
-            # Thành công -> Parse content
-            supplier_source_orders = supplier_source_result.get("data", [])
-            for dm_order in supplier_source_orders:
-                delivered = dm_order.get("deliveredContent")
-                if delivered:
-                    items_bought.extend(normalize_delivered_items(delivered))
-            
-            # Nếu không có content (API trả về success nhưng chưa giao hàng) -> Thử lấy detail
-            if not items_bought:
-                 # Retry logic or wait logic similar to check_payment_job if needed
-                 # For simplicity in balance payment (synchronous feel), we try one more fetch
-                 for dm_order in supplier_source_orders:
-                    dm_id = dm_order.get("id")
-                    if dm_id:
-                        det = await supplier_get_order_details(p, dm_id)
-                        if det.get("success"):
-                            d_content = det.get("data", {}).get("deliveredContent")
-                            if d_content:
-                                items_bought.extend(normalize_delivered_items(d_content))
-        
-        else:
-            # === REGULAR LOCAL STOCK FLOW ===
-            stock_result = await consume_local_stock_items(
-                prod_id,
-                qty,
-                order_state={
-                    "user_id": user_id,
-                    "product_id": prod_id,
-                },
-                persist_tables=(PRODUCTS_FILE,),
-                notify_bot=context.bot,
-                source="store_balance",
-            )
-            if stock_result.get("items") is None:
-                await safe_answer(query, f"Het hang! Chi con {int(stock_result.get('available', 0) or 0)} san pham.", show_alert=True)
-                return True
+        items_bought = list(stock_result.get("items") or [])
+        actual_qty = int(stock_result.get("actual_delivered") or len(items_bought))
+        refunded_qty = int(stock_result.get("refunded_qty") or 0)
+        unit_price = int(p.get("price", 0) or 0)
+        refund_amount = refunded_qty * unit_price
+        charged_amount = total_price - refund_amount
+        new_balance = balance - charged_amount
+        db_update_balance(user_id, new_balance, reason=f"Purchase: {p['name']} x{actual_qty} (refunded {refunded_qty} duplicates)")
 
-            items_bought = list(stock_result.get("items") or [])
-            actual_qty = int(stock_result.get("actual_delivered") or len(items_bought))
-            refunded_qty = int(stock_result.get("refunded_qty") or 0)
-            unit_price = int(p.get("price", 0) or 0)
-            refund_amount = refunded_qty * unit_price
-            charged_amount = total_price - refund_amount
-            new_balance = balance - charged_amount
-            db_update_balance(user_id, new_balance, reason=f"Purchase: {p['name']} x{actual_qty} (refunded {refunded_qty} duplicates)")
-
-        
+    
         # === CHUNG CHO CẢ 2 FLOW (Delivery & Logging) ===
-        if not items_bought and is_resell:
-             # Trường hợp SupplierSource success mà chưa có hàng ngay -> Báo user chờ
-             # Log order với status pending? 
-             # Here let's assume worst case handled or manual check needed
-             await query.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng đã tạo nhưng hệ thống nguồn chưa trả hàng. Vui lòng liên hệ Admin đọc Mã Đơn Hàng.")
-
         # Log Order
         order_code = await generate_unique_order_code(
             prefix="PROD",
@@ -1993,7 +1114,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             "amount": charged_amount,
             "status": "Hoàn thành",
             "type": "store_product",
-            "link": "Resell Product" if is_resell else "Sản phẩm khác",
+            "link": "Sản phẩm khác",
             "timestamp": time.time(),
             "coupon_used": store_coupon_code or "",
             "refunded_at": 0,
@@ -2005,12 +1126,8 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             "refunded_qty": refunded_qty,
             "refund_amount": refund_amount,
             "items": items_bought, # Save items into order history too
-            "is_supplier_source_resell": is_resell
         }
         order_data["delivery_method"] = "pending"
-        if not items_bought and is_resell:
-            order_data["status"] = "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Chờ giao từ nguồn (Resell)"
-            order_data["delivery_method"] = "pending_source"
         db_add_order(order_data)
         if store_coupon_code and store_coupon_code in coupons:
             coupons[store_coupon_code]['used'] = coupons[store_coupon_code].get('used', 0) + 1
@@ -2141,7 +1258,6 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 payment_method="balance",
                 items=items_bought,
                 delivery_method=delivery_result.get("method", "failed"),
-                is_resell=is_resell,
             )
             create_background_task(send_post_purchase_followups(context, user_id, prod_id))
         
@@ -2183,16 +1299,6 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         if not p:
             await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
-        if p.get('is_supplier_source_resell'):
-            available_count = _get_supplier_source_stock_count(p)
-            if available_count < qty:
-                await safe_answer(
-                    query,
-                    f"❌ Nguồn SupplierSource chỉ còn {available_count} sản phẩm!",
-                    show_alert=True,
-                )
-                return True
-
         user_id = update.effective_user.id
         pending_code, pending_detail = await get_user_pending_order(user_id)
         if pending_code:
@@ -2205,15 +1311,12 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await safe_answer(query, "❌ Số dư ví bằng 0!", show_alert=True)
             return True
 
-        if _is_ctt_store_product(p):
-            total_price = _get_ctt_store_total_price(user_id, context, prod_id, p, qty)
-        else:
-            unit_price, _, _ = get_best_discount(user_id, prod_id, p['price'])
-            _, store_coupon_discount = get_active_store_coupon_context(context, prod_id, qty)
-            if store_coupon_discount > 0:
-                coupon_unit_price = max(0, p['price'] - store_coupon_discount)
-                unit_price = min(unit_price, coupon_unit_price)
-            total_price = unit_price * qty
+        unit_price, _, _ = get_best_discount(user_id, prod_id, p['price'])
+        _, store_coupon_discount = get_active_store_coupon_context(context, prod_id, qty)
+        if store_coupon_discount > 0:
+            coupon_unit_price = max(0, p['price'] - store_coupon_discount)
+            unit_price = min(unit_price, coupon_unit_price)
+        total_price = unit_price * qty
 
         if balance >= total_price:
             await safe_answer(query, "<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư đủ! Hãy chọn thanh toán bằng số dư.", show_alert=True)
@@ -2222,25 +1325,14 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         balance_used = balance
         _qr_amount = total_price - balance_used
 
-        if _is_ctt_store_product(p):
-            return await _begin_ctt_checkout_collection(query, context, prod_id, qty, "qr", balance_used=balance_used)
-
         requires_gmail = p.get('requires_gmail', False)
         if not requires_gmail:
-            if not p.get('is_supplier_source_resell'):
-                lock = await get_product_lock(prod_id)
-                async with lock:
-                    available_count = int(get_local_stock_available_count(products.get(prod_id)) or 0)
-                    if available_count < qty:
-                        await safe_answer(query, "❌ Số lượng yêu cầu vượt quá tồn kho!", show_alert=True)
-                        return True
-        else:
-            pending_count = sum(1 for o in pending_manual_orders.values() if o.get('product_id') == prod_id)
-            max_pending = p.get('max_pending_orders', 10)
-            if pending_count >= max_pending:
-                await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Admin đang bận ({pending_count}/{max_pending})!", show_alert=True)
-                return True
-
+            lock = await get_product_lock(prod_id)
+            async with lock:
+                available_count = int(get_local_stock_available_count(products.get(prod_id)) or 0)
+                if available_count < qty:
+                    await safe_answer(query, "❌ Số lượng yêu cầu vượt quá tồn kho!", show_alert=True)
+                    return True
         db_update_balance(user_id, 0, reason=f"Combo payment: -{balance_used:,} for {prod_id}")
 
         qr_sent = await generate_product_payment_qr(update, context, prod_id, qty, balance_used=balance_used)
@@ -2267,12 +1359,6 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         if not p:
             await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
-        if p.get('is_supplier_source_resell'):
-            available_count = _get_supplier_source_stock_count(p)
-            if available_count < qty:
-                await safe_answer(query, f"❌ Nguồn SupplierSource chỉ còn {available_count} sản phẩm!", show_alert=True)
-                return True
-
         from app.handlers.payment_generation import generate_product_payment_usdt_trc20
         # Delete old message to avoid duplicate buttons
         try:
@@ -2305,38 +1391,22 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         if not p:
             await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
-        if p.get('is_supplier_source_resell'):
-            available_count = _get_supplier_source_stock_count(p)
-            if available_count < qty:
-                await safe_answer(
-                    query,
-                    f"❌ Nguồn SupplierSource chỉ còn {available_count} sản phẩm!",
-                    show_alert=True,
-                )
-                return True
-
         pending_code, pending_detail = await get_user_pending_order(update.effective_user.id)
         if pending_code:
             await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Bạn đang có đơn {pending_code} chưa hoàn thành! Vui lòng hoàn tất hoặc hủy đơn cũ trước.", show_alert=True)
             return True
 
-        if _is_ctt_store_product(p):
-            return await _begin_ctt_checkout_collection(query, context, prod_id, qty, "qr")
-        
         requires_gmail = p.get('requires_gmail', False)
         
         if not requires_gmail:
             # Auto product - phải có stock với lock protection
-            # NHƯNG skip cho resell products (mua real-time từ API)
-            if not p.get('is_supplier_source_resell'):
-                lock = await get_product_lock(prod_id)
-                async with lock:
-                    available_count = int(get_local_stock_available_count(products.get(prod_id)) or 0)
-                    if available_count < qty:
-                        await safe_answer(query, "❌ Số lượng yêu cầu vượt quá tồn kho!", show_alert=True)
-                        return True
-                    # Stock check passed - proceed to create QR (stock will be reserved in pending_orders)
-            # Resell products: Skip local stock check, sẽ mua từ SupplierSource khi thanh toán
+            lock = await get_product_lock(prod_id)
+            async with lock:
+                available_count = int(get_local_stock_available_count(products.get(prod_id)) or 0)
+                if available_count < qty:
+                    await safe_answer(query, "❌ Số lượng yêu cầu vượt quá tồn kho!", show_alert=True)
+                    return True
+                # Stock check passed - proceed to create QR (stock will be reserved in pending_orders)
         else:
             # Manual product - check pending limit
             pending_count = sum(1 for o in pending_manual_orders.values() if o.get('product_id') == prod_id)

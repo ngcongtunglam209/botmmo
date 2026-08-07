@@ -347,7 +347,6 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         user_state
         and (
             user_state.startswith('awaiting_custom_qty:')
-            or user_state.startswith('awaiting_ctt_')
             or user_state in {'awaiting_store_coupon'}
         )
     )
@@ -423,120 +422,6 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         await handle_withdrawal_input(update, context)
         return
 
-    if user_state == "awaiting_ctt_catalog_search":
-        lowered_input = user_input.strip().casefold()
-        if lowered_input in {"/cancel", "cancel", "huy", "hủy"}:
-            _clear_ctt_search_state(context)
-            await update.message.reply_text(
-                _get_ctt_root_panel_text(),
-                parse_mode=ParseMode.HTML,
-                reply_markup=create_ctt_source_category_menu(page=0),
-            )
-            return
-
-
-        search_query = user_input.strip()
-        await _ensure_ctt_catalog_ready()
-        matches = _get_ctt_search_result_entries(search_query)
-        if not matches:
-            await update.message.reply_text(
-                "Không tìm thấy dịch vụ social phù hợp.\n"
-                "Vui lòng nhập từ khóa khác hoặc gõ <code>hủy</code> để quay lại.",
-                parse_mode=ParseMode.HTML,
-            )
-            return
-
-        _clear_ctt_search_state(context, clear_query=False)
-        context.user_data["ctt_search_query"] = search_query
-        await update.message.reply_text(
-            _get_ctt_search_result_panel_text(search_query),
-            parse_mode=ParseMode.HTML,
-            reply_markup=create_ctt_search_result_menu(search_query, page=0),
-        )
-        return
-
-    if user_state and user_state.startswith('awaiting_ctt_'):
-        lowered_input = user_input.strip().casefold()
-        if lowered_input in {'/cancel', 'cancel', 'huy', 'hủy'}:
-            await clear_user_state(context)
-            await update.message.reply_text("Đã hủy tạo đơn social.")
-            return
-
-        draft = context.user_data.get('pending_ctt_checkout')
-        if not isinstance(draft, dict):
-            await update.message.reply_text("Không tìm thấy phiên đặt dịch vụ social. Vui lòng chọn lại sản phẩm.")
-            await clear_user_state(context)
-            return
-
-        prod_id = str(draft.get("prod_id") or "").strip()
-        p = products.get(prod_id)
-        if not _is_ctt_store_product(p):
-            await update.message.reply_text("Sản phẩm social không còn khả dụng. Vui lòng chọn lại.")
-            await clear_user_state(context)
-            return
-
-        field_name = user_state.replace('awaiting_ctt_', '', 1).strip()
-        value, error_text = _ctt_validate_field_value(field_name, user_input)
-        if error_text:
-            await update.message.reply_text(error_text)
-            return
-
-        collected_inputs = dict(draft.get("collected_inputs") or {})
-        collected_inputs[field_name] = value
-        draft["collected_inputs"] = collected_inputs
-        fields = list(draft.get("fields") or _ctt_required_input_fields(p))
-
-        next_field = next((fname for fname in fields if fname and fname not in collected_inputs), None)
-        if next_field:
-            context.user_data['pending_ctt_checkout'] = draft
-            context.user_data['state'] = f'awaiting_ctt_{next_field}'
-            await update.message.reply_text(
-                _ctt_build_checkout_prompt(p, int(draft.get("qty", 1) or 1), next_field),
-                parse_mode=ParseMode.HTML,
-            )
-            return
-
-        qty = int(draft.get("qty", 1) or 1)
-        payment_flow = str(draft.get("payment_flow") or "balance")
-        balance_used = int(draft.get("balance_used", 0) or 0)
-        extra_pending_data = _ctt_build_pending_payment_data(p, qty, collected_inputs)
-
-        context.user_data.pop('state', None)
-        context.user_data.pop('pending_ctt_checkout', None)
-        context.user_data.pop('pending_ctt_payment_balance_used', None)
-
-        if payment_flow == "balance":
-            completed_draft = dict(draft)
-            completed_draft["collected_inputs"] = collected_inputs
-            await _complete_ctt_balance_purchase(update, context, completed_draft)
-            return
-
-        if payment_flow == "usdt_trc20":
-            await update.message.reply_text(
-                "USDT (TRC20) da duoc tat. Vui long quay lai va chon So du hoac Chuyen khoan (QR).",
-                reply_markup=InlineKeyboardMarkup([
-                    [_btn("Chon lai thanh toan", callback_data=f"buy_prod_confirm_{prod_id}_{qty}")]
-                ]),
-            )
-            return
-
-        if balance_used > 0:
-            user_info_ctt = db_get_user(user.id)
-            current_balance_ctt = int((user_info_ctt or {}).get('balance', 0) or 0)
-            if current_balance_ctt < balance_used:
-                await update.message.reply_text("Số dư hiện tại không còn đủ để giữ phần ví cho đơn social này.")
-                return
-            db_update_balance(user.id, current_balance_ctt - balance_used, reason=f"SOCIAL_SOURCE combo payment hold: {prod_id}")
-
-        await generate_product_payment_qr(
-            update,
-            context,
-            prod_id,
-            qty,
-            balance_used=balance_used,
-            extra_pending_data=extra_pending_data,
-        )
-        return
 
     if user_state == 'awaiting_api_rotate_confirmation':
         lowered_input = user_input.strip().casefold()
@@ -612,105 +497,6 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             source_message_id=source_message_id,
         )
         return
-    
-    # NEW: Handle Dice Game iCloud Prize Email
-    if user_state == 'awaiting_dice_email':
-        email_input = user_input.lower()
-        
-        if not EMAIL_REGEX.match(email_input):
-            await update.message.reply_text(
-                "❌ Email không hợp lệ!\n\n"
-                "<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Vui lòng nhập email đúng định dạng.\n"
-                "<i>Ví dụ: example@gmail.com</i>",
-                parse_mode='HTML'
-            )
-            return
-        
-        # Get saved link
-        link = context.user_data.get('dice_prize_link')
-        if not link:
-            await update.message.reply_text("❌ Lỗi: Không tìm thấy link. Vui lòng thử lại.")
-            await clear_user_state(context)
-            return
-        
-        # Clear winner flag and state (both ephemeral and persistent)
-        context.user_data.pop('dice_winner', None)
-        context.user_data.pop('dice_prize_link', None)
-        context.user_data.pop('state', None)
-        record_promo_cost(ICLOUD_PACKAGE_PRICE, 'dice_icloud')
-        dice_game_data.pop(f"winner_{user.id}", None)
-        
-        # Send email
-        try:
-            email_sent, email_error = await send_activation_email(
-                email_input,
-                "<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> [Dice Prize] Link kích hoạt iCloud 2TB",
-                user.full_name,
-                link,
-            )
-            if not email_sent:
-                await update.message.reply_text(
-                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đã ghi nhận email nhưng gửi mail phần thưởng thất bại.\n"
-                    "Vui lòng liên hệ Admin để được gửi lại link.",
-                    reply_markup=create_back_button_menu(),
-                )
-                await safe_send_admin(
-                    context.bot,
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>DICE EMAIL FAILED</b>\n"
-                    f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> User: {format_user_name_html(user=user)} (<code>{user.id}</code>)\n"
-                    f"<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Email: <code>{html.escape(email_input)}</code>\n"
-                    f"<tg-emoji emoji-id=\"5231489647946768652\">🔗</tg-emoji> Link: <code>{html.escape(link)}</code>\n"
-                    f"<tg-emoji emoji-id=\"5350481781306958339\">🧾</tg-emoji> Lỗi: <code>{html.escape(str(email_error or 'Unknown error'))}</code>",
-                )
-                return
-
-            await update.message.reply_text(
-                f"<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> <b>CHÚC MỪNG!</b>\n\n"
-                f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Link kích hoạt đã được gửi đến:\n"
-                f"<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> <code>{email_input}</code>\n\n"
-                f"<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> Vui lòng kiểm tra hộp thư (kể cả Spam)!",
-                parse_mode='HTML',
-                reply_markup=create_back_button_menu()
-            )
-            
-            # Log order
-            order_code = f"DICE{int(time.time())}"
-            order_data = {
-                "order_code": order_code,
-                "user_id": user.id,
-                "email": email_input,
-                "amount": 0,
-                "status": "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Hoàn thành (Dice Game)",
-                "link": link,
-                "timestamp": time.time(),
-                "full_name": user.full_name,
-                "username": user.username,
-                "product_name": "iCloud 2TB (Dice Prize)",
-                "quantity": 1
-            }
-            db_add_order(order_data)
-            
-            # Notify admin
-            await context.bot.send_message(
-                ADMIN_USER_ID,
-                f"<tg-emoji emoji-id=\"5226711870492126219\">🎲</tg-emoji> <b>DICE PRIZE DELIVERED (iCloud)</b>\n\n"
-                f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>User:</b> {format_user_name_html(user=user)} (<code>{user.id}</code>)\n"
-                f"<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> <b>Email:</b> <code>{email_input}</code>\n"
-                f"<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> <b>Prize:</b> iCloud 2TB",
-                parse_mode='HTML'
-            )
-            
-            logger.info(f"<tg-emoji emoji-id=\"5226711870492126219\">🎲</tg-emoji> DICE iCloud PRIZE: User {user.id} - Email: {email_input}")
-            
-        except (ValueError, TypeError, KeyError, IndexError) as e:
-            logger.error(f"Error sending dice iCloud prize email: {e}")
-            await update.message.reply_text(
-                f"❌ Lỗi gửi email: {str(e)[:50]}\n\n"
-                f"Vui lòng liên hệ Admin!",
-                reply_markup=create_back_button_menu()
-            )
-        return
-
     
     # NEW: Handle Manual Order Email (từ balance purchase flow)
     if user_state == 'awaiting_manual_email':
@@ -861,22 +647,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         )
         
         return
-    if user_state == 'awaiting_email':
-        if not EMAIL_REGEX.match(user_input):  # Tối ưu: compiled regex
-            await update.message.reply_text("<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Email không hợp lệ, vui lòng kiểm tra và gửi lại."); return
-        context.user_data['purchase_email'] = user_input.lower(); context.user_data['state'] = 'awaiting_coupon_choice'
-        keyboard = [[_btn("Có", icon_id="5021905410089550576", callback_data='coupon_yes'), _btn("Không", icon_id="5273914604752216432", callback_data='coupon_no')]]
-        await update.message.reply_text("<tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> Bạn có mã giảm giá không?", reply_markup=InlineKeyboardMarkup(keyboard))
-    elif user_state == 'awaiting_coupon_code':
-        email = context.user_data.get('purchase_email')
-        if not email:
-            await update.message.reply_text("❌ Lỗi: Không tìm thấy email. Vui lòng bắt đầu lại bằng /start")
-            await clear_user_state(context)
-            return
-        await show_icloud_payment_method_menu(update, context, email, user_input)
-    elif user_state == 'awaiting_icloud_payment_method':
-        await update.message.reply_text("<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Hãy bấm nút thanh toán bên trên để chọn Ngân hàng (QR).")
-    elif user_state == 'awaiting_store_coupon':
+    if user_state == 'awaiting_store_coupon':
         prod_id = context.user_data.get('store_coupon_prod_id')
         qty = context.user_data.get('store_coupon_qty', 1)
         await clear_user_state(context)
@@ -911,14 +682,10 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         else:
             discount_amount = discount_val
             discount_text = f"{discount_amount:,}\u0111"
-        is_ctt_product = _is_ctt_store_product(p)
         discounted_unit = max(0, base_price - discount_amount)
-        total_price = _get_ctt_store_total_price(user.id, context, prod_id, p, qty) if is_ctt_product else discounted_unit * qty
-        base_price_text = f"{base_price:,}\u0111"
-        discounted_unit_text = f"{discounted_unit:,}\u0111"
-        if is_ctt_product:
-            base_price_text = f"~{_ctt_format_vnd_decimal(_ctt_get_base_unit_price_decimal(p))}\u0111"
-            discounted_unit_text = f"~{_ctt_format_vnd_decimal(_ctt_get_base_unit_price_decimal(p) - discount_amount)}\u0111"
+        total_price = discounted_unit * qty
+        base_price_text = f"{base_price:,}đ"
+        discounted_unit_text = f"{discounted_unit:,}đ"
         user_id_c = update.effective_user.id
         user_info_c = db_get_user(user_id_c)
         balance_c = user_info_c.get('balance', 0) if user_info_c else 0
@@ -1061,12 +828,8 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     break
         
         is_auto_stock = False
-        is_icloud_link = False
         is_manual_product = False
-        product_name_folded = str(product_name or "").casefold()
-        if order_type == 'icloud':
-            is_icloud_link = True
-        elif order_type == 'store_product':
+        if order_type == 'store_product':
             if p_check and p_check.get('requires_gmail'):
                 is_manual_product = True
             else:
@@ -1076,16 +839,10 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 is_manual_product = True
             else:
                 is_auto_stock = True
-        if "icloud" in product_name_folded or "i cloud" in product_name_folded:
-            is_icloud_link = True
-            is_manual_product = False
         
         if is_auto_stock:
             type_label = "<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Store (Auto Stock)"
             btns.append([_btn("Cấp Acc Mới (Auto)", icon_id="6129870117619634982", callback_data=f"replace_auto:{order_code}")])
-        elif is_icloud_link:
-            type_label = "<tg-emoji emoji-id=\"5231489647946768652\">☁️</tg-emoji> iCloud (Link)"
-            btns.append([_btn("Gửi Lại Link", icon_id="6129870117619634982", callback_data=f"resend_link:{found_order.get('user_id')}:{email_val}")])
         elif is_manual_product:
             type_label = "<tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> Sản phẩm thủ công"
             btns.append([_btn("Cấp Acc/Link Mới (Thủ công)", icon_id="6129870117619634982", callback_data=f"replace_manual:{order_code}")])
@@ -1259,25 +1016,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             return
         
         
-        if _is_ctt_store_product(p):
-            stock_count = _ctt_get_max_package_purchase(p)
-            is_resell = False
-            is_ctt_product = True
-            quantity_error = _ctt_validate_purchase_quantity(p, qty)
-        # BUG FIX: Sản phẩm resell dùng supplier_source_stock
-        elif p.get('is_supplier_source_resell'):
-            try:
-                stock_count = int(p.get('supplier_source_stock', 0) or 0)
-            except (TypeError, ValueError, KeyError):
-                stock_count = 0
-            is_resell = True
-            is_ctt_product = False
-            quantity_error = ""
-        else:
-            stock_count = len(p.get('stock', []))
-            is_resell = False
-            is_ctt_product = False
-            quantity_error = ""
+        stock_count = len(p.get('stock', []))
         
         # Check range
         if qty < 1:
@@ -1286,22 +1025,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 parse_mode=ParseMode.HTML
             )
             return
-        elif is_ctt_product and quantity_error:
-            await update.message.reply_text(
-                f"❌ <b>SỐ LƯỢNG KHÔNG HỢP LỆ!</b>\n\n{html.escape(quantity_error)}",
-                parse_mode=ParseMode.HTML,
-            )
-            return
-        elif is_resell and stock_count <= 0:
-            await update.message.reply_text(
-                "❌ <b>SẢN PHẨM ĐANG HẾT HÀNG!</b>\n\n"
-                "Nguồn SupplierSource hiện không còn hàng. Vui lòng quay lại sau.",
-                parse_mode=ParseMode.HTML
-            )
-            await clear_user_state(context)
-            return
-        elif qty > stock_count and not is_resell and not is_ctt_product:
-            # Chỉ block nếu KHÔNG phải resell (resell check lại lúc thanh toán)
+        elif qty > stock_count:
             await update.message.reply_text(
                 f"❌ <b>KHÔNG ĐỦ HÀNG!</b>\n\n"
                 f"Bạn muốn: <b>{qty}</b>\n"
@@ -1310,20 +1034,11 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 parse_mode=ParseMode.HTML
             )
             return
-        elif qty > stock_count and is_resell and stock_count > 0:
-            await update.message.reply_text(
-                f"❌ <b>SỐ LƯỢNG VƯỢT QUÁ KHO!</b>\n\n"
-                f"Bạn muốn: <b>{qty}</b>\n"
-                f"Kho hiện tại: <b>{stock_count}</b>\n\n"
-                f"Vui lòng nhập số nhỏ hơn hoặc bằng {stock_count}.",
-                parse_mode=ParseMode.HTML
-            )
-            return
         
         # Valid quantity - show confirmation
         await clear_user_state(context)
         
-        total_price = _get_ctt_store_total_price(user.id, context, prod_id, p, qty) if is_ctt_product else p['price'] * qty
+        total_price = p['price'] * qty
         user_info = db_get_user(user.id)
         balance = user_info.get('balance', 0) if user_info else 0
         
@@ -1342,18 +1057,10 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             btns.append([_btn("Chuyển khoản (QR)", icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
         btns.append([_btn("Quay lại", icon_id="6206032691075223572", callback_data=f"sel_qty_{prod_id}")])
         
-        supplier_units_line = ""
-        if is_ctt_product:
-            supplier_units_line = (
-                f'<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> '
-                f'<b>Đơn vị nguồn:</b> {_ctt_get_total_supplier_quantity(p, qty):,}\n'
-            )
-        
         confirm_text = (
             f'<tg-emoji emoji-id="5247134066322447995">🛍</tg-emoji> <b>XÁC NHẬN MUA HÀNG</b>\n\n'
             f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> <b>Sản phẩm:</b> {p["name"]}\n'
             f'<tg-emoji emoji-id="5305749482170758709">0️⃣</tg-emoji> <b>Số lượng:</b> {qty}\n'
-            f'{supplier_units_line}'
             f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> <b>Tổng tiền:</b> {total_price:,} VNĐ\n\n'
             f'<tg-emoji emoji-id="6186252635805323641">👇</tg-emoji> Vui lòng chọn phương thức thanh toán:'
         )
