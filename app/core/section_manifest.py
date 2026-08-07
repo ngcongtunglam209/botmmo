@@ -18,6 +18,7 @@ SECTION_FILES = [
     APP_ROOT / "services" / "referrals_stats.py",
     APP_ROOT / "jobs" / "support_and_warranty.py",
     APP_ROOT / "services" / "games_withdrawals_db.py",
+    APP_ROOT / "services" / "disabled_source_integrations.py",
     APP_ROOT / "integrations" / "ai_core.py",
     APP_ROOT / "services" / "support_automation.py",
     APP_ROOT / "handlers" / "product_catalog.py",

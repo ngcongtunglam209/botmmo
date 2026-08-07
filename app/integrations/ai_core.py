@@ -1,4 +1,14 @@
 # ==============================================================================
+class TicketType(Enum):
+    LINK_NOT_WORKING = "link_not_working"
+    EMAIL_NOT_FOUND = "email_not_found"
+    HOW_TO_USE_ICLOUD = "how_to_use_icloud"
+    BILLING_QUESTIONS = "billing_questions"
+    PRIVACY_CONCERNS = "privacy_concerns"
+    FAMILY_SHARING = "family_sharing"
+    OTHER = "other"
+
+
 class GroqAssistant:
     """
     AI Assistant using Groq API (OpenAI-compatible endpoint)

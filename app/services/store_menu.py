@@ -434,6 +434,13 @@ def get_ctt_source_category_by_index(source_index: int):
     return entries[safe_index]
 
 
+def refresh_ctt_runtime_config() -> None:
+    """No-op: SOCIAL_SOURCE_API_KEY/BASE_URL la hang so tinh (hardcode rong)
+    trong config_env.py, khong co runtime nao khac ghi de len - khong co gi
+    de refresh. Giu ham nay lai vi nhieu noi khac van goi no."""
+    return None
+
+
 def _ctt_has_configured_source() -> bool:
     refresh_ctt_runtime_config()
     return bool(str(SOCIAL_SOURCE_API_KEY or "").strip())
