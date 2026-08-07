@@ -194,6 +194,45 @@ docker compose up --build
 
 Dam bao `.env` da duoc dien truoc khi build/chay.
 
+## 7b. Reverse Proxy (Cloudflare + Caddy)
+
+Can thiet de co HTTPS that cho admin panel, webhook SePay, va Telegram OAuth
+callback. `docker-compose.yml` da co san service `caddy` dung lam reverse
+proxy - port 8080 cua bot khong con public truc tiep ra VPS nua, chi Caddy
+(80/443) moi public. Ly do bat buoc: `_admin_web_client_ip()` tin thang
+header `X-Forwarded-For` de ghi log/chong brute-force dang nhap admin - neu
+con ai cung goi thang duoc port 8080, ho gia mao duoc IP de qua mat khoa
+brute-force. Dong port do lai la phan bat buoc cua fix, khong chi la tuy chon.
+
+1. Tren Cloudflare dashboard: `SSL/TLS` -> `Overview` -> chon mode **Full (strict)**.
+2. `SSL/TLS` -> `Origin Server` -> `Create Certificate` -> giu mac dinh (RSA, 15 nam) -> Create.
+   Cloudflare hien 2 khoi text: **Origin Certificate** va **Private Key**.
+3. Tren VPS, trong thu muc project, tao 2 file tu 2 khoi text do:
+   ```bash
+   nano cloudflare-origin.pem       # dan Origin Certificate vao
+   nano cloudflare-origin-key.pem   # dan Private Key vao
+   ```
+4. DNS: `DNS` -> `Records` -> A record tro `lamtung.dev` ve IP VPS, **Proxy status: Proxied** (may cam mau cam bat).
+5. Mo firewall dung 2 port nay, dong han port bot:
+   ```bash
+   ufw allow 80/tcp
+   ufw allow 443/tcp
+   ufw deny 8080/tcp
+   ```
+6. Chay lai:
+   ```bash
+   docker compose up -d --build
+   docker compose logs -f caddy
+   ```
+   Thay `caddy` boot xong khong loi la ok - khong can cho ACME/Let's Encrypt gi ca vi dung thang cert Cloudflare cap.
+7. Cap nhat `.env`:
+   ```env
+   PUBLIC_API_URL=https://lamtung.dev
+   AUTO_PUBLIC_IP_DETECT=false
+   ```
+
+Neu doi domain khac subdomain, sua dong dau tien trong `Caddyfile` (`lamtung.dev {`) cho khop, va `TELEGRAM_LOGIN_REDIRECT_URI` trong `.env` cho khop domain moi.
+
 ## 8. Loi Thuong Gap
 
 ### Thieu bien moi truong

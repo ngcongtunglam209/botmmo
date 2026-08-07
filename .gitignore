@@ -50,6 +50,12 @@ htmlcov/
 # Docker
 .dockerignore
 
+# Caddy / Cloudflare reverse proxy
+caddy_data/
+caddy_config/
+cloudflare-origin.pem
+cloudflare-origin-key.pem
+
 # OS
 .DS_Store
 Thumbs.db

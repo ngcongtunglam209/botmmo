@@ -1,0 +1,19 @@
+lamtung.dev {
+    tls /etc/caddy/cloudflare-origin.pem /etc/caddy/cloudflare-origin-key.pem
+
+    log {
+        output stdout
+        level INFO
+    }
+
+    encode gzip zstd
+
+    # SePay webhook payload nho, nhung du phong cho form upload anh admin.
+    request_body {
+        max_size 20MB
+    }
+
+    reverse_proxy bot:8080 {
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
