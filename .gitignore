@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+bot.log
+*.log
+
+# Instance lock
+bot.instance.lock
+
+# Database
+database.sqlite
+database.sqlite-shm
+database.sqlite-wal
+restore_test_*.sqlite
+
+# Backups & Temp
+backup_before_restore_*.zip
+runtime_backups/
+tmp*/
+tmp_*.py
+*.bak
+*.bak*
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db

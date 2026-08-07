@@ -1,0 +1,438 @@
+/* ============================================================
+   Dino Admin — Motion System (Performance + Mobile Optimized)
+   ============================================================ */
+
+/* ── Keyframes (minimal, GPU-accelerated) ───────────── */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes ripple {
+  to { transform: scale(3.5); opacity: 0; }
+}
+
+/* ── Page Entrance (lightweight) ────────────────────── */
+
+.admin-console { animation: fadeIn 0.3s ease-out; }
+.module-section.active { animation: fadeInUp 0.3s ease-out; }
+
+/* ── Metric Cards ───────────────────────────────────── */
+
+.metric {
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  will-change: auto;
+}
+
+.metric:hover {
+  transform: translate3d(0, -3px, 0);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+.metric b {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Sidebar Nav ────────────────────────────────────── */
+
+.side-rail a {
+  transition: background 0.18s ease, color 0.18s ease;
+  text-decoration: none !important;
+  text-shadow: none !important;
+}
+
+.side-rail a:hover {
+  background: rgba(0, 240, 255, 0.08);
+  color: #fff;
+  text-decoration: none !important;
+  text-shadow: none !important;
+}
+
+/* Kill hover effects entirely on touch devices (sticky hover bug) */
+@media (hover: none) {
+  .side-rail a:hover,
+  a:hover {
+    text-decoration: none !important;
+    text-shadow: none !important;
+  }
+}
+
+/* ── Buttons (simple transitions) ───────────────────── */
+
+button, .btn, [role="button"] {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+button:hover:not(:disabled), .btn:hover:not(:disabled) {
+  transform: translate3d(0, -1px, 0);
+}
+
+button:active, .btn:active {
+  transform: translate3d(0, 0, 0) scale(0.98);
+}
+
+/* ── Table Rows ─────────────────────────────────────── */
+
+tbody tr {
+  transition: background 0.15s ease;
+}
+
+tbody tr:hover {
+  background: rgba(0, 240, 255, 0.04);
+}
+
+/* ── Tags ───────────────────────────────────────────── */
+
+.tag {
+  transition: filter 0.15s ease;
+}
+
+.tag:hover {
+  filter: brightness(1.15);
+}
+
+/* ── Input Focus ────────────────────────────────────── */
+
+input, select, textarea {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.15);
+  border-color: #00f0ff;
+  outline: none;
+}
+
+/* ── Alert ──────────────────────────────────────────── */
+
+.alert {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* ── Section Headers ────────────────────────────────── */
+
+.section-head h2 {
+  color: #f0f0f5;
+}
+
+/* ── Action Cards ───────────────────────────────────── */
+
+.action-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-card:hover {
+  transform: translate3d(0, -2px, 0);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Console Tools Links ────────────────────────────── */
+
+.console-tools a {
+  position: relative;
+  transition: color 0.18s ease;
+}
+
+.console-tools a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #00f0ff;
+  transition: width 0.2s ease;
+}
+
+.console-tools a:hover {
+  color: #00f0ff;
+}
+
+.console-tools a:hover::after {
+  width: 100%;
+}
+
+/* ── Page Transitions (no reflow) ───────────────────── */
+
+.admin-page {
+  transition: opacity 0.2s ease;
+}
+
+.admin-page:not(.active) {
+  display: none;
+}
+
+/* ── JS Ripple Effect ───────────────────────────────── */
+
+.ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(0);
+  animation: ripple 0.5s ease-out;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE (Critical fix)
+   ============================================================ */
+
+@media (max-width: 1024px) {
+  .admin-layout,
+  .admin-console {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: unset !important;
+    gap: 0 !important;
+    padding: 8px !important;
+  }
+
+  .side-rail {
+    position: sticky !important;
+    top: 56px;
+    z-index: 20;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 6px !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    max-height: none !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    grid-template-columns: unset !important;
+  }
+
+  .side-rail .brand-block {
+    display: none !important;
+  }
+
+  .side-rail a {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+    width: auto !important;
+    min-width: auto !important;
+    display: inline-flex !important;
+    border-left: none !important;
+    box-shadow: none !important;
+  }
+
+  .side-rail a::before {
+    display: none !important;
+  }
+
+  .side-rail a.active {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.22), rgba(176, 0, 255, 0.14)) !important;
+    border-left: none !important;
+    padding-left: 14px !important;
+  }
+
+  .workspace {
+    padding: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .workspace-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 16px !important;
+  }
+
+  .workspace-head h1 {
+    font-size: 22px !important;
+    line-height: 1.2;
+  }
+
+  .workspace-head p {
+    font-size: 13px;
+  }
+
+  .console-tools {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px !important;
+  }
+
+  #globalSearch {
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  .status-cluster,
+  .quick-actions {
+    flex-wrap: wrap;
+  }
+
+  .module-section {
+    padding: 16px !important;
+  }
+
+  .section-head {
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: flex-start !important;
+  }
+
+  .section-head h2 {
+    font-size: 18px !important;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .metric {
+    padding: 14px !important;
+  }
+
+  .metric span {
+    font-size: 11px !important;
+  }
+
+  .metric b {
+    font-size: 20px !important;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 12px;
+  }
+
+  table th, table td {
+    padding: 8px 10px !important;
+    white-space: nowrap;
+  }
+
+  .actions-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .overview-board,
+  .detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .metric:hover,
+  .action-card:hover,
+  button:hover {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .workspace-head h1 {
+    font-size: 20px !important;
+  }
+
+  .metric b {
+    font-size: 18px !important;
+  }
+
+  .three-backdrop {
+    display: none !important;
+  }
+
+  header nav {
+    padding: 10px 14px !important;
+    gap: 6px !important;
+    flex-wrap: wrap !important;
+  }
+
+  header nav strong {
+    font-size: 16px !important;
+  }
+
+  header nav a {
+    font-size: 12px;
+    padding: 4px 8px !important;
+  }
+
+  .language-switch {
+    margin-left: auto;
+  }
+
+  .side-rail {
+    top: 48px;
+  }
+
+  .side-rail a {
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+  }
+
+  .command-card {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+}
+
+/* ── Kill heavy backdrop-filter (main lag source) ───── */
+
+.side-rail,
+.metric,
+.action-card,
+.workspace-head,
+.mini-panel,
+.overview-list,
+.table-scroll,
+.raw-panel,
+.command-group,
+.command-card,
+.hero,
+.alert {
+  backdrop-filter: none !important;
+}
+
+header {
+  backdrop-filter: blur(8px) saturate(1.1) !important;
+}
+
+/* ── Kill body::after overlay on mobile ────────────── */
+
+@media (max-width: 1024px) {
+  body::after {
+    display: none !important;
+  }
+
+  #adminThreeScene {
+    filter: none !important;
+    opacity: 0.25 !important;
+  }
+
+  header {
+    backdrop-filter: none !important;
+  }
+}
+
+/* ── Reduced Motion ─────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

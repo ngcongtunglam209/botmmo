@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Tài liệu tích hợp Dino Store Partner API V2">
+  <meta name="theme-color" content="#07110d">
+  <title>Dino Store — API Developers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/docs/assets/api-docs.css?v=20260727-responsive">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Dino Store API">
+      <span class="brand-mark">D</span>
+      <span>Dino Store <b>Developers</b></span>
+    </a>
+    <div class="top-actions">
+      <span class="status"><i></i> API v2 ổn định</span>
+      <a class="ghost-button" href="/openapi.json">OpenAPI JSON</a>
+      <a class="primary-button" href="/reference">Thử API trực tiếp <span>↗</span></a>
+    </div>
+    <button class="menu-button" aria-label="Mở mục lục" aria-expanded="false">☰</button>
+  </header>
+
+  <div class="docs-shell" id="top">
+    <aside class="sidebar" aria-label="Mục lục">
+      <div class="sidebar-search">
+        <span>⌕</span>
+        <input id="docs-search" type="search" placeholder="Tìm trong tài liệu..." aria-label="Tìm trong tài liệu">
+        <kbd>/</kbd>
+      </div>
+      <nav>
+        <p>BẮT ĐẦU</p>
+        <a class="active" href="#overview">Tổng quan</a>
+        <a href="#quickstart">Bắt đầu nhanh</a>
+        <a href="#authentication">Xác thực</a>
+        <a href="#workflow">Luồng tích hợp</a>
+        <p>API CỐT LÕI</p>
+        <a href="#endpoints">Danh sách endpoint</a>
+        <a href="#create-order">Tạo đơn hàng</a>
+        <a href="#delivery">Nhận sản phẩm</a>
+        <a href="#social">Dịch vụ Social</a>
+        <p>VẬN HÀNH</p>
+        <a href="#idempotency">Chống trùng đơn</a>
+        <a href="#errors">Mã lỗi</a>
+        <a href="#examples">Code mẫu</a>
+      </nav>
+      <div class="sidebar-note">
+        <span>?</span>
+        <div><strong>Cần hỗ trợ?</strong><small>Liên hệ admin Dino Store để lấy API key.</small></div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="hero reveal" id="overview" data-search="tổng quan base url api partner">
+        <div class="eyebrow"><span>PARTNER API</span> / VERSION 2.0</div>
+        <h1>Tích hợp bán hàng.<br><em>Không còn đoán mò.</em></h1>
+        <p class="lead">Một hướng dẫn đầy đủ để đồng bộ sản phẩm, tạo đơn an toàn và giao tài khoản tự động qua Dino Store Partner API.</p>
+        <div class="base-url">
+          <span class="method method-base">BASE URL</span>
+          <code>https://api.example.com</code>
+          <button class="copy" data-copy="https://api.example.com" aria-label="Sao chép Base URL">Sao chép</button>
+        </div>
+        <div class="hero-grid">
+          <div><b>REST + JSON</b><span>Chuẩn HTTP, phản hồi dễ xử lý</span></div>
+          <div><b>Idempotent</b><span>Retry an toàn, không tạo trùng đơn</span></div>
+          <div><b>2 luồng rõ ràng</b><span>Sản phẩm thường và Social riêng biệt</span></div>
+        </div>
+      </section>
+
+      <section id="quickstart" class="doc-section reveal" data-search="bắt đầu nhanh quickstart curl me api key số dư">
+        <div class="section-kicker">01 — QUICKSTART</div>
+        <h2>Chạy request đầu tiên trong 60 giây</h2>
+        <p>Dùng endpoint <code>/api/v2/me</code> để kiểm tra API key, tên đối tác, số dư ví và trạng thái bảo trì trước khi tạo đơn.</p>
+        <div class="code-window">
+          <div class="code-head"><span><i></i><i></i><i></i></span><b>Terminal</b><button class="copy" data-copy-target="quickstart-code">Sao chép</button></div>
+          <pre id="quickstart-code"><code><span class="token-purple">curl</span> <span class="token-green">"https://api.example.com/api/v2/me"</span> \
+  -H <span class="token-green">"x-api-key: API_KEY_CUA_BAN"</span></code></pre>
+        </div>
+        <div class="callout success">
+          <span>✓</span>
+          <div><b>Response thành công</b><code>{ "ok": true, "data": { "partner_name": "ShopA", "balance": 850000 } }</code></div>
+        </div>
+      </section>
+
+      <section id="authentication" class="doc-section reveal" data-search="xác thực authentication x-api-key bearer header bảo mật">
+        <div class="section-kicker">02 — AUTHENTICATION</div>
+        <h2>Một API key cho toàn bộ request</h2>
+        <p>Gửi key qua header <code>x-api-key</code>. Không đặt key trong URL, JavaScript phía trình duyệt, log công khai hoặc repository.</p>
+        <div class="split-cards">
+          <article class="info-card preferred"><span class="badge">KHUYẾN NGHỊ</span><h3>x-api-key</h3><code>x-api-key: API_KEY_CUA_BAN</code></article>
+          <article class="info-card"><span class="badge neutral">HỖ TRỢ</span><h3>Bearer token</h3><code>Authorization: Bearer API_KEY_CUA_BAN</code></article>
+        </div>
+      </section>
+
+      <section id="workflow" class="doc-section reveal" data-search="quy trình luồng tích hợp catalog tạo đơn poll giao hàng">
+        <div class="section-kicker">03 — INTEGRATION FLOW</div>
+        <h2>Luồng tích hợp chuẩn</h2>
+        <div class="timeline">
+          <article><span>1</span><div><h3>Kiểm tra kết nối</h3><p><code>GET /api/v2/me</code> để xác nhận key và số dư.</p></div></article>
+          <article><span>2</span><div><h3>Đồng bộ catalog</h3><p>Dùng <code>/api/v2/catalog</code> cho sản phẩm thường, <code>/api/social/catalog</code> cho dịch vụ social.</p></div></article>
+          <article><span>3</span><div><h3>Tạo đơn an toàn</h3><p>Gửi <code>partner_ref</code> và <code>x-idempotency-key</code> giống nhau.</p></div></article>
+          <article><span>4</span><div><h3>Giao hoặc theo dõi</h3><p>Có <code>data.items</code> thì giao ngay; chưa có thì poll chi tiết đơn mỗi 5–15 giây.</p></div></article>
+        </div>
+      </section>
+
+      <section id="endpoints" class="doc-section reveal" data-search="endpoint me status catalog orders history by-ref social">
+        <div class="section-kicker">04 — ENDPOINTS</div>
+        <div class="section-title-row"><div><h2>Endpoint cần dùng</h2><p>Tập trung vào V2. API legacy chỉ dành cho hệ thống cũ.</p></div><a href="/reference">Xem toàn bộ reference →</a></div>
+        <div class="endpoint-list">
+          <article data-search="GET me profile balance số dư"><span class="method get">GET</span><code>/api/v2/me</code><p>Thông tin partner và số dư</p><a href="#quickstart">Chi tiết</a></article>
+          <article data-search="GET status system health maintenance"><span class="method get">GET</span><code>/api/v2/status</code><p>Trạng thái hệ thống và kho</p><a href="/reference#/Partner">Thử API</a></article>
+          <article data-search="GET catalog products sản phẩm"><span class="method get">GET</span><code>/api/v2/catalog</code><p>Catalog sản phẩm thường</p><a href="/reference#/Partner">Thử API</a></article>
+          <article data-search="POST orders create tạo đơn"><span class="method post">POST</span><code>/api/v2/orders</code><p>Tạo đơn sản phẩm thường</p><a href="#create-order">Chi tiết</a></article>
+          <article data-search="GET orders history lịch sử"><span class="method get">GET</span><code>/api/v2/orders</code><p>Lịch sử đơn, hỗ trợ phân trang</p><a href="/reference#/Partner">Thử API</a></article>
+          <article data-search="GET order code lookup poll"><span class="method get">GET</span><code>/api/v2/orders/{order_code}</code><p>Chi tiết và trạng thái đơn</p><a href="#delivery">Chi tiết</a></article>
+          <article data-search="GET by ref partner reference"><span class="method get">GET</span><code>/api/v2/orders/by-ref/{partner_ref}</code><p>Tra đơn bằng mã của bạn</p><a href="#idempotency">Chi tiết</a></article>
+          <article data-search="social catalog orders"><span class="method social">SOCIAL</span><code>/api/social/*</code><p>Catalog và đơn Social Media</p><a href="#social">Chi tiết</a></article>
+        </div>
+      </section>
+
+      <section id="create-order" class="doc-section reveal" data-search="tạo đơn post orders body quantity customer email note">
+        <div class="section-kicker">05 — CREATE ORDER</div>
+        <h2>Tạo đơn sản phẩm thường</h2>
+        <div class="code-window">
+          <div class="code-head"><span><i></i><i></i><i></i></span><b>POST /api/v2/orders</b><button class="copy" data-copy-target="create-code">Sao chép</button></div>
+          <pre id="create-code"><code><span class="token-purple">curl</span> -X POST <span class="token-green">"https://api.example.com/api/v2/orders"</span> \
+  -H <span class="token-green">"Content-Type: application/json"</span> \
+  -H <span class="token-green">"x-api-key: API_KEY_CUA_BAN"</span> \
+  -H <span class="token-green">"x-idempotency-key: ORDER_20260727_0001"</span> \
+  -d <span class="token-green">'{
+    "partner_ref": "ORDER_20260727_0001",
+    "product_id": "p_1772672574",
+    "quantity": 2,
+    "customer_email": "khach@example.com",
+    "customer_id": "telegram_9988",
+    "note": "don tu website doi tac",
+    "send_email": false
+  }'</span></code></pre>
+        </div>
+        <div class="field-table">
+          <div class="field-head"><span>Field</span><span>Kiểu</span><span>Mô tả</span></div>
+          <div><code>partner_ref</code><span>string · bắt buộc</span><p>Mã đơn duy nhất của bạn, tối đa 64 ký tự.</p></div>
+          <div><code>product_id</code><span>string · bắt buộc</span><p>ID lấy trực tiếp từ catalog tương ứng.</p></div>
+          <div><code>quantity</code><span>integer</span><p>Sản phẩm thường: 1–200; social theo giới hạn trong catalog.</p></div>
+          <div><code>customer_email</code><span>string</span><p>Email khách cuối nếu sản phẩm cần xử lý qua email.</p></div>
+          <div><code>customer_id</code><span>string</span><p>ID khách trong hệ thống của bạn, dùng để đối soát.</p></div>
+        </div>
+      </section>
+
+      <section id="delivery" class="doc-section reveal" data-search="giao hàng nhận sản phẩm items delivery_mode poll pending manual resell">
+        <div class="section-kicker">06 — DELIVERY</div>
+        <h2>Đọc đúng dữ liệu để giao khách</h2>
+        <div class="decision-grid">
+          <article class="decision yes"><span>CÓ <code>data.items</code></span><h3>Giao ngay</h3><p>Mỗi phần tử là một tài khoản hoặc item. <code>delivered_count</code> cho biết số lượng đã giao.</p></article>
+          <article class="decision wait"><span>CHƯA CÓ ITEMS</span><h3>Poll trạng thái</h3><p>Lưu <code>order_code</code>, gọi endpoint chi tiết mỗi 5–15 giây đến khi có items hoặc trạng thái cuối.</p></article>
+        </div>
+        <div class="callout warning"><span>!</span><div><b>Đừng nhầm data.link</b><p>Với API V2, nội dung giao hàng nằm trong <code>data.items</code>. <code>data.link</code> thường chỉ mô tả cách giao. Chỉ endpoint legacy <code>/api/buy</code> dùng link làm nội dung chính.</p></div></div>
+        <div class="mini-code"><code>GET /api/v2/orders/{order_code}</code><button class="copy" data-copy="GET https://api.example.com/api/v2/orders/{order_code}">Sao chép</button></div>
+      </section>
+
+      <section id="social" class="doc-section reveal" data-search="social media facebook tiktok target link comments quantity supplier">
+        <div class="section-kicker">07 — SOCIAL API</div>
+        <h2>Luồng riêng cho Social Media</h2>
+        <p>Không trộn catalog social với catalog thường. Luôn đọc <code>minimum_order_quantity</code>, <code>maximum_order_quantity</code> và <code>social_input_fields</code> trước khi tạo đơn.</p>
+        <div class="social-flow">
+          <code>GET /api/social/catalog</code><span>→</span><code>POST /api/social/orders</code><span>→</span><code>GET /api/social/orders/{order_code}</code>
+        </div>
+        <ul class="check-list">
+          <li><span>✓</span><div><b>target_link</b><p>Bắt buộc khi <code>social_input_fields</code> có <code>link</code>.</p></div></li>
+          <li><span>✓</span><div><b>comments</b><p>Gửi mỗi comment một dòng nếu dịch vụ yêu cầu.</p></div></li>
+          <li><span>✓</span><div><b>supplier progress</b><p>Đọc <code>supplier_status</code>, <code>supplier_remains</code> và <code>supplier_progress</code> khi poll.</p></div></li>
+        </ul>
+      </section>
+
+      <section id="idempotency" class="doc-section reveal" data-search="idempotency chống trùng đơn partner ref retry timeout">
+        <div class="section-kicker">08 — IDEMPOTENCY</div>
+        <h2>Retry mà không tạo đơn thứ hai</h2>
+        <p>Dùng cùng một giá trị cho body và header. Nếu timeout, gửi lại nguyên request với nguyên mã — không sinh mã mới.</p>
+        <div class="pair-code"><div><small>HEADER</small><code>x-idempotency-key: ORDER_20260727_0001</code></div><b>=</b><div><small>BODY</small><code>"partner_ref": "ORDER_20260727_0001"</code></div></div>
+        <p class="muted">Request lặp hợp lệ trả đơn cũ với <code>data.idempotent_replay: true</code>.</p>
+      </section>
+
+      <section id="errors" class="doc-section reveal" data-search="mã lỗi error 400 401 402 403 404 409 422 429 502 503">
+        <div class="section-kicker">09 — ERRORS</div>
+        <h2>Mã lỗi và cách xử lý</h2>
+        <div class="error-table">
+          <div><b>400</b><p>Field thiếu/sai, idempotency không khớp</p><span>Sửa request, không retry nguyên trạng</span></div>
+          <div><b>401 / 403</b><p>Key sai, bị tắt hoặc IP không được phép</p><span>Kiểm tra cấu hình và liên hệ admin</span></div>
+          <div><b>402</b><p>Không đủ số dư ví API</p><span>Nạp thêm số dư rồi tạo đơn mới</span></div>
+          <div><b>404</b><p>Không thấy sản phẩm hoặc đơn</p><span>Đồng bộ catalog / kiểm tra mã đơn</span></div>
+          <div><b>409</b><p>Thiếu stock hoặc mã đơn đang xử lý</p><span>Chờ rồi tra cứu theo partner_ref</span></div>
+          <div><b>422</b><p>JSON sai kiểu dữ liệu</p><span>Đối chiếu schema trong API Reference</span></div>
+          <div><b>429</b><p>Vượt giới hạn request/phút</p><span>Đọc Retry-After và backoff</span></div>
+          <div><b>502 / 503</b><p>Nguồn ngoài lỗi hoặc hệ thống bảo trì</p><span>Retry có backoff, giữ nguyên idempotency key</span></div>
+        </div>
+      </section>
+
+      <section id="examples" class="doc-section reveal" data-search="code mẫu javascript node python php polling">
+        <div class="section-kicker">10 — CODE EXAMPLES</div>
+        <h2>Mẫu client tối thiểu</h2>
+        <div class="tabs" role="tablist">
+          <button class="active" data-tab="node" role="tab">Node.js</button>
+          <button data-tab="python" role="tab">Python</button>
+          <button data-tab="php" role="tab">PHP</button>
+        </div>
+        <div class="code-window tab-panel active" data-panel="node">
+          <div class="code-head"><span><i></i><i></i><i></i></span><b>client.js</b><button class="copy" data-copy-target="node-code">Sao chép</button></div>
+          <pre id="node-code"><code>const BASE_URL = <span class="token-green">"https://api.example.com"</span>;
+const API_KEY = process.env.DINO_API_KEY;
+
+async function request(path, options = {}) {
+  const response = await fetch(BASE_URL + path, {
+    ...options,
+    headers: {
+      <span class="token-green">"Content-Type"</span>: <span class="token-green">"application/json"</span>,
+      <span class="token-green">"x-api-key"</span>: API_KEY,
+      ...options.headers
+    }
+  });
+  const body = await response.json();
+  if (!response.ok) throw new Error(JSON.stringify(body));
+  return body;
+}</code></pre>
+        </div>
+        <div class="code-window tab-panel" data-panel="python">
+          <div class="code-head"><span><i></i><i></i><i></i></span><b>client.py</b><button class="copy" data-copy-target="python-code">Sao chép</button></div>
+          <pre id="python-code"><code>import os
+import requests
+
+BASE_URL = <span class="token-green">"https://api.example.com"</span>
+API_KEY = os.environ[<span class="token-green">"DINO_API_KEY"</span>]
+
+def request(method, path, **kwargs):
+    response = requests.request(
+        method, BASE_URL + path,
+        headers={<span class="token-green">"x-api-key"</span>: API_KEY},
+        timeout=30, **kwargs
+    )
+    response.raise_for_status()
+    return response.json()</code></pre>
+        </div>
+        <div class="code-window tab-panel" data-panel="php">
+          <div class="code-head"><span><i></i><i></i><i></i></span><b>client.php</b><button class="copy" data-copy-target="php-code">Sao chép</button></div>
+          <pre id="php-code"><code>&lt;?php
+$baseUrl = <span class="token-green">"https://api.example.com"</span>;
+$apiKey = getenv(<span class="token-green">"DINO_API_KEY"</span>);
+
+$ch = curl_init($baseUrl . <span class="token-green">"/api/v2/me"</span>);
+curl_setopt_array($ch, [
+  CURLOPT_RETURNTRANSFER =&gt; true,
+  CURLOPT_HTTPHEADER =&gt; [<span class="token-green">"x-api-key: "</span> . $apiKey],
+  CURLOPT_TIMEOUT =&gt; 30
+]);
+$result = json_decode(curl_exec($ch), true);</code></pre>
+        </div>
+      </section>
+
+      <footer>
+        <div class="brand"><span class="brand-mark">D</span><span>Dino Store Developers</span></div>
+        <p>Partner API v2 · Cập nhật tháng 07/2026</p>
+        <a href="#top">Lên đầu trang ↑</a>
+      </footer>
+    </main>
+  </div>
+  <div class="toast" role="status" aria-live="polite">Đã sao chép</div>
+  <script src="/docs/assets/api-docs.js" defer></script>
+</body>
+</html>
