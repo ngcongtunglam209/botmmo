@@ -28,6 +28,7 @@ def _callback_requires_manual_answer(command: str) -> bool:
         'withdraw_request',
     }
     manual_answer_prefixes = (
+        'topup_cancel:',
         'adm_quick:',
         'adm_uo:',
         'admin_open_chat:',
@@ -492,6 +493,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # ===== ADVANCED FEATURES CALLBACKS =====
     elif command == 'my_stats':
         await show_my_stats(update, context, is_callback=True)
+
+    elif command == 'topup_start':
+        await start_user_topup_flow(update, context, is_callback=True)
+
+    elif command.startswith('topup_cancel:'):
+        await cancel_user_topup(update, context, command.split(':', 1)[1])
     
     elif command == 'my_referral':
         await show_my_referral(update, context, is_callback=True)

@@ -100,7 +100,8 @@ async def handle_withdrawal_input(update: Update, context: ContextTypes.DEFAULT_
         except ValueError:
             await update.message.reply_text(lt(user_id, f"{E_LIMIT} Vui lòng nhập số tiền hợp lệ (chỉ số).", f"{E_LIMIT} Enter a valid amount using numbers only.", f"{E_LIMIT} 请输入有效金额（仅数字）。"))
             return
-        balance = user_data_db.get(user_id_str, {}).get('balance', 0)
+        # Tien nap khong duoc rut: chi phan thuong/hoa hong moi rut duoc.
+        balance = get_withdrawable_balance(user_id)
         if amount < MIN_WITHDRAWAL_AMOUNT:
             await update.message.reply_text(lt(user_id, "{limit} Số tiền rút tối thiểu là {amount:,} VNĐ.", "{limit} Minimum withdrawal is {amount:,} VND.", "{limit} 最低提现金额为 {amount:,} VND。", limit=E_LIMIT, amount=MIN_WITHDRAWAL_AMOUNT))
             return
@@ -383,6 +384,17 @@ def db_update_balance(user_id, new_balance, reason="Unknown transaction"):
     else:
         user_data_db[user_id_str] = {"balance": int(new_balance), "user_id": int(user_id_str)}
     amount_change = int(new_balance) - old_balance
+    # Tien nap chi duoc mua hang, khong rut. Theo doi phan so du den tu nap de
+    # get_withdrawable_balance() loai no ra; tieu tien thi tru phan nap truoc.
+    try:
+        topup_balance = max(0, int(user_data_db[user_id_str].get("balance_topup", 0) or 0))
+    except (TypeError, ValueError, KeyError, AttributeError):
+        topup_balance = 0
+    if amount_change > 0 and str(reason or "").startswith("Topup:"):
+        topup_balance += amount_change
+    elif amount_change < 0:
+        topup_balance = max(0, topup_balance + amount_change)
+    user_data_db[user_id_str]["balance_topup"] = min(topup_balance, max(0, int(new_balance)))
     if amount_change != 0:
         transaction_history.setdefault(user_id_str, []).append({
             "amount": amount_change, "new_balance": int(new_balance), "reason": reason,

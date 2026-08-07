@@ -533,7 +533,10 @@ async def show_my_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, is_c
         percent=REFERRAL_COMMISSION_PERCENT, refs=stats["referral_count"], earned=stats["commission_earned"],
         achievements=achievements_block, rank=rank_block,
     )
-    btns = [[_btn(lt(user_id, "Link giới thiệu", "Referral Link", "推荐链接"), icon_id="5193085063998224234", callback_data='my_referral')]]
+    btns = [
+        [_btn(lt(user_id, "Nạp tiền vào ví", "Top up wallet", "钱包充值"), icon_id="5278467510604160626", callback_data='topup_start', style="primary")],
+        [_btn(lt(user_id, "Link giới thiệu", "Referral Link", "推荐链接"), icon_id="5193085063998224234", callback_data='my_referral')],
+    ]
     msg = upgrade_text_to_premium_emoji(msg)
     if is_callback:
         btns.append([_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data='back_to_main')])

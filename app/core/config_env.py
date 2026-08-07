@@ -329,7 +329,8 @@ REFERRAL_DATA_FILE = "data_referral_data.json"
 LIVE_CHATS_FILE = "data_live_chats.json"
 DICE_GAME_FILE = "data_dice_game.json"  # NEW: Dice Game tracking
 PROMO_BUDGET_FILE = 'data_promo_budget.json'
-WITHDRAWALS_FILE = "data_withdrawals.json"  # NEW: Withdrawal requests
+WITHDRAWALS_FILE = "data_withdrawals.json"
+USER_TOPUP_FILE = "data_pending_user_topups.json"  # NEW: Pending wallet top-ups
 STOCK_WAITLIST_FILE = "data_stock_waitlist.json"
 FLASH_SALES_FILE = "data_flash_sales.json"
 COMBO_DEALS_FILE = "data_combo_deals.json"
@@ -339,6 +340,11 @@ WHEEL_DATA_FILE = "data_wheel_data.json"
 TRANSACTION_HISTORY_FILE = "data_transaction_history.json"  # NEW: Balance history
 ADMIN_ACTION_LOG_FILE = "data_admin_action_log.json"
 MIN_WITHDRAWAL_AMOUNT = 200000  # Minimum 200,000 VNĐ
+
+# Nap tien vao vi (tien nap chi de mua hang, khong rut ra duoc)
+MIN_USER_TOPUP_AMOUNT = get_env_int("MIN_USER_TOPUP_AMOUNT", 10000, minimum=1000)
+MAX_USER_TOPUP_AMOUNT = get_env_int("MAX_USER_TOPUP_AMOUNT", 20000000, minimum=10000)
+USER_TOPUP_EXPIRATION_SECONDS = get_env_int("USER_TOPUP_EXPIRATION_SECONDS", 900, minimum=300)
 
 # Hủy đơn sau 10 phút không thanh toán | Cron duyệt đơn quét bank mặc định mỗi 15 giây
 ORDER_EXPIRATION_SECONDS = 600
@@ -355,6 +361,7 @@ USER_ORDER_CODE_REGEX = re.compile(r'^(?:ICLD\d{6}|MANUAL[A-Z0-9]{6,}|PROD[A-Z0-
 ORDER_CODE_SEARCH_REGEX = re.compile(r'ICLD\d{6}')
 ICLD_PATTERN = re.compile(r'ICLD\s*(\d{6})', re.IGNORECASE)
 NAPI_PATTERN = re.compile(r'(NAPI\d+)', re.IGNORECASE)
+NAPU_PATTERN = re.compile(r'(NAPU\d+)', re.IGNORECASE)
 
 # ===============================================
 
