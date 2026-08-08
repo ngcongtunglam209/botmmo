@@ -301,17 +301,19 @@ async def broadcast_out_of_stock(context: ContextTypes.DEFAULT_TYPE, product_nam
             if user_id in banned_users or (isinstance(profile, dict) and profile.get("broadcast_disabled")):
                 continue
             
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=message,
-                parse_mode=ParseMode.HTML
+            result = await broadcast_send_message(
+                context.bot, user_id, message, parse_mode=ParseMode.HTML
             )
-            success_count += 1
+            if result == "ok":
+                success_count += 1
+            else:
+                fail_count += 1
+                if result in {"blocked", "invalid"}:
+                    blocked_ids.append(user_id_str)
+                elif fail_count <= 3:
+                    logger.warning(f"Lỗi broadcast đến user {user_id_str}: {result}")
             await asyncio.sleep(0.05)
-            
-        except Forbidden:
-            fail_count += 1
-            blocked_ids.append(user_id_str)
+
         except (ValueError, TypeError, KeyError, IndexError) as e:
             fail_count += 1
             if fail_count <= 3:
@@ -819,17 +821,17 @@ async def broadcast_back_in_stock(context: ContextTypes.DEFAULT_TYPE, product_na
             if user_id in banned_users or (isinstance(profile, dict) and profile.get("broadcast_disabled")):
                 continue
             
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=message,
-                parse_mode=ParseMode.HTML
+            result = await broadcast_send_message(
+                context.bot, user_id, message, parse_mode=ParseMode.HTML
             )
-            success_count += 1
+            if result == "ok":
+                success_count += 1
+            else:
+                fail_count += 1
+                if result in {"blocked", "invalid"}:
+                    blocked_ids.append(user_id_str)
             await asyncio.sleep(0.05)
-            
-        except Forbidden:
-            fail_count += 1
-            blocked_ids.append(user_id_str)
+
         except (ValueError, TypeError, KeyError, IndexError):
             fail_count += 1
     

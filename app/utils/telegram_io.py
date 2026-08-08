@@ -1114,6 +1114,51 @@ def _patch_message_edit_methods():
 _patch_message_edit_methods()
 
 
+async def broadcast_send_message(bot, chat_id, text, **kwargs) -> str:
+    """Gui mot tin trong vong broadcast. KHONG BAO GIO raise.
+
+    Tra ve:
+      "ok"      - da gui
+      "blocked" - user chan bot (Forbidden), nen don khoi danh sach
+      "invalid" - chat khong con ton tai (tai khoan da xoa), nen don
+      "failed"  - loi khac, giu lai de lan sau thu tiep
+
+    Cac vong broadcast truoc day chi bat Forbidden va vai loi kieu du lieu.
+    BadRequest("Chat not found") - tai khoan da xoa - khong nam trong so do, nen
+    dung mot nguoi nhan hong la ca task chet va TAT CA nguoi con lai khong nhan
+    duoc gi. Mot nguoi nhan hong khong duoc phep dung ca dot gui.
+
+    RetryAfter duoc ngu roi thu lai mot lan: coi flood-control la that bai se
+    lam mat dung nhung user o giua dot gui, khi Telegram bat dau chan toc do.
+    """
+    for attempt in (1, 2):
+        try:
+            await bot.send_message(chat_id=chat_id, text=text, **kwargs)
+            return "ok"
+        except Forbidden:
+            return "blocked"
+        except RetryAfter as e:
+            if attempt == 1:
+                await asyncio.sleep(float(getattr(e, "retry_after", 1) or 1) + 0.5)
+                continue
+            return "failed"
+        except BadRequest as e:
+            reason = str(e).lower().replace("_", " ")
+            if (
+                "chat not found" in reason
+                or "user is deactivated" in reason
+                or "peer id invalid" in reason
+                or "bot was blocked" in reason
+            ):
+                return "invalid"
+            return "failed"
+        except TelegramError:
+            return "failed"
+        except (ValueError, TypeError, KeyError, IndexError, AttributeError):
+            return "failed"
+    return "failed"
+
+
 def _is_tg_emoji_parse_error(error) -> bool:
     """True chi khi loi that su den tu the tg-emoji trong NOI DUNG tin nhan.
 

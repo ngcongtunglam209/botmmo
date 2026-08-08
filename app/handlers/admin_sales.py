@@ -97,17 +97,19 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 if user_id in banned_users:
                     continue
                 
-                await context.bot.send_message(
-                    chat_id=user_id,
-                    text=sale_message,
-                    parse_mode=ParseMode.HTML
+                result = await broadcast_send_message(
+                    context.bot, user_id, sale_message, parse_mode=ParseMode.HTML
                 )
-                success_count += 1
+                if result == "ok":
+                    success_count += 1
+                else:
+                    fail_count += 1
+                    if result in {"blocked", "invalid"}:
+                        blocked_ids.append(user_id_str)
+                    elif fail_count <= 3:
+                        logger.warning(f"Không thể gửi SALE cho user {user_id_str}: {result}")
                 await asyncio.sleep(0.05)
-                
-            except Forbidden:
-                fail_count += 1
-                blocked_ids.append(user_id_str)
+
             except (ValueError, TypeError, KeyError, IndexError) as e:
                 fail_count += 1
                 if fail_count <= 3:

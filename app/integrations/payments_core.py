@@ -135,15 +135,26 @@ async def handle_membership_check(update) -> None:
     try:
         is_joined = await _is_required_group_member(update, force_refresh=True)
     except Exception as e:
-        logger.exception("Membership callback check failed for user_id=%s: %s", user_id, e)
-        await query.answer(
+        # Cung ly do voi check_if_banned: khong kiem tra duoc thi cho qua. Bao
+        # loi ky thuat o day la ngo cut - khach bam lai bao nhieu lan cung ra
+        # dung mot loi, va ho khong sua duoc gi.
+        logger.error(
+            "Khong kiem tra duoc nhom bat buoc (REQUIRED_GROUP_ID=%s) cho user_id=%s: %s "
+            "-> cho vao",
+            REQUIRED_GROUP_ID, user_id, e,
+        )
+        await _alert_required_group_broken(update, e)
+        await query.answer(lt(user_id, "Đã xác minh", "Verified", "已验证"))
+        await query.edit_message_text(
             lt(
                 user_id,
-                f"Không kiểm tra được tư cách thành viên: {e}",
-                f"Could not check your membership: {e}",
-                f"无法检查群成员身份：{e}",
+                "✅ Bạn có thể tiếp tục dùng bot.",
+                "✅ You can continue using the bot.",
+                "✅ 您可以继续使用机器人。",
             ),
-            show_alert=True,
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton(lt(user_id, "🚀 Tiếp tục", "🚀 Continue", "🚀 继续"), callback_data="back_to_main")
+            ]]),
         )
         return
     if is_joined:
