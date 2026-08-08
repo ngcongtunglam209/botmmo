@@ -59,7 +59,7 @@ async def notify_admin_store_order(
     payment_labels = {
         "balance": "Số dư",
         "bank_transfer": "Chuyển khoản",
-        "usdt_trc20": "USDT TRC20",
+        "usdt_rpay": "USDT (RPay)",
         "binance_pay": "Binance Pay",
     }
     payment_label = payment_labels.get(str(payment_method or "").strip().lower(), str(payment_method or "N/A"))

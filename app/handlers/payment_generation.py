@@ -274,7 +274,7 @@ async def generate_product_payment_qr(
         return False
 
 
-async def generate_product_payment_binance(
+async def generate_product_payment_rpay(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,
     prod_id: str,
@@ -282,8 +282,15 @@ async def generate_product_payment_binance(
     balance_used: int = 0,
     extra_pending_data: dict | None = None,
 ):
-    """Generates Binance Pay checkout for Store Products."""
+    """Tao hoa don USDT qua RPay cho san pham trong cua hang."""
     user = update.effective_user
+    if not is_usdt_payment_enabled():
+        await _reply_payment_generation_error(
+            update,
+            context,
+            lt(user.id, "Phương thức thanh toán này chưa được cấu hình.", "This payment method is not configured yet.", "此付款方式尚未配置。"),
+        )
+        return
 
     pending_code, _pending_detail = await get_user_pending_order(user.id)
     if pending_code:
@@ -315,8 +322,8 @@ async def generate_product_payment_binance(
     try:
         order_code = await generate_unique_order_code(prefix="ICLD", length=6)
     except (TelegramError, ValueError, KeyError, AttributeError) as exc:
-        logger.error(f"Cannot generate unique Binance order code: {exc}")
-        _refund_balance_used_if_needed(user.id, balance_used, f"Refund: Binance order code failed {prod_id}")
+        logger.error(f"Cannot generate unique RPay order code: {exc}")
+        _refund_balance_used_if_needed(user.id, balance_used, f"Refund: RPay order code failed {prod_id}")
         await _reply_payment_generation_error(
             update,
             context,
@@ -325,195 +332,46 @@ async def generate_product_payment_binance(
         return
 
     try:
-        binance_order = await create_binance_pay_order(
+        invoice = await create_rpay_order(
             order_code=order_code,
             amount_vnd=amount_due,
             goods_name=p["name"],
             goods_detail=f"{p['name']} x{quantity}",
-            reference_goods_id=prod_id,
         )
     except Exception as exc:
         await release_reserved_order_code(order_code)
-        logger.error(f"Error creating Binance Pay order for {order_code}: {exc}")
+        logger.error(f"Error creating RPay invoice for {order_code}: {exc}")
         if balance_used > 0:
             current_info = db_get_user(user.id)
             current_bal = current_info.get('balance', 0) if current_info else 0
-            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: Binance order failed {prod_id}")
-            await context.bot.send_message(
-                user.id,
-                lt(user.id, "Không thể tạo checkout Binance. Đã hoàn lại {amount:,}đ vào ví.\nVui lòng thử lại sau.", "Could not create Binance checkout. {amount:,} VND was refunded to your wallet.\nPlease try again later.", "无法创建 Binance 结账。{amount:,} VND 已退回钱包。\n请稍后重试。", amount=balance_used),
-            )
+            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: RPay invoice failed {prod_id}")
+            await context.bot.send_message(user.id, lt(user.id, "Không thể tạo hóa đơn USDT. Đã hoàn lại {amount:,}đ vào ví.\nVui lòng thử lại sau.", "Could not create the USDT invoice. {amount:,} VND was refunded to your wallet.\nPlease try again later.", "无法创建 USDT 账单。{amount:,} VND 已退回钱包。\n请稍后重试。", amount=balance_used))
         else:
-            await context.bot.send_message(user.id, lt(user.id, "Không thể tạo checkout Binance. Vui lòng thử lại sau.", "Could not create Binance checkout. Please try again later.", "无法创建 Binance 结账，请稍后重试。"))
+            await context.bot.send_message(user.id, lt(user.id, "Không thể tạo hóa đơn USDT. Vui lòng thử lại sau.", "Could not create the USDT invoice. Please try again later.", "无法创建 USDT 账单，请稍后重试。"))
         return
+
+    network_name = str(invoice.get("network_name") or invoice.get("network") or "").strip()
+    token_symbol = str(invoice.get("token") or "USDT").strip()
+    expires_at = str(invoice.get("expires_at") or "").strip() or (
+        datetime.now() + timedelta(seconds=ORDER_EXPIRATION_SECONDS)
+    ).strftime('%H:%M:%S')
 
     balance_line = lt(user.id, '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Tổng giá:</b> {total:,} VNĐ\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Đã trừ ví:</b> -{used:,} VNĐ\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Total:</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Wallet used:</b> -{used:,} VND\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>总价：</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>钱包抵扣：</b> -{used:,} VND\n', total=total_amount, used=balance_used) if balance_used > 0 else ""
     caption = lt(
         user.id,
-        '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>HÓA ĐƠN BINANCE PAY</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Sản phẩm:</b> <i>{product}</i>\n<tg-emoji emoji-id="5334890573281114250">🔢</tg-emoji> <b>Số lượng:</b> {quantity}\n{balance}{note}<tg-emoji emoji-id="5278467510604160626">🏦</tg-emoji> <b>Cần thanh toán:</b> {due:,} VNĐ\n<tg-emoji emoji-id="5379773896352355687">🪙</tg-emoji> <b>Ước tính:</b> {crypto} {currency}\n<tg-emoji emoji-id="6059654836918423763">📈</tg-emoji> <b>Tỷ giá cấu hình:</b> 1 USDT ≈ {rate:,} VNĐ\n<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>Mã đơn:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> Đơn hàng sẽ bị hủy sau {minutes} phút.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏳</tg-emoji> <b>Hết hạn lúc:</b> {expires}',
-        '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>BINANCE PAY INVOICE</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Product:</b> <i>{product}</i>\n<tg-emoji emoji-id="5334890573281114250">🔢</tg-emoji> <b>Quantity:</b> {quantity}\n{balance}{note}<tg-emoji emoji-id="5278467510604160626">🏦</tg-emoji> <b>Amount due:</b> {due:,} VND\n<tg-emoji emoji-id="5379773896352355687">🪙</tg-emoji> <b>Estimated:</b> {crypto} {currency}\n<tg-emoji emoji-id="6059654836918423763">📈</tg-emoji> <b>Configured rate:</b> 1 USDT ≈ {rate:,} VND\n<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>Order code:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> Order expires in {minutes} minutes.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏳</tg-emoji> <b>Expires at:</b> {expires}',
-        '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>BINANCE PAY 账单</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>商品：</b> <i>{product}</i>\n<tg-emoji emoji-id="5334890573281114250">🔢</tg-emoji> <b>数量：</b> {quantity}\n{balance}{note}<tg-emoji emoji-id="5278467510604160626">🏦</tg-emoji> <b>应付：</b> {due:,} VND\n<tg-emoji emoji-id="5379773896352355687">🪙</tg-emoji> <b>预计：</b> {crypto} {currency}\n<tg-emoji emoji-id="6059654836918423763">📈</tg-emoji> <b>设定汇率：</b> 1 USDT ≈ {rate:,} VND\n<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>订单号：</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> 订单将在 {minutes} 分钟后过期。{refund}\n<tg-emoji emoji-id="5213349767672769194">⏳</tg-emoji> <b>到期时间：</b> {expires}',
-        icon=BINANCE_BUTTON_ICON_ID, product=html.escape(str(p['name'])), quantity=quantity, balance=balance_line, note='', due=amount_due, crypto=html.escape(str(binance_order.get('quoted_usdt') or binance_order.get('totalFee') or '')), currency=html.escape(str(binance_order.get('currency') or 'USDT')), rate=BINANCE_PAY_RATE_VND_PER_USDT, code=order_code, minutes=ORDER_EXPIRATION_SECONDS // 60, refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "", expires=(datetime.now() + timedelta(seconds=ORDER_EXPIRATION_SECONDS)).strftime('%H:%M:%S'),
+        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>THANH TOÁN {token} ({network})</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Sản phẩm:</b> <i>{product}</i> x{quantity}\n{balance}• <b>Cần thanh toán:</b> {due:,} VNĐ\n\n• <b>Số tiền {token}:</b> <code>{crypto}</code>\n• <b>Địa chỉ ví:</b> <code>{wallet}</code>\n• <b>Mạng lưới:</b> {network}\n• <b>Tỉ giá:</b> 1 USDT = {rate:,} VNĐ\n• <b>Mã đơn:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>LƯU Ý QUAN TRỌNG:</b>\n- Chuyển <b>đúng số tiền ở trên</b> để hệ thống tự nhận diện.\n- Chỉ dùng mạng <b>{network}</b>. Chuyển sai mạng sẽ mất tiền.\n- Hết hạn sau {minutes} phút.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Hết hạn lúc:</b> {expires}',
+        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>{token} PAYMENT ({network})</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Product:</b> <i>{product}</i> x{quantity}\n{balance}• <b>Amount due:</b> {due:,} VND\n\n• <b>{token} amount:</b> <code>{crypto}</code>\n• <b>Wallet address:</b> <code>{wallet}</code>\n• <b>Network:</b> {network}\n• <b>Rate:</b> 1 USDT = {rate:,} VND\n• <b>Order code:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>IMPORTANT:</b>\n- Send the <b>exact amount above</b> for automatic detection.\n- Use only the <b>{network}</b> network. Funds sent through another network may be lost.\n- Expires in {minutes} minutes.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Expires at:</b> {expires}',
+        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>{token} 支付（{network}）</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>商品：</b> <i>{product}</i> x{quantity}\n{balance}• <b>应付：</b> {due:,} VND\n\n• <b>{token} 金额：</b> <code>{crypto}</code>\n• <b>钱包地址：</b> <code>{wallet}</code>\n• <b>网络：</b> {network}\n• <b>汇率：</b> 1 USDT = {rate:,} VND\n• <b>订单号：</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>重要提示：</b>\n- 请转入<b>上方准确金额</b>以便系统自动识别。\n- 仅使用 <b>{network}</b> 网络，转错网络可能造成资金丢失。\n- {minutes} 分钟后过期。{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>到期时间：</b> {expires}',
+        token=html.escape(token_symbol), network=html.escape(network_name or "USDT"), product=html.escape(str(p['name'])), quantity=quantity, balance=balance_line, due=amount_due, crypto=html.escape(str(invoice.get("amount_text") or "")), wallet=html.escape(str(invoice.get("address") or "")), rate=invoice.get("rate", USDT_RATE_VND_PER_USDT), code=order_code, minutes=ORDER_EXPIRATION_SECONDS // 60, refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "", expires=html.escape(expires_at),
     )
     caption += _build_payment_legal_notice(user.id)
 
     try:
         created_ts = time.time()
-        sent_message = await context.bot.send_photo(
-            chat_id=user.id,
-            photo=binance_order.get("qrcodeLink"),
-            caption=caption,
-            parse_mode='HTML',
-            reply_markup=build_binance_checkout_keyboard(binance_order, order_code, user_id=user.id),
-        )
-        pending_payload = {
-            "user_id": user.id,
-            "type": "store_product",
-            "product_id": prod_id,
-            "product_name": p['name'],
-            "amount": amount_due,
-            "original_price": total_amount,
-            "total_amount": total_amount,
-            "balance_used": balance_used,
-            "quantity": quantity,
-            "time": created_ts,
-            "timestamp": created_ts,
-            "status": "pending_payment",
-            "full_name": user.full_name,
-            "username": user.username,
-            "message_id": sent_message.message_id,
-            "coupon_code": store_coupon_code,
-            "payment_method": "binance_pay",
-            "provider": "binance_pay",
-            "binance_prepay_id": binance_order.get("prepayId"),
-            "binance_checkout_url": binance_order.get("checkoutUrl"),
-            "binance_universal_url": binance_order.get("universalUrl"),
-            "binance_qrcode_link": binance_order.get("qrcodeLink"),
-            "binance_currency": binance_order.get("currency") or "USDT",
-            "binance_total_fee": str(binance_order.get("totalFee") or binance_order.get("quoted_usdt") or ""),
-            "binance_vnd_rate": str(BINANCE_PAY_RATE_VND_PER_USDT),
-        }
-        if isinstance(extra_pending_data, dict):
-            pending_payload.update(extra_pending_data)
-        await pending_set(order_code, pending_payload)
-        await save_data(force=True, tables=[PENDING_ORDERS_FILE])
-        clear_store_coupon_context(context)
-    except (TelegramError, ValueError, KeyError, AttributeError) as exc:
-        await release_reserved_order_code(order_code)
-        logger.error(f"Error sending Binance product invoice: {exc}")
-        if balance_used > 0:
-            current_info = db_get_user(user.id)
-            current_bal = current_info.get('balance', 0) if current_info else 0
-            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: Binance invoice send failed {prod_id}")
-            await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn Binance. Đã hoàn lại {amount:,}đ vào ví.\nVui lòng thử lại sau.", "Could not send the Binance invoice. {amount:,} VND was refunded to your wallet.\nPlease try again later.", "无法发送 Binance 账单。{amount:,} VND 已退回钱包。\n请稍后重试。", amount=balance_used))
-        else:
-            await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn Binance. Vui lòng thử lại sau.", "Could not send the Binance invoice. Please try again later.", "无法发送 Binance 账单，请稍后重试。"))
+        qr_photo = rpay_qr_photo(invoice)
+        if qr_photo is None:
+            raise ValueError(f"RPay invoice {invoice.get('trans_id')} khong co QR")
 
-
-async def generate_product_payment_usdt_trc20(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE,
-    prod_id: str,
-    quantity: int = 1,
-    balance_used: int = 0,
-    extra_pending_data: dict | None = None,
-):
-    user = update.effective_user
-    if not BINANCE_PAY_ID and not USDT_TRC20_WALLET_ADDRESS:
-        await _reply_payment_generation_error(
-            update,
-            context,
-            "Phương thức thanh toán này chưa được cấu hình.",
-        )
-        return
-
-    pending_code, _pending_detail = await get_user_pending_order(user.id)
-    if pending_code:
-        await context.bot.send_message(
-            user.id,
-            lt(user.id, '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> Bạn đang có đơn <b>{code}</b> chưa hoàn thành!\nVui lòng hoàn tất hoặc hủy đơn cũ trước khi tạo đơn mới.', '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> You have an unfinished order <b>{code}</b>!\nComplete or cancel it before creating a new order.', '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> 您有一个未完成订单 <b>{code}</b>！\n请先完成或取消该订单。', code=pending_code),
-            parse_mode='HTML',
-        )
-        if balance_used > 0:
-            current_info = db_get_user(user.id)
-            current_bal = current_info.get('balance', 0) if current_info else 0
-            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: Already has pending order {pending_code}")
-        return
-
-    p = products.get(prod_id)
-    if not p:
-        _refund_balance_used_if_needed(user.id, balance_used, f"Refund: Product missing {prod_id}")
-        await _reply_payment_generation_error(
-            update,
-            context,
-            lt(user.id, "Sản phẩm không tồn tại hoặc đã bị xóa.", "Product does not exist or was removed.", "商品不存在或已被删除。"),
-        )
-        return
-
-    store_coupon_code, _store_coupon_discount = get_active_store_coupon_context(context, prod_id, quantity)
-    total_amount = _get_product_checkout_total_amount(user.id, context, prod_id, p, quantity)
-    amount_due = total_amount - balance_used if balance_used > 0 else total_amount
-
-    try:
-        order_code = await generate_unique_order_code(prefix="ICLD", length=6)
-    except (TelegramError, ValueError, KeyError, AttributeError) as exc:
-        logger.error(f"Cannot generate unique USDT order code: {exc}")
-        _refund_balance_used_if_needed(user.id, balance_used, f"Refund: USDT order code failed {prod_id}")
-        await _reply_payment_generation_error(
-            update,
-            context,
-            lt(user.id, "Lỗi hệ thống. Vui lòng thử lại sau 30 giây.", "System error. Try again in 30 seconds.", "系统错误，请在 30 秒后重试。"),
-        )
-        return
-
-    try:
-        usdt_quote = await get_usdt_trc20_order_quote(order_code, amount_due)
-    except Exception as exc:
-        await release_reserved_order_code(order_code)
-        logger.error(f"Error creating USDT BEP20 quote for {order_code}: {exc}")
-        if balance_used > 0:
-            current_info = db_get_user(user.id)
-            current_bal = current_info.get('balance', 0) if current_info else 0
-            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: USDT quote failed {prod_id}")
-            await context.bot.send_message(user.id, lt(user.id, "Không thể tạo hóa đơn USDT BEP20. Đã hoàn lại {amount:,}đ vào ví.\nVui lòng thử lại sau.", "Could not create the USDT BEP20 invoice. {amount:,} VND was refunded to your wallet.\nPlease try again later.", "无法创建 USDT BEP20 账单。{amount:,} VND 已退回钱包。\n请稍后重试。", amount=balance_used))
-        else:
-            await context.bot.send_message(user.id, lt(user.id, "Không thể tạo hóa đơn USDT BEP20. Vui lòng thử lại sau.", "Could not create the USDT BEP20 invoice. Please try again later.", "无法创建 USDT BEP20 账单，请稍后重试。"))
-        return
-
-    balance_line = lt(user.id, '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Tổng giá:</b> {total:,} VNĐ\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Đã trừ ví:</b> -{used:,} VNĐ\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Total:</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Wallet used:</b> -{used:,} VND\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>总价：</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>钱包抵扣：</b> -{used:,} VND\n', total=total_amount, used=balance_used) if balance_used > 0 else ""
-    caption = lt(
-        user.id,
-        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>THANH TOÁN USDT (MẠNG TRC20)</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Sản phẩm:</b> <i>{product}</i> x{quantity}\n{balance}{note}• <b>Cần thanh toán:</b> {due:,} VNĐ\n\n• <b>Số tiền USDT:</b> <code>{crypto}</code>\n• <b>Địa chỉ ví:</b> <code>{wallet}</code>\n• <b>Mạng lưới:</b> TRON (TRC20)\n• <b>Tỉ giá:</b> 1 USDT = {rate:,} VNĐ\n• <b>Mã đơn:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>LƯU Ý QUAN TRỌNG:</b>\n- Chuyển <b>đúng số tiền ở trên</b> để hệ thống tự nhận diện.\n- Chỉ dùng mạng TRON (TRC20). Chuyển sai mạng sẽ mất tiền.\n- QR chỉ chứa địa chỉ ví; bạn cần tự điền số tiền USDT.\n- Hết hạn sau {minutes} phút.{refund}',
-        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>USDT PAYMENT (TRC20 NETWORK)</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Product:</b> <i>{product}</i> x{quantity}\n{balance}{note}• <b>Amount due:</b> {due:,} VND\n\n• <b>USDT amount:</b> <code>{crypto}</code>\n• <b>Wallet address:</b> <code>{wallet}</code>\n• <b>Network:</b> TRON (TRC20)\n• <b>Rate:</b> 1 USDT = {rate:,} VND\n• <b>Order code:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>IMPORTANT:</b>\n- Send the <b>exact amount above</b> for automatic detection.\n- Use only TRON (TRC20). Funds sent through another network may be lost.\n- The QR contains only the wallet address; enter the USDT amount manually.\n- Expires in {minutes} minutes.{refund}',
-        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>USDT 支付（TRC20 网络）</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>商品：</b> <i>{product}</i> x{quantity}\n{balance}{note}• <b>应付：</b> {due:,} VND\n\n• <b>USDT 金额：</b> <code>{crypto}</code>\n• <b>钱包地址：</b> <code>{wallet}</code>\n• <b>网络：</b> TRON (TRC20)\n• <b>汇率：</b> 1 USDT = {rate:,} VND\n• <b>订单号：</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>重要提示：</b>\n- 请转入<b>上方准确金额</b>以便系统自动识别。\n- 仅使用 TRON (TRC20)，转错网络可能造成资金丢失。\n- QR 仅包含钱包地址；请手动输入 USDT 金额。\n- {minutes} 分钟后过期。{refund}',
-        product=html.escape(str(p['name'])), quantity=quantity, balance=balance_line, note='', due=amount_due, crypto=html.escape(usdt_quote['amount_text']), wallet=html.escape(USDT_TRC20_WALLET_ADDRESS), rate=usdt_quote.get("live_rate", USDT_TRC20_RATE_VND_PER_USDT), code=order_code, minutes=ORDER_EXPIRATION_SECONDS // 60, refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "",
-    )
-    destination_lines = {
-        "THANH TOÁN USDT (MẠNG TRC20)": "THANH TOÁN USDT (BINANCE ID / BEP20)",
-        "<b>Địa chỉ ví:</b>": f"<b>ID Binance (QR):</b> <code>{html.escape(BINANCE_PAY_ID)}</code>\n• <b>Địa chỉ ví BEP20:</b>",
-        "<b>Mạng lưới:</b> TRON (TRC20)": "<b>Kênh:</b> Binance Pay hoặc BNB Smart Chain (BEP20)",
-        "- Chỉ dùng mạng TRON (TRC20). Chuyển sai mạng sẽ mất tiền.": "- Dùng QR cho Binance ID; nếu chuyển ví thì chỉ dùng BNB Smart Chain (BEP20).",
-        "<b>Wallet address:</b>": f"<b>Binance ID (QR):</b> <code>{html.escape(BINANCE_PAY_ID)}</code>\n• <b>BEP20 wallet address:</b>",
-        "USDT PAYMENT (TRC20 NETWORK)": "USDT PAYMENT (BINANCE ID / BEP20)",
-        "<b>Network:</b> TRON (TRC20)": "<b>Channel:</b> Binance Pay or BNB Smart Chain (BEP20)",
-        "- Use only TRON (TRC20). Funds sent through another network may be lost.": "- Use the QR for Binance ID; for wallet transfers, use only BNB Smart Chain (BEP20).",
-        "<b>钱包地址：</b>": f"<b>Binance ID (QR)：</b> <code>{html.escape(BINANCE_PAY_ID)}</code>\n• <b>BEP20 钱包地址：</b>",
-        "USDT 支付（TRC20 网络）": "USDT 支付（Binance ID / BEP20）",
-        "<b>网络：</b> TRON (TRC20)": "<b>渠道：</b> Binance Pay 或 BNB Smart Chain (BEP20)",
-        "- 仅使用 TRON (TRC20)，转错网络可能造成资金丢失。": "- Binance ID 请使用 QR；钱包转账仅使用 BNB Smart Chain (BEP20)。",
-        "QR chỉ chứa địa chỉ ví": "QR chỉ chứa ID Binance",
-        "QR contains only the wallet address": "The QR contains only the Binance ID",
-        "QR 仅包含钱包地址": "QR 仅包含 Binance ID",
-    }
-    for old, new in destination_lines.items():
-        caption = caption.replace(old, new)
-    caption += _build_payment_legal_notice(user.id)
-
-    try:
-        created_ts = time.time()
-        qr_target = BINANCE_PAY_ID or USDT_TRC20_WALLET_ADDRESS
-        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={qr_target}"
-        
         sent_message = await _send_product_qr_photo_or_prompt(
             update,
             context,
@@ -521,14 +379,10 @@ async def generate_product_payment_usdt_trc20(
             prod_id,
             balance_used,
             chat_id=user.id,
-            photo=qr_url,
+            photo=qr_photo,
             caption=caption,
             parse_mode='HTML',
-            reply_markup=build_usdt_trc20_checkout_keyboard(
-                order_code,
-                USDT_TRC20_WALLET_ADDRESS,
-                user_id=user.id,
-            ),
+            reply_markup=build_rpay_checkout_keyboard(invoice, order_code, user_id=user.id),
         )
         if sent_message is None:
             return
@@ -548,20 +402,19 @@ async def generate_product_payment_usdt_trc20(
             "full_name": user.full_name,
             "username": user.username,
             "message_id": sent_message.message_id,
-            "message_kind": "text",
             "coupon_code": store_coupon_code,
-            "payment_method": "usdt_bep20",
-            "provider": "usdt_multi",
-            "usdt_trc20_currency": usdt_quote.get("currency") or "USDT",
-            "usdt_trc20_network": "BNB Smart Chain (BEP20)",
-            "usdt_trc20_wallet_address": USDT_TRC20_WALLET_ADDRESS,
-            "usdt_bep20_wallet_address": USDT_BEP20_WALLET_ADDRESS,
-            "binance_pay_id": BINANCE_PAY_ID,
-            "usdt_trc20_amount": usdt_quote.get("amount_text"),
-            "usdt_trc20_amount_quant": usdt_quote.get("amount_quant"),
-            "usdt_trc20_base_amount": _decimal_to_plain_text(usdt_quote.get("base_amount") or Decimal("0")),
-            "usdt_trc20_unique_delta": _decimal_to_plain_text(usdt_quote.get("unique_delta") or Decimal("0")),
-            "usdt_trc20_rate": str(usdt_quote.get("live_rate", USDT_TRC20_RATE_VND_PER_USDT)),
+            "payment_method": "usdt_rpay",
+            "provider": "rpay",
+            "rpay_trans_id": str(invoice.get("trans_id") or ""),
+            "rpay_request_id": str(invoice.get("request_id") or ""),
+            "rpay_amount": str(invoice.get("amount_text") or ""),
+            "rpay_token": token_symbol,
+            "rpay_network": str(invoice.get("network") or ""),
+            "rpay_network_name": network_name,
+            "rpay_address": str(invoice.get("address") or ""),
+            "rpay_url_payment": str(invoice.get("url_payment") or ""),
+            "rpay_expires_at": expires_at,
+            "rpay_rate": str(invoice.get("rate", USDT_RATE_VND_PER_USDT)),
         }
         if isinstance(extra_pending_data, dict):
             pending_payload.update(extra_pending_data)
@@ -570,11 +423,155 @@ async def generate_product_payment_usdt_trc20(
         clear_store_coupon_context(context)
     except (TelegramError, ValueError, KeyError, AttributeError) as exc:
         await release_reserved_order_code(order_code)
-        logger.error(f"Error sending USDT BEP20 product invoice: {exc}")
+        logger.error(f"Error sending RPay product invoice: {exc}")
         if balance_used > 0:
             current_info = db_get_user(user.id)
             current_bal = current_info.get('balance', 0) if current_info else 0
-            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: USDT invoice send failed {prod_id}")
-            await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn USDT BEP20. Đã hoàn lại {amount:,}đ vào ví.\nVui lòng thử lại sau.", "Could not send the USDT BEP20 invoice. {amount:,} VND was refunded to your wallet.\nPlease try again later.", "无法发送 USDT BEP20 账单。{amount:,} VND 已退回钱包。\n请稍后重试。", amount=balance_used))
+            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: RPay invoice send failed {prod_id}")
+            await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn USDT. Đã hoàn lại {amount:,}đ vào ví.\nVui lòng thử lại sau.", "Could not send the USDT invoice. {amount:,} VND was refunded to your wallet.\nPlease try again later.", "无法发送 USDT 账单。{amount:,} VND 已退回钱包。\n请稍后重试。", amount=balance_used))
         else:
-            await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn USDT BEP20. Vui lòng thử lại sau.", "Could not send the USDT BEP20 invoice. Please try again later.", "无法发送 USDT BEP20 账单，请稍后重试。"))
+            await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn USDT. Vui lòng thử lại sau.", "Could not send the USDT invoice. Please try again later.", "无法发送 USDT 账单，请稍后重试。"))
+
+
+async def generate_product_payment_binance_pay(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    prod_id: str,
+    quantity: int = 1,
+    balance_used: int = 0,
+    extra_pending_data: dict | None = None,
+):
+    """Hoa don Binance Pay: khach chuyen thang vao Binance ID cua shop.
+
+    Khong co API tao hoa don, doi soat bang feed lich su nen so tien phai duy
+    nhat - xem app/integrations/binancepay_api.py.
+    """
+    user = update.effective_user
+    if not is_binance_pay_enabled():
+        await _reply_payment_generation_error(
+            update,
+            context,
+            lt(user.id, "Phương thức thanh toán này chưa được cấu hình.", "This payment method is not configured yet.", "此付款方式尚未配置。"),
+        )
+        return
+
+    pending_code, _pending_detail = await get_user_pending_order(user.id)
+    if pending_code:
+        await context.bot.send_message(
+            user.id,
+            lt(user.id, '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> Bạn đang có đơn <b>{code}</b> chưa hoàn thành!\nVui lòng hoàn tất hoặc hủy đơn cũ trước khi tạo đơn mới.', '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> You have an unfinished order <b>{code}</b>!\nComplete or cancel it before creating a new order.', '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> 您有一个未完成订单 <b>{code}</b>！\n请先完成或取消该订单。', code=pending_code),
+            parse_mode='HTML',
+        )
+        if balance_used > 0:
+            current_info = db_get_user(user.id)
+            current_bal = current_info.get('balance', 0) if current_info else 0
+            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: Already has pending order {pending_code}")
+        return
+
+    p = products.get(prod_id)
+    if not p:
+        _refund_balance_used_if_needed(user.id, balance_used, f"Refund: Product missing {prod_id}")
+        await _reply_payment_generation_error(
+            update,
+            context,
+            lt(user.id, "Sản phẩm không tồn tại hoặc đã bị xóa.", "Product does not exist or was removed.", "商品不存在或已被删除。"),
+        )
+        return
+
+    store_coupon_code, _store_coupon_discount = get_active_store_coupon_context(context, prod_id, quantity)
+    total_amount = _get_product_checkout_total_amount(user.id, context, prod_id, p, quantity)
+    amount_due = total_amount - balance_used if balance_used > 0 else total_amount
+
+    try:
+        order_code = await generate_unique_order_code(prefix="ICLD", length=6)
+    except (TelegramError, ValueError, KeyError, AttributeError) as exc:
+        logger.error(f"Cannot generate unique Binance Pay order code: {exc}")
+        _refund_balance_used_if_needed(user.id, balance_used, f"Refund: Binance Pay order code failed {prod_id}")
+        await _reply_payment_generation_error(
+            update,
+            context,
+            lt(user.id, "Lỗi hệ thống. Vui lòng thử lại sau 30 giây.", "System error. Try again in 30 seconds.", "系统错误，请在 30 秒后重试。"),
+        )
+        return
+
+    try:
+        quote = await create_binance_pay_order(order_code=order_code, amount_vnd=amount_due)
+    except Exception as exc:
+        await release_reserved_order_code(order_code)
+        logger.error(f"Error creating Binance Pay quote for {order_code}: {exc}")
+        if balance_used > 0:
+            current_info = db_get_user(user.id)
+            current_bal = current_info.get('balance', 0) if current_info else 0
+            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: Binance Pay quote failed {prod_id}")
+            await context.bot.send_message(user.id, lt(user.id, "Không thể tạo hóa đơn Binance Pay. Đã hoàn lại {amount:,}đ vào ví.\nVui lòng thử lại sau.", "Could not create the Binance Pay invoice. {amount:,} VND was refunded to your wallet.\nPlease try again later.", "无法创建 Binance Pay 账单。{amount:,} VND 已退回钱包。\n请稍后重试。", amount=balance_used))
+        else:
+            await context.bot.send_message(user.id, lt(user.id, "Không thể tạo hóa đơn Binance Pay. Vui lòng thử lại sau.", "Could not create the Binance Pay invoice. Please try again later.", "无法创建 Binance Pay 账单，请稍后重试。"))
+        return
+
+    amount_text = str(quote.get("amount_text") or "")
+    balance_line = lt(user.id, '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Tổng giá:</b> {total:,} VNĐ\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Đã trừ ví:</b> -{used:,} VNĐ\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Total:</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Wallet used:</b> -{used:,} VND\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>总价：</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>钱包抵扣：</b> -{used:,} VND\n', total=total_amount, used=balance_used) if balance_used > 0 else ""
+    caption = lt(
+        user.id,
+        '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>THANH TOÁN BINANCE PAY</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Sản phẩm:</b> <i>{product}</i> x{quantity}\n{balance}• <b>Cần thanh toán:</b> {due:,} VNĐ\n\n• <b>Số tiền USDT:</b> <code>{crypto}</code>\n• <b>ID Binance:</b> <code>{payid}</code>\n• <b>Tỉ giá:</b> 1 USDT = {rate:,} VNĐ\n• <b>Mã đơn:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>LƯU Ý QUAN TRỌNG:</b>\n- Chuyển <b>đúng số tiền {crypto} USDT</b> — kể cả số lẻ cuối. Số lẻ đó là thứ duy nhất giúp bot nhận ra đơn của bạn.\n- Chuyển thiếu hoặc thừa dù chỉ 0.0001 USDT thì bot <b>không tự nhận</b> được, phải liên hệ hỗ trợ đối soát tay.\n- Chỉ chuyển qua <b>Binance Pay</b> tới đúng ID ở trên.\n- Hết hạn sau {minutes} phút.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Hết hạn lúc:</b> {expires}',
+        '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>BINANCE PAY PAYMENT</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Product:</b> <i>{product}</i> x{quantity}\n{balance}• <b>Amount due:</b> {due:,} VND\n\n• <b>USDT amount:</b> <code>{crypto}</code>\n• <b>Binance ID:</b> <code>{payid}</code>\n• <b>Rate:</b> 1 USDT = {rate:,} VND\n• <b>Order code:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>IMPORTANT:</b>\n- Send <b>exactly {crypto} USDT</b>, including the trailing decimals. Those decimals are the only thing that identifies your order.\n- If you send even 0.0001 USDT more or less, the bot <b>cannot match it automatically</b> and support has to reconcile it by hand.\n- Send via <b>Binance Pay</b> to the ID above only.\n- Expires in {minutes} minutes.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Expires at:</b> {expires}',
+        '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>BINANCE PAY 支付</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>商品：</b> <i>{product}</i> x{quantity}\n{balance}• <b>应付：</b> {due:,} VND\n\n• <b>USDT 金额：</b> <code>{crypto}</code>\n• <b>Binance ID：</b> <code>{payid}</code>\n• <b>汇率：</b> 1 USDT = {rate:,} VND\n• <b>订单号：</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>重要提示：</b>\n- 请转入<b>准确的 {crypto} USDT</b>，包括末尾小数。该小数是识别您订单的唯一依据。\n- 多转或少转哪怕 0.0001 USDT，机器人都<b>无法自动识别</b>，需联系客服人工核对。\n- 仅通过 <b>Binance Pay</b> 转至上方 ID。\n- {minutes} 分钟后过期。{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>到期时间：</b> {expires}',
+        icon=CRYPTO_BUTTON_ICON_ID, product=html.escape(str(p['name'])), quantity=quantity, balance=balance_line, due=amount_due, crypto=html.escape(amount_text), payid=html.escape(str(quote.get("binance_pay_id") or "")), rate=quote.get("rate", USDT_RATE_VND_PER_USDT), code=order_code, minutes=ORDER_EXPIRATION_SECONDS // 60, refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "", expires=(datetime.now() + timedelta(seconds=ORDER_EXPIRATION_SECONDS)).strftime('%H:%M:%S'),
+    )
+    caption += _build_payment_legal_notice(user.id)
+
+    try:
+        created_ts = time.time()
+        sent_message = await _send_product_qr_photo_or_prompt(
+            update,
+            context,
+            order_code,
+            prod_id,
+            balance_used,
+            chat_id=user.id,
+            photo=binance_pay_qr_photo(),
+            caption=caption,
+            parse_mode='HTML',
+            reply_markup=build_binance_pay_checkout_keyboard(order_code, amount_text, user_id=user.id),
+        )
+        if sent_message is None:
+            return
+        pending_payload = {
+            "user_id": user.id,
+            "type": "store_product",
+            "product_id": prod_id,
+            "product_name": p['name'],
+            "amount": amount_due,
+            "original_price": total_amount,
+            "total_amount": total_amount,
+            "balance_used": balance_used,
+            "quantity": quantity,
+            "time": created_ts,
+            "timestamp": created_ts,
+            "status": "pending_payment",
+            "full_name": user.full_name,
+            "username": user.username,
+            "message_id": sent_message.message_id,
+            "coupon_code": store_coupon_code,
+            "payment_method": "binance_pay",
+            "provider": "binance_pay",
+            # Doi soat khop theo dung chuoi nay, nen no phai duoc luu y het nhu
+            # da hien cho khach.
+            "binance_pay_amount": amount_text,
+            "binance_pay_id": str(quote.get("binance_pay_id") or ""),
+            "binance_pay_rate": str(quote.get("rate", USDT_RATE_VND_PER_USDT)),
+        }
+        if isinstance(extra_pending_data, dict):
+            pending_payload.update(extra_pending_data)
+        await pending_set(order_code, pending_payload)
+        await save_data(force=True, tables=[PENDING_ORDERS_FILE])
+        clear_store_coupon_context(context)
+    except (TelegramError, ValueError, KeyError, AttributeError) as exc:
+        await release_reserved_order_code(order_code)
+        logger.error(f"Error sending Binance Pay product invoice: {exc}")
+        if balance_used > 0:
+            current_info = db_get_user(user.id)
+            current_bal = current_info.get('balance', 0) if current_info else 0
+            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: Binance Pay invoice send failed {prod_id}")
+            await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn Binance Pay. Đã hoàn lại {amount:,}đ vào ví.\nVui lòng thử lại sau.", "Could not send the Binance Pay invoice. {amount:,} VND was refunded to your wallet.\nPlease try again later.", "无法发送 Binance Pay 账单。{amount:,} VND 已退回钱包。\n请稍后重试。", amount=balance_used))
+        else:
+            await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn Binance Pay. Vui lòng thử lại sau.", "Could not send the Binance Pay invoice. Please try again later.", "无法发送 Binance Pay 账单，请稍后重试。"))

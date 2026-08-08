@@ -68,7 +68,7 @@ class Order(BaseModel):
     delivery_method: str = Field("", description="auto_stock | manual_completed | social_service")
 
     # Payment
-    payment_method: str = Field("bank_transfer", description="bank_transfer | binance_pay | usdt_bep20 | balance")
+    payment_method: str = Field("bank_transfer", description="bank_transfer | usdt_rpay | binance_pay | balance")
     balance_used: int = Field(0, ge=0, description="Wallet balance portion used")
     qr_amount: int = Field(0, ge=0, description="Amount paid via QR/transfer")
     coupon_used: str = Field("", description="Applied coupon code")
@@ -122,7 +122,7 @@ class PendingOrder(BaseModel):
     transfer_content: str = Field("", description="Expected bank transfer description")
     secret_transfer_code: str = Field("", description="Secret code to match in transfer description")
     payment_method: str = Field("bank_transfer")
-    provider: str = Field("", description="Payment provider: bank_transfer | binance_pay | usdt_multi")
+    provider: str = Field("", description="Payment provider: bank_transfer | rpay | binance_pay")
     balance_used: int = Field(0, ge=0)
     coupon_code: str = Field("")
     original_price: int = Field(0, ge=0)
@@ -137,12 +137,15 @@ class PendingOrder(BaseModel):
     username: str | None = None
     email: str | None = None
 
-    # Binance Pay
-    binance_prepay_id: str = Field("")
+    # RPay USDT
+    rpay_trans_id: str = Field("")
+    rpay_request_id: str = Field("")
+    rpay_amount: str = Field("", description="Invoice amount in USDT, as sent to RPay")
 
-    # USDT TRC20
-    usdt_trc20_amount: str = Field("")
-    usdt_trc20_amount_quant: str = Field("")
+    # Binance Pay. Reconciliation matches on this exact string, so it must stay
+    # byte-identical to what the customer was shown.
+    binance_pay_amount: str = Field("", description="Unique USDT amount the customer must send")
+    binance_pay_id: str = Field("")
 
     model_config = ConfigDict(extra="allow")
 

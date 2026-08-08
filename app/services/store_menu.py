@@ -223,7 +223,7 @@ def create_store_menu(selected_category=None, user_id=None):
         if not price_vnd: return "0đ" if lang == "vi" else "0 USDT"
         if lang == "vi": return f"{price_vnd:,}đ"
         try:
-            rate = float(globals().get("_cached_live_usdt_rate") or USDT_TRC20_RATE_VND_PER_USDT)
+            rate = float(globals().get("_cached_live_usdt_rate") or USDT_RATE_VND_PER_USDT)
             return f"{price_vnd / rate:.2f} USDT"
         except (TypeError, ValueError, ZeroDivisionError):
             return f"{price_vnd:,} VND"

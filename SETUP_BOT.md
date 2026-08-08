@@ -57,7 +57,7 @@ Lay `TELEGRAM_TOKEN` trong BotFather. `ADMIN_USER_ID` la Telegram numeric ID cua
 
 ### Cau hinh web admin
 
-File `.env.admin` dung cho tai khoan/session web admin. Neu chua co, co the de trong cac secret; app se tu tao `ADMIN_WEB_SESSION_SECRET` khi chay.
+Session web admin duoc ky bang `ADMIN_WEB_SESSION_SECRET` trong `.env`. De trong thi app sinh khoa ngau nhien moi lan khoi dong, nghia la moi admin bi dang xuat sau mot lan restart - sinh khoa co dinh bang `openssl rand -hex 32` roi dan vao `.env`.
 
 ```env
 ADMIN_WEB_USERNAME=
@@ -254,7 +254,7 @@ Bot co co che tu xoa webhook khi khoi dong. Neu van loi, vao BotFather hoac dung
 
 ## 9. Luu Y Bao Mat
 
-- Khong commit `.env` va `.env.admin` len Git.
+- Khong commit `.env` len Git.
 - Doi ngay token/secret neu tung bi lo.
 - Khong dung lai token, bank password, API secret cu.
 - Neu chia source cho nguoi khac, chi gui source da scrub va `.env.example`, khong gui `.env` that.

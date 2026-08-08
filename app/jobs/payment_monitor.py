@@ -180,15 +180,8 @@ async def _cleanup_expired_pending_orders(context: ContextTypes.DEFAULT_TYPE, cu
         if not details:
             continue
         try:
-            if details.get("provider") == "binance_pay":
-                try:
-                    await close_binance_pay_order(
-                        order_code=code,
-                        prepay_id=str(details.get("binance_prepay_id") or ""),
-                    )
-                except Exception as e:
-                    logger.exception(f"Cannot close expired Binance order {code}: {e}", exc_info=e)
-
+            # RPay tu het han hoa don theo expireMinutes da gui luc tao, khong
+            # co endpoint huy nen khong can goi gi them o day.
             user_id = details.get('user_id')
             refund_text = ""
             balance_used = details.get('balance_used', 0)
@@ -245,187 +238,137 @@ def _cleanup_expired_api_deposits(current_time: float) -> bool:
     return bool(expired_deposits)
 
 
-async def _scan_usdt_bep20_payments(synthetic_transactions: list) -> None:
-    from app.integrations.payments_core import fetch_usdt_bep20_transfers, is_usdt_bep20_enabled
-    if not is_usdt_bep20_enabled():
-        return
-    usdt_pending_orders = []
-    for order_code, order_details in await pending_items_snapshot():
-        if order_details.get("provider") not in {"usdt_trc20", "usdt_multi"} or order_details.get("status") != "pending_payment":
-            continue
-        expected_amount = int(order_details.get("amount", 0) or 0)
-        created_ts = float(order_details.get("timestamp") or order_details.get("time") or 0)
-        if expected_amount <= 0 or created_ts <= 0:
-            continue
-        usdt_pending_orders.append((order_code, order_details, expected_amount, int(created_ts * 1000)))
+async def _scan_rpay_payments(synthetic_transactions: list) -> dict:
+    """RPay: rut het hoa don callback da xac nhan (duong chinh, gan tuc thi),
+    roi doi soat lai bang GetInvoiceStatus (du phong khi callback bi mat).
 
-    if not usdt_pending_orders:
-        return
-    start_timestamp_ms = max(0, min(item[3] for item in usdt_pending_orders) - 60_000)
+    Ca hai deu nap dung dang {"transactionID","description","amount"} vao
+    `synthetic_transactions`, dung chung pipeline khop-don/cong-tien ben duoi
+    (check_payment_job) - trung trans_id giua callback va poll van chi cong 1
+    lan nho db_claim_transaction() khoa theo transactionID.
+
+    Tra ve trang thai suc khoe: {"enabled": bool, "ok": bool, "error": str,
+    "count": int}.
+    """
+    from app.integrations.rpay_api import (
+        is_rpay_enabled,
+        rpay_callback_inbox,
+        rpay_poll_pending_invoices,
+    )
+
+    if not is_rpay_enabled():
+        return {"enabled": False, "ok": True, "error": "", "count": 0}
+
+    found = 0
+
+    # 1) Callback inbox - rut het (khong co await xen giua doc/xoa nen an toan).
+    if rpay_callback_inbox:
+        drained, rpay_callback_inbox[:] = list(rpay_callback_inbox), []
+        synthetic_transactions.extend(drained)
+        found += len(drained)
+
+    # 2) Poll du phong - hoi trang thai tung hoa don RPay dang cho.
     try:
-        transfers = await fetch_usdt_bep20_transfers(
-            USDT_BEP20_WALLET_ADDRESS,
-            start_timestamp_ms=start_timestamp_ms,
-        )
-        matched_hashes = set()
-        for order_code, order_details, expected_amount, created_ts_ms in sorted(usdt_pending_orders, key=lambda item: item[3]):
-            expire_ts_ms = created_ts_ms + (ORDER_EXPIRATION_SECONDS * 1000)
-            for transfer in transfers:
-                tx_hash = str(transfer.get("hash") or "").strip()
-                if not tx_hash or tx_hash in matched_hashes or db_check_tx_exists(f"BEP20:{tx_hash}"):
-                    continue
-                tx_amount = str(transfer.get("amount_display") or "").strip()
-                expected_text = str(order_details.get("usdt_trc20_amount") or "").strip()
-                try:
-                    if Decimal(tx_amount) != Decimal(expected_text):
-                        continue
-                except (ValueError, ArithmeticError):
-                    continue
-                tx_timestamp = int(transfer.get("block_timestamp") or transfer.get("timestamp") or transfer.get("block_ts") or 0)
-                if tx_timestamp and tx_timestamp < created_ts_ms:
-                    continue
-                if tx_timestamp and tx_timestamp > expire_ts_ms + (BANK_CHECK_INTERVAL_SECONDS * 1000):
-                    continue
-                matched_hashes.add(tx_hash)
-                synthetic_transactions.append({
-                    "transactionID": f"BEP20:{tx_hash}",
-                    "description": order_code,
-                    "amount": expected_amount,
-                })
-                break
+        polled = await rpay_poll_pending_invoices()
+        for tx in polled:
+            if db_check_tx_exists(tx["transactionID"]):
+                continue
+            synthetic_transactions.append(tx)
+            found += 1
     except Exception as e:
-        logger.exception(f"USDT BEP20 scan failed: {e}", exc_info=e)
+        logger.warning(f"RPay poll scan failed: {e}")
+        return {"enabled": True, "ok": False, "error": str(e), "count": found}
+
+    return {"enabled": True, "ok": True, "error": "", "count": found}
 
 
-async def _scan_binance_pay_payments(synthetic_transactions: list) -> None:
+
+async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
+    """Binance Pay: doi soat bang feed lich su (khong co callback).
+
+    Feed khong tra ve noi dung chuyen khoan nen khong khop duoc theo ma ICLD.
+    Chi con SO TIEN + CUA SO THOI GIAN. Ba rang buoc giu cho no an toan:
+
+      1. So tien phai trung tuyet doi. Moi don da duoc cap so le rieng luc tao
+         (allocate_binance_pay_amount), nen trong dieu kien binh thuong khong
+         hai don nao dung chung mot so.
+      2. Neu van co hai don cung so tien (vi du don khoi phuc tu file cu), CA
+         HAI deu bi bo qua. Cong nham nguoi la mat hang, tha de admin doi soat
+         tay.
+      3. Giao dich phai roi trong [tao don - leeway, het han + leeway].
+
+    So tien cong cho khach luon lay tu don pending, khong bao gio tu feed.
+    """
+    from app.integrations.binancepay_api import (
+        fetch_binance_pay_transactions,
+        is_binance_pay_enabled,
+    )
+
     if not is_binance_pay_enabled():
-        return
+        return {"enabled": False, "ok": True, "error": "", "count": 0}
+
+    pending_by_amount: dict = {}
     for order_code, order_details in await pending_items_snapshot():
         if order_details.get("provider") != "binance_pay" or order_details.get("status") != "pending_payment":
             continue
-        expected_amount = int(order_details.get("amount", 0) or 0)
-        if expected_amount <= 0:
+        expected_vnd = int(order_details.get("amount", 0) or 0)
+        amount_text = str(order_details.get("binance_pay_amount") or "").strip()
+        created_ts = float(order_details.get("timestamp") or order_details.get("time") or 0)
+        if expected_vnd <= 0 or not amount_text or created_ts <= 0:
             continue
-        try:
-            binance_data = await query_binance_pay_order(
-                order_code=order_code,
-                prepay_id=str(order_details.get("binance_prepay_id") or ""),
+        pending_by_amount.setdefault(amount_text, []).append((order_code, expected_vnd, created_ts))
+
+    if not pending_by_amount:
+        return {"enabled": True, "ok": True, "error": "", "count": 0}
+
+    for amount_text, orders in pending_by_amount.items():
+        if len(orders) > 1:
+            logger.error(
+                "Binance Pay: %s don dang cho cung so tien %s USDT (%s) -> bo qua het, can doi soat tay",
+                len(orders),
+                amount_text,
+                ", ".join(code for code, _vnd, _ts in orders),
             )
-            order_status = str(binance_data.get("status") or "").upper()
-            if order_status == "PAID":
-                tx_ref = binance_data.get("transactionId") or order_details.get("binance_prepay_id") or order_code
-                synthetic_transactions.append({
-                    "transactionID": f"BINPAY:{tx_ref}",
-                    "description": order_code,
-                    "amount": expected_amount,
-                })
-        except Exception as e:
-            logger.exception(f"Binance Pay query failed for {order_code}: {e}", exc_info=e)
 
-
-async def _scan_binance_pay_id_payments(synthetic_transactions: list) -> None:
-    from app.integrations.payments_core import fetch_binance_pay_id_transactions, is_binance_pay_id_enabled
-    if not is_binance_pay_id_enabled():
-        return
-    pending = []
-    for order_code, order_details in await pending_items_snapshot():
-        if order_details.get("provider") not in {"binance_pay_id", "usdt_multi"} or order_details.get("status") != "pending_payment":
-            continue
-        expected_amount = int(order_details.get("amount", 0) or 0)
-        created_ts = float(order_details.get("timestamp") or order_details.get("time") or 0)
-        if expected_amount > 0 and created_ts > 0:
-            pending.append((order_code, order_details, expected_amount, int(created_ts * 1000)))
-    if not pending:
-        return
-
-    start_timestamp_ms = max(0, min(item[3] for item in pending) - 60_000)
     try:
-        transfers = await fetch_binance_pay_id_transactions(start_timestamp_ms=start_timestamp_ms)
-        matched_hashes = set()
-        for order_code, order_details, expected_amount, created_ts_ms in sorted(pending, key=lambda item: item[3]):
-            expire_ts_ms = created_ts_ms + (ORDER_EXPIRATION_SECONDS * 1000)
-            for transfer in transfers:
-                tx_hash = str(transfer.get("transactionId") or "").strip()
-                if not tx_hash or tx_hash in matched_hashes or db_check_tx_exists(f"BINPAYID:{tx_hash}"):
-                    continue
-                try:
-                    if Decimal(str(transfer.get("amount") or 0)) != Decimal(str(order_details.get("usdt_trc20_amount") or 0)):
-                        continue
-                except (TypeError, ValueError, ArithmeticError):
-                    continue
-                tx_timestamp = int(transfer.get("transactionTime") or 0)
-                if tx_timestamp and (tx_timestamp < created_ts_ms or tx_timestamp > expire_ts_ms + (BANK_CHECK_INTERVAL_SECONDS * 1000)):
-                    continue
-                matched_hashes.add(tx_hash)
-                synthetic_transactions.append({
-                    "transactionID": f"BINPAYID:{tx_hash}",
-                    "description": order_code,
-                    "amount": expected_amount,
-                })
-                break
+        transfers = await fetch_binance_pay_transactions()
     except Exception as e:
-        logger.exception(f"Binance Pay ID scan failed: {e}", exc_info=e)
+        logger.warning(f"Binance Pay history scan failed: {e}")
+        return {"enabled": True, "ok": False, "error": str(e), "count": 0}
 
-
-async def _scan_binance_spot_payments(synthetic_transactions: list) -> None:
-    from app.integrations.payments_core import is_binance_spot_enabled, fetch_binance_spot_deposits
-    if not is_binance_spot_enabled():
-        return
-    usdt_pending_orders = []
-    for order_code, order_details in await pending_items_snapshot():
-        if order_details.get("provider") not in {"usdt_trc20", "usdt_multi"} or order_details.get("status") != "pending_payment":
+    found = 0
+    leeway_ms = BINANCE_PAY_MATCH_LEEWAY_SECONDS * 1000
+    matched_amounts = set()
+    for transfer in transfers:
+        amount_text = transfer["amount_text"]
+        orders = pending_by_amount.get(amount_text)
+        # Bo qua ca cum khi trung so tien (rang buoc 2), va khi mot giao dich
+        # khac trong cung vong quet da khop don nay roi.
+        if not orders or len(orders) != 1 or amount_text in matched_amounts:
             continue
-        expected_amount = int(order_details.get("amount", 0) or 0)
-        expected_quant = str(order_details.get("usdt_trc20_amount_quant") or "").strip()
-        created_ts = float(order_details.get("timestamp") or order_details.get("time") or 0)
-        if expected_amount <= 0 or not expected_quant or created_ts <= 0:
-            continue
-        usdt_pending_orders.append((order_code, order_details, expected_amount, expected_quant, int(created_ts * 1000)))
 
-    if not usdt_pending_orders:
-        return
-    start_timestamp_ms = max(0, min(item[4] for item in usdt_pending_orders) - 60_000)
-    try:
-        deposits = await fetch_binance_spot_deposits(start_timestamp_ms=start_timestamp_ms)
-        logger.debug(f"LAM SHOP CRON (Binance Spot): Tìm thấy {len(deposits)} giao dịch nạp từ {start_timestamp_ms}")
-        if deposits:
-            logger.debug(f"DEBUG Binance Spot Data: {[d.get('txId') + ' (' + str(d.get('amount')) + ' ' + d.get('coin') + ' status:' + str(d.get('status')) + ')' for d in deposits[:3]]}...")
-        matched_hashes = set()
-        for order_code, order_details, expected_amount, expected_quant, created_ts_ms in sorted(usdt_pending_orders, key=lambda item: item[4]):
-            expire_ts_ms = created_ts_ms + (ORDER_EXPIRATION_SECONDS * 1000)
-            for dep in deposits:
-                # 1 = success
-                if int(dep.get("status", 0)) != 1:
-                    continue
-                tx_id = str(dep.get("txId") or "").strip()
-                if not tx_id or tx_id in matched_hashes or db_check_tx_exists(f"BINSPOT:{tx_id}"):
-                    continue
-                
-                # Verify exact amount matches expected quote
-                tx_amount = str(dep.get("amount") or "").strip()
-                expected_text = str(order_details.get("usdt_trc20_amount") or "").strip()
-                
-                try:
-                    if Decimal(tx_amount) != Decimal(expected_text):
-                        continue
-                except (ValueError, ArithmeticError):
-                    continue
-                    
-                tx_timestamp = int(dep.get("insertTime") or 0)
-                if tx_timestamp and tx_timestamp < created_ts_ms:
-                    continue
-                if tx_timestamp and tx_timestamp > expire_ts_ms + (BANK_CHECK_INTERVAL_SECONDS * 1000):
-                    continue
-                    
-                matched_hashes.add(tx_id)
-                synthetic_transactions.append({
-                    "transactionID": f"BINSPOT:{tx_id}",
-                    "description": order_code,
-                    "amount": expected_amount,
-                })
-                break
-    except Exception as e:
-        logger.exception(f"Binance Spot scan failed: {e}", exc_info=e)
+        order_code, expected_vnd, created_ts = orders[0]
+        transaction_ref = binance_pay_normalize_ref(transfer["transaction_id"])
+        if db_check_tx_exists(transaction_ref):
+            continue
+
+        created_ts_ms = int(created_ts * 1000)
+        expire_ts_ms = created_ts_ms + (ORDER_EXPIRATION_SECONDS * 1000)
+        timestamp_ms = int(transfer.get("timestamp_ms") or 0)
+        if timestamp_ms <= 0:
+            continue
+        if timestamp_ms < created_ts_ms - leeway_ms or timestamp_ms > expire_ts_ms + leeway_ms:
+            continue
+
+        matched_amounts.add(amount_text)
+        synthetic_transactions.append({
+            "transactionID": transaction_ref,
+            "description": order_code,
+            "amount": expected_vnd,
+        })
+        found += 1
+
+    return {"enabled": True, "ok": True, "error": "", "count": found}
 
 
 async def _scan_sepay_payments(synthetic_transactions: list) -> dict:
@@ -489,10 +432,12 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         f"API Nạp chờ: {len(pending_api_deposits)} | Ví nạp chờ: {len(pending_user_topups)}"
     )
     synthetic_transactions: list = []
-    await _scan_usdt_bep20_payments(synthetic_transactions)
-    await _scan_binance_pay_id_payments(synthetic_transactions)
-    await _scan_binance_pay_payments(synthetic_transactions)
-    await _scan_binance_spot_payments(synthetic_transactions)
+    rpay_status = await _scan_rpay_payments(synthetic_transactions)
+    if not rpay_status["ok"]:
+        logger.warning(f"❌ LỖI API RPAY: {rpay_status['error'] or 'Unknown Error'}")
+    binance_pay_status = await _scan_binance_pay_payments(synthetic_transactions)
+    if not binance_pay_status["ok"]:
+        logger.warning(f"❌ LỖI FEED BINANCE PAY: {binance_pay_status['error'] or 'Unknown Error'}")
     sepay_status = await _scan_sepay_payments(synthetic_transactions)
 
     try:

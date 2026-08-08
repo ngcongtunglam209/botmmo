@@ -443,7 +443,7 @@ async def _show_store_product_detail(
         if not price_vnd: return "0đ" if lang == "vi" else "0 USDT"
         if lang == "vi": return f"{price_vnd:,}đ"
         try:
-            rate = float(globals().get("_cached_live_usdt_rate") or USDT_TRC20_RATE_VND_PER_USDT)
+            rate = float(globals().get("_cached_live_usdt_rate") or USDT_RATE_VND_PER_USDT)
             return f"{price_vnd / rate:.2f} USDT"
         except (TypeError, ValueError, ZeroDivisionError):
             return f"{price_vnd:,} VND"
@@ -796,9 +796,12 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             else:
                 btns.append([_btn(manual["none"], icon_id="5273914604752216432", callback_data="ignore", style="danger")])
 
-            from app.integrations.payments_core import is_usdt_trc20_enabled, is_binance_pay_id_enabled
-            if is_usdt_trc20_enabled() or is_binance_pay_id_enabled():
-                btns.append([_btn("USDT (Binance ID / BEP20)", icon_id="5281029063459234079", callback_data=f"pay_prod_usdt_trc20_{prod_id}_1", style="success")])
+            from app.integrations.payments_core import is_usdt_payment_enabled
+            if is_usdt_payment_enabled():
+                btns.append([_btn("USDT (RPay)", icon_id="5281029063459234079", callback_data=f"pay_prod_rpay_{prod_id}_1", style="success")])
+            from app.integrations.binancepay_api import is_binance_pay_enabled
+            if is_binance_pay_enabled():
+                btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_1", style="success")])
             from app.integrations.payments_core import is_bank_transfer_enabled
             if is_bank_transfer_enabled():
                 btns.append([_btn(labels["bank"], icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_1", style="success")])
@@ -901,9 +904,12 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         else:
             btns.append([_btn(f"{bal_text} - {labels['insufficient']}", icon_id="5273914604752216432", callback_data="ignore", style="danger")])
 
-        from app.integrations.payments_core import is_usdt_trc20_enabled, is_binance_pay_id_enabled
-        if is_usdt_trc20_enabled() or is_binance_pay_id_enabled():
-            btns.append([_btn("USDT (Binance ID / BEP20)", icon_id="5281029063459234079", callback_data=f"pay_prod_usdt_trc20_{prod_id}_{qty}", style="success")])
+        from app.integrations.payments_core import is_usdt_payment_enabled
+        if is_usdt_payment_enabled():
+            btns.append([_btn("USDT (RPay)", icon_id="5281029063459234079", callback_data=f"pay_prod_rpay_{prod_id}_{qty}", style="success")])
+        from app.integrations.binancepay_api import is_binance_pay_enabled
+        if is_binance_pay_enabled():
+            btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_{qty}", style="success")])
         from app.integrations.payments_core import is_bank_transfer_enabled
         if is_bank_transfer_enabled():
             btns.append([_btn(labels["bank"], icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}", style="success")])
@@ -1373,8 +1379,8 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             pass
         return True
 
-    elif data.startswith("pay_prod_usdt_trc20_"):
-        clean_data = data.replace("pay_prod_usdt_trc20_", "")
+    elif data.startswith("pay_prod_rpay_"):
+        clean_data = data.replace("pay_prod_rpay_", "")
         if "_" in clean_data:
             prod_id, qty_str = clean_data.rsplit("_", 1)
             try:
@@ -1388,19 +1394,44 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         if not p:
             await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
-        from app.handlers.payment_generation import generate_product_payment_usdt_trc20
+        from app.handlers.payment_generation import generate_product_payment_rpay
         # Delete old message to avoid duplicate buttons
         try:
             await query.delete_message()
         except Exception:
             pass
-        await generate_product_payment_usdt_trc20(update, context, prod_id, qty)
+        await generate_product_payment_rpay(update, context, prod_id, qty)
         return True
 
     elif data.startswith("pay_prod_binance_"):
+        clean_data = data.replace("pay_prod_binance_", "")
+        if "_" in clean_data:
+            prod_id, qty_str = clean_data.rsplit("_", 1)
+            try:
+                qty = int(qty_str)
+            except ValueError:
+                prod_id = clean_data; qty = 1
+        else:
+            prod_id = clean_data; qty = 1
+
+        p = products.get(prod_id)
+        if not p:
+            await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
+            return True
+        from app.handlers.payment_generation import generate_product_payment_binance_pay
+        # Delete old message to avoid duplicate buttons
+        try:
+            await query.delete_message()
+        except Exception:
+            pass
+        await generate_product_payment_binance_pay(update, context, prod_id, qty)
+        return True
+
+    # Nut cua cac hoa don BEP20/TRC20 cu con ton trong lich su chat.
+    elif data.startswith("pay_prod_usdt_trc20_"):
         await safe_answer(
             query,
-            "Binance Pay đã được thay thế bằng USDT. Vui lòng chọn USDT (Binance ID / BEP20).",
+            "Phương thức này đã ngừng. Vui lòng chọn USDT (RPay) hoặc Binance Pay.",
             show_alert=True,
         )
         return True
