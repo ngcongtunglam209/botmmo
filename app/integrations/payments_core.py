@@ -331,6 +331,16 @@ async def warm_display_rates() -> None:
         logger.debug("Khong lay duoc ty gia USDT/CNY de hien thi")
 
 
+async def refresh_display_rates_job(context=None) -> None:
+    """Giu ty gia luon am trong cache cho cac man hinh dong bo.
+
+    Menu chinh, nut trang thai va bang thong ke deu la ham dong bo nen khong tu
+    goi API duoc: chua co ty gia thi khach EN/ZH thay so VND. Chay dinh ky de
+    lan bam dau tien sau khi bot khoi dong cung da dung don vi.
+    """
+    await warm_display_rates()
+
+
 # --- HIEN THI TIEN THEO NGON NGU ---
 # vi -> VND, en -> USD, zh -> CNY kem USD trong ngoac. Moi so tien trong he
 # thong van luu bang VND; day chi la lop dich o be mat, va no luon rot ve VND

@@ -1,8 +1,23 @@
 MAIN_MENU_TEXT = get_main_menu_text()
 
 
-def build_main_menu_account_summary(user_id=None):
+def _localized_rank_name(target_user_id) -> str:
+    """Ten hang cua khach, da dich va da bo the emoji (dung duoc trong nut)."""
     import re
+
+    try:
+        from app.services.referrals_stats import format_rank_entry_premium, get_user_rank
+        rank_info = get_user_rank(target_user_id)
+        name = format_rank_entry_premium(rank_info.get("rank") or {}, user_id=target_user_id)
+        cleaned = re.sub(r"<[^>]+>", "", name).strip()
+        if cleaned:
+            return cleaned
+    except Exception:
+        pass
+    return t("rank_label", user_id=target_user_id)
+
+
+def build_main_menu_account_summary(user_id=None):
     try:
         target_user_id = int(user_id or 0)
     except (TypeError, ValueError):
@@ -14,26 +29,18 @@ def build_main_menu_account_summary(user_id=None):
         balance = int((db_get_user(target_user_id) or {}).get("balance", 0) or 0)
     except (TypeError, ValueError, KeyError, AttributeError, ImportError):
         balance = 0
-    rank_name = t("rank_label", user_id=target_user_id)
-    try:
-        from app.services.referrals_stats import get_user_rank
-        rank_info = get_user_rank(target_user_id)
-        raw = str((rank_info.get("rank") or {}).get("name", "") or "")
-        rank_name = re.sub(r"<[^>]+>", "", raw).strip() or rank_name
-    except Exception:
-        pass
+    rank_name = _localized_rank_name(target_user_id)
     return lt(
         target_user_id,
-        "🏅 <b>Hạng hiện tại:</b> {rank}\n💰 <b>Số dư:</b> <b>{balance:,} VNĐ</b>\n\n",
-        "🏅 <b>Current rank:</b> {rank}\n💰 <b>Balance:</b> <b>{balance:,} VND</b>\n\n",
-        "🏅 <b>当前等级：</b>{rank}\n💰 <b>余额：</b><b>{balance:,} VND</b>\n\n",
+        "🏅 <b>Hạng hiện tại:</b> {rank}\n💰 <b>Số dư:</b> <b>{balance}</b>\n\n",
+        "🏅 <b>Current rank:</b> {rank}\n💰 <b>Balance:</b> <b>{balance}</b>\n\n",
+        "🏅 <b>当前等级：</b>{rank}\n💰 <b>余额：</b><b>{balance}</b>\n\n",
         rank=rank_name,
-        balance=balance,
+        balance=format_money(balance, target_user_id),
     )
 
 
 def build_main_menu_status_button_text(user_id=None):
-    import re
     try:
         target_user_id = int(user_id or 0)
     except (TypeError, ValueError):
@@ -45,15 +52,12 @@ def build_main_menu_status_button_text(user_id=None):
         balance = int((db_get_user(target_user_id) or {}).get("balance", 0) or 0)
     except (TypeError, ValueError, KeyError, AttributeError, ImportError):
         balance = 0
-    rank_name = t("rank_label", user_id=target_user_id)
-    try:
-        from app.services.referrals_stats import get_user_rank
-        rank_info = get_user_rank(target_user_id)
-        raw = str((rank_info.get("rank") or {}).get("name", "") or "")
-        rank_name = re.sub(r"<[^>]+>", "", raw).strip() or rank_name
-    except Exception:
-        pass
-    return t("rank_balance", user_id=target_user_id, rank=rank_name, balance=balance)
+    return t(
+        "rank_balance",
+        user_id=target_user_id,
+        rank=_localized_rank_name(target_user_id),
+        balance=format_money(balance, target_user_id),
+    )
 
 
 HUONGDAN_TEXT_VI = (
