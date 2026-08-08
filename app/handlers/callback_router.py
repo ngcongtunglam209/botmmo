@@ -1446,7 +1446,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         await safe_send_admin(context.bot, admin_message_text, reply_markup=InlineKeyboardMarkup([[reply_button]]))
 
-        await query.edit_message_text(f'<tg-emoji emoji-id="6269163801178804220">✅</tg-emoji> Đã tạo phiếu hỗ trợ với mã <b>{ticket_id}</b>. Admin sẽ sớm phản hồi. Cảm ơn bạn!', parse_mode=ParseMode.HTML)
+        await query.edit_message_text(
+            lt(
+                user_id,
+                f'<tg-emoji emoji-id="6269163801178804220">✅</tg-emoji> Đã tạo phiếu hỗ trợ mã <b>{ticket_id}</b>. Admin sẽ phản hồi sớm.',
+                f'<tg-emoji emoji-id="6269163801178804220">✅</tg-emoji> Support ticket <b>{ticket_id}</b> created. The admin will reply shortly.',
+                f'<tg-emoji emoji-id="6269163801178804220">✅</tg-emoji> 工单 <b>{ticket_id}</b> 已创建，管理员会尽快回复。',
+            ),
+            parse_mode=ParseMode.HTML,
+        )
 
         await clear_user_state(context)
 
