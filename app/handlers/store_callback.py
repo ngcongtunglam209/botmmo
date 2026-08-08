@@ -1196,7 +1196,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 file_content=file_content,
                 file_prefix="DonHang",
                 caption_html=f"<tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> <b>File tài khoản</b>\nMã đơn: <code>{order_code}</code>",
-                reply_markup=create_success_menu(),
+                reply_markup=create_success_menu(user_id=user_id),
             )
             order_data["delivery_method"] = delivery_result.get("method", "failed")
             await save_data(force=True, tables=[HISTORY_FILE])
@@ -1217,7 +1217,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                     f"❌ Có lỗi khi gửi file tài khoản cho đơn <code>{order_code}</code>.\n"
                     "Admin đã nhận cảnh báo và sẽ gửi thủ công sớm nhất.",
                     parse_mode=ParseMode.HTML,
-                    reply_markup=create_success_menu(),
+                    reply_markup=create_success_menu(user_id=user_id),
                 )
                 await save_data(force=True, tables=[HISTORY_FILE])
         else:
@@ -1233,7 +1233,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         
         await query.edit_message_text(
             f"{E_SUCCESS} <b>ĐÃ THANH TOÁN THÀNH CÔNG</b>\n\nCảm ơn bạn đã mua hàng!",
-            reply_markup=create_back_button_menu()
+            reply_markup=create_back_button_menu(user_id=user_id)
         )
         
         # Post-purchase follow-ups are delayed so they do not visually drown out the delivery file.

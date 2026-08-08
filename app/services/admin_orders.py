@@ -228,7 +228,7 @@ async def handle_legacy_manual_done_refund(query, context, command):
                     f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n\n"
                     f"Cảm ơn bạn đã sử dụng dịch vụ! <tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji>",
                     parse_mode='HTML',
-                    reply_markup=create_back_button_menu()
+                    reply_markup=create_back_button_menu(user_id=customer_id)
                 )
             except (TelegramError, ValueError, KeyError, AttributeError) as e:
                 logger.error(f"Could not notify customer {customer_id}: {e}")
@@ -274,7 +274,7 @@ async def handle_legacy_manual_done_refund(query, context, command):
                     f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Đã hoàn tiền:</b> {amount:,} VNĐ\n"
                     f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Số dư mới:</b> {new_balance:,} VNĐ",
                     parse_mode='HTML',
-                    reply_markup=create_back_button_menu()
+                    reply_markup=create_back_button_menu(user_id=customer_id)
                 )
             except (TelegramError, ValueError, KeyError, AttributeError) as e:
                 logger.error(f"Could not notify customer {customer_id}: {e}")
@@ -347,7 +347,7 @@ async def handle_new_manual_done_refund(query, context, command):
                     f"{E_TIP} Nếu có vấn đề, liên hệ Admin với mã đơn trên."
                 ),
                 parse_mode=ParseMode.HTML,
-                reply_markup=create_success_menu()
+                reply_markup=create_success_menu(user_id=user_id)
             )
             create_background_task(
                 send_post_purchase_followups(context, user_id, order_info.get("product_id"))
@@ -460,7 +460,7 @@ async def handle_cancel_order_payment(query, context, command):
             query.from_user.id,
             text=f"❌ <b>ĐÃ HỦY GIAO DỊCH</b>\n\nSản phẩm: {html.escape(str(prod_name))}\nMã đơn: <code>{order_code}</code>{refund_msg}",
             parse_mode=ParseMode.HTML,
-            reply_markup=create_back_button_menu()
+            reply_markup=create_back_button_menu(user_id=getattr(getattr(query, 'from_user', None), 'id', None))
         )
     else:
         prod_id = command.replace('cancel_payment_', '')
@@ -500,5 +500,5 @@ async def handle_cancel_order_payment(query, context, command):
             query.from_user.id,
             text=f"❌ <b>ĐÃ HỦY GIAO DỊCH</b>\n\nSản phẩm: {prod_name}{refund_msg}",
             parse_mode=ParseMode.HTML,
-            reply_markup=create_back_button_menu()
+            reply_markup=create_back_button_menu(user_id=getattr(getattr(query, 'from_user', None), 'id', None))
         )

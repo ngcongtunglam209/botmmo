@@ -171,7 +171,7 @@ async def lichsu_command(update: Update, context: ContextTypes.DEFAULT_TYPE, is_
     if not msg or not keyboard:
         empty_msg = lt(user_id, "Bạn chưa có đơn hàng nào.", "You have no orders yet.", "您还没有订单。")
         if is_callback:
-            await context.bot.send_message(chat_id, empty_msg, reply_markup=create_back_button_menu(text=lt(user_id, "Quay lại", "Back", "返回")))
+            await context.bot.send_message(chat_id, empty_msg, reply_markup=create_back_button_menu(text=lt(user_id, "Quay lại", "Back", "返回"), user_id=user_id))
         else:
             await update.message.reply_text(empty_msg)
         return

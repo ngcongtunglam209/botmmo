@@ -1017,9 +1017,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     elif command in {'huongdan', 'chinhsach'}:
-        text_map = {'huongdan': HUONGDAN_TEXT, 'chinhsach': CHINHSACH_TEXT}
-        menu = create_guide_policy_menu("guide" if command == "huongdan" else "policy")
-        full_text = text_map[command]
+        is_guide = command == "huongdan"
+        menu = create_guide_policy_menu("guide" if is_guide else "policy", user_id=user_id)
+        full_text = get_guide_text(user_id) if is_guide else get_policy_text(user_id)
         if len(full_text) <= 4000:
             await safe_edit_message(
                 query,

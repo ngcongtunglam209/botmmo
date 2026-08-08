@@ -323,7 +323,7 @@ async def credit_user_topup(context: ContextTypes.DEFAULT_TYPE, code: str, amoun
                 ok=E_SUCCESS, amount=amount_received, balance=new_balance,
             ),
             parse_mode=ParseMode.HTML,
-            reply_markup=create_back_button_menu(),
+            reply_markup=create_back_button_menu(user_id=user_id),
         )
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
         logger.warning(f"[topup] Khong bao duoc cho user {user_id}: {e}")

@@ -565,7 +565,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             f"{E_SOS} Bạn sẽ nhận thông báo khi hoàn tất!\n\n"
             f"{E_TIP} <b>Mã đơn:</b> <code>{order_code}</code>",
             parse_mode='HTML',
-            reply_markup=create_back_button_menu()
+            reply_markup=create_back_button_menu(user_id=update.effective_user.id if update.effective_user else None)
         )
         
         # 4. Log order
@@ -641,7 +641,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             f"{E_SOS} Bạn sẽ nhận thông báo khi hoàn tất\n\n"
             f"{E_TIP} <b>Mã đơn:</b> <code>{order_code}</code>",
             parse_mode=ParseMode.HTML,
-            reply_markup=create_back_button_menu()
+            reply_markup=create_back_button_menu(user_id=update.effective_user.id if update.effective_user else None)
         )
         
         # Gửi cho Admin

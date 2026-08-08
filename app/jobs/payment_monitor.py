@@ -206,14 +206,14 @@ async def _cleanup_expired_pending_orders(context: ContextTypes.DEFAULT_TYPE, cu
                     f"Đơn hàng này đã hết hạn thanh toán.\n"
                     f"Vui lòng tạo đơn mới nếu bạn vẫn muốn mua.{refund_text}"
                 )
-                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "store_main")
+                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "store_main", user_id=user_id)
             else:
                 caption = (
                     f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>ĐƠN HÀNG ĐÃ HẾT HẠN</b> <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji>\n\n"
                     f"Đơn hàng cho email <b>{details.get('email', 'N/A')}</b> đã hết hạn thanh toán.\n"
                     f"Vui lòng tạo đơn mới nếu bạn vẫn muốn mua.{refund_text}"
                 )
-                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "store_main")
+                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "store_main", user_id=user_id)
 
             if details.get('message_id'):
                 if details.get("message_kind") == "text":
@@ -880,7 +880,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 file_content=file_content,
                                 file_prefix="DonHang",
                                 caption_html=f"<tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> <b>File tài khoản</b>\nMã đơn: <code>{order_code}</code>",
-                                reply_markup=create_success_menu(),
+                                reply_markup=create_success_menu(user_id=order_details['user_id']),
                             )
                             delivery_status = "Hoàn thành" if delivery_result.get("delivered") else "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Chờ gửi thủ công (AUTO Local)"
                             if not delivery_result.get("delivered"):
@@ -899,7 +899,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     f"❌ Có lỗi khi gửi tài khoản cho đơn <code>{order_code}</code>.\n"
                                     "Admin đã nhận cảnh báo và sẽ gửi thủ công sớm nhất.",
                                     parse_mode=ParseMode.HTML,
-                                    reply_markup=create_success_menu(),
+                                    reply_markup=create_success_menu(user_id=order_details['user_id']),
                                 )
                             
                             # Tạo completed_order cho AUTO product (LƯU items để khôi phục nếu cần)

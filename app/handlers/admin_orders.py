@@ -177,7 +177,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                     f"<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>Account details for order {order_code}</b>\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Please store this file safely.",
                     f"<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>订单 {order_code} 的账号信息</b>\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> 请妥善保存该文件。",
                 ),
-                reply_markup=create_success_menu(),
+                reply_markup=create_success_menu(user_id=user_id),
             )
             completed_order["delivery_method"] = delivery_result.get("method", "failed")
             if not delivery_result.get("delivered"):
@@ -204,7 +204,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                         "管理员已收到提醒，会尽快人工发送。",
                     ),
                     parse_mode=ParseMode.HTML,
-                    reply_markup=create_success_menu(),
+                    reply_markup=create_success_menu(user_id=user_id),
                 )
             
             # Notifications

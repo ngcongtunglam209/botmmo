@@ -22,7 +22,14 @@ def build_main_menu_account_summary(user_id=None):
         rank_name = re.sub(r"<[^>]+>", "", raw).strip() or rank_name
     except Exception:
         pass
-    return f"🏅 <b>Hạng hiện tại:</b> {rank_name}\n💰 <b>Số dư:</b> <b>{balance:,} VNĐ</b>\n\n"
+    return lt(
+        target_user_id,
+        "🏅 <b>Hạng hiện tại:</b> {rank}\n💰 <b>Số dư:</b> <b>{balance:,} VNĐ</b>\n\n",
+        "🏅 <b>Current rank:</b> {rank}\n💰 <b>Balance:</b> <b>{balance:,} VND</b>\n\n",
+        "🏅 <b>当前等级：</b>{rank}\n💰 <b>余额：</b><b>{balance:,} VND</b>\n\n",
+        rank=rank_name,
+        balance=balance,
+    )
 
 
 def build_main_menu_status_button_text(user_id=None):
@@ -49,7 +56,7 @@ def build_main_menu_status_button_text(user_id=None):
     return t("rank_balance", user_id=target_user_id, rank=rank_name, balance=balance)
 
 
-HUONGDAN_TEXT = (
+HUONGDAN_TEXT_VI = (
     '<tg-emoji emoji-id="5321466670177330155">📖</tg-emoji> <b>HƯỚNG DẪN SỬ DỤNG LÂM SHOP</b>\n'
     '<i>Cập nhật: 06/08/2026</i>\n\n'
     '<b>1. Chọn sản phẩm</b>\n'
@@ -75,7 +82,59 @@ HUONGDAN_TEXT = (
     '<b>Cần hỗ trợ?</b> Chọn <b>Hỗ Trợ &amp; Liên Hệ</b> trong menu chính và gửi đầy đủ mã đơn cùng bằng chứng.'
 )
 
-CHINHSACH_TEXT = (
+HUONGDAN_TEXT_EN = (
+    '<tg-emoji emoji-id="5321466670177330155">📖</tg-emoji> <b>HOW TO USE LÂM SHOP</b>\n'
+    '<i>Updated: 06/08/2026</i>\n\n'
+    '<b>1. Pick a product</b>\n'
+    '• Open <b>Shop</b> → choose a category → choose a product.\n'
+    '• Read the description, current price, stock, duration and warranty terms carefully.\n'
+    '<b>2. Choose the quantity and pay</b>\n'
+    '• Pick the quantity → check the total → pay with your wallet, bank QR, Binance Pay or USDT where available.\n'
+    '• With QR: transfer the <b>exact amount</b> with the <b>exact reference</b> before the deadline.\n'
+    '• Do not edit the transfer reference and do not reuse the QR of an older order.\n'
+    '• If you sent the wrong amount, keep the receipt and contact support so we can reconcile it. Do not send a second transfer.\n\n'
+    '<b>3. Receive the product</b>\n'
+    '• Automatic orders: delivered in Telegram as soon as the payment is confirmed.\n'
+    '• Manual orders: follow the prompt for your email or details and wait for the admin.\n'
+    '• You can read the details again under <b>Purchased</b> → pick the order → <b>Resend order details</b>.\n'
+    '• <b>Buy this product again</b> is available too; it always uses the current price and stock.\n\n'
+    '<b>4. Reporting a problem and warranty</b>\n'
+    '• Go to <b>Purchased</b> → pick the order → <b>Report a problem</b>.\n'
+    '• Send the order code, a screenshot or video of the problem, and what you already tried.\n'
+    '• Do not change the password or recovery email, and do not share the account, before we have checked it.\n\n'
+    '<b>5. Account safety</b>\n'
+    '• Lâm Shop never asks for your banking password, an OTP or a wallet verification code.\n'
+    '• Never post your API key, order code or product contents in public.\n\n'
+    '<b>Need help?</b> Choose <b>Support &amp; Contact</b> in the main menu and include the order code and your evidence.'
+)
+
+HUONGDAN_TEXT_ZH = (
+    '<tg-emoji emoji-id="5321466670177330155">📖</tg-emoji> <b>LÂM SHOP 使用指南</b>\n'
+    '<i>更新时间：2026/08/06</i>\n\n'
+    '<b>1. 选择商品</b>\n'
+    '• 进入<b>购买</b> → 选择分类 → 选择商品。\n'
+    '• 请仔细阅读商品说明、当前价格、库存、有效期与质保条件。\n'
+    '<b>2. 选择数量并付款</b>\n'
+    '• 选择数量 → 核对总金额 → 使用钱包、银行 QR、Binance Pay 或 USDT（如已开放）付款。\n'
+    '• 使用 QR 时：请在超时前转账<b>准确金额</b>并填写<b>准确备注</b>。\n'
+    '• 请勿修改转账备注，也不要重复使用旧订单的 QR。\n'
+    '• 若转错金额，请保留凭证并联系客服核对，切勿再次转账。\n\n'
+    '<b>3. 接收商品</b>\n'
+    '• 自动订单：系统确认付款后立即在 Telegram 发货。\n'
+    '• 人工订单：按提示提交邮箱或所需信息，等待管理员处理。\n'
+    '• 可在<b>已购</b> → 选择订单 → <b>重新获取订单信息</b>中再次查看。\n'
+    '• 也可使用<b>再次购买该商品</b>，系统始终按当前价格与库存计算。\n\n'
+    '<b>4. 报错与质保</b>\n'
+    '• 进入<b>已购</b> → 选择订单 → <b>报告订单问题</b>。\n'
+    '• 请提供订单号、问题截图或录屏，以及已尝试的操作。\n'
+    '• 在我们核查之前，请勿修改密码、找回邮箱，也不要共享账号。\n\n'
+    '<b>5. 账号安全</b>\n'
+    '• LÂM SHOP 绝不会索要银行密码、OTP 或钱包验证码。\n'
+    '• 请勿在公开场合分享 API 密钥、订单号或商品内容。\n\n'
+    '<b>需要帮助？</b>请在主菜单选择<b>客服与联系</b>，并附上订单号与相关凭证。'
+)
+
+CHINHSACH_TEXT_VI = (
     '<tg-emoji emoji-id="5321466670177330155">📜</tg-emoji> <b>CHÍNH SÁCH LÂM SHOP</b>\n'
     '<i>Cập nhật: 06/08/2026</i>\n\n'
     '<b>1. Phạm vi áp dụng</b>\n'
@@ -114,6 +173,94 @@ CHINHSACH_TEXT = (
     'Gửi yêu cầu qua <b>Hỗ Trợ &amp; Liên Hệ</b>, kèm mã đơn, thời gian, nội dung và bằng chứng. Hai bên ưu tiên kiểm tra dữ liệu hệ thống và trao đổi để giải quyết minh bạch.\n\n'
     '<i>Chính sách này là thông tin giao dịch của Lâm Shop và không thay thế quy định pháp luật hiện hành.</i>'
 )
+
+CHINHSACH_TEXT_EN = (
+    '<tg-emoji emoji-id="5321466670177330155">📜</tg-emoji> <b>LÂM SHOP POLICY</b>\n'
+    '<i>Updated: 06/08/2026</i>\n\n'
+    '<b>1. Scope</b>\n'
+    'By placing an order you confirm that you have read the product description, price, quantity, delivery method and the related policies shown at the time of ordering.\n\n'
+    '<b>2. Price and payment</b>\n'
+    '• Prices follow supply and may change; an order is charged at the price shown on the final confirmation step.\n'
+    '• Pay only through the methods the bot offers, and use the reference belonging to your order.\n'
+    '• A transfer with the wrong amount, the wrong reference or after the deadline may need manual reconciliation.\n'
+    '• QR payments are for lawful orders only. Fraud, money laundering, misappropriation and any unlawful use are prohibited.\n\n'
+    '<b>3. Delivery</b>\n'
+    '• Delivery time depends on the product type: automatic or manual.\n'
+    '• Check the product right after you receive it and keep the details safe.\n'
+    '• Do not publish or resell the contents where the product or the supplier does not allow it.\n\n'
+    '<b>4. Warranty</b>\n'
+    '• Applies only within the period and scope stated on the product or the order.\n'
+    '• The order code and evidence of the fault are required for us to check.\n'
+    '• Faults caused by changing the password or recovery email, sharing the account, using it against the guide, breaching the platform terms or tampering with the product are not covered.\n'
+    '\n'
+    '<b>5. Cancellation and refunds</b>\n'
+    '• An unpaid order can be cancelled before it expires. Wallet funds on hold are returned according to the system state.\n'
+    '• Refunds are considered when the system charged you without creating an order, delivered a duplicate, or the supplier confirmed a cancellation or partial refund.\n'
+    '• A digital product delivered correctly and already used is normally not refundable, unless it falls under the warranty or a verified fault.\n'
+    '• A faulty order that was partly used is refunded for the whole unused days remaining; a day that has started counts as used.\n'
+    '• Refunds below 200,000 VND go to your bot wallet. From 200,000 VND you may request a bank transfer once you provide correct details and the admin confirms it.\n'
+    '• A bank transfer request holds the refund amount out of your bot wallet; if it is declined, the money returns to the wallet.\n'
+    '• Processing time depends on reconciliation with the bank, the wallet and the supplier.\n\n'
+    '<b>6. Data and privacy</b>\n'
+    '• The bot uses only the information needed to create orders, deliver, support you, prevent fraud and reconcile payments.\n'
+    '• Never send banking passwords, OTPs, wallet keys or any data that is not required.\n'
+    '• Information may be shared with the relevant processors or with the authorities where the law requires it.\n\n'
+    '<b>7. Prohibited use</b>\n'
+    '• Using products for fraud, spam, unauthorised access, malware distribution, data theft or any unlawful content.\n'
+    '• Exploiting system faults, faking transactions, claiming fraudulent refunds or deliberately creating duplicate orders.\n'
+    '• Lâm Shop may decline to process an order and ask for verification when something looks irregular.\n\n'
+    '<b>8. Complaints and support</b>\n'
+    'Send your request through <b>Support &amp; Contact</b> with the order code, the time, what happened and your evidence. We check the system records first and work with you towards a transparent outcome.\n\n'
+    '<i>This policy describes how Lâm Shop trades and does not replace applicable law.</i>'
+)
+
+CHINHSACH_TEXT_ZH = (
+    '<tg-emoji emoji-id="5321466670177330155">📜</tg-emoji> <b>LÂM SHOP 服务条款</b>\n'
+    '<i>更新时间：2026/08/06</i>\n\n'
+    '<b>1. 适用范围</b>\n'
+    '下单即表示买家已阅读下单时显示的商品说明、价格、数量、发货方式及相关条款。\n\n'
+    '<b>2. 价格与付款</b>\n'
+    '• 价格随供货情况变动；订单按最终确认步骤显示的价格计算。\n'
+    '• 请仅使用机器人提供的付款方式，并填写本订单对应的备注。\n'
+    '• 金额错误、备注错误或超时的转账可能需要人工核对。\n'
+    '• QR 付款仅限合法订单。严禁欺诈、洗钱、侵占财产及任何违法行为。\n\n'
+    '<b>3. 发货</b>\n'
+    '• 发货时间取决于商品类型：自动或人工。\n'
+    '• 买家须在收货后立即检查商品，并妥善保管相关信息。\n'
+    '• 若商品或供应商不允许，请勿公开或转售其内容。\n\n'
+    '<b>4. 质保</b>\n'
+    '• 仅在商品或订单标明的期限与范围内适用。\n'
+    '• 需提供订单号及故障凭证以便核查。\n'
+    '• 因修改密码/找回邮箱、多人共享、未按指南使用、违反平台条款或自行改动商品造成的问题不在质保范围内。\n'
+    '\n'
+    '<b>5. 取消与退款</b>\n'
+    '• 未付款订单可在超时前取消，钱包中冻结的金额按系统状态退回。\n'
+    '• 出现系统已扣款但未生成订单、重复发货，或供应商确认取消/部分退款时，可申请退款。\n'
+    '• 已正确发货且已使用的数字商品通常不予退款，除非属于质保范围或已核实存在故障。\n'
+    '• 部分使用的问题订单按剩余整天数退款；已开始的当天计为已使用。\n'
+    '• 低于 200,000 VND 的退款退入机器人钱包；达到 200,000 VND 及以上可在提供正确信息并经管理员确认后申请银行转账。\n'
+    '• 申请银行转账会先从机器人钱包冻结相应金额；若被拒绝，款项将退回钱包。\n'
+    '• 处理时间取决于与银行、钱包及供应商的对账。\n\n'
+    '<b>6. 数据与隐私</b>\n'
+    '• 机器人仅使用创建订单、发货、客服、反欺诈与对账所必需的信息。\n'
+    '• 请勿发送银行密码、OTP、钱包密钥或其他非必要数据。\n'
+    '• 在法律要求时，信息可能提供给相关处理方或有权机关。\n\n'
+    '<b>7. 禁止行为</b>\n'
+    '• 将商品用于诈骗、垃圾信息、非法入侵、传播恶意软件、窃取数据或任何违法内容。\n'
+    '• 利用系统漏洞、伪造交易、恶意申请退款或故意重复下单。\n'
+    '• 发现异常迹象时，LÂM SHOP 可拒绝处理并要求进行验证。\n\n'
+    '<b>8. 投诉与支持</b>\n'
+    '请通过<b>客服与联系</b>提交请求，并附订单号、时间、事情经过与凭证。双方优先核对系统数据，透明沟通解决。\n\n'
+    '<i>本条款为 LÂM SHOP 的交易说明，不替代现行法律法规。</i>'
+)
+
+
+def get_guide_text(user_id=None) -> str:
+    return {"vi": HUONGDAN_TEXT_VI, "en": HUONGDAN_TEXT_EN, "zh": HUONGDAN_TEXT_ZH}[get_user_lang(user_id)]
+
+
+def get_policy_text(user_id=None) -> str:
+    return {"vi": CHINHSACH_TEXT_VI, "en": CHINHSACH_TEXT_EN, "zh": CHINHSACH_TEXT_ZH}[get_user_lang(user_id)]
 
 
 def _btn(text, icon_id=None, **kwargs):
@@ -175,72 +322,6 @@ def get_partner_api_entry_by_user(user_id: int):
         except (TypeError, ValueError):
             continue
     return None, None
-def _legacy_create_main_menu_v1(user_id=None):
-    keyboard = [
-        [_btn("Mua Hàng", icon_id="5247134066322447995", callback_data='store_main'), _btn("Đã Mua", icon_id="5444856076954520455", callback_data='lichsu_entry')],
-        [_btn("Vòng Quay", icon_id="5226711870492126219", callback_data='lucky_wheel_menu'), _btn("Xúc Xắc", icon_id="6201668110949291585", callback_data='play_dice_game'), _btn("Kiếm Tiền", icon_id="5193085063998224234", callback_data='my_referral')],
-        [_btn("Tài Khoản & Số Dư", icon_id="4967667085606912536", callback_data='my_stats'), _btn("HD & CS", icon_id="5321466670177330155", callback_data='huongdan')],
-        [_btn("Hỗ Trợ & Liên Hệ", icon_id="5462921117423384478", callback_data='lienhe_admin'), _btn("Báo Lỗi", icon_id="5273914604752216432", callback_data='guide_baoloi_menu')],
-        [_btn("Nhóm Cộng đồng", icon_id="5443038326535759644", url=SUPPORT_GROUP_LINK)]
-    ]
-
-    partner_api_key = None
-    if user_id:
-        partner_api_key, _ = get_partner_api_entry_by_user(user_id)
-    if partner_api_key:
-        keyboard.insert(
-            3,
-            [
-                _btn("API Partner", icon_id="5436359785534466562", callback_data='api_member_menu'),
-                _btn("Nạp Ví", icon_id="5278467510604160626", callback_data='api_member_wallet'),
-            ]
-        )
-    elif user_id and user_id != ADMIN_USER_ID:
-        keyboard.insert(
-            3,
-            [
-                _btn("Đăng Ký API", icon_id="5436359785534466562", callback_data='api_register_request'),
-                _btn("HD API", icon_id="5350481781306958339", callback_data='api_register_guide')
-            ]
-        )
-
-    if user_id == ADMIN_USER_ID:
-        keyboard.append([_btn("Bảng Điều Khiển Admin", icon_id="6129805886383723340", callback_data='adm:home')])
-    return InlineKeyboardMarkup(keyboard)
-
-def _legacy_create_main_menu_v2(user_id=None):
-    keyboard = [
-        [_btn("Mua Hàng", icon_id="5247134066322447995", callback_data='store_main'), _btn("Đã Mua", icon_id="5444856076954520455", callback_data='lichsu_entry')],
-        [_btn("Game", icon_id="5226711870492126219", callback_data='games_menu'), _btn("Kiếm Tiền", icon_id="5193085063998224234", callback_data='my_referral')],
-        [_btn("Tài Khoản & Số Dư", icon_id="4967667085606912536", callback_data='my_stats'), _btn("HD & CS", icon_id="5321466670177330155", callback_data='huongdan')],
-        [_btn("Hỗ Trợ & Liên Hệ", icon_id="5462921117423384478", callback_data='lienhe_admin'), _btn("Báo Lỗi", icon_id="5273914604752216432", callback_data='guide_baoloi_menu')],
-        [_btn("Nhóm Cộng Đồng", icon_id="5443038326535759644", url=SUPPORT_GROUP_LINK)]
-    ]
-
-    partner_api_key = None
-    if user_id:
-        partner_api_key, _ = get_partner_api_entry_by_user(user_id)
-    if partner_api_key:
-        keyboard.insert(
-            3,
-            [
-                _btn("API Partner", icon_id="5436359785534466562", callback_data='api_member_menu'),
-                _btn("Nạp Ví", icon_id="5278467510604160626", callback_data='api_member_wallet'),
-            ]
-        )
-    elif user_id and user_id != ADMIN_USER_ID:
-        keyboard.insert(
-            3,
-            [
-                _btn("Đăng Ký API", icon_id="5436359785534466562", callback_data='api_register_request'),
-                _btn("HD API", icon_id="5350481781306958339", callback_data='api_register_guide')
-            ]
-        )
-
-    if user_id == ADMIN_USER_ID:
-        keyboard.append([_btn("Bảng Điều Khiển Admin", icon_id="6129805886383723340", callback_data='adm:home')])
-    return InlineKeyboardMarkup(keyboard)
-
 
 def create_main_menu(user_id=None):
     keyboard = [
@@ -313,20 +394,44 @@ def create_games_menu(user_id=None):
     ])
 
 
-def create_guide_policy_menu(active: str = "guide"):
-    guide_text = "• Hướng dẫn" if active == "guide" else "Hướng dẫn"
-    policy_text = "• Chính sách" if active == "policy" else "Chính sách"
+def create_guide_policy_menu(active: str = "guide", user_id=None):
+    guide_text = lt(user_id, "Hướng dẫn", "Guide", "使用指南")
+    policy_text = lt(user_id, "Chính sách", "Policy", "服务条款")
     return InlineKeyboardMarkup([
         [
-            _btn(guide_text, icon_id="5321466670177330155", callback_data="huongdan", style="primary" if active == "guide" else None),
-            _btn(policy_text, icon_id="6037266106832041274", callback_data="chinhsach", style="primary" if active == "policy" else None),
+            _btn(
+                f"• {guide_text}" if active == "guide" else guide_text,
+                icon_id="5321466670177330155",
+                callback_data="huongdan",
+                style="primary" if active == "guide" else None,
+            ),
+            _btn(
+                f"• {policy_text}" if active == "policy" else policy_text,
+                icon_id="6037266106832041274",
+                callback_data="chinhsach",
+                style="primary" if active == "policy" else None,
+            ),
         ],
-        [_btn("Quay Lại Menu Chính", icon_id="6206032691075223572", callback_data="back_to_main")],
+        [_btn(t("btn_back_main", user_id=user_id), icon_id="6206032691075223572", callback_data="back_to_main")],
     ])
 
 
-def create_back_button_menu(text="⬅️ Quay Lại Menu Chính", callback="back_to_main"): return InlineKeyboardMarkup([[_btn(text, icon_id="6206032691075223572", callback_data=callback)]])
-def create_success_menu(): return InlineKeyboardMarkup([ [_btn("Cần hỗ trợ / Báo lỗi đơn hàng", icon_id="5273914604752216432", callback_data='report_error')], [_btn("Quay Lại Menu Chính", icon_id="6206032691075223572", callback_data='back_to_main')] ])
+def create_back_button_menu(text=None, callback="back_to_main", user_id=None):
+    label = text or f"⬅️ {t('btn_back_main', user_id=user_id)}"
+    return InlineKeyboardMarkup([[_btn(label, icon_id="6206032691075223572", callback_data=callback)]])
+
+
+def create_success_menu(user_id=None):
+    return InlineKeyboardMarkup([
+        [
+            _btn(
+                lt(user_id, "Cần hỗ trợ / Báo lỗi đơn hàng", "Need help / report an issue", "需要帮助 / 报告订单问题"),
+                icon_id="5273914604752216432",
+                callback_data='report_error',
+            )
+        ],
+        [_btn(t("btn_back_main", user_id=user_id), icon_id="6206032691075223572", callback_data='back_to_main')],
+    ])
 
 # ===================== QR CODE HELPERS =====================
 
