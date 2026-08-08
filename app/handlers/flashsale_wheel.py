@@ -127,17 +127,29 @@ async def flashsale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
     async def _flash_sale_broadcast(bot, msg, sale_id_bg):
         success_count = 0
+        fail_count = 0
+        blocked_ids = []
         for uid_str in list(user_data_db.keys()):
             try:
                 uid = int(uid_str)
-                if uid in banned_users:
-                    continue
-                await bot.send_message(chat_id=uid, text=msg, parse_mode=ParseMode.HTML)
+            except (ValueError, TypeError):
+                continue
+            if uid in banned_users:
+                continue
+            result = await broadcast_send_message(bot, uid, msg, parse_mode=ParseMode.HTML)
+            if result == "ok":
                 success_count += 1
-                await asyncio.sleep(0.05)
-            except (ValueError, TypeError, KeyError, IndexError):
-                logger.debug("Suppressed error at L8032")
-        logger.info(f"Flash Sale {sale_id_bg}: broadcast to {success_count} users")
+            else:
+                fail_count += 1
+                if result in {"blocked", "invalid"}:
+                    blocked_ids.append(uid_str)
+            await asyncio.sleep(0.05)
+        if blocked_ids:
+            await _cleanup_blocked_users(blocked_ids)
+        logger.info(
+            f"Flash Sale {sale_id_bg}: broadcast to {success_count} users "
+            f"({fail_count} that bai, {len(blocked_ids)} da chan/xoa)"
+        )
 
     create_background_task(_flash_sale_broadcast(context.bot, broadcast_msg, sale_id))
 

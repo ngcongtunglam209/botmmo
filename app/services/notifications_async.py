@@ -20,11 +20,20 @@ def _log_channel_send_error(error, *, channel_id, topic_id, label: str, fix_hint
     duoi dang BadRequest, nen phai tach ra - khong thi admin di kiem tra kenh
     trong khi thu hong that su la topic.
     """
-    text = str(error).lower()
+    # Telegram tron hai kieu viet trong cung mot API: "Message thread not found"
+    # nhung "Topic_closed" / "TOPIC_DELETED". Doi gach duoi thanh dau cach de
+    # mot chuoi khop duoc ca hai, thay vi phai liet ke tung bien the.
+    text = str(error).lower().replace("_", " ")
     target = f"kenh {channel_id}" + (f" topic {topic_id}" if int(topic_id or 0) > 0 else "")
-    if "thread not found" in text or "topic_deleted" in text or "topic closed" in text:
+    if "topic closed" in text:
         logger.warning(
-            f"{E_ERROR} {label} that bai: topic {topic_id} khong ton tai/da dong trong kenh "
+            f"{E_ERROR} {label} that bai: topic {topic_id} trong kenh {channel_id} DANG DONG. "
+            "Mo lai topic trong Telegram, hoac cap quyen 'Manage Topics' cho bot de no dang "
+            "duoc vao topic dong."
+        )
+    elif "thread not found" in text or "topic deleted" in text:
+        logger.warning(
+            f"{E_ERROR} {label} that bai: topic {topic_id} khong ton tai/da bi xoa trong kenh "
             f"{channel_id}. Kiem tra lai ID topic o link t.me/c/<group>/<topic>."
         )
     elif "chat not found" in text:
@@ -292,17 +301,19 @@ async def broadcast_out_of_stock(context: ContextTypes.DEFAULT_TYPE, product_nam
             if user_id in banned_users or (isinstance(profile, dict) and profile.get("broadcast_disabled")):
                 continue
             
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=message,
-                parse_mode=ParseMode.HTML
+            result = await broadcast_send_message(
+                context.bot, user_id, message, parse_mode=ParseMode.HTML
             )
-            success_count += 1
+            if result == "ok":
+                success_count += 1
+            else:
+                fail_count += 1
+                if result in {"blocked", "invalid"}:
+                    blocked_ids.append(user_id_str)
+                elif fail_count <= 3:
+                    logger.warning(f"Lỗi broadcast đến user {user_id_str}: {result}")
             await asyncio.sleep(0.05)
-            
-        except Forbidden:
-            fail_count += 1
-            blocked_ids.append(user_id_str)
+
         except (ValueError, TypeError, KeyError, IndexError) as e:
             fail_count += 1
             if fail_count <= 3:
@@ -810,17 +821,17 @@ async def broadcast_back_in_stock(context: ContextTypes.DEFAULT_TYPE, product_na
             if user_id in banned_users or (isinstance(profile, dict) and profile.get("broadcast_disabled")):
                 continue
             
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=message,
-                parse_mode=ParseMode.HTML
+            result = await broadcast_send_message(
+                context.bot, user_id, message, parse_mode=ParseMode.HTML
             )
-            success_count += 1
+            if result == "ok":
+                success_count += 1
+            else:
+                fail_count += 1
+                if result in {"blocked", "invalid"}:
+                    blocked_ids.append(user_id_str)
             await asyncio.sleep(0.05)
-            
-        except Forbidden:
-            fail_count += 1
-            blocked_ids.append(user_id_str)
+
         except (ValueError, TypeError, KeyError, IndexError):
             fail_count += 1
     

@@ -3,7 +3,34 @@ import time
 
 REQUIRED_GROUP_MEMBERSHIP_CACHE_TTL_SECONDS = 300
 REQUIRED_GROUP_NON_MEMBER_CACHE_TTL_SECONDS = 8
+REQUIRED_GROUP_ALERT_INTERVAL_SECONDS = 900
 _required_group_membership_cache = {}
+_required_group_alert_at = 0.0
+
+
+async def _alert_required_group_broken(update, error) -> None:
+    """Bao admin khi khong kiem tra duoc tu cach thanh vien, toi da 15 phut/lan.
+
+    Loi nay im lang la nguy hiem nhat: bot van chay, log van troi, nhung khong
+    ai mua duoc hang.
+    """
+    global _required_group_alert_at
+    now = time.monotonic()
+    if now - _required_group_alert_at < REQUIRED_GROUP_ALERT_INTERVAL_SECONDS:
+        return
+    _required_group_alert_at = now
+    try:
+        await safe_send_admin(
+            update.get_bot(),
+            f"{E_LIMIT} <b>KHONG KIEM TRA DUOC NHOM BAT BUOC</b>\n\n"
+            f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> REQUIRED_GROUP_ID: <code>{REQUIRED_GROUP_ID}</code>\n"
+            f"<tg-emoji emoji-id=\"5350481781306958339\">🧾</tg-emoji> Loi: <code>{html.escape(str(error)[:200])}</code>\n\n"
+            "Bot dang <b>cho tat ca vao</b> de khong chan khach. Kiem tra: ID nhom "
+            "phai la chat_id dang <code>-100...</code> (khong phai ID topic), va bot "
+            "phai o trong nhom do. Dat <code>REQUIRED_GROUP_ID=0</code> de tat han."
+        )
+    except Exception:
+        logger.debug("Khong gui duoc canh bao nhom bat buoc cho admin")
 
 
 async def _is_required_group_member(update, *, force_refresh: bool = False) -> bool:
@@ -62,8 +89,18 @@ async def check_if_banned(update) -> bool:
         try:
             is_joined = await _is_required_group_member(update)
         except Exception as e:
-            logger.exception("Membership check failed for user_id=%s: %s", user_id, e)
-            is_joined = False
+            # Khong kiem tra duoc KHAC voi "da kiem tra va nguoi nay chua vao".
+            # Coi no la chua vao thi mot REQUIRED_GROUP_ID go sai (vi du dat
+            # nham ID topic) se khoa TOAN BO khach khoi bot, va log chi hien mot
+            # dong "Chat not found" khong ai doc. Cong ep vao nhom la de marketing,
+            # khong phai lop bao mat - mat cong do con hon dong cua hang.
+            logger.error(
+                "Khong kiem tra duoc nhom bat buoc (REQUIRED_GROUP_ID=%s) cho user_id=%s: %s "
+                "-> tam thoi cho vao",
+                REQUIRED_GROUP_ID, user_id, e,
+            )
+            await _alert_required_group_broken(update, e)
+            return False
         if not is_joined:
             from telegram import InlineKeyboardMarkup, InlineKeyboardButton
             markup = InlineKeyboardMarkup([
@@ -98,15 +135,26 @@ async def handle_membership_check(update) -> None:
     try:
         is_joined = await _is_required_group_member(update, force_refresh=True)
     except Exception as e:
-        logger.exception("Membership callback check failed for user_id=%s: %s", user_id, e)
-        await query.answer(
+        # Cung ly do voi check_if_banned: khong kiem tra duoc thi cho qua. Bao
+        # loi ky thuat o day la ngo cut - khach bam lai bao nhieu lan cung ra
+        # dung mot loi, va ho khong sua duoc gi.
+        logger.error(
+            "Khong kiem tra duoc nhom bat buoc (REQUIRED_GROUP_ID=%s) cho user_id=%s: %s "
+            "-> cho vao",
+            REQUIRED_GROUP_ID, user_id, e,
+        )
+        await _alert_required_group_broken(update, e)
+        await query.answer(lt(user_id, "Đã xác minh", "Verified", "已验证"))
+        await query.edit_message_text(
             lt(
                 user_id,
-                f"Không kiểm tra được tư cách thành viên: {e}",
-                f"Could not check your membership: {e}",
-                f"无法检查群成员身份：{e}",
+                "✅ Bạn có thể tiếp tục dùng bot.",
+                "✅ You can continue using the bot.",
+                "✅ 您可以继续使用机器人。",
             ),
-            show_alert=True,
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton(lt(user_id, "🚀 Tiếp tục", "🚀 Continue", "🚀 继续"), callback_data="back_to_main")
+            ]]),
         )
         return
     if is_joined:
@@ -243,7 +291,7 @@ def convert_vnd_to_usdt(amount_vnd: int, rate: Decimal = None, quantizer=None):
     return (amount_decimal / rate).quantize(quantizer, rounding=ROUND_UP)
 
 
-async def create_rpay_order(order_code: str, amount_vnd: int, goods_name: str, goods_detail: str) -> dict:
+async def create_rpay_order(order_code: str, amount_vnd: int, goods_name: str, goods_detail: str, network: str = "") -> dict:
     """Quy doi VND -> USDT roi tao hoa don RPay cho `order_code`.
 
     Tra ve khoi `data` cua RPay, bo sung cac khoa ta tu tinh:
@@ -263,6 +311,7 @@ async def create_rpay_order(order_code: str, amount_vnd: int, goods_name: str, g
         name=_sanitize_invoice_text(goods_name, "Digital Goods"),
         description=_sanitize_invoice_text(goods_detail, order_code),
         expire_minutes=ORDER_EXPIRATION_SECONDS // 60,
+        network=network,
     )
     invoice["request_id"] = request_id
     invoice["amount_usdt"] = amount_usdt

@@ -281,6 +281,7 @@ async def generate_product_payment_rpay(
     quantity: int = 1,
     balance_used: int = 0,
     extra_pending_data: dict | None = None,
+    network: str = "",
 ):
     """Tao hoa don USDT qua RPay cho san pham trong cua hang."""
     user = update.effective_user
@@ -337,6 +338,7 @@ async def generate_product_payment_rpay(
             amount_vnd=amount_due,
             goods_name=p["name"],
             goods_detail=f"{p['name']} x{quantity}",
+            network=network,
         )
     except Exception as exc:
         await release_reserved_order_code(order_code)

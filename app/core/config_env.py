@@ -142,6 +142,21 @@ RPAY_API_BASE_URL = get_env_str("RPAY_API_BASE_URL", "https://api.rpay.vn/api").
 RPAY_TOKEN = get_env_str("RPAY_TOKEN", "USDT").upper()
 RPAY_NETWORK = os.getenv("RPAY_NETWORK", "").strip().lower()
 RPAY_WALLET_ADDRESS = os.getenv("RPAY_WALLET_ADDRESS", "").strip()
+# Nhieu vi cung luc: liet ke cac network cho khach tu chon luc thanh toan,
+# vi du "bsc,tron,polygon". De trong thi rot ve RPAY_NETWORK (mot mang), va
+# neu ca hai deu trong thi RPay dung vi mac dinh cua cua hang.
+RPAY_NETWORKS = [
+    network
+    for network in re.split(r"[,\s;]+", get_env_str("RPAY_NETWORKS", "").lower())
+    if network
+] or ([RPAY_NETWORK] if RPAY_NETWORK else [])
+# Vi rieng cho tung mang khi mot network/token co nhieu vi active:
+# RPAY_WALLET_ADDRESS_BSC=0x..., RPAY_WALLET_ADDRESS_TRON=T...
+RPAY_WALLET_ADDRESS_BY_NETWORK = {
+    network: address
+    for network in RPAY_NETWORKS
+    if (address := os.getenv(f"RPAY_WALLET_ADDRESS_{network.upper()}", "").strip())
+}
 # De trong -> bam theo PUBLIC_API_URL + /webhook/rpay (xem rpay_callback_url()).
 RPAY_CALLBACK_URL = os.getenv("RPAY_CALLBACK_URL", "").strip()
 RPAY_TIMEOUT_SECONDS = get_env_float("RPAY_TIMEOUT_SECONDS", 15.0, minimum=3.0)
