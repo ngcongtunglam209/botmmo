@@ -20,11 +20,20 @@ def _log_channel_send_error(error, *, channel_id, topic_id, label: str, fix_hint
     duoi dang BadRequest, nen phai tach ra - khong thi admin di kiem tra kenh
     trong khi thu hong that su la topic.
     """
-    text = str(error).lower()
+    # Telegram tron hai kieu viet trong cung mot API: "Message thread not found"
+    # nhung "Topic_closed" / "TOPIC_DELETED". Doi gach duoi thanh dau cach de
+    # mot chuoi khop duoc ca hai, thay vi phai liet ke tung bien the.
+    text = str(error).lower().replace("_", " ")
     target = f"kenh {channel_id}" + (f" topic {topic_id}" if int(topic_id or 0) > 0 else "")
-    if "thread not found" in text or "topic_deleted" in text or "topic closed" in text:
+    if "topic closed" in text:
         logger.warning(
-            f"{E_ERROR} {label} that bai: topic {topic_id} khong ton tai/da dong trong kenh "
+            f"{E_ERROR} {label} that bai: topic {topic_id} trong kenh {channel_id} DANG DONG. "
+            "Mo lai topic trong Telegram, hoac cap quyen 'Manage Topics' cho bot de no dang "
+            "duoc vao topic dong."
+        )
+    elif "thread not found" in text or "topic deleted" in text:
+        logger.warning(
+            f"{E_ERROR} {label} that bai: topic {topic_id} khong ton tai/da bi xoa trong kenh "
             f"{channel_id}. Kiem tra lai ID topic o link t.me/c/<group>/<topic>."
         )
     elif "chat not found" in text:

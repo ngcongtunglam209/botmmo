@@ -113,6 +113,33 @@ async def test_a_missing_topic_is_reported_as_a_topic_problem(monkeypatch, caplo
     assert "chua vao" not in caplog.text
 
 
+@pytest.mark.parametrize(
+    "message, expected",
+    [
+        # Telegram mixes styles in one API: spaces here, underscores there.
+        ("Topic_closed", "DANG DONG"),
+        ("TOPIC_CLOSED", "DANG DONG"),
+        ("Message thread not found", "khong ton tai"),
+        ("TOPIC_DELETED", "khong ton tai"),
+    ],
+)
+async def test_every_spelling_of_a_topic_fault_is_recognised(monkeypatch, caplog, message, expected):
+    notif = _load()
+    from telegram.error import BadRequest
+
+    monkeypatch.setattr(notif, "LIVE_ORDERS_CHANNEL_ID", -1004396644933, raising=False)
+    monkeypatch.setattr(notif, "LIVE_ORDERS_TOPIC_ID", 580, raising=False)
+    bot = FakeBot(error=BadRequest(message))
+
+    with caplog.at_level("WARNING"):
+        await notif.send_live_order_notification(FakeContext(bot), "Nguyen Van An", 39900)
+
+    # Underscore spellings used to miss every marker and fall through to the
+    # generic "Telegram API" line, which names no remedy.
+    assert expected in caplog.text
+    assert "topic 580" in caplog.text
+
+
 async def test_a_missing_chat_is_still_reported_as_a_channel_problem(monkeypatch, caplog):
     notif = _load()
     from telegram.error import BadRequest
