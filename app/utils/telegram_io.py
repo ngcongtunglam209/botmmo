@@ -1114,11 +1114,26 @@ def _patch_message_edit_methods():
 _patch_message_edit_methods()
 
 
+def _is_tg_emoji_parse_error(error) -> bool:
+    """True chi khi loi that su den tu the tg-emoji trong NOI DUNG tin nhan.
+
+    Truoc day dieu kien la `'parse' in str(e).lower()`, ma Telegram cung dung
+    tu "parse" cho loi ban phim: "Can't parse InlineKeyboardButton: text buttons
+    are unallowed in the inline keyboard". Loi do bi doi thanh loi tg-emoji, roi
+    gui lai y het ban phim hong -> lan hai that bai giong lan mot, va log chi ro
+    vao tg-emoji nen khong ai nghi den ban phim. Loai han cac loi ban phim ra.
+    """
+    text = str(error).lower()
+    if 'inlinekeyboard' in text or 'button' in text or 'reply_markup' in text:
+        return False
+    return 'document_invalid' in text or 'entity' in text or 'parse' in text
+
+
 async def safe_reply_html(message, text, **kwargs):
     try:
         return await message.reply_html(text, **kwargs)
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
-        if 'Document_invalid' in str(e) or 'entity' in str(e).lower() or 'parse' in str(e).lower():
+        if _is_tg_emoji_parse_error(e):
             logger.warning(f'[safe_reply_html] tg-emoji fallback: {e}')
             return await message.reply_html(_plain_text_preserve_emoji(text), **kwargs)
         raise
@@ -1132,7 +1147,7 @@ async def safe_reply_video_html(message, video, caption, **kwargs):
             **kwargs,
         )
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
-        if 'Document_invalid' in str(e) or 'entity' in str(e).lower() or 'parse' in str(e).lower():
+        if _is_tg_emoji_parse_error(e):
             logger.warning(f'[safe_reply_video_html] tg-emoji fallback: {e}')
             return await message.reply_video(
                 video=video,
@@ -1146,7 +1161,7 @@ async def safe_bot_send_html(bot, chat_id, text, **kwargs):
     try:
         return await bot.send_message(chat_id, text, parse_mode=ParseMode.HTML, **kwargs)
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
-        if 'Document_invalid' in str(e) or 'entity' in str(e).lower() or 'parse' in str(e).lower():
+        if _is_tg_emoji_parse_error(e):
             logger.warning(f'[safe_bot_send_html] tg-emoji fallback: {e}')
             return await bot.send_message(chat_id, _plain_text_preserve_emoji(text), parse_mode=ParseMode.HTML, **kwargs)
         raise
