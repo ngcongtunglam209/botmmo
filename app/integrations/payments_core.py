@@ -246,6 +246,20 @@ def _get_usdt_quantizer():
 
 _cached_live_usdt_rate = None
 _cached_live_usdt_rate_time = 0
+_cached_live_cny_rate = None
+_cached_live_cny_rate_time = 0
+
+
+async def _fetch_p2p_usdt_price(fiat: str):
+    """Gia 1 USDT tinh bang `fiat`, doc tu bang quang cao P2P cong khai."""
+    import httpx
+    from decimal import Decimal
+
+    payload = {"fiat": str(fiat).upper(), "page": 1, "rows": 1, "tradeType": "SELL", "asset": "USDT", "countries": [], "proMerchantAds": False, "shieldMerchantAds": False, "publisherType": None}
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        resp = await client.post(USDT_RATE_SOURCE_URL, json=payload)
+        data = resp.json()
+        return Decimal(str(data['data'][0]['adv']['price']))
 
 
 async def get_live_usdt_vnd_rate():
@@ -256,22 +270,35 @@ async def get_live_usdt_vnd_rate():
     USDT_RATE_VND_PER_USDT cau hinh tay.
     """
     global _cached_live_usdt_rate, _cached_live_usdt_rate_time
-    import time, httpx
-    from decimal import Decimal
+    import time
     now = time.time()
     if _cached_live_usdt_rate and now - _cached_live_usdt_rate_time < 300:
         return _cached_live_usdt_rate
     try:
-        payload = {"fiat": "VND", "page": 1, "rows": 1, "tradeType": "SELL", "asset": "USDT", "countries": [], "proMerchantAds": False, "shieldMerchantAds": False, "publisherType": None}
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.post(USDT_RATE_SOURCE_URL, json=payload)
-            data = resp.json()
-            price = data['data'][0]['adv']['price']
-            _cached_live_usdt_rate = Decimal(str(price))
-            _cached_live_usdt_rate_time = now
-            return _cached_live_usdt_rate
+        _cached_live_usdt_rate = await _fetch_p2p_usdt_price("VND")
+        _cached_live_usdt_rate_time = now
+        return _cached_live_usdt_rate
     except Exception:
         return USDT_RATE_VND_PER_USDT
+
+
+async def get_live_usdt_cny_rate():
+    """Ty gia USDT/CNY, cung nguon va cung cach rot ve nhu ban VND.
+
+    Chi phuc vu HIEN THI cho khach dung tieng Trung. Khong duong thanh toan nao
+    thu CNY, nen gia nay sai lech vai phan tram cung khong lam lech so tien thu.
+    """
+    global _cached_live_cny_rate, _cached_live_cny_rate_time
+    import time
+    now = time.time()
+    if _cached_live_cny_rate and now - _cached_live_cny_rate_time < 300:
+        return _cached_live_cny_rate
+    try:
+        _cached_live_cny_rate = await _fetch_p2p_usdt_price("CNY")
+        _cached_live_cny_rate_time = now
+        return _cached_live_cny_rate
+    except Exception:
+        return USDT_RATE_CNY_PER_USDT
 
 
 def get_cached_usdt_rate() -> Decimal:
@@ -279,6 +306,124 @@ def get_cached_usdt_rate() -> Decimal:
     if _cached_live_usdt_rate:
         return _cached_live_usdt_rate
     return Decimal(str(USDT_RATE_VND_PER_USDT))
+
+
+def get_cached_usdt_cny_rate() -> Decimal:
+    from decimal import Decimal
+    if _cached_live_cny_rate:
+        return _cached_live_cny_rate
+    return Decimal(str(USDT_RATE_CNY_PER_USDT))
+
+
+async def warm_display_rates() -> None:
+    """Nap san ty gia truoc khi hien mot man hinh co so tien.
+
+    Ca hai ham deu tu cache 5 phut va tu nuot loi mang, nen goi thua khong ton
+    gi. Khong warm thi khach EN/ZH thay so VND o lan bam dau tien.
+    """
+    try:
+        await get_live_usdt_vnd_rate()
+    except Exception:
+        logger.debug("Khong lay duoc ty gia USDT/VND de hien thi")
+    try:
+        await get_live_usdt_cny_rate()
+    except Exception:
+        logger.debug("Khong lay duoc ty gia USDT/CNY de hien thi")
+
+
+# --- HIEN THI TIEN THEO NGON NGU ---
+# vi -> VND, en -> USD, zh -> CNY kem USD trong ngoac. Moi so tien trong he
+# thong van luu bang VND; day chi la lop dich o be mat, va no luon rot ve VND
+# khi chua co ty gia (hien "0.00 USD" con te hon hien so VND that).
+_DISPLAY_CURRENCY_BY_LANG = {"vi": "VND", "en": "USD", "zh": "CNY"}
+
+
+def get_display_rate_vnd_per_unit(currency: str) -> Decimal:
+    """Bao nhieu VND cho 1 don vi `currency`. Tra 0 khi chua biet ty gia."""
+    from decimal import Decimal
+
+    code = str(currency or "").upper()
+    if code == "VND":
+        return Decimal("1")
+    vnd_per_usdt = Decimal(str(get_cached_usdt_rate() or 0))
+    if vnd_per_usdt <= 0:
+        return Decimal("0")
+    if code == "USD":
+        return vnd_per_usdt
+    if code == "CNY":
+        cny_per_usdt = Decimal(str(get_cached_usdt_cny_rate() or 0))
+        if cny_per_usdt <= 0:
+            return Decimal("0")
+        return vnd_per_usdt / cny_per_usdt
+    return Decimal("0")
+
+
+def get_user_display_currency(user_id=None, lang=None) -> str:
+    """Ma tien hien cho khach nay, da tinh ca truong hop thieu ty gia."""
+    code = _DISPLAY_CURRENCY_BY_LANG.get(lang or get_user_lang(user_id), "VND")
+    if code != "VND" and get_display_rate_vnd_per_unit(code) <= 0:
+        return "VND"
+    return code
+
+
+def _format_display_number(value) -> str:
+    return f"{value:,.2f}"
+
+
+def format_money(amount_vnd, user_id=None, lang=None) -> str:
+    """So tien VND -> chuoi theo ngon ngu khach.
+
+    vi: `100,000 VNĐ` | en: `$3.83` | zh: `¥27.60 ($3.83)`.
+    """
+    from decimal import Decimal
+
+    try:
+        amount = Decimal(str(int(amount_vnd or 0)))
+    except (TypeError, ValueError):
+        amount = Decimal("0")
+
+    currency = get_user_display_currency(user_id, lang)
+    if currency == "VND":
+        return f"{int(amount):,} VNĐ"
+
+    rate = get_display_rate_vnd_per_unit(currency)
+    converted = amount / rate
+    if currency == "USD":
+        return f"${_format_display_number(converted)}"
+
+    usd_rate = get_display_rate_vnd_per_unit("USD")
+    usd_part = f" (${_format_display_number(amount / usd_rate)})" if usd_rate > 0 else ""
+    return f"¥{_format_display_number(converted)}{usd_part}"
+
+
+def parse_money_to_vnd(text, user_id=None, lang=None):
+    """Chuoi khach go (theo tien hien cho ho) -> so nguyen VND. None neu sai.
+
+    Khach VN go so nguyen kieu `100.000` / `100,000`, nen ca hai dau phan cach
+    deu bi bo. Khach USD/CNY go so thap phan (`12.5`) nen chi bo dau phay.
+    """
+    from decimal import Decimal, InvalidOperation
+
+    raw = str(text or "").strip().replace(" ", "").replace("$", "").replace("¥", "")
+    if not raw:
+        return None
+
+    currency = get_user_display_currency(user_id, lang)
+    if currency == "VND":
+        raw = raw.replace(",", "").replace(".", "")
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return None
+
+    raw = raw.replace(",", "")
+    try:
+        value = Decimal(raw)
+    except (InvalidOperation, ValueError, TypeError):
+        return None
+    if value <= 0:
+        return None
+    return int((value * get_display_rate_vnd_per_unit(currency)).to_integral_value())
 
 
 def convert_vnd_to_usdt(amount_vnd: int, rate: Decimal = None, quantizer=None):

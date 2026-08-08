@@ -207,6 +207,9 @@ USDT_RATE_SOURCE_URL = get_env_str(
     "USDT_RATE_SOURCE_URL",
     "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
 )
+# Ty gia du phong CNY/USDT khi khong lay duoc gia P2P live. Chi dung de HIEN
+# THI cho khach dung tieng Trung; moi so tien thu vao van tinh bang VND/USDT.
+USDT_RATE_CNY_PER_USDT_RAW = get_env_str("USDT_RATE_CNY_PER_USDT", "7.2")
 BANK_BUTTON_ICON_ID = get_env_str("BANK_BUTTON_ICON_ID", "6201627300170043826")
 CRYPTO_BUTTON_ICON_ID = get_env_str("CRYPTO_BUTTON_ICON_ID", "5280763862113592324")
 VIP_PREMIUM_ICON_ID = get_env_str("VIP_PREMIUM_ICON_ID", "5240228673738527951")
@@ -247,6 +250,13 @@ try:
     USDT_RATE_VND_PER_USDT = Decimal(USDT_RATE_VND_PER_USDT_RAW or "0")
 except InvalidOperation:
     USDT_RATE_VND_PER_USDT = Decimal("0")
+
+try:
+    USDT_RATE_CNY_PER_USDT = Decimal(USDT_RATE_CNY_PER_USDT_RAW or "0")
+except InvalidOperation:
+    USDT_RATE_CNY_PER_USDT = Decimal("7.2")
+if USDT_RATE_CNY_PER_USDT < 0:
+    USDT_RATE_CNY_PER_USDT = Decimal("0")
 
 try:
     RPAY_UNDERPAY_TOLERANCE = Decimal(RPAY_UNDERPAY_TOLERANCE_RAW or "0")

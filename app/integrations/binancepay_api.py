@@ -62,14 +62,32 @@ def binance_pay_amount_text(value) -> str:
     )
 
 
-def collect_pending_binance_pay_amounts(exclude_order_code: str = "") -> set:
-    """So tien (chuoi da chuan hoa) ma cac don Binance Pay dang cho chiem giu."""
-    taken = set()
+def iter_pending_binance_pay_records():
+    """(ma, ban ghi) cua moi thu dang cho tra bang Binance Pay.
+
+    Gop CA don hang lan lenh nap vi: hai ho so nay o hai dictionary khac nhau
+    nhung chung mot cach doi soat (khop theo so tien), nen mot so tien bi don
+    hang chiem cung phai bi coi la da chiem voi lenh nap - khong thi mot lenh
+    nap co the an mat tien cua mot don hang.
+    """
     for order_code, details in list(pending_orders.items()):
         if not isinstance(details, dict):
             continue
         if details.get("provider") != "binance_pay" or details.get("status") != "pending_payment":
             continue
+        yield str(order_code), details
+    for topup_code, details in list(pending_user_topups.items()):
+        if not isinstance(details, dict):
+            continue
+        if details.get("provider") != "binance_pay":
+            continue
+        yield str(topup_code), details
+
+
+def collect_pending_binance_pay_amounts(exclude_order_code: str = "") -> set:
+    """So tien (chuoi da chuan hoa) ma cac don Binance Pay dang cho chiem giu."""
+    taken = set()
+    for order_code, details in iter_pending_binance_pay_records():
         if exclude_order_code and order_code == exclude_order_code:
             continue
         amount = _binance_pay_decimal(details.get("binance_pay_amount"))

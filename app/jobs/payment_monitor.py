@@ -307,16 +307,29 @@ async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
     if not is_binance_pay_enabled():
         return {"enabled": False, "ok": True, "error": "", "count": 0}
 
+    # Don hang va lenh nap vi deu khop bang so tien nen phai vao chung mot bang:
+    # neu ca hai lo trung so tien thi CA HAI deu bi bo qua (rang buoc 2).
+    candidates = [
+        (str(order_code), order_details, ORDER_EXPIRATION_SECONDS)
+        for order_code, order_details in await pending_items_snapshot()
+        if order_details.get("provider") == "binance_pay" and order_details.get("status") == "pending_payment"
+    ]
+    candidates.extend(
+        (str(topup_code), topup_details, USER_TOPUP_EXPIRATION_SECONDS)
+        for topup_code, topup_details in list(pending_user_topups.items())
+        if isinstance(topup_details, dict) and topup_details.get("provider") == "binance_pay"
+    )
+
     pending_by_amount: dict = {}
-    for order_code, order_details in await pending_items_snapshot():
-        if order_details.get("provider") != "binance_pay" or order_details.get("status") != "pending_payment":
-            continue
-        expected_vnd = int(order_details.get("amount", 0) or 0)
-        amount_text = str(order_details.get("binance_pay_amount") or "").strip()
-        created_ts = float(order_details.get("timestamp") or order_details.get("time") or 0)
+    for reference_code, details, expire_seconds in candidates:
+        expected_vnd = int(details.get("amount", 0) or 0)
+        amount_text = str(details.get("binance_pay_amount") or "").strip()
+        created_ts = float(details.get("timestamp") or details.get("time") or 0)
         if expected_vnd <= 0 or not amount_text or created_ts <= 0:
             continue
-        pending_by_amount.setdefault(amount_text, []).append((order_code, expected_vnd, created_ts))
+        pending_by_amount.setdefault(amount_text, []).append(
+            (reference_code, expected_vnd, created_ts, expire_seconds)
+        )
 
     if not pending_by_amount:
         return {"enabled": True, "ok": True, "error": "", "count": 0}
@@ -327,7 +340,7 @@ async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
                 "Binance Pay: %s don dang cho cung so tien %s USDT (%s) -> bo qua het, can doi soat tay",
                 len(orders),
                 amount_text,
-                ", ".join(code for code, _vnd, _ts in orders),
+                ", ".join(code for code, _vnd, _ts, _expire in orders),
             )
 
     try:
@@ -347,13 +360,13 @@ async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
         if not orders or len(orders) != 1 or amount_text in matched_amounts:
             continue
 
-        order_code, expected_vnd, created_ts = orders[0]
+        order_code, expected_vnd, created_ts, expire_seconds = orders[0]
         transaction_ref = binance_pay_normalize_ref(transfer["transaction_id"])
         if db_check_tx_exists(transaction_ref):
             continue
 
         created_ts_ms = int(created_ts * 1000)
-        expire_ts_ms = created_ts_ms + (ORDER_EXPIRATION_SECONDS * 1000)
+        expire_ts_ms = created_ts_ms + (int(expire_seconds) * 1000)
         timestamp_ms = int(transfer.get("timestamp_ms") or 0)
         if timestamp_ms <= 0:
             continue
