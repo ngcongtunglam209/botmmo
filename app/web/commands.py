@@ -33,6 +33,8 @@ COMMAND_GROUPS: list[dict[str, Any]] = [
             ("viewstock", "/viewstock", "Xem stock local.", "readonly"),
             ("delstock", "/delstock", "Conversation xóa stock local.", "conversation"),
             ("setlimit", "/setlimit <product_id> <so_luong>", "Đặt giới hạn pending/manual.", "write"),
+            ("setstockchannel", "/setstockchannel <chat_id|off>", "Đặt kênh nhận thông báo nhập kho (hoặc forward tin từ kênh).", "write"),
+            ("stockchannel", "/stockchannel", "Xem kênh nhận thông báo nhập kho.", "readonly"),
         ],
     },
     {

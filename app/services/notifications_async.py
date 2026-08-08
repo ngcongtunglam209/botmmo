@@ -116,6 +116,72 @@ async def _cleanup_blocked_users(blocked_ids: list):
         logger.info(f"Disabled broadcasts for {marked} blocked users; financial data retained")
     return marked
 
+def get_stock_channel_id() -> int:
+    """Kênh nhận thông báo nhập kho: /setstockchannel thắng, sau đó tới .env."""
+    try:
+        override = bot_settings.get("stock_channel_id") if isinstance(bot_settings, dict) else None
+    except NameError:
+        override = None
+    if override is not None:
+        try:
+            return int(override)
+        except (TypeError, ValueError):
+            logger.warning(f"stock_channel_id trong bot_settings khong hop le: {override!r}")
+    return int(STOCK_CHANNEL_ID or 0)
+
+
+async def set_stock_channel_id(channel_id: int) -> int:
+    """Lưu kênh nhập kho. Truyền 0 để tắt hẳn thông báo."""
+    value = int(channel_id or 0)
+    bot_settings["stock_channel_id"] = value
+    await save_data(force=True, tables=[BOT_SETTINGS_FILE])
+    return value
+
+
+async def notify_stock_added(
+    context: ContextTypes.DEFAULT_TYPE,
+    product_name: str,
+    added_count: int,
+    total_count: int,
+    price: int = 0,
+):
+    """Đăng bài 'hàng mới về' lên kênh mỗi khi admin nhập kho."""
+    channel_id = get_stock_channel_id()
+    if not channel_id:
+        return
+
+    price_line = f"{E_TAG} <b>Giá:</b> {int(price):,} VNĐ\n" if price else ""
+    bot_username = getattr(getattr(context, "bot", None), "username", "") or ""
+    cta = f"\n{E_TIP} <i>Đặt hàng tại: @{bot_username}</i>" if bot_username else ""
+
+    msg = (
+        f"{E_SUCCESS} <b>HÀNG MỚI VỀ!</b>\n\n"
+        f"{E_TAG} <b>Sản phẩm:</b> {html.escape(str(product_name))}\n"
+        f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Vừa thêm:</b> {int(added_count):,}\n"
+        f"{price_line}"
+        f"{E_STAT} <b>Tồn kho hiện tại:</b> {int(total_count):,}\n"
+        f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <b>Thời gian:</b> {datetime.now().strftime('%H:%M %d/%m/%Y')}"
+        f"{cta}"
+    )
+    try:
+        await context.bot.send_message(chat_id=channel_id, text=msg, parse_mode=ParseMode.HTML)
+        logger.info(f"{E_SUCCESS} Da dang thong bao nhap kho '{product_name}' (+{added_count}) len kenh {channel_id}")
+    except BadRequest as e:
+        if "chat not found" in str(e).lower():
+            logger.warning(
+                f"{E_ERROR} Thong bao nhap kho that bai: bot chua vao kenh {channel_id} hoac ID sai. "
+                "Dung /setstockchannel de dat lai."
+            )
+        else:
+            logger.error(f"Loi gui thong bao nhap kho (Telegram API): {e}")
+    except Forbidden:
+        logger.warning(
+            f"{E_ERROR} Thong bao nhap kho that bai: bot khong co quyen dang bai o kenh {channel_id}."
+        )
+    except (TelegramError, ValueError, KeyError, AttributeError) as e:
+        logger.error(f"Loi gui thong bao nhap kho: {e}")
+
+
 async def broadcast_out_of_stock(context: ContextTypes.DEFAULT_TYPE, product_name: str, product_id: str = None):
     """
     NEW: Broadcast thông báo hết hàng cho toàn bộ users

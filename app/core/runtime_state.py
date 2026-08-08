@@ -252,6 +252,7 @@ stock_waitlist = {}
 flash_sales = {}
 combo_deals = {}
 wheel_data = {}
+bot_settings = {}  # Cài đặt admin sửa lúc chạy: {"stock_channel_id": int}
 
 # NEW: Locks for concurrency
 product_stock_locks = {}  # {product_id: asyncio.Lock()}

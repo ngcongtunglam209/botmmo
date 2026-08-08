@@ -69,6 +69,7 @@ class AppState:
     flash_sales: dict = field(default_factory=dict)
     combo_deals: dict = field(default_factory=dict)
     wheel_data: dict = field(default_factory=dict)
+    bot_settings: dict = field(default_factory=dict)
 
     # ── Runtime state (NOT persisted to DB) ───────────────────────────
     bot_instance: Any = None
@@ -116,7 +117,7 @@ class AppState:
         "referral_data", "live_chats", "active_giveaways", "dice_game_data",
         "withdrawal_requests", "transaction_history", "admin_action_log",
         "daily_promo_tracker", "stock_waitlist", "flash_sales", "combo_deals",
-        "wheel_data",
+        "wheel_data", "bot_settings",
     )
 
     # Names of runtime state fields (not persisted)

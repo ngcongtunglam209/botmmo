@@ -107,6 +107,8 @@ REPORT_INSTRUCTION_IMAGE_URL = os.getenv(
     "https://sf-static.upanhlaylink.com/img/image_2026012951ccd173a4a5883794367070516a2463.jpg"
 ).strip()
 LIVE_ORDERS_CHANNEL_ID = int(os.getenv("LIVE_ORDERS_CHANNEL_ID", "-1002191171631"))
+# Kênh nhận thông báo nhập kho. Đây chỉ là mặc định; /setstockchannel ghi đè lúc chạy.
+STOCK_CHANNEL_ID = int(os.getenv("STOCK_CHANNEL_ID", "0") or "0")
 BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip()
 
 MAINTENANCE_MODE = False
@@ -335,6 +337,7 @@ STOCK_WAITLIST_FILE = "data_stock_waitlist.json"
 FLASH_SALES_FILE = "data_flash_sales.json"
 COMBO_DEALS_FILE = "data_combo_deals.json"
 WHEEL_DATA_FILE = "data_wheel_data.json"
+BOT_SETTINGS_FILE = "data_bot_settings.json"  # Cài đặt admin đổi lúc chạy, giữ qua restart
 
 # Withdrawal Configuration
 TRANSACTION_HISTORY_FILE = "data_transaction_history.json"  # NEW: Balance history

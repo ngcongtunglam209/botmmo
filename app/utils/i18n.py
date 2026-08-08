@@ -227,7 +227,27 @@ STRINGS = {
 
 def normalize_lang(lang) -> str:
     key = str(lang or "").strip().lower().replace(" ", "")
-    return _LANG_ALIASES.get(key, DEFAULT_LANG)
+    if key in _LANG_ALIASES:
+        return _LANG_ALIASES[key]
+    # Telegram gửi IETF tag như "en-US", "zh-Hans", "vi-VN": lấy phần gốc.
+    base = key.replace("_", "-").split("-", 1)[0]
+    return _LANG_ALIASES.get(base, DEFAULT_LANG)
+
+
+def resolve_lang(user) -> str:
+    """Ngôn ngữ đã lưu trong profile, nếu chưa có thì lấy theo client Telegram."""
+    try:
+        uid = int(getattr(user, "id", 0) or 0)
+    except (TypeError, ValueError):
+        uid = 0
+    if uid > 0:
+        try:
+            profile = user_data_db.get(str(uid)) if isinstance(user_data_db, dict) else None
+        except NameError:
+            profile = None
+        if isinstance(profile, dict) and profile.get("lang"):
+            return normalize_lang(profile.get("lang"))
+    return normalize_lang(getattr(user, "language_code", None))
 
 
 def get_user_lang(user_id=None) -> str:

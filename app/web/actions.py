@@ -196,6 +196,14 @@ def update_product(form: Any) -> Result:
         record.update(updates)
         if drop_category_cache:
             record.pop("category_image_file_id", None)
+
+    if new_stock:
+        queue_stock_post(
+            product_name=str(updates.get("name") or product.get("name") or product_id),
+            added_count=len(new_stock),
+            total_count=len(updates["stock"]),
+            price=as_int(str(updates.get("price", product.get("price", 0))), 0),
+        )
     return ok(f"Đã cập nhật {product_id}: {', '.join(changes)}.")
 
 
@@ -599,6 +607,33 @@ def _write_env(key: str, value: str) -> None:
     env_path.write_text(content, "utf-8")
 
 
+# --- Thông báo nhập kho ------------------------------------------------------
+
+#: Các action ở đây chạy đồng bộ nên không tự await được. Chúng xếp thông báo
+#: vào đây, `record_and_notify` (async, luôn chạy ngay sau action) sẽ đẩy đi.
+_pending_stock_posts: list[dict[str, Any]] = []
+
+
+def queue_stock_post(product_name: str, added_count: int, total_count: int, price: int = 0) -> None:
+    _pending_stock_posts.append({
+        "product_name": product_name,
+        "added_count": added_count,
+        "total_count": total_count,
+        "price": price,
+    })
+
+
+async def flush_stock_posts() -> None:
+    import logging
+
+    while _pending_stock_posts:
+        post = _pending_stock_posts.pop(0)
+        try:
+            await bridge.notify_stock_channel(**post)
+        except Exception:
+            logging.getLogger(__name__).exception("Không gửi được thông báo nhập kho")
+
+
 # --- Audit ------------------------------------------------------------------
 
 async def record_and_notify(
@@ -612,6 +647,7 @@ async def record_and_notify(
     import logging
 
     logger = logging.getLogger(__name__)
+    await flush_stock_posts()
     try:
         event = audit.record(
             action,

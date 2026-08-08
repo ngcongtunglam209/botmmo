@@ -543,6 +543,14 @@ async def receive_stock_input(update: Update, context: ContextTypes.DEFAULT_TYPE
                 parse_mode='HTML'
             )
             
+            create_background_task(notify_stock_added(
+                context,
+                product_name,
+                len(new_items),
+                new_total,
+                price=int(products[prod_id].get('price', 0) or 0),
+            ))
+
             # NEW: Auto-broadcast nếu từ hết hàng → có hàng
             if was_out_of_stock and new_total > 0:
                 create_background_task(broadcast_back_in_stock(context, product_name, prod_id, new_total))

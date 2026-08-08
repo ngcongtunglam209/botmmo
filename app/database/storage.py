@@ -512,6 +512,7 @@ async def save_data(force=False, tables=None):
                 (FLASH_SALES_FILE, flash_sales),
                 (COMBO_DEALS_FILE, combo_deals),
                 (WHEEL_DATA_FILE, wheel_data),
+                (BOT_SETTINGS_FILE, bot_settings),
                 (TRANSACTION_HISTORY_FILE, transaction_history),
                 (ADMIN_ACTION_LOG_FILE, admin_action_log)
             ]
@@ -559,7 +560,7 @@ async def save_data_debounced(context: ContextTypes.DEFAULT_TYPE):
 
 def load_data():
     global pending_user_topups
-    global order_history, processed_transaction_ids, user_data_db, banned_users, coupons, pending_orders, api_keys, pending_api_deposits, products, custom_store_icons, store_categories, pending_manual_orders, stock_waitlist, flash_sales, combo_deals, wheel_data
+    global order_history, processed_transaction_ids, user_data_db, banned_users, coupons, pending_orders, api_keys, pending_api_deposits, products, custom_store_icons, store_categories, pending_manual_orders, stock_waitlist, flash_sales, combo_deals, wheel_data, bot_settings
     global warranty_claims, product_ratings, referral_data, live_chats, active_giveaways, dice_game_data, withdrawal_requests, transaction_history, admin_action_log, daily_promo_tracker
     
     init_db()
@@ -598,6 +599,9 @@ def load_data():
     flash_sales = load_from_db(FLASH_SALES_FILE, {}, FLASH_SALES_FILE)
     combo_deals = load_from_db(COMBO_DEALS_FILE, {}, COMBO_DEALS_FILE)
     wheel_data = load_from_db(WHEEL_DATA_FILE, {}, WHEEL_DATA_FILE)
+    bot_settings = load_from_db(BOT_SETTINGS_FILE, {}, BOT_SETTINGS_FILE)
+    if not isinstance(bot_settings, dict):
+        bot_settings = {}
     transaction_history = load_from_db(TRANSACTION_HISTORY_FILE, {}, TRANSACTION_HISTORY_FILE)
     admin_action_log = load_from_db(ADMIN_ACTION_LOG_FILE, [], ADMIN_ACTION_LOG_FILE)
     if not isinstance(admin_action_log, list):
@@ -621,6 +625,7 @@ def load_data():
         "flash_sales",
         "combo_deals",
         "wheel_data",
+        "bot_settings",
         "warranty_claims",
         "product_ratings",
         "referral_data",

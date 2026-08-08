@@ -35,12 +35,13 @@ async def _send_registration_challenge(update, context, referrer_id: int | None 
         if referrer_id:
             context.user_data["pending_referrer_id"] = referrer_id
 
-    user_id = update.effective_user.id if update.effective_user else None
+    # Profile chưa tồn tại ở bước này nên phải lấy ngôn ngữ từ client Telegram.
+    lang = resolve_lang(update.effective_user)
     await update.message.reply_html(
-        f"{E_TIP} <b>{t('verify_title', user_id=user_id)}</b>\n\n"
-        f"{t('verify_prompt', user_id=user_id)}\n\n"
+        f"{E_TIP} <b>{t('verify_title', lang=lang)}</b>\n\n"
+        f"{t('verify_prompt', lang=lang)}\n\n"
         f"<b>{challenge['question']} = ?</b>\n\n"
-        f"{t('verify_example', user_id=user_id)}"
+        f"{t('verify_example', lang=lang)}"
     )
 
 
@@ -68,6 +69,7 @@ async def _register_user_profile(context, user, referrer_id: int | None = None) 
             "last_name": user.last_name,
             "username": user.username,
             "is_premium": bool(getattr(user, "is_premium", False)),
+            "lang": resolve_lang(user),
             "first_seen": now_iso,
             "balance": 0,
             "total_spent": 0,
@@ -115,18 +117,20 @@ async def handle_registration_challenge_answer(update, context, user_input: str)
         await _send_registration_challenge(update, context)
         return True
 
+    lang = resolve_lang(user)
+
     try:
         answer = int(str(user_input or "").strip())
     except ValueError:
         await update.message.reply_html(
-            f"{E_TIP} {t('verify_number_only', user_id=user.id)}\n\n"
+            f"{E_TIP} {t('verify_number_only', lang=lang)}\n\n"
             f"<b>{challenge.get('question')} = ?</b>"
         )
         return True
 
     if answer != int(challenge.get("answer", -1)):
         await update.message.reply_html(
-            f"{E_ERROR} {t('verify_wrong', user_id=user.id)}\n\n"
+            f"{E_ERROR} {t('verify_wrong', lang=lang)}\n\n"
             f"<b>{challenge.get('question')} = ?</b>"
         )
         return True
@@ -179,7 +183,7 @@ async def registered_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if await check_if_banned(update): return
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
         await update.message.reply_text(
-            t("maintenance", user_id=update.effective_user.id),
+            t("maintenance", lang=resolve_lang(update.effective_user)),
             parse_mode=ParseMode.HTML
         )
         return
@@ -243,14 +247,58 @@ def _should_handle_start_command(update: Update, context: ContextTypes.DEFAULT_T
     return mentioned_username.casefold() in valid_usernames
 
 
+async def _redirect_group_start_to_private(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Trong group chỉ đưa link về chat riêng, không render menu.
+
+    Menu chính in kèm hạng và số dư, nên hiển thị nó trong group là lộ dữ liệu
+    của một người cho cả nhóm.
+    """
+    user = update.effective_user
+    lang = resolve_lang(user)
+    username = ""
+    try:
+        username = str(getattr(getattr(context, "bot", None), "username", "") or "")
+    except RuntimeError:
+        username = ""
+    username = (username or str(BOT_USERNAME or "")).strip().lstrip("@")
+
+    payload = ""
+    if context.args:
+        candidate = str(context.args[0]).strip()
+        if re.fullmatch(r"[A-Za-z0-9_-]{1,64}", candidate):
+            payload = f"?start={candidate}"
+
+    text = lt(
+        user.id if user else None,
+        "👋 Bấm nút bên dưới để mở bot trong chat riêng nhé. Số dư và đơn hàng chỉ hiển thị ở đó.",
+        "👋 Tap below to open the bot in a private chat. Your balance and orders are only shown there.",
+        "👋 请点击下方按钮在私聊中打开机器人。余额和订单只在私聊中显示。",
+    )
+    reply_markup = None
+    if username:
+        reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton(
+            t("btn_shop", lang=lang),
+            url=f"https://t.me/{username}{payload}",
+        )]])
+    try:
+        await update.message.reply_html(text, reply_markup=reply_markup)
+    except (TelegramError, ValueError, AttributeError) as e:
+        logger.debug(f"Cannot point group /start to private chat: {e}")
+
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not _should_handle_start_command(update, context):
         return
     if await check_if_banned(update): return
 
+    chat_type = str(getattr(getattr(update, "effective_chat", None), "type", "") or "").lower()
+    if chat_type != "private":
+        await _redirect_group_start_to_private(update, context)
+        return
+
     # Kiểm tra chế độ bảo trì
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
-        await update.message.reply_text(t("maintenance", user_id=update.effective_user.id), parse_mode=ParseMode.HTML)
+        await update.message.reply_text(t("maintenance", lang=resolve_lang(update.effective_user)), parse_mode=ParseMode.HTML)
         return
 
     await clear_user_state(context)
@@ -344,6 +392,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             "last_name": user.last_name,
             "username": user.username,
             "is_premium": bool(getattr(user, "is_premium", False)),
+            "lang": resolve_lang(user),
             "first_seen": now_iso,
             "balance": 0,
             "total_spent": 0,
