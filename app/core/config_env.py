@@ -119,7 +119,16 @@ LIVE_ORDERS_CHANNEL_ID = get_env_int("LIVE_ORDERS_CHANNEL_ID", -1002191171631, m
 LIVE_ORDERS_TOPIC_ID = get_env_int("LIVE_ORDERS_TOPIC_ID", 0, minimum=0)
 # Kênh nhận thông báo nhập kho. Đây chỉ là mặc định; /setstockchannel ghi đè lúc chạy.
 STOCK_CHANNEL_ID = get_env_int("STOCK_CHANNEL_ID", 0, minimum=None)
-STOCK_CHANNEL_TOPIC_ID = get_env_int("STOCK_CHANNEL_TOPIC_ID", 0, minimum=0)
+# Ten chuan la STOCK_TOPIC_ID, doi xung voi LIVE_ORDERS_TOPIC_ID. Ban dau bien
+# nay ten la STOCK_CHANNEL_TOPIC_ID trong khi cap kia bo chu CHANNEL, va su
+# khong doi xung do khien nguoi cau hinh go nham roi thong bao roi vao topic
+# General ma khong bao gi. Van doc ten cu de cau hinh cu khong gay.
+STOCK_TOPIC_ID = get_env_int(
+    "STOCK_TOPIC_ID",
+    get_env_int("STOCK_CHANNEL_TOPIC_ID", 0, minimum=0),
+    minimum=0,
+)
+STOCK_CHANNEL_TOPIC_ID = STOCK_TOPIC_ID
 BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip()
 
 MAINTENANCE_MODE = False

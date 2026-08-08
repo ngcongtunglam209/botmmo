@@ -200,7 +200,7 @@ def get_stock_channel_topic_id() -> int:
                 f"{bot_settings.get('stock_channel_topic_id')!r}"
             )
             return 0
-    return max(0, int(STOCK_CHANNEL_TOPIC_ID or 0))
+    return max(0, int(STOCK_TOPIC_ID or 0))
 
 
 async def set_stock_channel_id(channel_id: int, topic_id: int = 0) -> int:

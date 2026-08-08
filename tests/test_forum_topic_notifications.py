@@ -180,7 +180,7 @@ async def test_stock_notification_posts_into_its_topic(monkeypatch):
 
 def test_stock_topic_follows_whichever_source_set_the_channel(monkeypatch):
     notif = _load()
-    monkeypatch.setattr(notif, "STOCK_CHANNEL_TOPIC_ID", 111, raising=False)
+    monkeypatch.setattr(notif, "STOCK_TOPIC_ID", 111, raising=False)
 
     # No runtime override: the .env topic applies to the .env channel.
     monkeypatch.setattr(notif, "bot_settings", {}, raising=False)
@@ -195,6 +195,30 @@ def test_stock_topic_follows_whichever_source_set_the_channel(monkeypatch):
         notif, "bot_settings", {"stock_channel_id": -100999, "stock_channel_topic_id": 7}, raising=False
     )
     assert notif.get_stock_channel_topic_id() == 7
+
+
+def test_both_spellings_of_the_stock_topic_variable_are_read(monkeypatch):
+    config = load_modules()["app.core.config_env"]
+
+    def resolve():
+        return config.get_env_int(
+            "STOCK_TOPIC_ID",
+            config.get_env_int("STOCK_CHANNEL_TOPIC_ID", 0, minimum=0),
+            minimum=0,
+        )
+
+    monkeypatch.delenv("STOCK_TOPIC_ID", raising=False)
+    monkeypatch.delenv("STOCK_CHANNEL_TOPIC_ID", raising=False)
+    assert resolve() == 0
+
+    # The original name. Silently ignoring it would move an existing shop's
+    # restock posts into General with nothing in the logs.
+    monkeypatch.setenv("STOCK_CHANNEL_TOPIC_ID", "580")
+    assert resolve() == 580
+
+    # The canonical name, symmetrical with LIVE_ORDERS_TOPIC_ID.
+    monkeypatch.setenv("STOCK_TOPIC_ID", "42")
+    assert resolve() == 42
 
 
 def test_negative_channel_ids_survive_env_parsing(monkeypatch):
