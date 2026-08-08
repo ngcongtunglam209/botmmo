@@ -483,7 +483,7 @@ async def _show_store_product_detail(
     if isinstance(p, dict):
         p["_product_id"] = str(prod_id)
     if not p or not isinstance(p, dict):
-        await safe_answer(query, "Sản phẩm không tồn tại", show_alert=True)
+        await safe_answer(query, lt(query.from_user.id, "Sản phẩm không tồn tại", "This product no longer exists", "该商品不存在"), show_alert=True)
         return True
 
     requires_gmail = p.get('requires_gmail', False)
@@ -719,7 +719,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                         style="success" if is_store_product_available(pid, p) else "danger",
                     )
                 ])
-        btns.append([_btn("Quay lại", icon_id="6206032691075223572", callback_data="store_main")])
+        btns.append([_btn(lt(query.from_user.id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data="store_main")])
         await _show_store_panel(query, context, msg, InlineKeyboardMarkup(btns))
         return True
 
@@ -952,7 +952,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             f"{E_STAT} <b>Tồn kho:</b> {stock_count}\n"
             f"<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Vui lòng <b>nhập số lượng</b> muốn mua:\n\n"
             f"<i>Ví dụ: Nhập 1000 nếu muốn server chạy đúng 1000 đơn vị</i>",
-            InlineKeyboardMarkup([[_btn("Hủy", icon_id="5273914604752216432", callback_data=f"sel_qty_{prod_id}", style="danger")]]),
+            InlineKeyboardMarkup([[_btn(lt(query.from_user.id, "Hủy", "Cancel", "取消"), icon_id="5273914604752216432", callback_data=f"sel_qty_{prod_id}", style="danger")]]),
         )
         return True
 
@@ -1036,12 +1036,27 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             context.user_data['state'] = 'awaiting_manual_email'
             
             await query.message.reply_text(
-                f"{E_SUCCESS} <b>ĐÃ TRỪ TIỀN THÀNH CÔNG!</b>\n\n"
-                f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
-                f"{E_TAG} <b>Đã trừ:</b> {total_price:,} VNĐ\n"
-                f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Số dư còn:</b> {new_balance:,} VNĐ\n\n"
-                f"{E_GLOBE} <b>Vui lòng nhập email nhận dịch vụ:</b>\n"
-                f"<i>(Email này sẽ được dùng để setup/gửi thông tin)</i>",
+                lt(
+                    user_id,
+                    f"{E_SUCCESS} <b>ĐÃ TRỪ TIỀN THÀNH CÔNG</b>\n\n"
+                    f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
+                    f"{E_TAG} <b>Đã trừ:</b> {total_price:,} VNĐ\n"
+                    f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Số dư còn:</b> {new_balance:,} VNĐ\n\n"
+                    f"{E_GLOBE} <b>Vui lòng nhập email nhận dịch vụ:</b>\n"
+                    f"<i>(Email này sẽ được dùng để setup và gửi thông tin)</i>",
+                    f"{E_SUCCESS} <b>PAYMENT TAKEN FROM YOUR WALLET</b>\n\n"
+                    f"{E_TAG} <b>Product:</b> {p['name']}\n"
+                    f"{E_TAG} <b>Charged:</b> {total_price:,} VND\n"
+                    f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Remaining balance:</b> {new_balance:,} VND\n\n"
+                    f"{E_GLOBE} <b>Send the email address for this service:</b>\n"
+                    f"<i>(We use it to set the service up and send you the details)</i>",
+                    f"{E_SUCCESS} <b>已从钱包扣款</b>\n\n"
+                    f"{E_TAG} <b>商品：</b>{p['name']}\n"
+                    f"{E_TAG} <b>扣款：</b>{total_price:,} VND\n"
+                    f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>剩余余额：</b>{new_balance:,} VND\n\n"
+                    f"{E_GLOBE} <b>请输入接收服务的邮箱：</b>\n"
+                    f"<i>（该邮箱用于开通服务并发送信息）</i>",
+                ),
                 parse_mode='HTML'
             )
             
@@ -1221,7 +1236,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 )
                 await save_data(force=True, tables=[HISTORY_FILE])
         else:
-            await query.message.reply_text("<i>Liên hệ Admin để nhận hàng</i>", parse_mode='HTML')
+            await query.message.reply_text(lt(user_id, "<i>Liên hệ Admin để nhận hàng</i>", "<i>Contact the admin to receive your order</i>", "<i>请联系管理员领取订单</i>"), parse_mode='HTML')
             await safe_send_admin(
                 context.bot,
                 f"{E_TIP} <b>ĐƠN CHỜ GIAO TỪ NGUỒN</b>\n"
@@ -1232,7 +1247,12 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             )
         
         await query.edit_message_text(
-            f"{E_SUCCESS} <b>ĐÃ THANH TOÁN THÀNH CÔNG</b>\n\nCảm ơn bạn đã mua hàng!",
+            lt(
+                user_id,
+                f"{E_SUCCESS} <b>ĐÃ THANH TOÁN THÀNH CÔNG</b>\n\nCảm ơn bạn đã mua hàng.",
+                f"{E_SUCCESS} <b>PAYMENT COMPLETED</b>\n\nThank you for your purchase.",
+                f"{E_SUCCESS} <b>支付成功</b>\n\n感谢您的购买。",
+            ),
             reply_markup=create_back_button_menu(user_id=user_id)
         )
         
@@ -1277,9 +1297,18 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         context.user_data['store_coupon_qty'] = qty
         context.user_data['state'] = 'awaiting_store_coupon'
         await query.edit_message_text(
-            "\U0001f3ab <b>NH\u1eacP M\xc3 GI\u1ea2M GI\xc1</b>\n\n"
-            "Vui l\xf2ng nh\u1eadp m\xe3 coupon c\u1ee7a b\u1ea1n:\n"
-            "<i>(G\xf5 /cancel \u0111\u1ec3 h\u1ee7y)</i>",
+            lt(
+                query.from_user.id,
+                "🎫 <b>NHẬP MÃ GIẢM GIÁ</b>\n\n"
+                "Vui lòng nhập mã coupon của bạn:\n"
+                "<i>(Gõ /cancel để hủy)</i>",
+                "🎫 <b>ENTER A DISCOUNT CODE</b>\n\n"
+                "Send your coupon code:\n"
+                "<i>(Type /cancel to abort)</i>",
+                "🎫 <b>输入优惠码</b>\n\n"
+                "请发送您的优惠码：\n"
+                "<i>（输入 /cancel 取消）</i>",
+            ),
             parse_mode=ParseMode.HTML
         )
         return True

@@ -290,8 +290,8 @@ async def _complete_partner_api_key_rotation(
         f"<i>{API_PREM_WARN} API key cũ đã bị vô hiệu hóa để bảo mật. Hãy cập nhật key mới trong hệ thống của bạn.</i>"
     )
     kb = InlineKeyboardMarkup([
-        [_btn("Nạp Ví", icon_id="5278467510604160626", callback_data="api_member_wallet")],
-        [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+        [_btn(lt(user_id, "Nạp Ví", "Top up wallet", "充值钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet")],
+        [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]
     ])
     await safe_send_message(
         context,
@@ -572,9 +572,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             context.user_data['warranty_claim_order'] = order_code
             context.user_data['state'] = 'awaiting_warranty_description'
             await query.edit_message_text(
-                "<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>YÊU CẦU BẢO HÀNH</b>\n\nVui lòng <b>mô tả vấn đề</b> bạn gặp phải:\n<i>(Gửi tin nhắn mô tả chi tiết)</i>",
+                lt(
+                    user_id,
+                    "<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>YÊU CẦU BẢO HÀNH</b>\n\nVui lòng <b>mô tả vấn đề</b> bạn gặp phải:\n<i>(Gửi tin nhắn mô tả chi tiết)</i>",
+                    "<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>WARRANTY REQUEST</b>\n\nPlease <b>describe the problem</b> you ran into:\n<i>(Send a message with the details)</i>",
+                    "<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>质保申请</b>\n\n请<b>描述您遇到的问题</b>：\n<i>（发送一条包含详细信息的消息）</i>",
+                ),
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("❌ Hủy", callback_data="main_menu")]])
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(lt(user_id, "❌ Hủy", "❌ Cancel", "❌ 取消"), callback_data="main_menu")]])
             )
 
     elif command == 'open_live_chat':
@@ -641,11 +646,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 "<i>Menu API chỉ hiện sau khi được Admin duyệt.</i>"
             )
             kb = InlineKeyboardMarkup([
-                [_btn("Gửi yêu cầu đăng ký", icon_id="5436359785534466562", callback_data="api_register_request")],
-                [_btn("Quay lại", icon_id="6206032691075223572", callback_data="back_to_main")]
+                [_btn(lt(user_id, "Gửi yêu cầu đăng ký", "Send a registration request", "提交注册申请"), icon_id="5436359785534466562", callback_data="api_register_request")],
+                [_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data="back_to_main")]
             ])
             kb = InlineKeyboardMarkup([
-                [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]
             ])
             await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
             return
@@ -699,7 +704,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 ),
                 parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup([
-                    [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                    [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]
                 ]),
             )
             if sent_confirmation:
@@ -774,8 +779,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 "<i>\u26A0\uFE0F API key cũ đã bị vô hiệu hóa để bảo mật. Hãy cập nhật key mới trong hệ thống của bạn.</i>"
             )
             kb = InlineKeyboardMarkup([
-                [_btn("Nạp Ví", icon_id="5278467510604160626", callback_data="api_member_wallet")],
-                [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                [_btn(lt(user_id, "Nạp Ví", "Top up wallet", "充值钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet")],
+                [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]
             ])
             from app.core.emoji_runtime import upgrade_text_to_premium_emoji
             await safe_send_message(
@@ -854,8 +859,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 "• <code>/napapi 500000</code>"
             )
             kb = InlineKeyboardMarkup([
-                [_btn("Ví Chung", icon_id="5278467510604160626", callback_data="api_member_wallet")],
-                [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                [_btn(lt(user_id, "Ví Chung", "Shared wallet", "共享钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet")],
+                [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]
             ])
             await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
             return
@@ -885,8 +890,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 "<b>Mã phản hồi:</b> <code>200</code> OK · <code>400</code> sai endpoint/field · <code>401</code> sai key · <code>402</code> thiếu tiền · <code>404</code> không tìm thấy"
             )
             kb = InlineKeyboardMarkup([
-                [_btn("Tài Liệu API", icon_id="5350481781306958339", callback_data="api_member_docs")],
-                [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                [_btn(lt(user_id, "Tài Liệu API", "API documentation", "API 文档"), icon_id="5350481781306958339", callback_data="api_member_docs")],
+                [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]
             ])
             await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
             return
@@ -948,11 +953,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 "• Gặp <code>402</code>: nạp ví bằng <code>/napapi [số_tiền]</code>"
             )
             kb = InlineKeyboardMarkup([
-                [InlineKeyboardButton("Mở tài liệu Web", url=docs_url)],
-                [_btn("Ví Chung", icon_id="5278467510604160626", callback_data="api_member_wallet"),
+                [InlineKeyboardButton(lt(user_id, "Mở tài liệu Web", "Open the web documentation", "打开网页文档"), url=docs_url)],
+                [_btn(lt(user_id, "Ví Chung", "Shared wallet", "共享钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet"),
                  _btn("Endpoints", icon_id="5215039453487893428", callback_data="api_member_endpoints")],
-                [_btn("Gửi lại tài liệu", icon_id="5350481781306958339", callback_data="api_member_docs")],
-                [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+                [_btn(lt(user_id, "Gửi lại tài liệu", "Resend the documentation", "重新发送文档"), icon_id="5350481781306958339", callback_data="api_member_docs")],
+                [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]
             ])
             await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
             return
@@ -1011,7 +1016,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         kb = InlineKeyboardMarkup([
             [_btn("Endpoints", icon_id="5215039453487893428", callback_data="api_member_endpoints")],
-            [_btn("Quay lại menu API", icon_id="6206032691075223572", callback_data="api_member_menu")]
+            [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]
         ])
         await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
         return
@@ -1261,7 +1266,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 query,
                 text=f"❌ Không tìm thấy đơn hàng <code>{html.escape(order_code)}</code>",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
             return
         
@@ -1275,7 +1280,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 query,
                 text=f"❌ Bạn không có quyền xem lại đơn <code>{html.escape(order_code)}</code>",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
             return
 
@@ -1285,7 +1290,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 query,
                 text=f"❌ Đơn hàng <code>{html.escape(order_code)}</code> đã được hoàn tiền và không thể gửi lại thông tin",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
             return
 
@@ -1298,7 +1303,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     "Vui lòng liên hệ admin để được hỗ trợ."
                 ),
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
             return
         
@@ -1331,14 +1336,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     "Kiểm tra file phía trên nhé."
                 ),
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại danh sách", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn(lt(user_id, "Quay lại danh sách", "Back to the list", "返回列表"), icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
         else:
             await safe_edit_message(
                 query,
                 text=f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Không thể gửi lại thông tin. Vui lòng thử lại sau hoặc liên hệ admin.",
                 parse_mode=ParseMode.HTML,
-                reply_markup=InlineKeyboardMarkup([[_btn("Quay lại danh sách", icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
+                reply_markup=InlineKeyboardMarkup([[_btn(lt(user_id, "Quay lại danh sách", "Back to the list", "返回列表"), icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
         return
     elif command.startswith('report_specific_order:'):
@@ -1367,7 +1372,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         
         try:
             await query.message.edit_text(
-                f"Đang xử lý yêu cầu báo lỗi cho đơn hàng <code>{order_code}</code>...", 
+                lt(user_id,
+                   f"Đang xử lý yêu cầu báo lỗi cho đơn hàng <code>{order_code}</code>...",
+                   f"Working on the problem report for order <code>{order_code}</code>...",
+                   f"正在处理订单 <code>{order_code}</code> 的问题报告…"), 
                 parse_mode=ParseMode.HTML, 
                 reply_markup=None
             )
@@ -1380,12 +1388,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data.pop('report_photo_chat_id', None)
         context.user_data.pop('report_photo_message_id', None)
         await query.message.reply_text(
-            "Tiếp theo, vui lòng gửi <b>một ảnh chụp màn hình</b> về lỗi bạn đang gặp phải.",
+            lt(
+                user_id,
+                "Tiếp theo, vui lòng gửi <b>một ảnh chụp màn hình</b> về lỗi bạn đang gặp phải.",
+                "Next, please send <b>a screenshot</b> of the problem.",
+                "接下来，请发送<b>问题截图</b>。",
+            ),
             parse_mode=ParseMode.HTML
         )
     elif command == 'ask_ai_confirm':
 
-        await query.edit_message_text("Đang kết nối với Trợ lý AI, vui lòng chờ trong giây lát...")
+        await query.edit_message_text(lt(user_id, "Đang kết nối với Trợ lý AI, vui lòng chờ trong giây lát...", "Connecting you to the AI assistant, one moment...", "正在连接 AI 助手，请稍候…"))
 
         question = context.user_data.get('support_query')
 
@@ -1401,9 +1414,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
             ai_answer = await ask_ai(question)
 
-            await query.edit_message_text(f'<tg-emoji emoji-id="6271362510901747485">🤖</tg-emoji> <b>Trợ lý AI Lâm Shop trả lời:</b>\n\n{ai_answer}', parse_mode=ParseMode.HTML)  # FIX: ask_gemini -> ask_ai
+            await query.edit_message_text(
+                lt(
+                    user_id,
+                    f'<tg-emoji emoji-id="6271362510901747485">🤖</tg-emoji> <b>Trợ lý AI Lâm Shop trả lời:</b>\n\n{ai_answer}',
+                    f'<tg-emoji emoji-id="6271362510901747485">🤖</tg-emoji> <b>The Lâm Shop AI assistant says:</b>\n\n{ai_answer}',
+                    f'<tg-emoji emoji-id="6271362510901747485">🤖</tg-emoji> <b>LÂM SHOP AI 助手回复：</b>\n\n{ai_answer}',
+                ),
+                parse_mode=ParseMode.HTML,
+            )
 
-        else: await query.edit_message_text("Đã có lỗi xảy ra. Vui lòng bắt đầu lại.")
+        else: await query.edit_message_text(lt(user_id, "Đã có lỗi xảy ra. Vui lòng bắt đầu lại.", "Something went wrong. Please start again.", "出现错误，请重新开始。"))
 
         await clear_user_state(context)
 

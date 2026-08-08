@@ -786,87 +786,52 @@
  ],
  [
   "app\\services\\orders_delivery.py",
-  50,
-  "THONG TIN DON HANG"
- ],
- [
-  "app\\services\\orders_delivery.py",
-  51,
-  "DANH SACH TAI KHOAN"
- ],
- [
-  "app\\services\\orders_delivery.py",
-  52,
-  "Ma don hang"
- ],
- [
-  "app\\services\\orders_delivery.py",
-  53,
-  "Ngay mua"
- ],
- [
-  "app\\services\\orders_delivery.py",
-  54,
-  "San pham"
- ],
- [
-  "app\\services\\orders_delivery.py",
-  58,
-  "Bao hanh"
- ],
- [
-  "app\\services\\orders_delivery.py",
-  59,
-  "Mo ta"
- ],
- [
-  "app\\services\\orders_delivery.py",
-  523,
+  529,
   "nam"
  ],
  [
   "app\\services\\orders_delivery.py",
-  524,
+  530,
   "thang"
  ],
  [
   "app\\services\\orders_delivery.py",
-  525,
+  531,
   "tuan"
  ],
  [
   "app\\services\\orders_delivery.py",
-  526,
+  532,
   "ngay"
  ],
  [
   "app\\services\\orders_delivery.py",
-  527,
+  533,
   "gio"
  ],
  [
   "app\\services\\orders_delivery.py",
-  632,
+  638,
   "khong"
  ],
  [
   "app\\services\\orders_delivery.py",
-  182,
+  188,
   "luu y"
  ],
  [
   "app\\services\\orders_delivery.py",
-  390,
+  396,
   "THONG TIN TAI KHOAN - Don "
  ],
  [
   "app\\services\\orders_delivery.py",
-  633,
+  639,
   "khong bao hanh"
  ],
  [
   "app\\services\\orders_delivery.py",
-  633,
+  639,
   "khong bh"
  ],
  [
@@ -916,67 +881,67 @@
  ],
  [
   "app\\utils\\ui_and_email.py",
-  354,
+  459,
   "Xin chao ban xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  363,
+  468,
   "An lau khong ban xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  364,
+  469,
   "Hen nhau cuoi tuan xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  366,
+  471,
   "Mua roi do ban xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  369,
+  474,
   "Nho mui lua dong xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  376,
+  481,
   "Dau nam may man xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  377,
+  482,
   "Cuoi nam trung lon xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  380,
+  485,
   "Chuc ban phat loc xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  383,
+  488,
   "Mot doi an nhan xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  387,
+  492,
   "Cuoi tuan ve ben xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  392,
+  497,
   "Cho doi mot nguoi xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  393,
+  498,
   "Mong ngay gap lai xxx"
  ],
  [
   "app\\utils\\ui_and_email.py",
-  401,
+  506,
   "Chuyen nay de em lo xxx"
  ]
 ]
