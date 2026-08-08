@@ -106,5 +106,27 @@ async def test_set_stock_channel_persists_only_its_own_table(notifications, monk
     monkeypatch.setattr(notifications, "save_data", fake_save, raising=False)
 
     assert await notifications.set_stock_channel_id(-100456) == -100456
-    assert settings == {"stock_channel_id": -100456}
+    assert settings == {"stock_channel_id": -100456, "stock_channel_topic_id": 0}
     assert saved == [(True, ["data_bot_settings.json"])]
+
+
+async def test_set_stock_channel_clears_a_stale_topic(notifications, monkeypatch):
+    settings = {"stock_channel_id": -100123, "stock_channel_topic_id": 580}
+    monkeypatch.setattr(notifications, "bot_settings", settings, raising=False)
+
+    async def fake_save(force=False, tables=None):
+        return None
+
+    monkeypatch.setattr(notifications, "save_data", fake_save, raising=False)
+
+    await notifications.set_stock_channel_id(-100456)
+    # Topic 580 belongs to the old group. Carrying it over would post into
+    # whatever topic happens to have that id in the new one.
+    assert settings["stock_channel_topic_id"] == 0
+
+    await notifications.set_stock_channel_id(-100456, 42)
+    assert settings["stock_channel_topic_id"] == 42
+
+    # Turning notifications off drops the topic with the channel.
+    await notifications.set_stock_channel_id(0, 42)
+    assert settings == {"stock_channel_id": 0, "stock_channel_topic_id": 0}

@@ -4,7 +4,8 @@
 import os, sys, time, re, logging, json
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
-def get_env_int(name: str, default: int, minimum: int = 1) -> int:
+def get_env_int(name: str, default: int, minimum: int | None = 1) -> int:
+    """minimum=None cho phép giá trị âm — chat_id của group/kênh luôn âm."""
     raw_value = os.getenv(name, "").strip()
     if not raw_value:
         return default
@@ -12,6 +13,8 @@ def get_env_int(name: str, default: int, minimum: int = 1) -> int:
         parsed_value = int(raw_value)
     except ValueError:
         return default
+    if minimum is None:
+        return parsed_value
     return max(minimum, parsed_value)
 
 def get_env_float(name: str, default: float, minimum: float = 0.0) -> float:
@@ -90,9 +93,14 @@ REPORT_INSTRUCTION_IMAGE_URL = os.getenv(
     "REPORT_INSTRUCTION_IMAGE_URL",
     "https://sf-static.upanhlaylink.com/img/image_2026012951ccd173a4a5883794367070516a2463.jpg"
 ).strip()
-LIVE_ORDERS_CHANNEL_ID = int(os.getenv("LIVE_ORDERS_CHANNEL_ID", "-1002191171631"))
+LIVE_ORDERS_CHANNEL_ID = get_env_int("LIVE_ORDERS_CHANNEL_ID", -1002191171631, minimum=None)
+# Topic (subchannel) trong group forum. 0 = đăng thẳng vào kênh/topic General.
+# Đây là message_thread_id, KHÔNG phải chat_id: nó chỉ có nghĩa khi đi kèm
+# CHANNEL_ID của group. Lấy từ link topic: t.me/c/<group>/<topic>.
+LIVE_ORDERS_TOPIC_ID = get_env_int("LIVE_ORDERS_TOPIC_ID", 0, minimum=0)
 # Kênh nhận thông báo nhập kho. Đây chỉ là mặc định; /setstockchannel ghi đè lúc chạy.
-STOCK_CHANNEL_ID = int(os.getenv("STOCK_CHANNEL_ID", "0") or "0")
+STOCK_CHANNEL_ID = get_env_int("STOCK_CHANNEL_ID", 0, minimum=None)
+STOCK_CHANNEL_TOPIC_ID = get_env_int("STOCK_CHANNEL_TOPIC_ID", 0, minimum=0)
 BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip()
 
 MAINTENANCE_MODE = False
