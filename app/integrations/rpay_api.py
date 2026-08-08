@@ -66,6 +66,48 @@ def _rpay_decimal(raw, default=None):
         return default
 
 
+RPAY_NETWORK_LABELS = {
+    "bsc": "BNB Smart Chain (BEP20)",
+    "tron": "TRON (TRC20)",
+    "polygon": "Polygon",
+    "base": "Base",
+    "ethereum": "Ethereum (ERC20)",
+    "eth": "Ethereum (ERC20)",
+    "arbitrum": "Arbitrum",
+    "optimism": "Optimism",
+    "avalanche": "Avalanche (C-Chain)",
+    "solana": "Solana",
+}
+
+
+def rpay_network_label(network: str) -> str:
+    """Ten mang hien cho khach. Mang la -> in hoa chinh khoa, khong doan bua."""
+    key = str(network or "").strip().lower()
+    return RPAY_NETWORK_LABELS.get(key, key.upper() or "USDT")
+
+
+def rpay_available_networks() -> list:
+    """Cac mang khach duoc chon. Rong = de RPay tu chon vi mac dinh."""
+    return [network for network in (RPAY_NETWORKS or []) if network]
+
+
+def rpay_wallet_address_for(network: str) -> str:
+    """Vi nhan cho mot mang.
+
+    Chi can khi cung mot network/token co nhieu vi active ben RPay; con lai de
+    trong de RPay tu chon. Dia chi cua mang nay khong duoc dung cho mang khac,
+    nen RPAY_WALLET_ADDRESS chung chi ap dung khi cau hinh dung mot mang.
+    """
+    key = str(network or "").strip().lower()
+    specific = (RPAY_WALLET_ADDRESS_BY_NETWORK or {}).get(key, "")
+    if specific:
+        return specific
+    # Voi nhieu mang, mot dia chi chung gan nhu chac chan sai mang -> bo qua.
+    if len(rpay_available_networks()) > 1:
+        return ""
+    return RPAY_WALLET_ADDRESS
+
+
 def rpay_callback_url() -> str:
     """URL RPay se POST ket qua ve.
 
@@ -129,6 +171,7 @@ async def rpay_create_invoice(
     name: str,
     description: str = "",
     expire_minutes: int | None = None,
+    network: str | None = None,
 ) -> dict:
     """Tao hoa don USDT. Raise neu RPay tu choi hoac mang loi."""
     if not is_rpay_enabled():
@@ -150,13 +193,14 @@ async def rpay_create_invoice(
             "(vd https://shop.example/webhook/rpay)."
         )
 
+    chosen_network = str(network or RPAY_NETWORK or "").strip().lower()
     payload = {
         "name": str(name or order_code)[:255],
         "description": str(description or "")[:255],
         "amount": format(amount, "f"),
         "token": RPAY_TOKEN,
-        "network": RPAY_NETWORK,
-        "address": RPAY_WALLET_ADDRESS,
+        "network": chosen_network,
+        "address": rpay_wallet_address_for(chosen_network),
         "expireMinutes": str(minutes),
         "request_id": request_id,
         "callback_url": callback_url,

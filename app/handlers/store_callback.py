@@ -1399,6 +1399,36 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         if not p:
             await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
             return True
+
+        # Cua hang co nhieu vi RPay -> de khach chon mang truoc. Chuyen sai mang
+        # la mat tien, nen day phai la lua chon co y thuc chu khong phai mac dinh
+        # ngam cua shop.
+        from app.integrations.rpay_api import rpay_available_networks, rpay_network_label
+        networks = rpay_available_networks()
+        if len(networks) > 1:
+            rows = [[
+                _btn(rpay_network_label(network), icon_id="5281029063459234079",
+                     callback_data=f"rpaynet_{network}_{prod_id}_{qty}", style="success")
+            ] for network in networks]
+            rows.append([_btn(
+                lt(query.from_user.id, "⬅️ Quay lại", "⬅️ Back", "⬅️ 返回"),
+                callback_data=f"sel_qty_{prod_id}",
+            )])
+            await safe_answer(query)
+            await query.edit_message_text(
+                lt(
+                    query.from_user.id,
+                    "<b>Chọn mạng lưới USDT</b>\n\nChuyển sai mạng sẽ <b>mất tiền</b>. "
+                    "Hãy chọn đúng mạng mà ví của bạn hỗ trợ.",
+                    "<b>Choose the USDT network</b>\n\nSending on the wrong network <b>loses the funds</b>. "
+                    "Pick the network your wallet actually supports.",
+                    "<b>请选择 USDT 网络</b>\n\n转错网络会<b>造成资金丢失</b>。请选择您钱包支持的网络。",
+                ),
+                parse_mode='HTML',
+                reply_markup=InlineKeyboardMarkup(rows),
+            )
+            return True
+
         from app.handlers.payment_generation import generate_product_payment_rpay
         # Delete old message to avoid duplicate buttons
         try:
@@ -1406,6 +1436,36 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         except Exception:
             pass
         await generate_product_payment_rpay(update, context, prod_id, qty)
+        return True
+
+    elif data.startswith("rpaynet_"):
+        # rpaynet_<network>_<prod_id>_<qty>. Khoa mang khong co dau gach duoi
+        # (bsc/tron/polygon/base...) nen tach tu trai an toan; prod_id thi co.
+        clean_data = data.replace("rpaynet_", "")
+        network, _, rest = clean_data.partition("_")
+        if "_" in rest:
+            prod_id, qty_str = rest.rsplit("_", 1)
+            try:
+                qty = int(qty_str)
+            except ValueError:
+                prod_id = rest; qty = 1
+        else:
+            prod_id = rest; qty = 1
+
+        from app.integrations.rpay_api import rpay_available_networks
+        if network not in rpay_available_networks():
+            await safe_answer(query, "❌ Mạng lưới không khả dụng!", show_alert=True)
+            return True
+        if not products.get(prod_id):
+            await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
+            return True
+
+        from app.handlers.payment_generation import generate_product_payment_rpay
+        try:
+            await query.delete_message()
+        except Exception:
+            pass
+        await generate_product_payment_rpay(update, context, prod_id, qty, network=network)
         return True
 
     elif data.startswith("pay_prod_binance_"):
