@@ -3,7 +3,34 @@ import time
 
 REQUIRED_GROUP_MEMBERSHIP_CACHE_TTL_SECONDS = 300
 REQUIRED_GROUP_NON_MEMBER_CACHE_TTL_SECONDS = 8
+REQUIRED_GROUP_ALERT_INTERVAL_SECONDS = 900
 _required_group_membership_cache = {}
+_required_group_alert_at = 0.0
+
+
+async def _alert_required_group_broken(update, error) -> None:
+    """Bao admin khi khong kiem tra duoc tu cach thanh vien, toi da 15 phut/lan.
+
+    Loi nay im lang la nguy hiem nhat: bot van chay, log van troi, nhung khong
+    ai mua duoc hang.
+    """
+    global _required_group_alert_at
+    now = time.monotonic()
+    if now - _required_group_alert_at < REQUIRED_GROUP_ALERT_INTERVAL_SECONDS:
+        return
+    _required_group_alert_at = now
+    try:
+        await safe_send_admin(
+            update.get_bot(),
+            f"{E_LIMIT} <b>KHONG KIEM TRA DUOC NHOM BAT BUOC</b>\n\n"
+            f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> REQUIRED_GROUP_ID: <code>{REQUIRED_GROUP_ID}</code>\n"
+            f"<tg-emoji emoji-id=\"5350481781306958339\">🧾</tg-emoji> Loi: <code>{html.escape(str(error)[:200])}</code>\n\n"
+            "Bot dang <b>cho tat ca vao</b> de khong chan khach. Kiem tra: ID nhom "
+            "phai la chat_id dang <code>-100...</code> (khong phai ID topic), va bot "
+            "phai o trong nhom do. Dat <code>REQUIRED_GROUP_ID=0</code> de tat han."
+        )
+    except Exception:
+        logger.debug("Khong gui duoc canh bao nhom bat buoc cho admin")
 
 
 async def _is_required_group_member(update, *, force_refresh: bool = False) -> bool:
@@ -62,8 +89,18 @@ async def check_if_banned(update) -> bool:
         try:
             is_joined = await _is_required_group_member(update)
         except Exception as e:
-            logger.exception("Membership check failed for user_id=%s: %s", user_id, e)
-            is_joined = False
+            # Khong kiem tra duoc KHAC voi "da kiem tra va nguoi nay chua vao".
+            # Coi no la chua vao thi mot REQUIRED_GROUP_ID go sai (vi du dat
+            # nham ID topic) se khoa TOAN BO khach khoi bot, va log chi hien mot
+            # dong "Chat not found" khong ai doc. Cong ep vao nhom la de marketing,
+            # khong phai lop bao mat - mat cong do con hon dong cua hang.
+            logger.error(
+                "Khong kiem tra duoc nhom bat buoc (REQUIRED_GROUP_ID=%s) cho user_id=%s: %s "
+                "-> tam thoi cho vao",
+                REQUIRED_GROUP_ID, user_id, e,
+            )
+            await _alert_required_group_broken(update, e)
+            return False
         if not is_joined:
             from telegram import InlineKeyboardMarkup, InlineKeyboardButton
             markup = InlineKeyboardMarkup([
