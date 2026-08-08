@@ -1,4 +1,38 @@
 
+def topic_kwargs(topic_id) -> dict:
+    """`message_thread_id` cho send_message, hoac {} neu khong dung topic.
+
+    Telegram tu choi `message_thread_id=0`, va mot group thuong (khong bat che
+    do forum) tu choi tham so nay hoan toan. Vi vay chi gan khi that su co
+    topic, thay vi luon truyen roi de 0 lam hong ca nhung deployment cu.
+    """
+    try:
+        value = int(topic_id or 0)
+    except (TypeError, ValueError):
+        return {}
+    return {"message_thread_id": value} if value > 0 else {}
+
+
+def _log_channel_send_error(error, *, channel_id, topic_id, label: str, fix_hint: str) -> None:
+    """Log loi gui kenh sao cho doc xong biet phai sua CAI GI.
+
+    Sai chat_id va sai topic_id la hai loi khac han nhau nhung ca hai deu ve
+    duoi dang BadRequest, nen phai tach ra - khong thi admin di kiem tra kenh
+    trong khi thu hong that su la topic.
+    """
+    text = str(error).lower()
+    target = f"kenh {channel_id}" + (f" topic {topic_id}" if int(topic_id or 0) > 0 else "")
+    if "thread not found" in text or "topic_deleted" in text or "topic closed" in text:
+        logger.warning(
+            f"{E_ERROR} {label} that bai: topic {topic_id} khong ton tai/da dong trong kenh "
+            f"{channel_id}. Kiem tra lai ID topic o link t.me/c/<group>/<topic>."
+        )
+    elif "chat not found" in text:
+        logger.warning(f"{E_ERROR} {label} that bai: bot chua vao {target} hoac ID sai. {fix_hint}")
+    else:
+        logger.error(f"Loi {label.lower()} ({target}) (Telegram API): {error}")
+
+
 def mask_name(name: str) -> str:
     if not name: return "Khách hàng"
     name = name.strip()
@@ -33,13 +67,21 @@ async def send_live_order_notification(context: ContextTypes.DEFAULT_TYPE, full_
             f"{order_text}\n\n"
             f"{E_TIP} <i>Mua ngay tại: @{context.bot.username}</i>"
         )
-        await context.bot.send_message(chat_id=LIVE_ORDERS_CHANNEL_ID, text=msg, parse_mode=ParseMode.HTML)
+        await context.bot.send_message(
+            chat_id=LIVE_ORDERS_CHANNEL_ID,
+            text=msg,
+            parse_mode=ParseMode.HTML,
+            **topic_kwargs(LIVE_ORDERS_TOPIC_ID),
+        )
         logger.info(f"{E_SUCCESS} Đã gửi live order notification: {product_name} - {amount:,}đ")
     except BadRequest as e:
-        if "Chat not found" in str(e):
-            logger.warning(f"{E_ERROR} Cảnh báo Live Orders: Bot chưa tham gia kênh {LIVE_ORDERS_CHANNEL_ID} hoặc ID kênh sai. Vui lòng kiểm tra lại.")
-        else:
-            logger.error(f"Lỗi gửi tin nhắn Live Orders (Telegram API): {e}")
+        _log_channel_send_error(
+            e,
+            channel_id=LIVE_ORDERS_CHANNEL_ID,
+            topic_id=LIVE_ORDERS_TOPIC_ID,
+            label="Live Orders",
+            fix_hint="Kiem tra lai LIVE_ORDERS_CHANNEL_ID.",
+        )
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
         logger.error(f"Lỗi gửi tin nhắn Live Orders: {e}")
 
@@ -130,10 +172,37 @@ def get_stock_channel_id() -> int:
     return int(STOCK_CHANNEL_ID or 0)
 
 
-async def set_stock_channel_id(channel_id: int) -> int:
-    """Lưu kênh nhập kho. Truyền 0 để tắt hẳn thông báo."""
+def get_stock_channel_topic_id() -> int:
+    """Topic nhập kho: /setstockchannel thắng, sau đó tới .env.
+
+    Bám theo cùng nguồn với get_stock_channel_id(): khi admin đặt kênh bằng
+    lệnh, topic của .env không được phép dính vào kênh mới.
+    """
+    try:
+        has_override = isinstance(bot_settings, dict) and "stock_channel_id" in bot_settings
+    except NameError:
+        has_override = False
+    if has_override:
+        try:
+            return max(0, int(bot_settings.get("stock_channel_topic_id") or 0))
+        except (TypeError, ValueError):
+            logger.warning(
+                f"stock_channel_topic_id trong bot_settings khong hop le: "
+                f"{bot_settings.get('stock_channel_topic_id')!r}"
+            )
+            return 0
+    return max(0, int(STOCK_CHANNEL_TOPIC_ID or 0))
+
+
+async def set_stock_channel_id(channel_id: int, topic_id: int = 0) -> int:
+    """Lưu kênh nhập kho. Truyền 0 để tắt hẳn thông báo.
+
+    `topic_id` là message_thread_id của topic trong group forum; 0 nghĩa là
+    đăng thẳng vào kênh (hoặc topic General).
+    """
     value = int(channel_id or 0)
     bot_settings["stock_channel_id"] = value
+    bot_settings["stock_channel_topic_id"] = max(0, int(topic_id or 0)) if value else 0
     await save_data(force=True, tables=[BOT_SETTINGS_FILE])
     return value
 
@@ -163,17 +232,23 @@ async def notify_stock_added(
         f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <b>Thời gian:</b> {datetime.now().strftime('%H:%M %d/%m/%Y')}"
         f"{cta}"
     )
+    topic_id = get_stock_channel_topic_id()
     try:
-        await context.bot.send_message(chat_id=channel_id, text=msg, parse_mode=ParseMode.HTML)
+        await context.bot.send_message(
+            chat_id=channel_id,
+            text=msg,
+            parse_mode=ParseMode.HTML,
+            **topic_kwargs(topic_id),
+        )
         logger.info(f"{E_SUCCESS} Da dang thong bao nhap kho '{product_name}' (+{added_count}) len kenh {channel_id}")
     except BadRequest as e:
-        if "chat not found" in str(e).lower():
-            logger.warning(
-                f"{E_ERROR} Thong bao nhap kho that bai: bot chua vao kenh {channel_id} hoac ID sai. "
-                "Dung /setstockchannel de dat lai."
-            )
-        else:
-            logger.error(f"Loi gui thong bao nhap kho (Telegram API): {e}")
+        _log_channel_send_error(
+            e,
+            channel_id=channel_id,
+            topic_id=topic_id,
+            label="Thong bao nhap kho",
+            fix_hint="Dung /setstockchannel de dat lai.",
+        )
     except Forbidden:
         logger.warning(
             f"{E_ERROR} Thong bao nhap kho that bai: bot khong co quyen dang bai o kenh {channel_id}."
