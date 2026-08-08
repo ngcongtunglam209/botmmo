@@ -11,20 +11,25 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
 
     # Kiểm tra chế độ bảo trì
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
-        await update.message.reply_text("<tg-emoji emoji-id=\"5215392879320505675\">🛠️</tg-emoji> <b>HỆ THỐNG ĐANG BẢO TRÌ</b>\n\nChúng tôi đang nâng cấp hệ thống để phục vụ bạn tốt hơn. Vui lòng quay lại sau ít phút.", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(t("maintenance", user_id=update.effective_user.id), parse_mode=ParseMode.HTML)
         return
 
     user_state = context.user_data.get('state')
     
     if user_state == 'awaiting_report_photo':
         if not update.message or not update.message.photo:
-             await update.message.reply_text("❌ Vui lòng gửi ảnh hợp lệ.")
+             await update.message.reply_text(lt(update.effective_user.id, "❌ Vui lòng gửi ảnh hợp lệ.", "❌ Please send a valid photo.", "❌ 请发送有效的图片。"))
              return
         order_code = context.user_data.get('report_order_code')
         found_order = order_index.get(order_code) if order_code else None
         if found_order and found_order.get('refunded_at'):
             await update.message.reply_text(
-                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng này đã được hoàn tiền nên không thể báo lỗi nữa."
+                lt(
+                    update.effective_user.id,
+                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng này đã được hoàn tiền nên không thể báo lỗi nữa.",
+                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> This order was refunded, so it can no longer be reported.",
+                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> 该订单已退款，无法再提交问题报告。",
+                )
             )
             await clear_user_state(context)
             return
@@ -37,7 +42,12 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
             logger.warning(f"[REPORT] ảnh báo lỗi không hợp lệ ở bước nhận ({e})")
             await update.message.reply_text(
-                "❌ Ảnh không hợp lệ. Vui lòng gửi lại ảnh dạng <b>Photo</b> (không phải file/document).",
+                lt(
+                    update.effective_user.id,
+                    "❌ Ảnh không hợp lệ. Vui lòng gửi lại ảnh dạng <b>Photo</b> (không phải file/document).",
+                    "❌ That photo is not valid. Send it as a <b>Photo</b>, not as a file.",
+                    "❌ 图片无效。请以<b>图片</b>形式发送，而不是文件。",
+                ),
                 parse_mode=ParseMode.HTML
             )
             return
@@ -47,7 +57,15 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
         context.user_data['report_photo_message_id'] = update.message.message_id
         context.user_data['state'] = 'awaiting_report_description'
 
-        await update.message.reply_text("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã nhận ảnh. Cuối cùng, vui lòng <b>mô tả ngắn gọn</b> vấn đề của bạn là gì.", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(
+            lt(
+                update.effective_user.id,
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã nhận ảnh. Cuối cùng, vui lòng <b>mô tả ngắn gọn</b> vấn đề của bạn.",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Photo received. Last step: <b>describe the problem briefly</b>.",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> 已收到图片。最后请<b>简要描述问题</b>。",
+            ),
+            parse_mode=ParseMode.HTML,
+        )
  
     elif user_state == 'awaiting_warranty_photo':
         order_code = context.user_data.get('warranty_claim_order')
@@ -85,7 +103,15 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
         except (ValueError, TypeError, KeyError, IndexError) as e:
             logger.warning(f"Cannot notify admin about warranty claim {claim_id}: {e}")
         
-        await update.message.reply_text("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Yêu cầu bảo hành đã được gửi. Admin sẽ xem xét sớm.", reply_markup=create_main_menu(user_id=update.effective_user.id))
+        await update.message.reply_text(
+            lt(
+                update.effective_user.id,
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã gửi yêu cầu bảo hành. Admin sẽ xem xét sớm.",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Your warranty request was sent. The admin will review it shortly.",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> 质保申请已提交，管理员会尽快处理。",
+            ),
+            reply_markup=create_main_menu(user_id=update.effective_user.id),
+        )
         await clear_user_state(context)
 
 async def show_my_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, is_callback=False):

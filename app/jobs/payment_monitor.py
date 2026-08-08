@@ -46,7 +46,7 @@ async def _mark_pending_payment_message_completed(context, order_details: dict):
         return
 
     completed_button = InlineKeyboardButton(
-        "Đã hoàn thành",
+        lt(user_id, "Đã hoàn thành", "Completed", "已完成"),
         callback_data="ignore",
         api_kwargs={
             "icon_custom_emoji_id": "6269163801178804220",
@@ -1090,12 +1090,23 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             try:
                                 await context.bot.send_message(
                                     chat_id=user_id_to_notify,
-                                    text=(
-                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>NẠP TIỀN API THÀNH CÔNG!</b>\n\n"
+                                    text=lt(
+                                        user_id_to_notify,
+                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>NẠP TIỀN API THÀNH CÔNG</b>\n\n"
                                         f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Partner:</b> {html.escape(str(p_name))}\n"
                                         f"<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> <b>Đã nạp:</b> {amount_received:,} VNĐ\n"
                                         f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số dư mới:</b> {new_bal:,} VNĐ\n"
-                                        f"<i>Cảm ơn bạn đã nạp tiền!</i>"
+                                        f"<i>Cảm ơn bạn đã nạp tiền.</i>",
+                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>API WALLET TOPPED UP</b>\n\n"
+                                        f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Partner:</b> {html.escape(str(p_name))}\n"
+                                        f"<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> <b>Added:</b> {amount_received:,} VND\n"
+                                        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>New balance:</b> {new_bal:,} VND\n"
+                                        f"<i>Thank you for your top-up.</i>",
+                                        f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>API 钱包充值成功</b>\n\n"
+                                        f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>合作方：</b>{html.escape(str(p_name))}\n"
+                                        f"<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> <b>充值：</b>{amount_received:,} VND\n"
+                                        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>新余额：</b>{new_bal:,} VND\n"
+                                        f"<i>感谢您的充值。</i>",
                                     ),
                                     parse_mode=ParseMode.HTML
                                 )

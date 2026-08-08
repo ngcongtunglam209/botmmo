@@ -195,15 +195,6 @@ def _paginate_items(items, page: int, page_size: int = STORE_PAGE_SIZE):
     return safe_items[start_index:end_index], safe_page, total_pages
 
 
-def _build_pagination_row(previous_callback: str | None = None, next_callback: str | None = None):
-    row = []
-    if previous_callback:
-        row.append(_btn("Trang trước", icon_id="6206032691075223572", callback_data=previous_callback))
-    if next_callback:
-        row.append(_btn("Trang sau", icon_id="6186252635805323641", callback_data=next_callback))
-    return row
-
-
 def is_store_product_available(pid, product, pending_manual_count_by_pid=None) -> bool:
     """Best-effort availability check used for store button styling."""
     if not _is_product_visible_in_store(product):

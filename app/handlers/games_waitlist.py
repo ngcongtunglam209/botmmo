@@ -124,7 +124,7 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             callback = f"dice_prize_{prize['type']}_{prize['id']}"
             keyboard.append([InlineKeyboardButton(btn_text, callback_data=callback)])
         
-        keyboard.append([_btn("Không nhận (Bỏ qua)", icon_id="6147646987257782307", callback_data="dice_skip")])
+        keyboard.append([_btn(lt(user_id, "Không nhận (Bỏ qua)", "Skip the prize", "放弃奖励"), icon_id="6147646987257782307", callback_data="dice_skip")])
         
         await context.bot.send_message(
             chat_id,
