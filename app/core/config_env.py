@@ -17,6 +17,25 @@ def get_env_int(name: str, default: int, minimum: int | None = 1) -> int:
         return parsed_value
     return max(minimum, parsed_value)
 
+def get_env_str(name: str, default: str = "") -> str:
+    """Biến tồn tại nhưng rỗng phải rơi về default.
+
+    `os.getenv(name, default)` chỉ dùng default khi biến VẮNG MẶT. File .env
+    được load với override=True, nên một dòng `KEY=` để trống lại đặt biến
+    thành chuỗi rỗng và nuốt mất default — ví dụ `USDT_RATE_SOURCE_URL=` biến
+    URL nguồn giá thành "", làm hỏng toàn bộ tỉ giá live mà không báo gì.
+    """
+    return str(os.getenv(name) or "").strip() or default
+
+
+def get_env_bool(name: str, default: bool) -> bool:
+    """Cùng lý do với get_env_str: dòng để trống không được ngầm thành False."""
+    raw = str(os.getenv(name) or "").strip().lower()
+    if not raw:
+        return default
+    return raw in {"1", "true", "yes", "on"}
+
+
 def get_env_float(name: str, default: float, minimum: float = 0.0) -> float:
     raw_value = os.getenv(name, "").strip()
     if not raw_value:
@@ -67,32 +86,32 @@ TELEGRAM_LOGIN_REDIRECT_URI = os.getenv("TELEGRAM_LOGIN_REDIRECT_URI", "").strip
 SENDER_APP_PASSWORD = os.getenv("SENDER_APP_PASSWORD", "").strip()
 
 # --- Config (có default an toàn) ---
-BANK_ID = os.getenv("BANK_ID", "MB").strip()
+BANK_ID = get_env_str("BANK_ID", "MB")
 BANK_ACCOUNT_NUMBER = os.getenv("BANK_ACCOUNT_NUMBER", "").strip()
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME", "").strip()
 
 # --- SePay: duong thanh toan ngan hang duy nhat (webhook la chinh, poll chi
 # la du phong doi soat lai) ---
-ENABLE_PAYMENT_SEPAY = os.getenv("ENABLE_PAYMENT_SEPAY", "true").strip().lower() in {"1", "true", "yes", "on"}
+ENABLE_PAYMENT_SEPAY = get_env_bool("ENABLE_PAYMENT_SEPAY", True)
 SEPAY_WEBHOOK_API_KEY = os.getenv("SEPAY_WEBHOOK_API_KEY", "").strip()
 SEPAY_API_TOKEN = os.getenv("SEPAY_API_TOKEN", "").strip()
-SEPAY_API_BASE_URL = os.getenv("SEPAY_API_BASE_URL", "https://my.sepay.vn").strip().rstrip("/")
+SEPAY_API_BASE_URL = get_env_str("SEPAY_API_BASE_URL", "https://my.sepay.vn").rstrip("/")
 SEPAY_ACCOUNT_NUMBER = os.getenv("SEPAY_ACCOUNT_NUMBER", "").strip() or BANK_ACCOUNT_NUMBER
-ADMIN_USER_ID = int(os.getenv("ADMIN_USER_ID", "0"))
+ADMIN_USER_ID = get_env_int("ADMIN_USER_ID", 0, minimum=0)
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "").strip()
 SUPPORT_GROUP_LINK = os.getenv("SUPPORT_GROUP_LINK", "").strip()
-REQUIRED_GROUP_ID = int(os.getenv("REQUIRED_GROUP_ID", "0") or "0")
-ENABLE_EMAIL_SENDING = os.getenv("ENABLE_EMAIL_SENDING", "true").strip().lower() in {"1", "true", "yes", "on"}
-REGISTRATION_CHALLENGE_ENABLED = os.getenv("REGISTRATION_CHALLENGE_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+REQUIRED_GROUP_ID = get_env_int("REQUIRED_GROUP_ID", 0, minimum=None)
+ENABLE_EMAIL_SENDING = get_env_bool("ENABLE_EMAIL_SENDING", True)
+REGISTRATION_CHALLENGE_ENABLED = get_env_bool("REGISTRATION_CHALLENGE_ENABLED", False)
 SENDER_EMAIL = os.getenv("SENDER_EMAIL", "").strip()
 if ENABLE_EMAIL_SENDING and not SENDER_APP_PASSWORD:
     SENDER_APP_PASSWORD = _require_env("SENDER_APP_PASSWORD")
 
 # --- FIX Phase 2: Chuyển hardcoded values → .env ---
-REPORT_INSTRUCTION_IMAGE_URL = os.getenv(
+REPORT_INSTRUCTION_IMAGE_URL = get_env_str(
     "REPORT_INSTRUCTION_IMAGE_URL",
-    "https://sf-static.upanhlaylink.com/img/image_2026012951ccd173a4a5883794367070516a2463.jpg"
-).strip()
+    "https://sf-static.upanhlaylink.com/img/image_2026012951ccd173a4a5883794367070516a2463.jpg",
+)
 LIVE_ORDERS_CHANNEL_ID = get_env_int("LIVE_ORDERS_CHANNEL_ID", -1002191171631, minimum=None)
 # Topic (subchannel) trong group forum. 0 = đăng thẳng vào kênh/topic General.
 # Đây là message_thread_id, KHÔNG phải chat_id: nó chỉ có nghĩa khi đi kèm
@@ -105,35 +124,35 @@ BOT_USERNAME = os.getenv("BOT_USERNAME", "").strip()
 
 MAINTENANCE_MODE = False
 AI_AUTO_REPLY = False
-API_SERVER_PORT = int(os.getenv("API_SERVER_PORT", "8080"))
-PUBLIC_API_SCHEME = os.getenv("PUBLIC_API_SCHEME", "https").strip().lower()
+API_SERVER_PORT = get_env_int("API_SERVER_PORT", 8080, minimum=1)
+PUBLIC_API_SCHEME = get_env_str("PUBLIC_API_SCHEME", "https").lower()
 # Which client IPs may set X-Forwarded-Proto/-For. Caddy reaches the bot over the
 # internal Docker network, so its address is not 127.0.0.1 and uvicorn would
 # otherwise drop those headers and report every HTTPS request as plain http.
-TRUSTED_PROXY_IPS = os.getenv("TRUSTED_PROXY_IPS", "*").strip() or "*"
-AUTO_PUBLIC_IP_DETECT = os.getenv("AUTO_PUBLIC_IP_DETECT", "true").strip().lower() in {"1", "true", "yes", "on"}
+TRUSTED_PROXY_IPS = get_env_str("TRUSTED_PROXY_IPS", "*")
+AUTO_PUBLIC_IP_DETECT = get_env_bool("AUTO_PUBLIC_IP_DETECT", True)
 # --- RPay: cong thanh toan USDT duy nhat (callback la chinh, poll
 # GetInvoiceStatus chi la du phong doi soat lai) ---
-ENABLE_PAYMENT_RPAY = os.getenv("ENABLE_PAYMENT_RPAY", "true").strip().lower() in {"1", "true", "yes", "on"}
+ENABLE_PAYMENT_RPAY = get_env_bool("ENABLE_PAYMENT_RPAY", True)
 RPAY_MERCHANT_ID = os.getenv("RPAY_MERCHANT_ID", "").strip()
 RPAY_API_KEY = os.getenv("RPAY_API_KEY", "").strip()
-RPAY_API_BASE_URL = os.getenv("RPAY_API_BASE_URL", "https://api.rpay.vn/api").strip().rstrip("/")
+RPAY_API_BASE_URL = get_env_str("RPAY_API_BASE_URL", "https://api.rpay.vn/api").rstrip("/")
 # Token/network/address deu tuy chon: de trong thi RPay dung vi mac dinh cua
 # cua hang. Chi bat buoc `address` khi 1 network/token co nhieu vi active.
-RPAY_TOKEN = os.getenv("RPAY_TOKEN", "USDT").strip().upper()
+RPAY_TOKEN = get_env_str("RPAY_TOKEN", "USDT").upper()
 RPAY_NETWORK = os.getenv("RPAY_NETWORK", "").strip().lower()
 RPAY_WALLET_ADDRESS = os.getenv("RPAY_WALLET_ADDRESS", "").strip()
 # De trong -> bam theo PUBLIC_API_URL + /webhook/rpay (xem rpay_callback_url()).
 RPAY_CALLBACK_URL = os.getenv("RPAY_CALLBACK_URL", "").strip()
 RPAY_TIMEOUT_SECONDS = get_env_float("RPAY_TIMEOUT_SECONDS", 15.0, minimum=3.0)
 # Tra thieu bao nhieu USDT thi van chap nhan (phi mang lam hut vai cent).
-RPAY_UNDERPAY_TOLERANCE_RAW = os.getenv("RPAY_UNDERPAY_TOLERANCE", "0.01").strip()
+RPAY_UNDERPAY_TOLERANCE_RAW = get_env_str("RPAY_UNDERPAY_TOLERANCE", "0.01")
 # So le USDT hien cho khach va gui len RPay. 2 la du cho moi network.
 USDT_DISPLAY_DECIMALS = get_env_int("USDT_DISPLAY_DECIMALS", 2, minimum=1)
 
 # --- Binance Pay: khach chuyen thang vao Binance ID cua shop, doi soat bang
 # feed lich su sieuthicode.com (poll, khong co callback) ---
-ENABLE_PAYMENT_BINANCE_PAY = os.getenv("ENABLE_PAYMENT_BINANCE_PAY", "false").strip().lower() in {"1", "true", "yes", "on"}
+ENABLE_PAYMENT_BINANCE_PAY = get_env_bool("ENABLE_PAYMENT_BINANCE_PAY", False)
 # Binance ID (Pay ID) khach se chuyen toi. Hien trong hoa don va QR.
 BINANCE_PAY_ID = os.getenv("BINANCE_PAY_ID", "").strip()
 # URL feed lich su day du, ke ca token. Vi du:
@@ -154,13 +173,13 @@ BINANCE_PAY_MATCH_LEEWAY_SECONDS = get_env_int("BINANCE_PAY_MATCH_LEEWAY_SECONDS
 USDT_RATE_VND_PER_USDT_RAW = os.getenv("USDT_RATE_VND_PER_USDT", "0").strip()
 # Nguon gia USDT/VND tham khao. San pham niem yet VND con RPay thu USDT nen
 # van phai quy doi; day chi la bang gia cong khai, khong phai cong thanh toan.
-USDT_RATE_SOURCE_URL = os.getenv(
+USDT_RATE_SOURCE_URL = get_env_str(
     "USDT_RATE_SOURCE_URL",
     "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
-).strip()
-BANK_BUTTON_ICON_ID = os.getenv("BANK_BUTTON_ICON_ID", "6201627300170043826").strip()
-CRYPTO_BUTTON_ICON_ID = os.getenv("CRYPTO_BUTTON_ICON_ID", "5280763862113592324").strip()
-VIP_PREMIUM_ICON_ID = os.getenv("VIP_PREMIUM_ICON_ID", "5240228673738527951").strip()
+)
+BANK_BUTTON_ICON_ID = get_env_str("BANK_BUTTON_ICON_ID", "6201627300170043826")
+CRYPTO_BUTTON_ICON_ID = get_env_str("CRYPTO_BUTTON_ICON_ID", "5280763862113592324")
+VIP_PREMIUM_ICON_ID = get_env_str("VIP_PREMIUM_ICON_ID", "5240228673738527951")
 
 # Advanced Features Configuration
 REFERRAL_COMMISSION_PERCENT = 10
@@ -283,7 +302,7 @@ _bank_api_total_success = 0
 #  CẤU HÌNH AI (GROQ API)
 ## =============================
 AI_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
-AI_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b").strip()
+AI_MODEL = get_env_str("GROQ_MODEL", "openai/gpt-oss-120b")
 AI_TEMPERATURE = float(os.getenv("AI_TEMPERATURE", "0.9"))
 
 def _iter_log_secrets():
