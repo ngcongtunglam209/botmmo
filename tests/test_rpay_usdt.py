@@ -193,3 +193,62 @@ async def test_monitor_drains_the_callback_inbox(monkeypatch):
     assert status == {"enabled": True, "ok": True, "error": "", "count": 1}
     # Drained, so the next cron pass does not replay it.
     assert rpay.rpay_callback_inbox == []
+
+
+def _pending_topup(request_id: str, trans_id: str = "TXTOPUP", amount_vnd: int = 100000, amount_usdt: str = "3.85"):
+    return {
+        "provider": "rpay",
+        "user_id": 555,
+        "amount": amount_vnd,
+        "rpay_request_id": request_id,
+        "rpay_trans_id": trans_id,
+        "rpay_amount": amount_usdt,
+    }
+
+
+def test_a_completed_callback_also_matches_a_wallet_topup(monkeypatch):
+    rpay, _ = _load()
+    _configure(monkeypatch, rpay)
+    request_id = "NAPU5551234:deadbeef"
+    monkeypatch.setattr(rpay, "pending_orders", {}, raising=False)
+    monkeypatch.setattr(rpay, "pending_user_topups", {"NAPU5551234": _pending_topup(request_id)}, raising=False)
+    monkeypatch.setattr(rpay, "RPAY_UNDERPAY_TOLERANCE", Decimal("0.01"), raising=False)
+
+    normalized = rpay.rpay_normalize_completed_invoice(
+        _callback(request_id, trans_id="TXTOPUP", received="3.85")
+    )
+
+    # The NAPU code in the description is what routes this to credit_user_topup;
+    # the VND figure comes from our own record, never from the callback.
+    assert normalized == {
+        "transactionID": "RPAYTXTOPUP",
+        "description": "NAPU5551234",
+        "amount": 100000,
+    }
+
+
+def test_a_topup_callback_with_the_wrong_secret_is_refused(monkeypatch):
+    rpay, _ = _load()
+    _configure(monkeypatch, rpay)
+    monkeypatch.setattr(rpay, "pending_orders", {}, raising=False)
+    monkeypatch.setattr(
+        rpay, "pending_user_topups", {"NAPU5551234": _pending_topup("NAPU5551234:deadbeef")}, raising=False
+    )
+
+    # The NAPU code is guessable; the random half is the only real proof.
+    assert rpay.rpay_normalize_completed_invoice(_callback("NAPU5551234:guessed")) is None
+
+
+def test_the_poll_covers_topups_as_well_as_orders(monkeypatch):
+    rpay, _ = _load()
+    _configure(monkeypatch, rpay)
+    monkeypatch.setattr(rpay, "pending_orders", {"ICLD123456": _pending("ICLD123456:aaa", trans_id="TX1")}, raising=False)
+    monkeypatch.setattr(
+        rpay, "pending_user_topups", {"NAPU5551234": _pending_topup("NAPU5551234:bbb", trans_id="TX2")}, raising=False
+    )
+
+    seen = [code for code, _details in rpay.rpay_iter_pending_records()]
+
+    # A top-up left out of the poll means a customer who paid after a missed
+    # callback never gets credited.
+    assert seen == ["ICLD123456", "NAPU5551234"]

@@ -264,23 +264,41 @@ def format_rank_name_premium(rank_name: str) -> str:
     return '⭐️ Đồng'
 
 
-def format_rank_entry_premium(rank: dict) -> str:
+# Bac hang chi ton tai bang ten tieng Viet trong VIP_RANKS (cau hinh, va mot ban
+# sao trong app/jobs/admin_background.py). Quy ve khoa bac roi moi dich, de doi
+# ten trong cau hinh khong lam vo phan hien thi cua khach EN/ZH.
+RANK_TIER_ICONS = {
+    "master": '<tg-emoji emoji-id="6124902618574625426">👑</tg-emoji>',
+    "diamond": '<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji>',
+    "gold": "⭐️",
+    "silver": "⭐️",
+    "bronze": "⭐️",
+}
+
+
+def rank_tier_key(rank) -> str:
+    """Bac cua mot muc VIP: bronze/silver/gold/diamond/master."""
     if not isinstance(rank, dict):
-        return '⭐️ Đồng'
+        return "bronze"
 
     min_spent = int(rank.get('min_spent', rank.get('min_spend', 0)) or 0)
     discount = int(rank.get('discount', 0) or 0)
     raw_name = re.sub(r'<[^>]+>', '', str(rank.get('name', '') or '')).strip().lower()
 
     if min_spent >= 10000000 or 'cao' in raw_name or chr(0x1F451) in raw_name or chr(0x1F3C6) in raw_name:
-        return '<tg-emoji emoji-id="6124902618574625426">👑</tg-emoji> Cao Thủ'
+        return "master"
     if min_spent >= 5000000 or discount >= 8 or chr(0x1F48E) in raw_name or 'kim' in raw_name:
-        return '<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> Kim Cương'
+        return "diamond"
     if min_spent >= 1000000 or discount >= 5 or chr(0x1F947) in raw_name:
-        return '⭐️ Vàng'
+        return "gold"
     if min_spent >= 500000 or discount >= 2 or chr(0x1F948) in raw_name:
-        return '⭐️ Bạc'
-    return '⭐️ Đồng'
+        return "silver"
+    return "bronze"
+
+
+def format_rank_entry_premium(rank: dict, user_id=None) -> str:
+    tier = rank_tier_key(rank)
+    return f'{RANK_TIER_ICONS[tier]} {t(f"rank_name_{tier}", user_id=user_id)}'
 
 
 def get_user_rank(user_id: int):

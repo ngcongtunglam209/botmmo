@@ -309,21 +309,52 @@ def rpay_verify_credentials(body: dict) -> bool:
     )
 
 
+def rpay_iter_pending_records():
+    """(ma, ban ghi) cua moi thu dang cho tra bang RPay.
+
+    Don hang nam o `pending_orders`, lenh nap vi nam o `pending_user_topups`.
+    Ca hai deu tao hoa don RPay theo cung mot cach nen phai doi soat chung mot
+    duong; bo qua mot ho so o day nghia la khach tra tien ma khong ai cong.
+    """
+    for order_code, details in list(pending_orders.items()):
+        if not isinstance(details, dict):
+            continue
+        if details.get("provider") != "rpay" or details.get("status") != "pending_payment":
+            continue
+        yield str(order_code), details
+    for topup_code, details in list(pending_user_topups.items()):
+        if not isinstance(details, dict):
+            continue
+        if details.get("provider") != "rpay":
+            continue
+        yield str(topup_code), details
+
+
+def rpay_find_pending_record(code: str):
+    """Ban ghi RPay dang cho mang ma nay, tim ca trong don hang lan lenh nap."""
+    details = pending_orders.get(code)
+    if isinstance(details, dict) and details.get("provider") == "rpay":
+        return details
+    details = pending_user_topups.get(code)
+    if isinstance(details, dict) and details.get("provider") == "rpay":
+        return details
+    return None
+
+
 def rpay_match_pending_invoice(request_id: str, trans_id: str):
     """Tim don pending khop `request_id` bi mat va `trans_id` da luu.
 
-    Tra (order_code, details) hoac (None, None). Doc truc tiep pending_orders
-    (khong qua lock) vi chi doc, va callback chay cung event loop.
+    Tra (order_code, details) hoac (None, None). Doc truc tiep pending_orders /
+    pending_user_topups (khong qua lock) vi chi doc, va callback chay cung event
+    loop.
     """
     import hmac
 
     order_code = rpay_order_code_from_request_id(request_id)
     if not order_code:
         return None, None
-    details = pending_orders.get(order_code)
+    details = rpay_find_pending_record(order_code)
     if not isinstance(details, dict):
-        return None, None
-    if details.get("provider") != "rpay":
         return None, None
 
     stored_request_id = str(details.get("rpay_request_id") or "").strip()
@@ -394,11 +425,7 @@ async def rpay_poll_pending_invoices() -> list:
         return []
 
     results = []
-    for order_code, details in list(pending_orders.items()):
-        if not isinstance(details, dict):
-            continue
-        if details.get("provider") != "rpay" or details.get("status") != "pending_payment":
-            continue
+    for order_code, details in rpay_iter_pending_records():
         trans_id = str(details.get("rpay_trans_id") or "").strip()
         if not trans_id:
             continue

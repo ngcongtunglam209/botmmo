@@ -306,6 +306,9 @@ def main() -> None:
         # Batch Error Reporting Job (1h)
         job_queue.run_repeating(send_batched_error_reports, interval=3600, first=60, name="batch_error_report")
         
+        # Tỉ giá hiển thị (VND/USD/CNY) cho menu và thống kê - cache 5 phút
+        job_queue.run_repeating(refresh_display_rates_job, interval=300, first=1, name="display_rates")
+
         # Tối ưu: Background task để debounced save
         job_queue.run_repeating(save_data_debounced, interval=_cache["save_debounce"], first=5)
     else:

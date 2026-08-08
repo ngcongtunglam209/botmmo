@@ -331,6 +331,16 @@ async def warm_display_rates() -> None:
         logger.debug("Khong lay duoc ty gia USDT/CNY de hien thi")
 
 
+async def refresh_display_rates_job(context=None) -> None:
+    """Giu ty gia luon am trong cache cho cac man hinh dong bo.
+
+    Menu chinh, nut trang thai va bang thong ke deu la ham dong bo nen khong tu
+    goi API duoc: chua co ty gia thi khach EN/ZH thay so VND. Chay dinh ky de
+    lan bam dau tien sau khi bot khoi dong cung da dung don vi.
+    """
+    await warm_display_rates()
+
+
 # --- HIEN THI TIEN THEO NGON NGU ---
 # vi -> VND, en -> USD, zh -> CNY kem USD trong ngoac. Moi so tien trong he
 # thong van luu bang VND; day chi la lop dich o be mat, va no luon rot ve VND
@@ -436,7 +446,7 @@ def convert_vnd_to_usdt(amount_vnd: int, rate: Decimal = None, quantizer=None):
     return (amount_decimal / rate).quantize(quantizer, rounding=ROUND_UP)
 
 
-async def create_rpay_order(order_code: str, amount_vnd: int, goods_name: str, goods_detail: str, network: str = "") -> dict:
+async def create_rpay_order(order_code: str, amount_vnd: int, goods_name: str, goods_detail: str, network: str = "", expire_minutes: int | None = None) -> dict:
     """Quy doi VND -> USDT roi tao hoa don RPay cho `order_code`.
 
     Tra ve khoi `data` cua RPay, bo sung cac khoa ta tu tinh:
@@ -455,7 +465,7 @@ async def create_rpay_order(order_code: str, amount_vnd: int, goods_name: str, g
         amount_usdt=amount_usdt,
         name=_sanitize_invoice_text(goods_name, "Digital Goods"),
         description=_sanitize_invoice_text(goods_detail, order_code),
-        expire_minutes=ORDER_EXPIRATION_SECONDS // 60,
+        expire_minutes=expire_minutes or (ORDER_EXPIRATION_SECONDS // 60),
         network=network,
     )
     invoice["request_id"] = request_id

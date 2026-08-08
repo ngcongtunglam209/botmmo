@@ -126,9 +126,9 @@ async def show_my_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, is_c
     user_info = db_get_user(user_id)
     balance = user_info.get('balance', 0) if user_info else 0
     maintenance_status = rank_info.get('maintenance_status') or {}
-    current_rank_name = format_rank_entry_premium(current_rank)
-    base_rank_name = format_rank_entry_premium(base_rank)
-    next_rank_name = format_rank_entry_premium(next_rank) if next_rank else ""
+    current_rank_name = format_rank_entry_premium(current_rank, user_id=user_id)
+    base_rank_name = format_rank_entry_premium(base_rank, user_id=user_id)
+    next_rank_name = format_rank_entry_premium(next_rank, user_id=user_id) if next_rank else ""
 
     achievements_block = ""
     if badges:
@@ -150,24 +150,24 @@ async def show_my_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, is_c
     if rank_info.get("demoted_by_maintenance"):
         rank_block += lt(
             user_id,
-            '• Tháng {period} đã chi <b>{spent:,} VNĐ</b> / yêu cầu <b>{minimum:,} VNĐ</b>\n• Đang bị tụt 1 bậc, cần thêm <b>{remaining:,} VNĐ</b> để lấy lại <b>{base}</b> vào tháng sau\n• Quy tắc duy trì: tháng trước chi dưới <b>{minimum:,} VNĐ</b> sẽ tụt 1 bậc\n',
-            '• Spent <b>{spent:,} VND</b> / required <b>{minimum:,} VND</b> in {period}\n• Temporarily down one rank; spend <b>{remaining:,} VND</b> more to restore <b>{base}</b> next month\n• Maintenance rule: spending below <b>{minimum:,} VND</b> in the previous month lowers one rank\n',
-            '• {period}消费 <b>{spent:,} VND</b> / 要求 <b>{minimum:,} VND</b>\n• 当前暂降一级；再消费 <b>{remaining:,} VND</b>，下月恢复 <b>{base}</b>\n• 保级规则：上月消费低于 <b>{minimum:,} VND</b> 将降一级\n',
-            period=maintenance_status.get("period_label", "trước"), spent=maintenance_status.get("monthly_spend", 0),
-            minimum=VIP_MONTHLY_MAINTENANCE_MIN_SPEND, remaining=remaining, base=base_rank_name,
+            '• Tháng {period} đã chi <b>{spent}</b> / yêu cầu <b>{minimum}</b>\n• Đang bị tụt 1 bậc, cần thêm <b>{remaining}</b> để lấy lại <b>{base}</b> vào tháng sau\n• Quy tắc duy trì: tháng trước chi dưới <b>{minimum}</b> sẽ tụt 1 bậc\n',
+            '• Spent <b>{spent}</b> / required <b>{minimum}</b> in {period}\n• Temporarily down one rank; spend <b>{remaining}</b> more to restore <b>{base}</b> next month\n• Maintenance rule: spending below <b>{minimum}</b> in the previous month lowers one rank\n',
+            '• {period}消费 <b>{spent}</b> / 要求 <b>{minimum}</b>\n• 当前暂降一级；再消费 <b>{remaining}</b>，下月恢复 <b>{base}</b>\n• 保级规则：上月消费低于 <b>{minimum}</b> 将降一级\n',
+            period=maintenance_status.get("period_label", "trước"), spent=format_money(maintenance_status.get("monthly_spend", 0), user_id),
+            minimum=format_money(VIP_MONTHLY_MAINTENANCE_MIN_SPEND, user_id), remaining=format_money(remaining, user_id), base=base_rank_name,
         )
     elif next_rank:
-        rank_block += lt(user_id, '• Cần thêm <b>{amount:,} VNĐ</b> để lên <b>{rank}</b>\n', '• Spend <b>{amount:,} VND</b> more to reach <b>{rank}</b>\n', '• 再消费 <b>{amount:,} VND</b> 即可升级至 <b>{rank}</b>\n', amount=remaining, rank=next_rank_name)
+        rank_block += lt(user_id, '• Cần thêm <b>{amount}</b> để lên <b>{rank}</b>\n', '• Spend <b>{amount}</b> more to reach <b>{rank}</b>\n', '• 再消费 <b>{amount}</b> 即可升级至 <b>{rank}</b>\n', amount=format_money(remaining, user_id), rank=next_rank_name)
     rank_block += '</blockquote>'
 
     msg = lt(
         user_id,
-        '<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> <b>THỐNG KÊ CÁ NHÂN</b>\n━━━━━━━━━━━━━━━━━━\n\n<tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> <b>Tài khoản</b>\n<blockquote>• Tên: <b>{name}</b>\n• Số dư: <b>{balance:,} VNĐ</b>\n• ID: <code>{id}</code></blockquote>\n\n{rank}\n\n<tg-emoji emoji-id="5247134066322447995">🛒</tg-emoji> <b>Mua sắm</b>\n<blockquote>• Tổng chi tiêu: <b>{spent:,} VNĐ</b>\n• Đơn hoàn thành: <b>{orders}</b>\n• Tiết kiệm mã giảm: <b>{saved:,} VNĐ</b></blockquote>\n\n<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>Giới thiệu ({percent}% hoa hồng)</b>\n<blockquote>• Đã giới thiệu: <b>{refs}</b> người\n• Hoa hồng thực nhận: <b>{earned:,} VNĐ</b></blockquote>{achievements}',
-        '<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> <b>PERSONAL STATISTICS</b>\n━━━━━━━━━━━━━━━━━━\n\n<tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> <b>Account</b>\n<blockquote>• Name: <b>{name}</b>\n• Balance: <b>{balance:,} VND</b>\n• ID: <code>{id}</code></blockquote>\n\n{rank}\n\n<tg-emoji emoji-id="5247134066322447995">🛒</tg-emoji> <b>Purchases</b>\n<blockquote>• Total spent: <b>{spent:,} VND</b>\n• Completed orders: <b>{orders}</b>\n• Coupon savings: <b>{saved:,} VND</b></blockquote>\n\n<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>Referrals ({percent}% commission)</b>\n<blockquote>• Referred: <b>{refs}</b> people\n• Commission earned: <b>{earned:,} VND</b></blockquote>{achievements}',
-        '<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> <b>个人统计</b>\n━━━━━━━━━━━━━━━━━━\n\n<tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> <b>账户</b>\n<blockquote>• 姓名：<b>{name}</b>\n• 余额：<b>{balance:,} VND</b>\n• ID：<code>{id}</code></blockquote>\n\n{rank}\n\n<tg-emoji emoji-id="5247134066322447995">🛒</tg-emoji> <b>购物</b>\n<blockquote>• 总消费：<b>{spent:,} VND</b>\n• 已完成订单：<b>{orders}</b>\n• 优惠码节省：<b>{saved:,} VND</b></blockquote>\n\n<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>推荐（{percent}% 佣金）</b>\n<blockquote>• 已推荐：<b>{refs}</b> 人\n• 已获佣金：<b>{earned:,} VND</b></blockquote>{achievements}',
-        name=format_user_name_html(user=update.effective_user), balance=balance, id=user_id,
-        spent=stats["total_spent"], orders=stats["order_count"], saved=stats["coupon_savings"],
-        percent=REFERRAL_COMMISSION_PERCENT, refs=stats["referral_count"], earned=stats["commission_earned"],
+        '<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> <b>THỐNG KÊ CÁ NHÂN</b>\n━━━━━━━━━━━━━━━━━━\n\n<tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> <b>Tài khoản</b>\n<blockquote>• Tên: <b>{name}</b>\n• Số dư: <b>{balance}</b>\n• ID: <code>{id}</code></blockquote>\n\n{rank}\n\n<tg-emoji emoji-id="5247134066322447995">🛒</tg-emoji> <b>Mua sắm</b>\n<blockquote>• Tổng chi tiêu: <b>{spent}</b>\n• Đơn hoàn thành: <b>{orders}</b>\n• Tiết kiệm mã giảm: <b>{saved}</b></blockquote>\n\n<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>Giới thiệu ({percent}% hoa hồng)</b>\n<blockquote>• Đã giới thiệu: <b>{refs}</b> người\n• Hoa hồng thực nhận: <b>{earned}</b></blockquote>{achievements}',
+        '<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> <b>PERSONAL STATISTICS</b>\n━━━━━━━━━━━━━━━━━━\n\n<tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> <b>Account</b>\n<blockquote>• Name: <b>{name}</b>\n• Balance: <b>{balance}</b>\n• ID: <code>{id}</code></blockquote>\n\n{rank}\n\n<tg-emoji emoji-id="5247134066322447995">🛒</tg-emoji> <b>Purchases</b>\n<blockquote>• Total spent: <b>{spent}</b>\n• Completed orders: <b>{orders}</b>\n• Coupon savings: <b>{saved}</b></blockquote>\n\n<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>Referrals ({percent}% commission)</b>\n<blockquote>• Referred: <b>{refs}</b> people\n• Commission earned: <b>{earned}</b></blockquote>{achievements}',
+        '<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> <b>个人统计</b>\n━━━━━━━━━━━━━━━━━━\n\n<tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> <b>账户</b>\n<blockquote>• 姓名：<b>{name}</b>\n• 余额：<b>{balance}</b>\n• ID：<code>{id}</code></blockquote>\n\n{rank}\n\n<tg-emoji emoji-id="5247134066322447995">🛒</tg-emoji> <b>购物</b>\n<blockquote>• 总消费：<b>{spent}</b>\n• 已完成订单：<b>{orders}</b>\n• 优惠码节省：<b>{saved}</b></blockquote>\n\n<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>推荐（{percent}% 佣金）</b>\n<blockquote>• 已推荐：<b>{refs}</b> 人\n• 已获佣金：<b>{earned}</b></blockquote>{achievements}',
+        name=format_user_name_html(user=update.effective_user), balance=format_money(balance, user_id), id=user_id,
+        spent=format_money(stats["total_spent"], user_id), orders=stats["order_count"], saved=format_money(stats["coupon_savings"], user_id),
+        percent=REFERRAL_COMMISSION_PERCENT, refs=stats["referral_count"], earned=format_money(stats["commission_earned"], user_id),
         achievements=achievements_block, rank=rank_block,
     )
     btns = [
@@ -189,10 +189,10 @@ async def show_my_referral(update: Update, context: ContextTypes.DEFAULT_TYPE, i
     balance = user_data_db.get(str(user_id), {}).get('balance', 0)
     msg = lt(
         user_id,
-        '<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>CHƯƠNG TRÌNH ĐỐI TÁC MMO</b>\n━━━━━━━━━━━━━━━━━━\nGiới thiệu bạn bè để nhận <b>{percent}%</b> hoa hồng cho tất cả giao dịch của họ. Hoa hồng được cộng vào số dư để mua sản phẩm tại Lâm Shop.\n\n<b>Link Giới Thiệu Của Bạn:</b>\n<code>{link}</code>\n\n<tg-emoji emoji-id="5190806721286657692">📊</tg-emoji> <b>Thống Kê Nhanh:</b>\n<tg-emoji emoji-id="5453957997418004470">👥</tg-emoji> Đã mời: <b>{count}</b> người\n<tg-emoji emoji-id="5863724849851011383">💵</tg-emoji> Đã kiếm: <b>{earned:,} VNĐ</b>\n<tg-emoji emoji-id="5445353829304387411">💳</tg-emoji> Số dư mua hàng: <b>{balance:,} VNĐ</b>\n',
-        '<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>MMO PARTNER PROGRAM</b>\n━━━━━━━━━━━━━━━━━━\nRefer friends and earn <b>{percent}%</b> commission on their transactions. Commission is added to your balance for purchases at Lâm Shop.\n\n<b>Your Referral Link:</b>\n<code>{link}</code>\n\n<tg-emoji emoji-id="5190806721286657692">📊</tg-emoji> <b>Quick Stats:</b>\n<tg-emoji emoji-id="5453957997418004470">👥</tg-emoji> Invited: <b>{count}</b> people\n<tg-emoji emoji-id="5863724849851011383">💵</tg-emoji> Earned: <b>{earned:,} VND</b>\n<tg-emoji emoji-id="5445353829304387411">💳</tg-emoji> Purchase balance: <b>{balance:,} VND</b>\n',
-        '<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>MMO 合作伙伴计划</b>\n━━━━━━━━━━━━━━━━━━\n邀请好友，获得其交易的 <b>{percent}%</b> 佣金。佣金将计入 Lâm Shop 的购物余额。\n\n<b>您的推荐链接：</b>\n<code>{link}</code>\n\n<tg-emoji emoji-id="5190806721286657692">📊</tg-emoji> <b>快速统计：</b>\n<tg-emoji emoji-id="5453957997418004470">👥</tg-emoji> 已邀请：<b>{count}</b> 人\n<tg-emoji emoji-id="5863724849851011383">💵</tg-emoji> 已赚取：<b>{earned:,} VND</b>\n<tg-emoji emoji-id="5445353829304387411">💳</tg-emoji> 购物余额：<b>{balance:,} VND</b>\n',
-        percent=REFERRAL_COMMISSION_PERCENT, link=ref_link, count=stats["referral_count"], earned=stats["commission_earned"], balance=balance,
+        '<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>CHƯƠNG TRÌNH ĐỐI TÁC MMO</b>\n━━━━━━━━━━━━━━━━━━\nGiới thiệu bạn bè để nhận <b>{percent}%</b> hoa hồng cho tất cả giao dịch của họ. Hoa hồng được cộng vào số dư để mua sản phẩm tại Lâm Shop.\n\n<b>Link Giới Thiệu Của Bạn:</b>\n<code>{link}</code>\n\n<tg-emoji emoji-id="5190806721286657692">📊</tg-emoji> <b>Thống Kê Nhanh:</b>\n<tg-emoji emoji-id="5453957997418004470">👥</tg-emoji> Đã mời: <b>{count}</b> người\n<tg-emoji emoji-id="5863724849851011383">💵</tg-emoji> Đã kiếm: <b>{earned}</b>\n<tg-emoji emoji-id="5445353829304387411">💳</tg-emoji> Số dư mua hàng: <b>{balance}</b>\n',
+        '<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>MMO PARTNER PROGRAM</b>\n━━━━━━━━━━━━━━━━━━\nRefer friends and earn <b>{percent}%</b> commission on their transactions. Commission is added to your balance for purchases at Lâm Shop.\n\n<b>Your Referral Link:</b>\n<code>{link}</code>\n\n<tg-emoji emoji-id="5190806721286657692">📊</tg-emoji> <b>Quick Stats:</b>\n<tg-emoji emoji-id="5453957997418004470">👥</tg-emoji> Invited: <b>{count}</b> people\n<tg-emoji emoji-id="5863724849851011383">💵</tg-emoji> Earned: <b>{earned}</b>\n<tg-emoji emoji-id="5445353829304387411">💳</tg-emoji> Purchase balance: <b>{balance}</b>\n',
+        '<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>MMO 合作伙伴计划</b>\n━━━━━━━━━━━━━━━━━━\n邀请好友，获得其交易的 <b>{percent}%</b> 佣金。佣金将计入 Lâm Shop 的购物余额。\n\n<b>您的推荐链接：</b>\n<code>{link}</code>\n\n<tg-emoji emoji-id="5190806721286657692">📊</tg-emoji> <b>快速统计：</b>\n<tg-emoji emoji-id="5453957997418004470">👥</tg-emoji> 已邀请：<b>{count}</b> 人\n<tg-emoji emoji-id="5863724849851011383">💵</tg-emoji> 已赚取：<b>{earned}</b>\n<tg-emoji emoji-id="5445353829304387411">💳</tg-emoji> 购物余额：<b>{balance}</b>\n',
+        percent=REFERRAL_COMMISSION_PERCENT, link=ref_link, count=stats["referral_count"], earned=format_money(stats["commission_earned"], user_id), balance=format_money(balance, user_id),
     )
     keyboard = [[_btn(lt(user_id, "Top giới thiệu", "Top Referrers", "推荐排行"), icon_id="6129805886383723340", callback_data='top_referrers')]]
     if is_callback:
@@ -214,7 +214,7 @@ async def show_top_referrers(update: Update, context: ContextTypes.DEFAULT_TYPE,
             medal = "⭐️" if rank <= 3 else f"{rank}."
             name = item['full_name'] if item.get('is_fake') else mask_name(item['full_name'])
             msg += f"{medal} <b>{name}</b>\n"
-            msg += lt(user_id, '   <tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> {count} người · <tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> {commission:,}đ\n\n', '   <tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> {count} people · <tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> {commission:,} VND\n\n', '   <tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> {count} 人 · <tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> {commission:,} VND\n\n', count=item['referral_count'], commission=item['total_commission'])
+            msg += lt(user_id, '   <tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> {count} người · <tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> {commission}\n\n', '   <tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> {count} people · <tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> {commission}\n\n', '   <tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> {count} 人 · <tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> {commission}\n\n', count=item['referral_count'], commission=format_money(item['total_commission'], user_id))
     btns = [[_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data='my_referral')]]
     if is_callback:
         await safe_edit_message(update.callback_query, text=msg, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(btns))
