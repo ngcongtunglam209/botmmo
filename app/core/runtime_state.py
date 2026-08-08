@@ -129,8 +129,12 @@ console_handler.addFilter(SensitiveDataFilter())
 # File handler (Giữ nguyên để debug)
 file_handler = None
 if "unittest" not in sys.modules:
+    # Rotation tao them bot.log.1/.2/.3 ben canh, nen duong dan phai nam trong
+    # thu muc duoc mount ra host chu khong phai mot file don le.
+    _log_path = os.getenv("LOG_FILE", "").strip() or "bot.log"
+    os.makedirs(os.path.dirname(_log_path) or ".", exist_ok=True)
     file_handler = logging.handlers.RotatingFileHandler(
-        'bot.log', maxBytes=5*1024*1024, backupCount=3, encoding='utf-8'
+        _log_path, maxBytes=5*1024*1024, backupCount=3, encoding='utf-8'
     )
     file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
     file_handler.addFilter(SensitiveDataFilter())

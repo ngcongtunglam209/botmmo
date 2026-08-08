@@ -519,4 +519,7 @@ async def fetch_binance_pay_id_transactions(start_timestamp_ms: int = 0) -> list
         if owns_client:
             await client.aclose()
 
-DB_PATH = "database.sqlite"
+# SQLite chay WAL nen con ghi them <db>-wal va <db>-shm ben canh file. Ca ba
+# phai nam cung mot thu muc duoc mount ra host, khong thi WAL chua checkpoint
+# se mat khi container dung. Dat DB_PATH tro vao thu muc do.
+DB_PATH = os.getenv("DB_PATH", "").strip() or "database.sqlite"

@@ -325,16 +325,14 @@ async def ops_page(request: Request):
 
 
 def _tail_log(max_lines: int = 60) -> list[str]:
-    from ..settings import PROJECT_ROOT
-
-    for candidate in (PROJECT_ROOT / "bot.log", get_settings().log_dir / "bot.log"):
-        if candidate.is_file():
-            try:
-                lines = candidate.read_text("utf-8", errors="replace").splitlines()
-            except OSError:
-                continue
-            return [domain.plain_text(line) for line in lines[-max_lines:]]
-    return []
+    path = get_settings().log_file
+    if not path.is_file():
+        return []
+    try:
+        lines = path.read_text("utf-8", errors="replace").splitlines()
+    except OSError:
+        return []
+    return [domain.plain_text(line) for line in lines[-max_lines:]]
 
 
 @router.post("/admin/ops/toggle")

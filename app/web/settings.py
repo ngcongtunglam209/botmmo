@@ -60,7 +60,7 @@ class Settings:
     asset_dir: Path
 
     notify_admin: bool
-    log_dir: Path
+    log_file: Path
 
     product_table_limit: int = 3000
     order_table_limit: int = 260
@@ -120,7 +120,7 @@ def get_settings() -> Settings:
         category_image_dir=upload_dir / "categories",
         asset_dir=PROJECT_ROOT / "app" / "api" / "assets",
         notify_admin=_env_bool("ADMIN_WEB_NOTIFY", True),
-        log_dir=PROJECT_ROOT / "logs",
+        log_file=Path(_env("LOG_FILE") or PROJECT_ROOT / "bot.log"),
     )
     settings.product_image_dir.mkdir(parents=True, exist_ok=True)
     settings.category_image_dir.mkdir(parents=True, exist_ok=True)
