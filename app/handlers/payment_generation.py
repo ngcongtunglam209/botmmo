@@ -364,7 +364,7 @@ async def generate_product_payment_binance(
             photo=binance_order.get("qrcodeLink"),
             caption=caption,
             parse_mode='HTML',
-            reply_markup=build_binance_checkout_keyboard(binance_order, order_code),
+            reply_markup=build_binance_checkout_keyboard(binance_order, order_code, user_id=user.id),
         )
         pending_payload = {
             "user_id": user.id,
@@ -527,6 +527,7 @@ async def generate_product_payment_usdt_trc20(
             reply_markup=build_usdt_trc20_checkout_keyboard(
                 order_code,
                 USDT_TRC20_WALLET_ADDRESS,
+                user_id=user.id,
             ),
         )
         if sent_message is None:
