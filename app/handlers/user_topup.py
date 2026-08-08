@@ -9,12 +9,25 @@
 def _topup_amount_bounds_text(user_id) -> str:
     return lt(
         user_id,
-        "Số tiền nạp từ <b>{min:,}</b> đến <b>{max:,}</b> VNĐ.",
-        "Top-up amount must be between <b>{min:,}</b> and <b>{max:,}</b> VND.",
-        "充值金额需在 <b>{min:,}</b> 至 <b>{max:,}</b> VND 之间。",
-        min=MIN_USER_TOPUP_AMOUNT,
-        max=MAX_USER_TOPUP_AMOUNT,
+        "Số tiền nạp từ <b>{min}</b> đến <b>{max}</b>.",
+        "Top-up amount must be between <b>{min}</b> and <b>{max}</b>.",
+        "充值金额需在 <b>{min}</b> 至 <b>{max}</b> 之间。",
+        min=format_money(MIN_USER_TOPUP_AMOUNT, user_id),
+        max=format_money(MAX_USER_TOPUP_AMOUNT, user_id),
     )
+
+
+def _topup_amount_example_text(user_id) -> str:
+    """Vi du so tien go vao, viet bang chinh don vi khach dang thay."""
+    from decimal import Decimal
+
+    currency = get_user_display_currency(user_id)
+    if currency == "VND":
+        return "100000"
+    rate = get_display_rate_vnd_per_unit(currency)
+    if rate <= 0:
+        return "100000"
+    return f"{Decimal(100000) / rate:.2f}"
 
 
 def get_user_topup_balance(user_id) -> int:
@@ -58,10 +71,8 @@ def get_user_pending_topup(user_id):
 
 
 def build_user_topup_qr_url(code: str, amount: int) -> str:
-    return (
-        f"https://img.vietqr.io/image/{BANK_ID}-{BANK_ACCOUNT_NUMBER}-print.png"
-        f"?amount={int(amount)}&addInfo={quote(str(code))}&accountName={quote(ACCOUNT_NAME)}"
-    )
+    """QR nap vi dung chung khung VietQR voi phan mua hang (qr.sepay.vn)."""
+    return create_vietqr_link(int(amount), str(code))
 
 
 def _build_topup_caption(user_id, code: str, amount: int) -> str:
@@ -69,44 +80,155 @@ def _build_topup_caption(user_id, code: str, amount: int) -> str:
     return lt(
         user_id,
         "<tg-emoji emoji-id=\"5278467510604160626\">🏦</tg-emoji> <b>NẠP TIỀN VÀO VÍ</b>\n\n"
-        "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số tiền:</b> {amount:,} VNĐ\n"
+        "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số tiền:</b> {amount}\n"
         "<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Nội dung:</b> <code>{code}</code>\n"
         "<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>Hiệu lực:</b> {minutes} phút\n\n"
         "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Chuyển <b>đúng số tiền</b> và <b>đúng nội dung</b>. "
         "Bot tự cộng tiền sau 1-3 phút.\n"
         "<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> Tiền trong ví chỉ dùng để mua hàng, không rút ra được.",
         "<tg-emoji emoji-id=\"5278467510604160626\">🏦</tg-emoji> <b>TOP UP YOUR WALLET</b>\n\n"
-        "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Amount:</b> {amount:,} VND\n"
+        "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Amount:</b> {amount}\n"
         "<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Transfer note:</b> <code>{code}</code>\n"
         "<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>Valid for:</b> {minutes} minutes\n\n"
         "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Send the <b>exact amount</b> with the <b>exact note</b>. "
         "The bot credits your wallet within 1-3 minutes.\n"
         "<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> Wallet funds can only be spent on purchases, not withdrawn.",
         "<tg-emoji emoji-id=\"5278467510604160626\">🏦</tg-emoji> <b>钱包充值</b>\n\n"
-        "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>金额：</b> {amount:,} VND\n"
+        "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>金额：</b> {amount}\n"
         "<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>转账备注：</b> <code>{code}</code>\n"
         "<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>有效期：</b> {minutes} 分钟\n\n"
         "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> 请转账<b>准确金额</b>并填写<b>准确备注</b>，机器人将在 1-3 分钟内入账。\n"
         "<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> 钱包余额仅可用于购物，不可提现。",
-        amount=amount,
+        amount=format_money(amount, user_id),
         code=code,
         minutes=minutes,
     )
 
 
-def _build_topup_keyboard(user_id, code: str):
-    return InlineKeyboardMarkup([
-        [_btn(lt(user_id, "Hủy lệnh nạp", "Cancel top-up", "取消充值"),
-              icon_id="5273914604752216432", callback_data=f"topup_cancel:{code}")],
-        [_btn(lt(user_id, "Quay lại", "Back", "返回"),
-              icon_id="6206032691075223572", callback_data="my_stats")],
-    ])
+def _build_binance_topup_caption(user_id, code: str, amount: int, quote_data: dict) -> str:
+    minutes = max(1, USER_TOPUP_EXPIRATION_SECONDS // 60)
+    return lt(
+        user_id,
+        '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>NẠP VÍ QUA BINANCE PAY</b>\n\n'
+        '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Số tiền nạp:</b> {amount}\n'
+        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>Số USDT cần chuyển:</b> <code>{crypto}</code>\n'
+        '<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>ID Binance:</b> <code>{payid}</code>\n'
+        '<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Hiệu lực:</b> {minutes} phút\n'
+        '<tg-emoji emoji-id="5972022360025336988">🔸</tg-emoji> <b>Mã lệnh nạp:</b> <code>{code}</code>\n\n'
+        '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> Chuyển <b>đúng {crypto} USDT</b> — kể cả số lẻ cuối. '
+        'Số lẻ đó là thứ duy nhất giúp bot nhận ra lệnh nạp của bạn.\n'
+        '- Thừa hoặc thiếu dù chỉ 0.0001 USDT thì bot <b>không tự cộng</b> được, phải nhờ hỗ trợ đối soát tay.\n'
+        '- Chỉ chuyển qua <b>Binance Pay</b> tới đúng ID ở trên.\n'
+        '<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> Tiền trong ví chỉ dùng để mua hàng, không rút ra được.',
+        '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>TOP UP VIA BINANCE PAY</b>\n\n'
+        '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Top-up amount:</b> {amount}\n'
+        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>USDT to send:</b> <code>{crypto}</code>\n'
+        '<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>Binance ID:</b> <code>{payid}</code>\n'
+        '<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Valid for:</b> {minutes} minutes\n'
+        '<tg-emoji emoji-id="5972022360025336988">🔸</tg-emoji> <b>Top-up code:</b> <code>{code}</code>\n\n'
+        '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> Send <b>exactly {crypto} USDT</b>, including the trailing '
+        'decimals. Those decimals are the only thing that identifies your top-up.\n'
+        '- If you send even 0.0001 USDT more or less, the bot <b>cannot credit it automatically</b> and support has to '
+        'reconcile it by hand.\n'
+        '- Send via <b>Binance Pay</b> to the ID above only.\n'
+        '<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> Wallet funds can only be spent on purchases, not withdrawn.',
+        '<tg-emoji emoji-id="{icon}">🌐</tg-emoji> <b>BINANCE PAY 充值</b>\n\n'
+        '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>充值金额：</b> {amount}\n'
+        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>需转 USDT：</b> <code>{crypto}</code>\n'
+        '<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>Binance ID：</b> <code>{payid}</code>\n'
+        '<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>有效期：</b> {minutes} 分钟\n'
+        '<tg-emoji emoji-id="5972022360025336988">🔸</tg-emoji> <b>充值单号：</b> <code>{code}</code>\n\n'
+        '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> 请转入<b>准确的 {crypto} USDT</b>，包括末尾小数。'
+        '该小数是识别您充值单的唯一依据。\n'
+        '- 多转或少转哪怕 0.0001 USDT，机器人都<b>无法自动入账</b>，需联系客服人工核对。\n'
+        '- 仅通过 <b>Binance Pay</b> 转至上方 ID。\n'
+        '<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> 钱包余额仅可用于购物，不可提现。',
+        icon=CRYPTO_BUTTON_ICON_ID,
+        amount=format_money(amount, user_id),
+        crypto=html.escape(str(quote_data.get("amount_text") or "")),
+        payid=html.escape(str(quote_data.get("binance_pay_id") or "")),
+        minutes=minutes,
+        code=code,
+    )
 
 
-async def create_user_topup_request(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int) -> bool:
+def _build_topup_keyboard(user_id, code: str, quote_data: dict | None = None):
+    rows = []
+    if isinstance(quote_data, dict):
+        binance_pay_id = str(quote_data.get("binance_pay_id") or "").strip()
+        amount_text = str(quote_data.get("amount_text") or "").strip()
+        if binance_pay_id:
+            rows.append([InlineKeyboardButton(
+                lt(user_id, "📋 Sao chép ID Binance", "📋 Copy Binance ID", "📋 复制 Binance ID"),
+                copy_text=CopyTextButton(binance_pay_id),
+            )])
+        if amount_text:
+            rows.append([InlineKeyboardButton(
+                lt(user_id, "📋 Sao chép số tiền", "📋 Copy amount", "📋 复制金额"),
+                copy_text=CopyTextButton(amount_text),
+            )])
+    rows.append([_btn(lt(user_id, "Hủy lệnh nạp", "Cancel top-up", "取消充值"),
+                      icon_id="5273914604752216432", callback_data=f"topup_cancel:{code}")])
+    rows.append([_btn(lt(user_id, "Quay lại", "Back", "返回"),
+                      icon_id="6206032691075223572", callback_data="my_stats")])
+    return InlineKeyboardMarkup(rows)
+
+
+def available_topup_methods() -> list:
+    """Cac cong nap vi dang bat, theo thu tu hien cho khach."""
+    methods = []
+    if is_bank_transfer_enabled():
+        methods.append("bank")
+    if is_binance_pay_enabled():
+        methods.append("binance")
+    # Khong cong nao bat -> van cho QR ngan hang de khong khoa han duong nap.
+    return methods or ["bank"]
+
+
+async def show_topup_method_choice(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int) -> bool:
+    """Hoi khach tra bang gi. Chi mot cong dang bat thi bo qua man hinh nay."""
+    user_id = update.effective_user.id
+    methods = available_topup_methods()
+    if len(methods) == 1:
+        return await create_user_topup_request(update, context, amount, method=methods[0])
+
+    rows = []
+    if "bank" in methods:
+        rows.append([_btn(lt(user_id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"),
+                          icon_id=BANK_BUTTON_ICON_ID, callback_data=f"topup_pay:bank:{int(amount)}", style="success")])
+    if "binance" in methods:
+        rows.append([_btn("Binance Pay (USDT)", icon_id=CRYPTO_BUTTON_ICON_ID,
+                          callback_data=f"topup_pay:binance:{int(amount)}", style="success")])
+    rows.append([_btn(lt(user_id, "Quay lại", "Back", "返回"),
+                      icon_id="6206032691075223572", callback_data="my_stats")])
+
+    text = lt(
+        user_id,
+        "<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>NẠP TIỀN VÀO VÍ</b>\n\n"
+        "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số tiền:</b> {amount}\n\n"
+        "<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> Chọn phương thức thanh toán:",
+        "<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>TOP UP YOUR WALLET</b>\n\n"
+        "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Amount:</b> {amount}\n\n"
+        "<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> Choose a payment method:",
+        "<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>钱包充值</b>\n\n"
+        "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>金额：</b> {amount}\n\n"
+        "<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> 请选择付款方式：",
+        amount=format_money(amount, user_id),
+    )
+    await safe_bot_send_html(
+        context.bot,
+        update.effective_chat.id,
+        text,
+        reply_markup=InlineKeyboardMarkup(rows),
+    )
+    return True
+
+
+async def create_user_topup_request(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, method: str = "bank") -> bool:
     """Tao ma nap + QR. Tra False neu khong tao duoc (da co ma cho / sai so tien)."""
     user = update.effective_user
     chat_id = update.effective_chat.id
+    method = str(method or "bank").strip().lower()
 
     if amount < MIN_USER_TOPUP_AMOUNT or amount > MAX_USER_TOPUP_AMOUNT:
         await safe_bot_send_html(context.bot, chat_id, f"{E_LIMIT} " + _topup_amount_bounds_text(user.id))
@@ -119,46 +241,83 @@ async def create_user_topup_request(update: Update, context: ContextTypes.DEFAUL
             chat_id,
             lt(
                 user.id,
-                "{limit} Bạn đang có lệnh nạp <code>{code}</code> ({amount:,} VNĐ) chưa hoàn tất.\n"
+                "{limit} Bạn đang có lệnh nạp <code>{code}</code> ({amount}) chưa hoàn tất.\n"
                 "Hoàn tất hoặc hủy lệnh cũ trước khi tạo lệnh mới.",
-                "{limit} You already have a pending top-up <code>{code}</code> ({amount:,} VND).\n"
+                "{limit} You already have a pending top-up <code>{code}</code> ({amount}).\n"
                 "Finish or cancel it before creating a new one.",
-                "{limit} 您已有待处理的充值 <code>{code}</code>（{amount:,} VND）。\n请先完成或取消后再创建。",
+                "{limit} 您已有待处理的充值 <code>{code}</code>（{amount}）。\n请先完成或取消后再创建。",
                 limit=E_LIMIT,
                 code=existing_code,
-                amount=int((existing_details or {}).get("amount", 0) or 0),
+                amount=format_money(int((existing_details or {}).get("amount", 0) or 0), user.id),
             ),
             reply_markup=_build_topup_keyboard(user.id, existing_code),
         )
         return False
 
     code = _generate_user_topup_code(user.id)
-    pending_user_topups[code] = {
+    record = {
         "code": code,
         "user_id": int(user.id),
         "amount": int(amount),
         "time": time.time(),
         "full_name": user.full_name,
         "username": user.username,
+        "provider": "bank",
     }
+    quote_data = None
+
+    if method == "binance":
+        if not is_binance_pay_enabled():
+            await safe_bot_send_html(
+                context.bot,
+                chat_id,
+                f"{E_LIMIT} " + lt(user.id, "Phương thức thanh toán này chưa được cấu hình.", "This payment method is not configured yet.", "此付款方式尚未配置。"),
+            )
+            return False
+        try:
+            quote_data = await create_binance_pay_order(order_code=code, amount_vnd=int(amount))
+        except Exception as e:
+            logger.error(f"[topup] Khong tao duoc lenh nap Binance Pay cho {user.id}: {e}")
+            await safe_bot_send_html(
+                context.bot,
+                chat_id,
+                f"{E_LIMIT} " + lt(user.id, "Không thể tạo lệnh nạp Binance Pay. Vui lòng thử lại sau.", "Could not create the Binance Pay top-up. Please try again later.", "无法创建 Binance Pay 充值单，请稍后重试。"),
+            )
+            return False
+        # Doi soat Binance Pay khop theo dung chuoi so tien nay, nen no phai duoc
+        # luu y het nhu da hien cho khach.
+        record.update({
+            "provider": "binance_pay",
+            "payment_method": "binance_pay",
+            "binance_pay_amount": str(quote_data.get("amount_text") or ""),
+            "binance_pay_id": str(quote_data.get("binance_pay_id") or ""),
+            "binance_pay_rate": str(quote_data.get("rate", USDT_RATE_VND_PER_USDT)),
+        })
+
+    pending_user_topups[code] = record
     await save_data(force=True, tables=[USER_TOPUP_FILE])
 
+    if quote_data is not None:
+        caption = _build_binance_topup_caption(user.id, code, amount, quote_data)
+        photo = binance_pay_qr_photo()
+    else:
+        caption = _build_topup_caption(user.id, code, amount)
+        photo = build_user_topup_qr_url(code, amount)
+
+    keyboard = _build_topup_keyboard(user.id, code, quote_data)
     try:
+        if not photo:
+            raise ValueError("khong tao duoc anh QR")
         await context.bot.send_photo(
             chat_id=chat_id,
-            photo=build_user_topup_qr_url(code, amount),
-            caption=_build_topup_caption(user.id, code, amount),
+            photo=photo,
+            caption=caption,
             parse_mode=ParseMode.HTML,
-            reply_markup=_build_topup_keyboard(user.id, code),
+            reply_markup=keyboard,
         )
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
         logger.warning(f"[topup] Khong gui duoc QR nap tien cho {user.id}: {e}")
-        await safe_bot_send_html(
-            context.bot,
-            chat_id,
-            _build_topup_caption(user.id, code, amount),
-            reply_markup=_build_topup_keyboard(user.id, code),
-        )
+        await safe_bot_send_html(context.bot, chat_id, caption, reply_markup=keyboard)
     return True
 
 
@@ -169,18 +328,21 @@ async def start_user_topup_flow(update: Update, context: ContextTypes.DEFAULT_TY
     user_id = update.effective_user.id
     await clear_user_state(context)
     context.user_data['state'] = 'awaiting_topup_amount'
+    # Ty gia phai co truoc khi ve man hinh, khong thi khach EN/ZH thay so VND.
+    await warm_display_rates()
 
     msg = lt(
         user_id,
         "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>NẠP TIỀN VÀO VÍ</b>\n\n"
         "Nhập số tiền muốn nạp (chỉ số).\n{bounds}\n\n"
-        "Ví dụ: <code>100000</code>\n\nGõ /cancel để hủy.",
+        "Ví dụ: <code>{example}</code>\n\nGõ /cancel để hủy.",
         "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>TOP UP YOUR WALLET</b>\n\n"
         "Enter the amount you want to add (numbers only).\n{bounds}\n\n"
-        "Example: <code>100000</code>\n\nSend /cancel to abort.",
+        "Example: <code>{example}</code>\n\nSend /cancel to abort.",
         "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>钱包充值</b>\n\n"
-        "请输入充值金额（仅数字）。\n{bounds}\n\n示例：<code>100000</code>\n\n发送 /cancel 取消。",
+        "请输入充值金额（仅数字）。\n{bounds}\n\n示例：<code>{example}</code>\n\n发送 /cancel 取消。",
         bounds=_topup_amount_bounds_text(user_id),
+        example=_topup_amount_example_text(user_id),
     )
     keyboard = InlineKeyboardMarkup([
         [_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data="my_stats")]
@@ -196,29 +358,55 @@ async def naptien_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await check_if_banned(update):
         return
     if context.args:
-        try:
-            amount = int(str(context.args[0]).replace(",", "").replace(".", "").strip())
-        except (TypeError, ValueError):
+        await warm_display_rates()
+        amount = parse_money_to_vnd(context.args[0], update.effective_user.id)
+        if amount is None:
             await update.message.reply_html(f"{E_LIMIT} " + _topup_amount_bounds_text(update.effective_user.id))
             return
         await clear_user_state(context)
-        await create_user_topup_request(update, context, amount)
+        if amount < MIN_USER_TOPUP_AMOUNT or amount > MAX_USER_TOPUP_AMOUNT:
+            await update.message.reply_html(f"{E_LIMIT} " + _topup_amount_bounds_text(update.effective_user.id))
+            return
+        await show_topup_method_choice(update, context, amount)
         return
     await start_user_topup_flow(update, context, is_callback=False)
 
 
 async def handle_topup_amount_input(update: Update, context: ContextTypes.DEFAULT_TYPE, user_input: str):
     user_id = update.effective_user.id
-    try:
-        amount = int(str(user_input).replace(",", "").replace(".", "").replace(" ", "").strip())
-    except (TypeError, ValueError):
-        await update.message.reply_html(f"{E_LIMIT} " + _topup_amount_bounds_text(user_id))
-        return
-    if amount < MIN_USER_TOPUP_AMOUNT or amount > MAX_USER_TOPUP_AMOUNT:
+    amount = parse_money_to_vnd(user_input, user_id)
+    if amount is None or amount < MIN_USER_TOPUP_AMOUNT or amount > MAX_USER_TOPUP_AMOUNT:
         await update.message.reply_html(f"{E_LIMIT} " + _topup_amount_bounds_text(user_id))
         return
     await clear_user_state(context)
-    await create_user_topup_request(update, context, amount)
+    await show_topup_method_choice(update, context, amount)
+
+
+async def handle_topup_method_choice(update: Update, context: ContextTypes.DEFAULT_TYPE, payload: str) -> bool:
+    """`topup_pay:<method>:<so tien VND>` tu man hinh chon phuong thuc."""
+    query = update.callback_query
+    user_id = update.effective_user.id
+    method, _, amount_text = str(payload or "").partition(":")
+    try:
+        amount = int(amount_text)
+    except (TypeError, ValueError):
+        await safe_answer(query, lt(user_id, "Số tiền không hợp lệ.", "Invalid amount.", "金额无效。"), show_alert=True)
+        return True
+    if method not in available_topup_methods():
+        await safe_answer(
+            query,
+            lt(user_id, "Phương thức này hiện không khả dụng.", "This method is not available.", "该方式当前不可用。"),
+            show_alert=True,
+        )
+        return True
+
+    await safe_answer(query)
+    try:
+        await query.delete_message()
+    except (TelegramError, ValueError, AttributeError):
+        pass
+    await create_user_topup_request(update, context, amount, method=method)
+    return True
 
 
 async def cancel_user_topup(update: Update, context: ContextTypes.DEFAULT_TYPE, code: str) -> bool:
@@ -309,18 +497,20 @@ async def credit_user_topup(context: ContextTypes.DEFAULT_TYPE, code: str, amoun
             lt(
                 user_id,
                 "{ok} <b>NẠP TIỀN THÀNH CÔNG</b>\n\n"
-                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Đã nạp:</b> +{amount:,} VNĐ\n"
-                "<tg-emoji emoji-id=\"4967667085606912536\">👛</tg-emoji> <b>Số dư mới:</b> {balance:,} VNĐ\n\n"
+                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Đã nạp:</b> +{amount}\n"
+                "<tg-emoji emoji-id=\"4967667085606912536\">👛</tg-emoji> <b>Số dư mới:</b> {balance}\n\n"
                 "Gõ /start để mua hàng ngay.",
                 "{ok} <b>TOP-UP SUCCESSFUL</b>\n\n"
-                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Added:</b> +{amount:,} VND\n"
-                "<tg-emoji emoji-id=\"4967667085606912536\">👛</tg-emoji> <b>New balance:</b> {balance:,} VND\n\n"
+                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Added:</b> +{amount}\n"
+                "<tg-emoji emoji-id=\"4967667085606912536\">👛</tg-emoji> <b>New balance:</b> {balance}\n\n"
                 "Send /start to shop now.",
                 "{ok} <b>充值成功</b>\n\n"
-                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>已充值：</b> +{amount:,} VND\n"
-                "<tg-emoji emoji-id=\"4967667085606912536\">👛</tg-emoji> <b>新余额：</b> {balance:,} VND\n\n"
+                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>已充值：</b> +{amount}\n"
+                "<tg-emoji emoji-id=\"4967667085606912536\">👛</tg-emoji> <b>新余额：</b> {balance}\n\n"
                 "发送 /start 立即购物。",
-                ok=E_SUCCESS, amount=amount_received, balance=new_balance,
+                ok=E_SUCCESS,
+                amount=format_money(amount_received, user_id),
+                balance=format_money(new_balance, user_id),
             ),
             parse_mode=ParseMode.HTML,
             reply_markup=create_back_button_menu(user_id=user_id),

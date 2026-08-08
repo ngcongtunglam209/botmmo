@@ -29,6 +29,7 @@ def _callback_requires_manual_answer(command: str) -> bool:
     }
     manual_answer_prefixes = (
         'topup_cancel:',
+        'topup_pay:',
         'adm_quick:',
         'adm_uo:',
         'admin_open_chat:',
@@ -496,6 +497,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     elif command == 'topup_start':
         await start_user_topup_flow(update, context, is_callback=True)
+
+    elif command.startswith('topup_pay:'):
+        await handle_topup_method_choice(update, context, command.split(':', 1)[1])
 
     elif command.startswith('topup_cancel:'):
         await cancel_user_topup(update, context, command.split(':', 1)[1])

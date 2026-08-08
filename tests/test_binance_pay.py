@@ -284,3 +284,110 @@ async def test_feed_failure_reports_unhealthy_without_leaking_the_token(monkeypa
     assert status["ok"] is False
     assert synthetic_transactions == []
     assert "TOKEN" not in status["error"]
+
+
+def _pending_topup(amount_text: str, *, amount_vnd: int = 100000, created_ts: float = 1_800_000_000.0):
+    return {
+        "provider": "binance_pay",
+        "user_id": 555,
+        "amount": amount_vnd,
+        "binance_pay_amount": amount_text,
+        "time": created_ts,
+        "timestamp": created_ts,
+    }
+
+
+def test_a_wallet_topup_cannot_take_an_amount_an_order_already_holds(monkeypatch):
+    binance, _ = _load()
+    _configure(monkeypatch, binance)
+    monkeypatch.setattr(binance, "pending_orders", {"ICLD000001": _pending("1.5400")}, raising=False)
+    monkeypatch.setattr(binance, "pending_user_topups", {}, raising=False)
+
+    # Orders and top-ups live in two different dictionaries but are reconciled
+    # by the same amount lookup, so a shared amount would cross-credit them.
+    _amount, text = binance.allocate_binance_pay_amount(Decimal("1.54"))
+    assert text == "1.5401"
+
+    binance.pending_user_topups["NAPU5551234"] = _pending_topup(text)
+    _amount, next_text = binance.allocate_binance_pay_amount(Decimal("1.54"))
+    assert next_text == "1.5402"
+
+
+async def test_scan_matches_a_pending_wallet_topup(monkeypatch):
+    binance, monitor = _load()
+    _configure(monkeypatch, binance)
+    created_ts = 1_800_000_000.0
+
+    async def fake_snapshot():
+        return []
+
+    async def fake_fetch():
+        return [binance.normalize_binance_pay_transaction(
+            _feed_row("P_TOPUP1", "1.5401", int(created_ts * 1000) + 30_000)
+        )]
+
+    monkeypatch.setattr(monitor, "pending_items_snapshot", fake_snapshot)
+    monkeypatch.setattr(monitor, "db_check_tx_exists", lambda _tx_id: False)
+    monkeypatch.setattr(monitor, "pending_user_topups", {"NAPU5551234": _pending_topup("1.5401", created_ts=created_ts)}, raising=False)
+    monkeypatch.setattr(binance, "fetch_binance_pay_transactions", fake_fetch, raising=False)
+
+    synthetic_transactions = []
+    await monitor._scan_binance_pay_payments(synthetic_transactions)
+
+    # The description carries the NAPU code so check_payment_job routes it to
+    # credit_user_topup, and the VND figure comes from our own record.
+    assert synthetic_transactions == [{
+        "transactionID": "BINPAYP_TOPUP1",
+        "description": "NAPU5551234",
+        "amount": 100000,
+    }]
+
+
+async def test_scan_skips_an_order_and_a_topup_that_share_an_amount(monkeypatch):
+    binance, monitor = _load()
+    _configure(monkeypatch, binance)
+    created_ts = 1_800_000_000.0
+
+    async def fake_snapshot():
+        return [("ICLD123456", _pending("1.5401", created_ts=created_ts))]
+
+    async def fake_fetch():
+        return [binance.normalize_binance_pay_transaction(
+            _feed_row("P_1", "1.5401", int(created_ts * 1000) + 30_000)
+        )]
+
+    monkeypatch.setattr(monitor, "pending_items_snapshot", fake_snapshot)
+    monkeypatch.setattr(monitor, "db_check_tx_exists", lambda _tx_id: False)
+    monkeypatch.setattr(monitor, "pending_user_topups", {"NAPU5551234": _pending_topup("1.5401", created_ts=created_ts)}, raising=False)
+    monkeypatch.setattr(binance, "fetch_binance_pay_transactions", fake_fetch, raising=False)
+
+    synthetic_transactions = []
+    await monitor._scan_binance_pay_payments(synthetic_transactions)
+
+    # Guessing between an order and a top-up means either shipping goods nobody
+    # paid for or eating a wallet credit. Neither is worth the guess.
+    assert synthetic_transactions == []
+
+
+async def test_a_topup_outside_its_own_expiry_window_is_not_matched(monkeypatch):
+    binance, monitor = _load()
+    _configure(monkeypatch, binance)
+    created_ts = 1_800_000_000.0
+
+    async def fake_snapshot():
+        return []
+
+    async def fake_fetch():
+        return [binance.normalize_binance_pay_transaction(
+            _feed_row("P_LATE", "1.5401", int(created_ts * 1000) + 86_400_000)
+        )]
+
+    monkeypatch.setattr(monitor, "pending_items_snapshot", fake_snapshot)
+    monkeypatch.setattr(monitor, "db_check_tx_exists", lambda _tx_id: False)
+    monkeypatch.setattr(monitor, "pending_user_topups", {"NAPU5551234": _pending_topup("1.5401", created_ts=created_ts)}, raising=False)
+    monkeypatch.setattr(binance, "fetch_binance_pay_transactions", fake_fetch, raising=False)
+
+    synthetic_transactions = []
+    await monitor._scan_binance_pay_payments(synthetic_transactions)
+
+    assert synthetic_transactions == []
