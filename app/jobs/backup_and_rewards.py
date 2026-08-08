@@ -114,6 +114,7 @@ def get_backup_file_specs():
         (FLASH_SALES_FILE, {}),
         (COMBO_DEALS_FILE, {}),
         (WHEEL_DATA_FILE, {}),
+        (BOT_SETTINGS_FILE, {}),
         (TRANSACTION_HISTORY_FILE, {}),
         (ADMIN_ACTION_LOG_FILE, []),
         (CUSTOM_STORE_ICONS_FILE, {}),

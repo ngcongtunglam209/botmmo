@@ -46,6 +46,7 @@ KV_TO_STATE: dict[str, str] = {
     "data_dice_game.json": "dice_game_data",
     "data_wheel_data.json": "wheel_data",
     "data_processed_ids.json": "processed_transaction_ids",
+    "data_bot_settings.json": "bot_settings",
 }
 
 
@@ -154,6 +155,38 @@ def bot_start_time(default: float) -> float:
     if state is None:
         return default
     return float(getattr(state, "bot_start_time", default) or default)
+
+
+class _BotContext:
+    """Vỏ mỏng để dùng lại các hàm notify của bot vốn nhận `context`."""
+
+    def __init__(self, bot: Any) -> None:
+        self.bot = bot
+
+
+async def notify_stock_channel(
+    product_name: str,
+    added_count: int,
+    total_count: int,
+    price: int = 0,
+) -> bool:
+    """Đăng thông báo nhập kho từ web admin, dùng lại logic kênh của bot."""
+    import sys
+
+    state = _app_state()
+    bot = getattr(state, "bot_instance", None) if state is not None else None
+    if bot is None:
+        return False
+    module = sys.modules.get("app.services.notifications_async")
+    notify = getattr(module, "notify_stock_added", None) if module else None
+    if not callable(notify):
+        return False
+    try:
+        await notify(_BotContext(bot), product_name, added_count, total_count, price)
+        return True
+    except Exception:
+        logger.warning("Bridge stock notification failed", exc_info=True)
+        return False
 
 
 async def notify_admin(text: str) -> bool:

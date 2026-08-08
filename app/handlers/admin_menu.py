@@ -83,7 +83,8 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
              _btn("Sửa sản phẩm", icon_id="5828072695694102691", callback_data="adm:h:editproduct")],
             [_btn("Thêm hàng vào kho", icon_id="5443127283898405358", callback_data="adm:h:addstock"),
              _btn("Giới hạn đơn chờ", icon_id="5212985021870123409", callback_data="adm:h:setlimit")],
-            [_btn("Xóa sản phẩm", icon_id="6114086705512321034", callback_data="adm:h:delproduct")],
+            [_btn("Xóa sản phẩm", icon_id="6114086705512321034", callback_data="adm:h:delproduct"),
+             _btn("Kênh báo nhập kho", icon_id="6129860303619363484", callback_data="adm:h:setstockchannel")],
             build_admin_back_row(),
         ])
         await _admin_edit("<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>KHO & SẢN PHẨM</b>\nChọn thao tác:", kb)
@@ -177,6 +178,7 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
             "editproduct":   "<tg-emoji emoji-id=\"5350752364246606166\">✏️</tg-emoji> Sửa sản phẩm:\n<code>/editproduct</code>",
             "addstock":       "<tg-emoji emoji-id=\"5854908544712707500\">📥</tg-emoji> Thêm hàng vào kho:\n<code>/addstock</code>",
             "setlimit":       "<tg-emoji emoji-id=\"5424857974784925603\">🚫</tg-emoji> Giới hạn đơn chờ:\n<code>/setlimit [product_id] [số]</code>",
+            "setstockchannel": "<tg-emoji emoji-id=\"6129860303619363484\">📢</tg-emoji> Kênh báo nhập kho:\nForward 1 tin từ kênh kèm <code>/setstockchannel</code>\nHoặc: <code>/setstockchannel [chat_id]</code>\nTắt: <code>/setstockchannel off</code>\nXem hiện tại: <code>/stockchannel</code>",
             "delproduct":     "❌ Xóa sản phẩm:\n<code>/delproduct [product_id]</code>",
             "find":           "<tg-emoji emoji-id=\"5429571366384842791\">🔍</tg-emoji> Tìm đơn hàng:\n<code>/find [mã_đơn]</code>",
             "refund":         "<tg-emoji emoji-id=\"5863724849851011383\">💸</tg-emoji> Hoàn tiền đơn:\n<code>/refund [mã_đơn]</code>",
@@ -209,6 +211,7 @@ async def handle_admin_menu_callback(query, context: ContextTypes.DEFAULT_TYPE) 
         hint = hints.get(cmd, f"Dùng lệnh: <code>/{cmd}</code>")
         back_category = {
             "newproduct": "kho", "editproduct": "kho", "addstock": "kho",
+            "setstockchannel": "kho",
             "find": "don", "refund": "don", "clearpending": "don", "setemail": "don",
             "info": "users", "ban": "users", "unban": "users", "addmoney": "users",
             "submoney": "users", "chat": "users", "bc": "users",

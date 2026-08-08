@@ -244,6 +244,8 @@ def main() -> None:
         # --- BROADCAST NOTIFICATIONS ---
         "notify": notify_command,
         "resetnotify": resetnotify_command,
+        "setstockchannel": setstockchannel_command,
+        "stockchannel": stockchannel_command,
 
         # --- NEW ADMIN COMMANDS ---
         "analytics": analytics_command,

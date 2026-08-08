@@ -553,3 +553,80 @@ def test_missing_product_returns_404_page(web):
     response = client.get("/admin/products/khong-ton-tai")
     assert response.status_code == 404
     assert "Không tìm thấy" in response.text
+
+
+def test_web_stock_add_posts_to_the_stock_channel(web, monkeypatch):
+    """Nhập kho qua web admin cũng phải bắn thông báo như /addstock."""
+    client, token, db_path = web
+    from app.web import actions, bridge
+
+    posts = []
+
+    async def fake_notify(**kwargs):
+        posts.append(kwargs)
+        return True
+
+    monkeypatch.setattr(bridge, "notify_stock_channel", fake_notify)
+    actions._pending_stock_posts.clear()
+
+    seed(db_path, "data_products.json", {"p1": {"name": "P1", "price": 50000, "stock": ["a"]}})
+    client.post(
+        "/admin/products/p1/update",
+        data={"csrf_token": csrf_of(token), "product_id": "p1", "stock_items": "b\nc"},
+        follow_redirects=False,
+    )
+
+    assert posts == [{
+        "product_name": "P1",
+        "added_count": 2,
+        "total_count": 3,
+        "price": 50000,
+    }]
+    assert actions._pending_stock_posts == []
+
+
+def test_web_edit_without_new_stock_posts_nothing(web, monkeypatch):
+    client, token, db_path = web
+    from app.web import actions, bridge
+
+    posts = []
+
+    async def fake_notify(**kwargs):
+        posts.append(kwargs)
+        return True
+
+    monkeypatch.setattr(bridge, "notify_stock_channel", fake_notify)
+    actions._pending_stock_posts.clear()
+
+    seed(db_path, "data_products.json", {"p1": {"name": "P1", "price": 50000, "stock": ["a"]}})
+    client.post(
+        "/admin/products/p1/update",
+        data={"csrf_token": csrf_of(token), "product_id": "p1", "name": "P1 doi ten"},
+        follow_redirects=False,
+    )
+
+    assert posts == []
+
+
+def test_rejected_stock_add_posts_nothing(web, monkeypatch):
+    """Sản phẩm manual bị chặn nhập kho thì không được bắn thông báo."""
+    client, token, db_path = web
+    from app.web import actions, bridge
+
+    posts = []
+
+    async def fake_notify(**kwargs):
+        posts.append(kwargs)
+        return True
+
+    monkeypatch.setattr(bridge, "notify_stock_channel", fake_notify)
+    actions._pending_stock_posts.clear()
+
+    seed(db_path, "data_products.json", {"m1": {"name": "M1", "requires_gmail": True, "stock": []}})
+    client.post(
+        "/admin/products/m1/update",
+        data={"csrf_token": csrf_of(token), "product_id": "m1", "stock_items": "x"},
+        follow_redirects=False,
+    )
+
+    assert posts == []

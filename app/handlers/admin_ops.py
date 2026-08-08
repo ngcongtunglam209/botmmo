@@ -1,3 +1,90 @@
+def _extract_stock_channel_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Lấy chat id từ tin nhắn được forward, hoặc từ ID admin gõ tay."""
+    message = update.effective_message
+    forward_chat = getattr(message, "forward_from_chat", None) if message else None
+    if forward_chat is not None and getattr(forward_chat, "id", None):
+        return int(forward_chat.id), str(getattr(forward_chat, "title", "") or "")
+
+    if context.args:
+        raw = str(context.args[0]).strip()
+        if raw.lower() in {"off", "tat", "tắt", "0"}:
+            return 0, ""
+        try:
+            return int(raw), ""
+        except ValueError:
+            return None, ""
+    return None, ""
+
+
+async def setstockchannel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Đặt kênh nhận thông báo nhập kho.
+
+    Cú pháp: /setstockchannel <chat_id> | off, hoặc forward 1 tin từ kênh đó.
+    """
+    channel_id, title = _extract_stock_channel_id(update, context)
+
+    if channel_id is None:
+        await update.message.reply_html(
+            "<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>ĐẶT KÊNH THÔNG BÁO NHẬP KHO</b>\n\n"
+            "<b>Cách 1:</b> Forward bất kỳ tin nhắn nào từ kênh đó vào đây kèm lệnh <code>/setstockchannel</code>\n"
+            "<b>Cách 2:</b> <code>/setstockchannel -1001234567890</code>\n"
+            "<b>Tắt:</b> <code>/setstockchannel off</code>\n\n"
+            "<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> Nhớ add bot vào kênh và cấp quyền đăng bài trước.\n"
+            "Xem cấu hình hiện tại: <code>/stockchannel</code>"
+        )
+        return
+
+    if channel_id == 0:
+        await set_stock_channel_id(0)
+        await update.message.reply_html(
+            f"{E_SUCCESS} <b>ĐÃ TẮT THÔNG BÁO NHẬP KHO.</b>\n\n"
+            "Bật lại bằng <code>/setstockchannel &lt;chat_id&gt;</code>."
+        )
+        return
+
+    # Gửi thử ngay để admin biết bot có đăng được không, thay vì phát hiện lúc nhập kho.
+    try:
+        await context.bot.send_message(
+            chat_id=channel_id,
+            text=f"{E_SUCCESS} <b>Kênh này đã được đặt làm nơi nhận thông báo nhập kho.</b>",
+            parse_mode=ParseMode.HTML,
+        )
+    except (TelegramError, ValueError, KeyError, AttributeError) as e:
+        await update.message.reply_html(
+            f"{E_ERROR} <b>KHÔNG GỬI ĐƯỢC VÀO KÊNH <code>{channel_id}</code></b>\n\n"
+            f"<code>{html.escape(str(e))}</code>\n\n"
+            "Kiểm tra: bot đã vào kênh chưa, và đã có quyền đăng bài chưa. Chưa lưu cấu hình."
+        )
+        return
+
+    await set_stock_channel_id(channel_id)
+    title_line = f"\n{E_TAG} <b>Tên kênh:</b> {html.escape(title)}" if title else ""
+    await update.message.reply_html(
+        f"{E_SUCCESS} <b>ĐÃ ĐẶT KÊNH THÔNG BÁO NHẬP KHO</b>\n\n"
+        f"{E_ID} <b>Chat ID:</b> <code>{channel_id}</code>{title_line}\n\n"
+        "Từ giờ mỗi lần thêm kho, bot sẽ đăng bài lên kênh này."
+    )
+
+
+async def stockchannel_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Xem kênh nhập kho đang dùng."""
+    channel_id = get_stock_channel_id()
+    if not channel_id:
+        await update.message.reply_html(
+            f"{E_TAG} <b>THÔNG BÁO NHẬP KHO: ĐANG TẮT</b>\n\n"
+            "Bật bằng <code>/setstockchannel &lt;chat_id&gt;</code> hoặc forward 1 tin từ kênh."
+        )
+        return
+
+    source = "lệnh /setstockchannel" if isinstance(bot_settings, dict) and "stock_channel_id" in bot_settings else "biến môi trường STOCK_CHANNEL_ID"
+    await update.message.reply_html(
+        f"{E_SUCCESS} <b>THÔNG BÁO NHẬP KHO: ĐANG BẬT</b>\n\n"
+        f"{E_ID} <b>Chat ID:</b> <code>{channel_id}</code>\n"
+        f"{E_TAG} <b>Nguồn cấu hình:</b> {source}\n\n"
+        "Tắt bằng <code>/setstockchannel off</code>."
+    )
+
+
 async def notify_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     NEW: Broadcast thông báo hết hàng thủ công
