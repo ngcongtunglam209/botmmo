@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0b0c0f">
+  <title>Đăng nhập — Lâm Shop Admin</title>
+  <link rel="stylesheet" href="/admin/static/app.css">
+</head>
+<body class="login-body">
+<main class="login-shell">
+  <section class="login-story">
+    <span class="brand-mark big">L</span>
+    <h1>Mọi hoạt động.<br><em>Một trung tâm.</em></h1>
+    <p>Đơn hàng, tồn kho, ví user và API partner — theo dõi tại một chỗ.</p>
+    <ul class="login-points">
+      <li><b>Commerce</b><span>Đơn hàng &amp; doanh thu</span></li>
+      <li><b>Inventory</b><span>Kho &amp; sản phẩm manual</span></li>
+      <li><b>Partners</b><span>API &amp; vận hành ví</span></li>
+    </ul>
+  </section>
+
+  <section class="login-panel">
+    <div class="login-card">
+      <h2>Chào mừng trở lại</h2>
+      <p class="muted">Đăng nhập để vào trang quản trị.</p>
+
+      {% if error %}
+        <div class="notice error" role="alert">{{ error }}</div>
+      {% endif %}
+
+      {% if telegram_enabled %}
+        <a class="telegram-button" href="/admin/login/telegram">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 3.2 18.4 19c-.2 1.1-.9 1.4-1.8.9l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6 12.8 1.2 11.3c-1-.3-1.1-1 .2-1.5L20 2.6c.9-.3 1.8.2 1.6.6Z"/></svg>
+          Đăng nhập bằng Telegram
+        </a>
+      {% else %}
+        <div class="notice error">
+          Chưa cấu hình đăng nhập Telegram. Cần đặt <code>TELEGRAM_LOGIN_CLIENT_ID</code>,
+          <code>TELEGRAM_LOGIN_CLIENT_SECRET</code> và <code>ADMIN_USER_ID</code> trong <code>.env</code>.
+        </div>
+      {% endif %}
+
+      <p class="login-security">Phiên đăng nhập được ký và tự động hết hạn.</p>
+    </div>
+  </section>
+</main>
+</body>
+</html>

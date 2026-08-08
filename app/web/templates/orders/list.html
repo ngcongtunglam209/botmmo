@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty %}
+
+{% block title %}Đơn hàng — Lâm Shop Admin{% endblock %}
+{% block heading %}Đơn hàng{% endblock %}
+{% block subheading %}Hiển thị {{ rows | length }}/{{ total }} đơn mới nhất · {{ pending_count }} đang chờ thanh toán.{% endblock %}
+
+{% block content %}
+<form class="filter-bar" method="get" action="/admin/orders">
+  <input type="search" name="q" value="{{ search }}" placeholder="Tìm theo mã đơn, sản phẩm hoặc user ID">
+  <button type="submit">Tìm</button>
+  {% if search %}<a class="ghost" href="/admin/orders">Xóa lọc</a>{% endif %}
+</form>
+
+{% if rows %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th>Mã</th><th>Sản phẩm</th><th>User</th><th>Trạng thái</th>
+               <th class="num">Tiền</th><th class="num">SL</th><th>Lúc</th><th></th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td><a class="strong-link mono" href="/admin/orders/{{ row.code }}">{{ row.code }}</a></td>
+        <td>{{ row.product | shorten(38) }}</td>
+        <td>{% if row.user_id %}<a href="/admin/users/{{ row.user_id }}">{{ row.user_id }}</a>{% else %}—{% endif %}</td>
+        <td>
+          <span class="badge badge-{{ 'ok' if row.completed else 'warn' }}">{{ row.status | plain | shorten(24) }}</span>
+        </td>
+        <td class="num">{{ row.amount | money }}</td>
+        <td class="num">{{ row.quantity }}</td>
+        <td>{{ row.timestamp | timestamp }}</td>
+        <td class="row-actions"><a href="/admin/orders/{{ row.code }}">Mở</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}{{ empty('Không có đơn nào khớp bộ lọc.') }}{% endif %}
+{% endblock %}

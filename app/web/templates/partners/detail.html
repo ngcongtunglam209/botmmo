@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, select, textarea, empty %}
+
+{% block title %}{{ row.name }} — API partner{% endblock %}
+{% block heading %}{{ row.name }}{% endblock %}
+{% block subheading %}<code>{{ row.public_id }}</code> · số dư {{ row.balance | money }} ·
+  {{ analytics.total }} request 14 ngày{% endblock %}
+
+{% block tools %}<a class="ghost" href="/admin/partners">← Danh sách</a>{% endblock %}
+
+{% block content %}
+{% set action = '/admin/partners/' ~ row.public_id ~ '/manage' %}
+
+<div class="split">
+  <section class="card">
+    <header><h2>Ví</h2><p class="muted">Mọi thay đổi được ghi vào sổ cái.</p></header>
+    <form method="post" action="{{ action }}" class="form-grid"
+          data-confirm="Xác nhận thay đổi số dư của {{ row.name }}?">
+      {{ csrf(csrf_token) }}
+      <input type="hidden" name="target" value="{{ row.public_id }}">
+      {{ select('Thao tác', 'mode', [('topup', 'Nạp tiền'), ('subtract', 'Trừ tiền'), ('set_balance', 'Đặt số dư')]) }}
+      {{ field('Số tiền (VND)', 'amount', placeholder='500000', required=True) }}
+      <div class="form-actions"><button type="submit">Cập nhật ví</button></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <header><h2>Bảo mật &amp; quota</h2></header>
+    <form method="post" action="{{ action }}" class="form-grid">
+      {{ csrf(csrf_token) }}
+      <input type="hidden" name="target" value="{{ row.public_id }}">
+      <input type="hidden" name="mode" value="configure">
+      {{ field('Rate limit (request/phút)', 'rate_limit', value=row.rate_limit) }}
+      {{ field('Ngưỡng cảnh báo số dư', 'low_balance_threshold', value=row.threshold) }}
+      {{ textarea('IP được phép', 'allowed_ips', value=row.allowed_ips | join('\n'), rows=3,
+                  hint='Mỗi dòng một IP. Bỏ trống = cho phép mọi IP.') }}
+      <label class="field checkbox">
+        <input type="checkbox" name="alert_enabled" value="1"{% if row.alert_enabled %} checked{% endif %}>
+        <span>Cảnh báo khi số dư thấp</span>
+      </label>
+      {{ textarea('Ghi chú admin', 'admin_note', value=row.admin_note, rows=2) }}
+      <div class="form-actions"><button type="submit">Lưu cấu hình</button></div>
+    </form>
+  </section>
+</div>
+
+<section class="card">
+  <header><h2>Sổ cái ví</h2></header>
+  {% if ledger %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Lúc</th><th>Loại</th><th class="num">Thay đổi</th><th class="num">Sau</th><th>Lý do</th></tr></thead>
+      <tbody>
+        {% for entry in ledger %}
+        <tr>
+          <td>{{ entry.created_at | timestamp }}</td>
+          <td>{{ entry.entry_type }}</td>
+          <td class="num {{ 'ok' if entry.amount >= 0 else 'bad' }}">{{ entry.amount | money }}</td>
+          <td class="num">{{ entry.balance_after | money }}</td>
+          <td>{{ entry.reason | shorten(48) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}{{ empty('Chưa có giao dịch nào.') }}{% endif %}
+</section>
+
+<section class="card">
+  <header><h2>Request gần đây</h2><p class="muted">{{ analytics.errors }} lỗi / {{ analytics.total }} request (14 ngày).</p></header>
+  {% if logs %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Lúc</th><th>Method</th><th>Endpoint</th><th class="num">Status</th><th class="num">Thời gian</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.requested_at | timestamp }}</td>
+          <td>{{ log.method }}</td>
+          <td class="mono">{{ log.endpoint | shorten(46) }}</td>
+          <td class="num"><span class="badge badge-{{ 'ok' if log.status_code < 400 else 'danger' }}">{{ log.status_code }}</span></td>
+          <td class="num">{{ '%.0f' | format(log.response_ms) }}ms</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}{{ empty('Chưa có request nào được ghi.') }}{% endif %}
+</section>
+
+<section class="card danger-zone">
+  <header><h2>Vòng đời key</h2>
+    <p class="muted">Regenerate sẽ cấp key mới và khóa key cũ vĩnh viễn.</p></header>
+  <div class="button-row">
+    {% if row.active %}
+      <form method="post" action="{{ action }}" data-confirm="Thu hồi key của {{ row.name }}?">
+        {{ csrf(csrf_token) }}
+        <input type="hidden" name="target" value="{{ row.public_id }}">
+        <input type="hidden" name="mode" value="disable">
+        <button class="danger" type="submit">Thu hồi key</button>
+      </form>
+    {% else %}
+      <form method="post" action="{{ action }}">
+        {{ csrf(csrf_token) }}
+        <input type="hidden" name="target" value="{{ row.public_id }}">
+        <input type="hidden" name="mode" value="enable">
+        <button type="submit"{% if row.rotated_to %} disabled title="Key đã regenerate"{% endif %}>Bật lại key</button>
+      </form>
+    {% endif %}
+    <form method="post" action="{{ action }}" data-confirm="Cấp key mới và khóa key hiện tại?">
+      {{ csrf(csrf_token) }}
+      <input type="hidden" name="target" value="{{ row.public_id }}">
+      <input type="hidden" name="mode" value="regenerate">
+      <button class="danger" type="submit">Regenerate key</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

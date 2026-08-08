@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty %}
+
+{% block title %}Audit — Lâm Shop Admin{% endblock %}
+{% block heading %}Nhật ký thao tác{% endblock %}
+{% block subheading %}{{ rows | length }} thao tác gần nhất trên web admin.{% endblock %}
+
+{% block content %}
+{% if rows %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th>Lúc</th><th>Thao tác</th><th>Đối tượng</th><th>Kết quả</th><th>IP</th><th>Chi tiết</th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.timestamp | timestamp }}</td>
+        <td>{{ row.label }}</td>
+        <td class="mono">{{ row.target or '—' }}</td>
+        <td><span class="badge badge-{{ 'ok' if row.ok else 'danger' }}">{{ 'OK' if row.ok else 'lỗi' }}</span></td>
+        <td class="mono">{{ row.ip or '—' }}</td>
+        <td>{{ row.message | shorten(70) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}{{ empty('Chưa có thao tác nào được ghi.') }}{% endif %}
+{% endblock %}

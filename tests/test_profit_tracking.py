@@ -6,7 +6,6 @@ from app.core.runtime_loader import load_modules
 def test_cost_snapshots_and_profit_summary():
     modules = load_modules()
     db = modules["app.services.games_withdrawals_db"]
-    web = modules["app.api.admin_web"]
     original_products = db.products
     original_history = db.order_history
     history = []
@@ -16,7 +15,6 @@ def test_cost_snapshots_and_profit_summary():
     }
     db.products = products
     db.order_history = history
-    web.order_history = history
     try:
         local = {"order_code": "L1", "product_id": "local", "quantity": 2, "amount": 12000, "status": "Hoàn thành", "timestamp": time.time()}
         dat = {"order_code": "D1", "product_id": "dat", "quantity": 3, "amount": 30000, "status": "Hoàn thành", "timestamp": time.time()}
@@ -34,7 +32,9 @@ def test_cost_snapshots_and_profit_summary():
         db.db_add_order(replacement, schedule_save=False)
         assert replacement["cost_total"] == 8000
 
-        summary = web._admin_web_financial_summary()
+        from app.web.repo import orders as orders_repo
+
+        summary = orders_repo.summarize(history)
         assert summary["revenue"] == 52000
         assert summary["profit"] == 14000
         assert summary["costed"] == 2
@@ -42,5 +42,4 @@ def test_cost_snapshots_and_profit_summary():
     finally:
         db.products = original_products
         db.order_history = original_history
-        web.order_history = original_history
 

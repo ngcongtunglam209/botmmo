@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Lỗi {{ status_code }} — Lâm Shop Admin{% endblock %}
+{% block heading %}Lỗi {{ status_code }}{% endblock %}
+{% block subheading %}{{ detail }}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <p>Thao tác không thực hiện được. Kiểm tra lại rồi thử lần nữa.</p>
+  <p><a class="button" href="/admin">Về trang tổng quan</a></p>
+</section>
+{% endblock %}

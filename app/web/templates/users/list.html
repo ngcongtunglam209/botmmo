@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty %}
+
+{% block title %}Users — Lâm Shop Admin{% endblock %}
+{% block heading %}Users &amp; ví{% endblock %}
+{% block subheading %}Hiển thị {{ rows | length }}/{{ total }} user, sắp theo số dư.{% endblock %}
+
+{% block content %}
+<form class="filter-bar" method="get" action="/admin/users">
+  <input type="search" name="q" value="{{ search }}" placeholder="Tìm theo ID, username hoặc tên">
+  <select name="status">
+    <option value="">Tất cả</option>
+    <option value="active"{% if status == 'active' %} selected{% endif %}>Đang hoạt động</option>
+    <option value="banned"{% if status == 'banned' %} selected{% endif %}>Bị ban</option>
+  </select>
+  <button type="submit">Lọc</button>
+  {% if search or status %}<a class="ghost" href="/admin/users">Xóa lọc</a>{% endif %}
+</form>
+
+{% if rows %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th>User</th><th class="num">Số dư</th><th class="num">Đơn</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>
+          <a class="strong-link" href="/admin/users/{{ row.id }}">{{ row.name }}</a>
+          <small class="mono">{{ row.id }}{% if row.username %} · {{ row.username }}{% endif %}</small>
+        </td>
+        <td class="num">{{ row.balance | money }}</td>
+        <td class="num">{{ row.orders }}</td>
+        <td>
+          <span class="badge badge-{{ 'danger' if row.banned else 'ok' }}">
+            {{ 'bị ban' if row.banned else 'hoạt động' }}
+          </span>
+        </td>
+        <td class="row-actions"><a href="/admin/users/{{ row.id }}">Mở</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}{{ empty('Không có user nào khớp bộ lọc.') }}{% endif %}
+{% endblock %}

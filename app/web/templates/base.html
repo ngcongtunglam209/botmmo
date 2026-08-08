@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0b0c0f">
+  <title>{% block title %}Lâm Shop Admin{% endblock %}</title>
+  <link rel="stylesheet" href="/admin/static/app.css">
+  <script>if (localStorage.getItem('admin_theme') === 'light') document.documentElement.classList.add('light');</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Tới nội dung chính</a>
+
+<header class="topbar">
+  <button class="menu-toggle" type="button" aria-label="Mở menu" aria-expanded="false" data-menu-toggle>
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="/admin"><span class="brand-mark">L</span> Lâm Shop <b>Admin</b></a>
+  <nav class="nav" data-nav>
+    {% set links = [
+      ('/admin', 'Tổng quan'),
+      ('/admin/products', 'Sản phẩm'),
+      ('/admin/categories', 'Danh mục'),
+      ('/admin/orders', 'Đơn hàng'),
+      ('/admin/users', 'Users'),
+      ('/admin/partners', 'API partner'),
+      ('/admin/coupons', 'Coupon'),
+      ('/admin/support', 'Hỗ trợ'),
+      ('/admin/ops', 'Vận hành'),
+      ('/admin/audit', 'Audit'),
+    ] %}
+    {% for href, label in links %}
+      <a href="{{ href }}"{% if current_path == href %} aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+  <div class="topbar-actions">
+    <button type="button" class="icon-button" data-theme-toggle title="Đổi nền sáng/tối" aria-label="Đổi nền sáng tối">◐</button>
+    <form method="post" action="/admin/logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button type="submit" class="ghost">Đăng xuất</button>
+    </form>
+  </div>
+</header>
+
+<main id="main">
+  <div class="page-head">
+    <div>
+      <h1>{% block heading %}{% endblock %}</h1>
+      <p class="muted">{% block subheading %}{% endblock %}</p>
+    </div>
+    <div class="page-tools">{% block tools %}{% endblock %}</div>
+  </div>
+  {% block content %}{% endblock %}
+</main>
+
+<div id="toasts" aria-live="polite"></div>
+{% if flash %}
+<script id="flash-data" type="application/json">{{ flash | tojson }}</script>
+{% endif %}
+
+<script src="/admin/static/htmx.min.js" defer></script>
+<script src="/admin/static/app.js" defer></script>
+</body>
+</html>
