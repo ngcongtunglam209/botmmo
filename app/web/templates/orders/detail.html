@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, select %}
+
+{% block title %}Đơn {{ order_code }} — Lâm Shop Admin{% endblock %}
+{% block heading %}Đơn {{ order_code }}{% endblock %}
+{% block subheading %}{{ order.product_name or '—' }} · {{ amount | money }}{% endblock %}
+
+{% block tools %}<a class="ghost" href="/admin/orders">← Danh sách</a>{% endblock %}
+
+{% block content %}
+<div class="split">
+  <section class="card">
+    <header><h2>Tóm tắt</h2></header>
+    <dl class="detail-list">
+      <dt>Trạng thái</dt>
+      <dd><span class="badge badge-{{ 'ok' if completed else 'warn' }}">{{ status | plain or '—' }}</span></dd>
+      <dt>Số tiền</dt><dd>{{ amount | money }}</dd>
+      <dt>Số lượng</dt><dd>{{ order.quantity or 1 }}</dd>
+      <dt>User</dt>
+      <dd>{% if order.user_id %}<a href="/admin/users/{{ order.user_id }}">{{ order.user_id }}</a>{% else %}—{% endif %}</dd>
+      <dt>Email</dt><dd>{{ order.email or order.customer_email or '—' }}</dd>
+      <dt>Tạo lúc</dt><dd>{{ timestamp | timestamp }}</dd>
+      <dt>Giá vốn</dt><dd>{{ order.cost_total | money if order.cost_total is not none else 'chưa có' }}</dd>
+      {% if order.admin_note %}<dt>Ghi chú admin</dt><dd>{{ order.admin_note }}</dd>{% endif %}
+    </dl>
+  </section>
+
+  <section class="card">
+    <header><h2>Cập nhật</h2><p class="muted">Áp dụng cho mọi bản ghi cùng mã đơn.</p></header>
+    <form method="post" action="/admin/orders/{{ order_code }}/update" class="form-grid">
+      {{ csrf(csrf_token) }}
+      <input type="hidden" name="order_code" value="{{ order_code }}">
+      {{ select('Thao tác', 'mode', [('set_email', 'Gắn email nhận hàng'), ('admin_note', 'Ghi chú admin')]) }}
+      {{ field('Giá trị', 'value', placeholder='email hoặc nội dung ghi chú', required=True) }}
+      <div class="form-actions"><button type="submit">Cập nhật đơn</button></div>
+    </form>
+  </section>
+</div>
+
+<section class="card">
+  <header><h2>Dữ liệu gốc</h2><p class="muted">Toàn bộ bản ghi như đang lưu trong database.</p></header>
+  <pre class="code-block">{{ order | tojson(indent=2) }}</pre>
+</section>
+{% endblock %}

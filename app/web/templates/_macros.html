@@ -1,0 +1,49 @@
+{# Macro dùng lại cho form và bảng. #}
+
+{% macro csrf(token) -%}
+<input type="hidden" name="csrf_token" value="{{ token }}">
+{%- endmacro %}
+
+{% macro field(label, name, value='', placeholder='', type='text', required=False, hint='') -%}
+<label class="field">
+  <span>{{ label }}{% if required %} <b class="req">*</b>{% endif %}</span>
+  <input type="{{ type }}" name="{{ name }}" value="{{ value if value is not none else '' }}"
+         placeholder="{{ placeholder }}"{% if required %} required{% endif %}>
+  {% if hint %}<small>{{ hint }}</small>{% endif %}
+</label>
+{%- endmacro %}
+
+{% macro textarea(label, name, value='', placeholder='', rows=4, hint='') -%}
+<label class="field wide">
+  <span>{{ label }}</span>
+  <textarea name="{{ name }}" rows="{{ rows }}" placeholder="{{ placeholder }}">{{ value if value is not none else '' }}</textarea>
+  {% if hint %}<small>{{ hint }}</small>{% endif %}
+</label>
+{%- endmacro %}
+
+{% macro select(label, name, options, selected='', hint='') -%}
+<label class="field">
+  <span>{{ label }}</span>
+  <select name="{{ name }}">
+    {% for value, text in options %}
+      <option value="{{ value }}"{% if value == selected %} selected{% endif %}>{{ text }}</option>
+    {% endfor %}
+  </select>
+  {% if hint %}<small>{{ hint }}</small>{% endif %}
+</label>
+{%- endmacro %}
+
+{% macro empty(text) -%}
+<p class="empty">{{ text }}</p>
+{%- endmacro %}
+
+{% macro badge(text, tone='neutral') -%}
+<span class="badge badge-{{ tone }}">{{ text }}</span>
+{%- endmacro %}
+
+{% macro card(title, subtitle='') -%}
+<section class="card">
+  <header><h2>{{ title }}</h2>{% if subtitle %}<p class="muted">{{ subtitle }}</p>{% endif %}</header>
+  {{ caller() }}
+</section>
+{%- endmacro %}

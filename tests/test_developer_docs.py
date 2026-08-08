@@ -33,6 +33,7 @@ def test_developer_docs_and_reference_are_available():
 
 
 def test_admin_login_uses_the_admin_ui_skin():
+    """Trang login phải do app/web phục vụ, chỉ có một đường đăng nhập Telegram."""
     modules = load_modules()
     app = modules["app.models.api_models"].app
     client = TestClient(app)
@@ -41,9 +42,19 @@ def test_admin_login_uses_the_admin_ui_skin():
 
     assert login.status_code == 200
     assert "Mọi hoạt động.".encode() in login.content
-    assert b"login-signals" in login.content
-    assert b"--accent: #e3b96c" in login.content
     assert b"login-shell" in login.content
-    assert "Đăng nhập bằng Telegram".encode() in login.content
+    assert b"login-points" in login.content
+    assert b"/admin/static/app.css" in login.content
+    # Không còn form mật khẩu: đăng nhập chỉ qua Telegram OIDC.
     assert b'name="username"' not in login.content
     assert b'name="password"' not in login.content
+
+
+def test_admin_stylesheet_is_served():
+    modules = load_modules()
+    client = TestClient(modules["app.models.api_models"].app)
+
+    stylesheet = client.get("/admin/static/app.css")
+
+    assert stylesheet.status_code == 200
+    assert b"--accent" in stylesheet.content

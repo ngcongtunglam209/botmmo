@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, textarea, select, empty %}
+
+{% block title %}User {{ user_id }} — Lâm Shop Admin{% endblock %}
+{% block heading %}{{ profile.full_name or profile.username or 'User ' ~ user_id }}{% endblock %}
+{% block subheading %}<code>{{ user_id }}</code> · số dư {{ balance | money }}{% endblock %}
+
+{% block tools %}<a class="ghost" href="/admin/users">← Danh sách</a>{% endblock %}
+
+{% block content %}
+<div class="split">
+  <section class="card">
+    <header><h2>Ví</h2><p class="muted">Mỗi thay đổi được ghi vào lịch sử giao dịch.</p></header>
+    <form method="post" action="/admin/users/{{ user_id }}/balance" class="form-grid"
+          data-confirm="Xác nhận thay đổi số dư của user {{ user_id }}?">
+      {{ csrf(csrf_token) }}
+      <input type="hidden" name="user_id" value="{{ user_id }}">
+      {{ select('Kiểu', 'mode', [('add', 'Cộng tiền'), ('sub', 'Trừ tiền'), ('set', 'Đặt số dư')]) }}
+      {{ field('Số tiền (VND)', 'amount', placeholder='100000', required=True) }}
+      {{ field('Lý do', 'reason', value='Admin web') }}
+      <div class="form-actions"><button type="submit">Cập nhật ví</button></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <header><h2>Hồ sơ</h2><p class="muted">Bỏ trống ô nào thì giữ nguyên.</p></header>
+    <form method="post" action="/admin/users/{{ user_id }}/profile" class="form-grid">
+      {{ csrf(csrf_token) }}
+      <input type="hidden" name="user_id" value="{{ user_id }}">
+      {{ field('Tên hiển thị', 'full_name', placeholder=profile.full_name or '') }}
+      {{ field('Username', 'username', placeholder=profile.username or '@username') }}
+      {{ field('Email nhận hàng', 'email', placeholder=profile.email or '') }}
+      {{ textarea('Ghi chú admin', 'admin_note', placeholder=profile.admin_note or 'Ghi chú nội bộ') }}
+      <div class="form-actions"><button type="submit">Lưu hồ sơ</button></div>
+    </form>
+  </section>
+</div>
+
+<section class="card">
+  <header><h2>Đơn gần đây</h2></header>
+  {% if orders %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Mã</th><th>Sản phẩm</th><th>Trạng thái</th><th class="num">Tiền</th><th>Lúc</th></tr></thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td><a class="strong-link" href="/admin/orders/{{ order.order_code or order.code or '' }}">{{ order.order_code or order.code or '—' }}</a></td>
+          <td>{{ (order.product_name or '—') | shorten(40) }}</td>
+          <td>{{ (order.status or '—') | plain | shorten(28) }}</td>
+          <td class="num">{{ order.amount | money }}</td>
+          <td>{{ order.timestamp | timestamp }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}{{ empty('User này chưa có đơn nào.') }}{% endif %}
+</section>
+
+<section class="card">
+  <header><h2>Lịch sử ví</h2></header>
+  {% if transactions %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Lúc</th><th class="num">Thay đổi</th><th class="num">Số dư sau</th><th>Lý do</th></tr></thead>
+      <tbody>
+        {% for entry in transactions %}
+        <tr>
+          <td>{{ entry.timestamp | timestamp }}</td>
+          <td class="num {{ 'ok' if entry.amount >= 0 else 'bad' }}">{{ entry.amount | money }}</td>
+          <td class="num">{{ entry.balance_after | money }}</td>
+          <td>{{ entry.reason | shorten(50) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}{{ empty('Chưa có giao dịch ví nào.') }}{% endif %}
+</section>
+
+<section class="card danger-zone">
+  <header><h2>{{ 'Bỏ ban' if banned else 'Ban user' }}</h2>
+    <p class="muted">User bị ban không dùng được bot.</p></header>
+  <form method="post" action="/admin/users/{{ user_id }}/ban"
+        data-confirm="Xác nhận đổi trạng thái ban của user {{ user_id }}?">
+    {{ csrf(csrf_token) }}
+    <input type="hidden" name="user_id" value="{{ user_id }}">
+    <input type="hidden" name="mode" value="{{ 'unban' if banned else 'ban' }}">
+    <button class="{{ '' if banned else 'danger' }}" type="submit">{{ 'Bỏ ban' if banned else 'Ban user' }}</button>
+  </form>
+</section>
+{% endblock %}

@@ -8,12 +8,11 @@ from app.core.runtime_loader import load_modules
 
 
 def _modules():
-    modules = load_modules()
-    return modules["app.api.helpers"], modules["app.api.admin_web"]
+    return load_modules()["app.api.helpers"]
 
 
 def test_partner_ip_whitelist_supports_ipv4_ipv6_and_cidr():
-    helpers, _ = _modules()
+    helpers = _modules()
     rules = helpers._api_normalize_allowed_ips("203.0.113.10\n2001:db8::/48 10.0.0.9/24")
 
     assert rules == ["203.0.113.10", "2001:db8::/48", "10.0.0.0/24"]
@@ -26,14 +25,14 @@ def test_partner_ip_whitelist_supports_ipv4_ipv6_and_cidr():
 
 
 def test_rate_limit_is_bounded_and_defaults_to_60():
-    helpers, _ = _modules()
+    helpers = _modules()
     assert helpers._api_partner_rate_limit({}) == 60
     assert helpers._api_partner_rate_limit({"rate_limit_per_minute": 0}) == 60
     assert helpers._api_partner_rate_limit({"rate_limit_per_minute": 99999}) == 10000
 
 
 def test_rotation_preserves_config_and_order_lineage(monkeypatch):
-    helpers, _ = _modules()
+    helpers = _modules()
     old_key = "sk_live_test_old"
     helpers.api_keys[old_key] = {
         "name": "Test Partner",
@@ -65,9 +64,10 @@ def test_rotation_preserves_config_and_order_lineage(monkeypatch):
 
 
 def test_csv_shape_never_contains_raw_api_key():
-    helpers, admin = _modules()
+    from app.web.repo import partners
+
     raw_key = "sk_live_secret_export_test"
-    public_id = admin._admin_web_api_public_id(raw_key)
+    public_id = partners.public_id(raw_key)
     output = io.StringIO()
     csv.writer(output).writerow([public_id, "Partner"])
 

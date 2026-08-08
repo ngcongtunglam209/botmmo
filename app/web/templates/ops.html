@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, select, empty %}
+
+{% block title %}Vận hành — Lâm Shop Admin{% endblock %}
+{% block heading %}Vận hành{% endblock %}
+{% block subheading %}Uptime {{ uptime }} · {{ pending_payment }} đơn chờ thanh toán ·
+  {{ pending_manual | length }} đơn manual chờ xử lý.{% endblock %}
+
+{% block content %}
+<div class="split">
+  <section class="card">
+    <header><h2>Chế độ bảo trì</h2>
+      <p class="muted">Đang {{ maintenance | onoff }}. Bật thì bot và API từ chối đơn mới.</p></header>
+    <form method="post" action="/admin/ops/toggle"
+          data-confirm="Xác nhận đổi chế độ bảo trì?">
+      {{ csrf(csrf_token) }}
+      <input type="hidden" name="mode" value="{{ 'maintenance_off' if maintenance else 'maintenance_on' }}">
+      <button class="{{ '' if maintenance else 'danger' }}" type="submit">
+        {{ 'Tắt bảo trì' if maintenance else 'Bật bảo trì' }}
+      </button>
+    </form>
+  </section>
+
+  <section class="card">
+    <header><h2>AI auto reply</h2><p class="muted">Đang {{ ai_auto_reply | onoff }}.</p></header>
+    <form method="post" action="/admin/ops/toggle">
+      {{ csrf(csrf_token) }}
+      <input type="hidden" name="mode" value="{{ 'ai_off' if ai_auto_reply else 'ai_on' }}">
+      <button type="submit">{{ 'Tắt AI' if ai_auto_reply else 'Bật AI' }}</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <header><h2>Cổng thanh toán</h2>
+      <p class="muted">Ghi vào <code>.env</code>; cần restart bot để áp dụng hoàn toàn.</p></header>
+    <form method="post" action="/admin/ops/toggle" class="form-grid">
+      {{ csrf(csrf_token) }}
+      {{ select('Thao tác', 'mode', [
+        ('mbbank_on', 'Bật MBBank'), ('mbbank_off', 'Tắt MBBank'),
+        ('binance_on', 'Bật Binance Spot'), ('binance_off', 'Tắt Binance Spot')]) }}
+      <div class="form-actions"><button type="submit">Áp dụng</button></div>
+    </form>
+  </section>
+</div>
+
+<section class="card">
+  <header><h2>Đơn manual đang chờ</h2>
+    <p class="muted">Xóa sẽ giải phóng slot; kiểm tra hoàn tiền trước khi xóa.</p></header>
+  {% if pending_manual %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Mã</th><th>Sản phẩm</th><th>User</th><th class="num">Tiền</th><th>Lúc</th><th></th></tr></thead>
+      <tbody>
+        {% for row in pending_manual %}
+        <tr>
+          <td class="mono"><a class="strong-link" href="/admin/orders/{{ row.code }}">{{ row.code }}</a></td>
+          <td>{{ row.product | shorten(38) }}</td>
+          <td>{% if row.user_id %}<a href="/admin/users/{{ row.user_id }}">{{ row.user_id }}</a>{% else %}—{% endif %}</td>
+          <td class="num">{{ row.amount | money }}</td>
+          <td>{{ row.timestamp | timestamp }}</td>
+          <td class="row-actions">
+            <form method="post" action="/admin/ops/pending-manual" data-confirm="Xóa pending manual {{ row.code }}?">
+              {{ csrf(csrf_token) }}
+              <input type="hidden" name="mode" value="clear_one">
+              <input type="hidden" name="order_code" value="{{ row.code }}">
+              <button class="ghost danger-text" type="submit">Xóa</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <form method="post" action="/admin/ops/pending-manual"
+        data-confirm="Xóa toàn bộ {{ pending_manual | length }} đơn manual đang chờ?">
+    {{ csrf(csrf_token) }}
+    <input type="hidden" name="mode" value="clear_all">
+    <button class="danger" type="submit">Xóa tất cả</button>
+  </form>
+  {% else %}{{ empty('Không có đơn manual nào đang chờ.') }}{% endif %}
+</section>
+
+<section class="card">
+  <header><h2>Log runtime</h2><p class="muted">{{ log_lines | length }} dòng cuối của bot.log.</p></header>
+  {% if log_lines %}
+    <pre class="code-block log">{% for line in log_lines %}{{ line }}
+{% endfor %}</pre>
+  {% else %}{{ empty('Không đọc được file log.') }}{% endif %}
+</section>
+{% endblock %}

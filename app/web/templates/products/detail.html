@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, textarea, empty %}
+
+{% block title %}{{ product.name }} — Lâm Shop Admin{% endblock %}
+{% block heading %}{{ product.name }}{% endblock %}
+{% block subheading %}<code>{{ product_id }}</code> · {{ kind }} · {{ category or 'chưa phân loại' }}{% endblock %}
+
+{% block tools %}
+  <a class="ghost" href="/admin/products">← Danh sách</a>
+{% endblock %}
+
+{% block content %}
+<div class="split">
+  <section class="card">
+    <header><h2>Thông tin</h2><p class="muted">Bỏ trống ô nào thì giữ nguyên giá trị cũ.</p></header>
+    <form method="post" action="/admin/products/{{ product_id }}/update" class="form-grid">
+      {{ csrf(csrf_token) }}
+      <input type="hidden" name="product_id" value="{{ product_id }}">
+      {{ field('Tên', 'name', placeholder=product.name) }}
+      {{ field('Giá bán (VND)', 'price', placeholder=product.price) }}
+      {{ field('Giá vốn (VND)', 'cost_price', placeholder=product.cost_price) }}
+      <label class="field">
+        <span>Danh mục</span>
+        <input name="store_category" list="category-options" placeholder="{{ category }}">
+        <datalist id="category-options">
+          {% for name in categories %}<option value="{{ name }}">{% endfor %}
+        </datalist>
+      </label>
+      {{ field('Thời hạn', 'duration', placeholder=product.duration or '30 ngày') }}
+      {{ field('Bảo hành', 'warranty', placeholder=product.warranty or 'Không') }}
+      {% if kind == 'manual' %}
+        {{ field('Giới hạn manual', 'max_pending_orders', placeholder=product.max_pending_orders or 10) }}
+      {% endif %}
+      {{ textarea('Mô tả', 'description', placeholder=product.description or '') }}
+      {% if kind == 'local' %}
+        {{ textarea('Thêm stock', 'stock_items', rows=5, placeholder='Mỗi dòng một item — sẽ cộng thêm vào kho') }}
+      {% endif %}
+      <div class="form-actions"><button type="submit">Lưu thay đổi</button></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <header><h2>Ảnh sản phẩm</h2></header>
+    {% if has_image %}
+      <img class="preview" src="{{ image_url }}" alt="Ảnh của {{ product.name }}">
+      <form method="post" action="/admin/products/{{ product_id }}/image/delete"
+            data-confirm="Xóa ảnh của sản phẩm này?">
+        {{ csrf(csrf_token) }}
+        <input type="hidden" name="product_id" value="{{ product_id }}">
+        <button class="danger" type="submit">Xóa ảnh</button>
+      </form>
+    {% else %}
+      {{ empty('Chưa có ảnh.') }}
+    {% endif %}
+    <form method="post" action="/admin/products/{{ product_id }}/image" enctype="multipart/form-data" class="form-grid">
+      {{ csrf(csrf_token) }}
+      <label class="field wide">
+        <span>Tải ảnh mới</span>
+        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
+        <small>JPG, PNG hoặc WEBP, tối đa 8MB.</small>
+      </label>
+      <div class="form-actions"><button type="submit">Tải lên</button></div>
+    </form>
+  </section>
+</div>
+
+{% if kind == 'local' %}
+<section class="card">
+  <header>
+    <h2>Kho local</h2>
+    <p class="muted">{{ stock_total }} item{% if stock_total > stock_items | length %} (hiện {{ stock_items | length }} đầu tiên){% endif %}</p>
+  </header>
+  {% if stock_items %}
+    <pre class="code-block">{% for item in stock_items %}{{ item }}
+{% endfor %}</pre>
+  {% else %}{{ empty('Kho đang trống.') }}{% endif %}
+  <form method="post" action="/admin/products/{{ product_id }}/clear-stock"
+        data-confirm="Xóa toàn bộ {{ stock_total }} item trong kho local?">
+    {{ csrf(csrf_token) }}
+    <input type="hidden" name="product_id" value="{{ product_id }}">
+    <button class="danger" type="submit">Xóa toàn bộ stock</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="card danger-zone">
+  <header><h2>Xóa sản phẩm</h2><p class="muted">Không khôi phục được. Ảnh đi kèm cũng bị xóa.</p></header>
+  <form method="post" action="/admin/products/{{ product_id }}/delete"
+        data-confirm="Xóa vĩnh viễn sản phẩm {{ product_id }}?">
+    {{ csrf(csrf_token) }}
+    <input type="hidden" name="product_id" value="{{ product_id }}">
+    <button class="danger" type="submit">Xóa sản phẩm</button>
+  </form>
+</section>
+{% endblock %}

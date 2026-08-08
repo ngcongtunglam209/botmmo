@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, empty %}
+
+{% block title %}Coupon — Lâm Shop Admin{% endblock %}
+{% block heading %}Khuyến mãi{% endblock %}
+{% block subheading %}{{ snapshot.coupons }} coupon · {{ snapshot.flash_sales }} flash sale ·
+  {{ snapshot.combo_deals }} combo · đã chi {{ snapshot.spent_today | money }} hôm nay.{% endblock %}
+
+{% block content %}
+<section class="card">
+  <header><h2>Thêm / cập nhật coupon</h2>
+    <p class="muted">Trùng mã sẽ ghi đè, số lượt đã dùng được giữ nguyên.</p></header>
+  <form method="post" action="/admin/coupons/save" class="form-grid">
+    {{ csrf(csrf_token) }}
+    <input type="hidden" name="mode" value="add">
+    {{ field('Mã coupon', 'code', placeholder='SALE2026', required=True) }}
+    {{ field('Giảm (VND)', 'discount', placeholder='35000') }}
+    {{ field('Số lượng', 'quantity', placeholder='100') }}
+    {{ field('Hết hạn sau (ngày)', 'days', placeholder='30') }}
+    <div class="form-actions"><button type="submit">Lưu coupon</button></div>
+  </form>
+</section>
+
+{% if rows %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr><th>Mã</th><th class="num">Giảm</th><th class="num">Đã dùng</th>
+               <th class="num">Số lượng</th><th>Hết hạn</th><th></th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td class="mono strong-link">{{ row.code }}</td>
+        <td class="num">{{ row.discount | money }}</td>
+        <td class="num">{{ row.used }}</td>
+        <td class="num">{{ row.quantity }}</td>
+        <td>{{ row.expires }}</td>
+        <td class="row-actions">
+          <form method="post" action="/admin/coupons/save" data-confirm="Xóa coupon {{ row.code }}?">
+            {{ csrf(csrf_token) }}
+            <input type="hidden" name="mode" value="delete">
+            <input type="hidden" name="code" value="{{ row.code }}">
+            <button class="ghost danger-text" type="submit">Xóa</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}{{ empty('Chưa có coupon nào.') }}{% endif %}
+{% endblock %}
