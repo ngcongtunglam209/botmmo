@@ -151,11 +151,9 @@ async def handle_api_registration_action(query, context, command, user_id):
                 f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số dư:</b> 0 VNĐ\n\n"
                 f"<b>Hướng dẫn bắt đầu nhanh:</b>\n"
                 f"1. Nạp tiền: <code>/napapi 500000</code>\n"
-                f"2. Sản phẩm thường: <code>GET /api/v2/catalog</code> → <code>POST /api/v2/orders</code>\n"
-                f"3. Social media: <code>GET /api/social/catalog</code> → <code>POST /api/social/orders</code>\n"
-                f"4. Tra social: <code>GET /api/social/orders/{{order_code}}</code>\n\n"
-                f"<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Vào <code>/start</code> để mở tài liệu API đầy đủ.\n\n"
-                f"<i>Hai nhóm dùng chung API key và số dư ví.</i>"
+                f"2. Tạo đơn: <code>GET /api/v2/catalog</code> → <code>POST /api/v2/orders</code>\n"
+                f"3. Tra đơn: <code>GET /api/v2/orders/{{order_code}}</code>\n\n"
+                f"<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Vào <code>/start</code> để mở tài liệu API đầy đủ."
             )
             await context.bot.send_message(target_uid, msg, parse_mode=ParseMode.HTML)
         except (TelegramError, ValueError, KeyError, AttributeError) as e:

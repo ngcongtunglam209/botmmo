@@ -12,8 +12,6 @@ async def _api_create_order(
     note: str | None = None,
     product_id: str | None = None,
     quantity: int = 1,
-    target_link: str | None = None,
-    comments: str | None = None,
 ):
     if MAINTENANCE_MODE:
         raise HTTPException(status_code=503, detail="System is in maintenance mode")
@@ -26,8 +24,6 @@ async def _api_create_order(
     customer_id_value = _api_clean_text(customer_id, API_V2_MAX_CUSTOMER_ID_LEN)
     note_value = _api_clean_text(note, API_V2_MAX_NOTE_LEN)
     product_id_value = _api_clean_text(product_id, API_V2_MAX_PRODUCT_ID_LEN)
-    target_link_value = _api_clean_text(target_link, 2000)
-    comments_value = _api_clean_text(comments, 4000)
     if email_value and not EMAIL_REGEX.match(email_value):
         raise HTTPException(status_code=400, detail="Invalid email format")
     try:

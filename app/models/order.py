@@ -65,7 +65,7 @@ class Order(BaseModel):
     items: list[str] = Field(default_factory=list, description="Delivered items (links, accounts)")
     link: str = Field("", description="Legacy single link field")
     email: str = Field("", description="Customer email for delivery")
-    delivery_method: str = Field("", description="auto_stock | manual_completed | social_service")
+    delivery_method: str = Field("", description="auto_stock | manual_completed")
 
     # Payment
     payment_method: str = Field("bank_transfer", description="bank_transfer | usdt_rpay | binance_pay | balance")

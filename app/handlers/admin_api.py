@@ -62,13 +62,7 @@ async def helpapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         "• <code>POST /api/v2/orders</code> - tạo đơn sản phẩm thường\n"
         "• <code>GET /api/v2/orders</code> - lịch sử đơn thường\n"
         "• <code>GET /api/v2/orders/{order_code}</code> - chi tiết đơn thường\n\n"
-        "<b>E) Social Media API</b>\n"
-        "• <code>GET /api/social/catalog</code> - chỉ dịch vụ social\n"
-        "• <code>POST /api/social/orders</code> - tạo đơn social\n"
-        "• <code>GET /api/social/orders</code> - lịch sử đơn social\n"
-        "• <code>GET /api/social/orders/{order_code}</code> - refresh trạng thái nguồn\n"
-        "• <code>GET /api/social/orders/by-ref/{partner_ref}</code> - tra theo mã đối tác\n\n"
-        "<b>F) Body mẫu đơn thường</b>\n"
+        "<b>E) Body mẫu đơn thường</b>\n"
         "<pre>{\n"
         '  "partner_ref": "ORDER_12345",\n'
         '  "product_id": "p_1700000000",\n'
@@ -77,29 +71,20 @@ async def helpapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         '  "customer_id": "telegram_9988",\n'
         '  "send_email": false\n'
         "}</pre>\n"
-        "<b>Body mẫu đơn social</b>\n"
-        "<pre>{\n"
-        '  "partner_ref": "SOCIAL_12345",\n'
-        '  "product_id": "prod_8786",\n'
-        '  "quantity": 100,\n'
-        '  "target_link": "https://facebook.com/example"\n'
-        "}</pre>\n"
         "<i>partner_ref phải duy nhất; retry phải giữ nguyên mã.</i>\n\n"
-        "<b>G) Nhận kết quả</b>\n"
-        "• Sản phẩm thường giao ngay nằm trong <code>data.items</code>.\n"
-        "• Social đọc <code>supplier_status</code>, <code>supplier_remains</code> và poll endpoint social.\n\n"
-        "<b>H) Lỗi thường gặp</b>\n"
-        "• <code>400</code>: thiếu field hoặc dùng nhầm nhóm endpoint\n"
+        "<b>F) Nhận kết quả</b>\n"
+        "• Sản phẩm giao ngay nằm trong <code>data.items</code>.\n\n"
+        "<b>G) Lỗi thường gặp</b>\n"
+        "• <code>400</code>: thiếu field\n"
         "• <code>401</code>: sai/thiếu API key\n"
         "• <code>402</code>: không đủ số dư ví chung\n"
         "• <code>404</code>: không tìm thấy sản phẩm/đơn\n"
         "• <code>409</code>: partner_ref đang xử lý\n\n"
-        "<b>I) Test nhanh</b>\n"
+        "<b>H) Test nhanh</b>\n"
         "<pre>"
-        f"curl -H \"x-api-key: KEY_PARTNER_CUA_BAN\" \"{base_url}/api/v2/catalog\"\n"
-        f"curl -H \"x-api-key: KEY_PARTNER_CUA_BAN\" \"{base_url}/api/social/catalog\""
+        f"curl -H \"x-api-key: KEY_PARTNER_CUA_BAN\" \"{base_url}/api/v2/catalog\""
         "</pre>\n"
-        "<b>J) API cũ (tương thích ngược)</b>\n"
+        "<b>I) API cũ (tương thích ngược)</b>\n"
         "• <code>GET /api/status</code>\n"
         "• <code>POST /api/buy</code>"
     )
