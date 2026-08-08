@@ -1,31 +1,14 @@
-def main() -> None:
-    if not TELEGRAM_TOKEN or (ENABLE_PAYMENT_SEPAY and not SEPAY_WEBHOOK_API_KEY):
-        logger.critical("!!! CẢNH BÁO: Thiếu biến cấu hình cần thiết !!!")
-        return
-
-    if not acquire_single_instance_lock():
-        logger.critical(
-            "❌ Bot instance lock is active. Có thể đang có 1 process local khác chạy bot này."
-        )
-        logger.critical(
-            "<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Hãy tắt instance cũ trước khi chạy lại để tránh conflict getUpdates."
-        )
-        return
-
-    load_data()
-    # FIX: Thêm post_shutdown để cleanup resources đúng cách
-    # FIX: Increase connection timeout to avoid ConnectTimeout error
-    request = HTTPXRequest(
-        connection_pool_size=8, 
-        connect_timeout=45.0, 
-        read_timeout=45.0, 
-        write_timeout=30.0, 
-        pool_timeout=30.0
-    )
-    application = Application.builder().token(TELEGRAM_TOKEN).request(request).post_init(post_init).post_shutdown(pre_shutdown).build()
-
-    # Đăng ký trình xử lý lỗi toàn cục
+def register_handlers(application) -> None:
+    """Gắn toàn bộ handler vào application. Tách riêng để test được scope chat."""
     application.add_error_handler(error_handler_callback)
+
+    # Cửa hàng, ví và mọi lệnh cá nhân chỉ chạy trong chat riêng. Trong group,
+    # câu trả lời của bot lộ số dư/đơn hàng cho cả nhóm, và bất kỳ ai cũng gõ
+    # được lệnh của người khác. Chỉ giveaway và guard tiếng Trung sống ở group.
+    PRIVATE = filters.ChatType.PRIVATE
+
+    def private_command(command, callback):
+        return CommandHandler(command, callback, filters=PRIVATE)
 
     # <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> FIX: Priority Email Handler (Group -1) - Chạy TRƯỚC mọi thứ để bắt email
     # Đảm bảo bot luôn phản hồi email dù đang ở state nào
@@ -37,11 +20,11 @@ def main() -> None:
         MessageHandler(filters.UpdateType.EDITED_MESSAGE & filters.ChatType.GROUPS, chinese_language_guard_handler),
         group=-2,
     )
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, priority_email_handler), group=-1)
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND & PRIVATE, priority_email_handler), group=-1)
 
     # --- STORE CONVERSATION HANDLERS (UPDATED: Thêm states mới) ---
     add_prod_handler = ConversationHandler(
-        entry_points=[CommandHandler('newproduct', add_product_start)],
+        entry_points=[private_command('newproduct', add_product_start)],
         states={
             ADD_PROD_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_prod_name)],
             ADD_PROD_NAME_SUGGEST: [CallbackQueryHandler(receive_prod_name_suggest, pattern='^name_suggest_')],
@@ -54,7 +37,7 @@ def main() -> None:
             ADD_PROD_WARRANTY: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_prod_warranty)],
             ADD_PROD_CONFIRM: [CallbackQueryHandler(receive_prod_confirm, pattern='^prod_confirm_')]
         },
-        fallbacks=[CommandHandler('cancel', cancel_conversation)],
+        fallbacks=[private_command('cancel', cancel_conversation)],
         per_message=False,
         per_chat=True,
         per_user=True
@@ -62,12 +45,12 @@ def main() -> None:
     application.add_handler(add_prod_handler)
     
     add_stock_handler = ConversationHandler(
-        entry_points=[CommandHandler('addstock', add_stock_start)],
+        entry_points=[private_command('addstock', add_stock_start)],
         states={
             STOCK_SELECT: [CallbackQueryHandler(stock_select_product, pattern='^(sel_stock_|stock_page_)')],
             STOCK_INPUT: [MessageHandler((filters.Document.ALL | filters.TEXT) & ~filters.COMMAND, receive_stock_input)],
         },
-        fallbacks=[CommandHandler('cancel', cancel_conversation)],
+        fallbacks=[private_command('cancel', cancel_conversation)],
         per_message=False,
         per_chat=True,
         per_user=True
@@ -76,7 +59,7 @@ def main() -> None:
     
     # NEW: Edit Product Handler
     edit_prod_handler = ConversationHandler(
-        entry_points=[CommandHandler('editproduct', edit_product_start)],
+        entry_points=[private_command('editproduct', edit_product_start)],
         states={
             EDIT_PROD_SELECT: [CallbackQueryHandler(edit_prod_select, pattern='^(edit_sel_|edit_page_)')],
             EDIT_PROD_FIELD: [CallbackQueryHandler(edit_prod_field, pattern='^edit_field_|cancel_edit'),
@@ -84,30 +67,30 @@ def main() -> None:
             EDIT_PROD_AI_DESC: [CallbackQueryHandler(receive_edit_ai_desc_action, pattern='^ai_edit_desc_')],
             EDIT_PROD_VALUE: [MessageHandler(filters.TEXT & ~filters.COMMAND, edit_prod_receive_value)]
         },
-        fallbacks=[CommandHandler('cancel', cancel_conversation)],
+        fallbacks=[private_command('cancel', cancel_conversation)],
     )
     application.add_handler(edit_prod_handler)
     
     # NEW: Stock Management Handler
     stock_mgmt_handler = ConversationHandler(
         entry_points=[
-            CommandHandler(['viewstock', 'delstock'], view_stock_start),
+            private_command(['viewstock', 'delstock'], view_stock_start),
             CallbackQueryHandler(view_stock_start, pattern='^adm:x:viewstock$')
         ],
         states={
             STOCK_VIEW: [CallbackQueryHandler(view_stock_select, pattern='^(view_stock_|del_stock_sel_)')],
             STOCK_DELETE_SELECT: [MessageHandler(filters.TEXT & ~filters.COMMAND, stock_delete_handler)]
         },
-        fallbacks=[CommandHandler('cancel', cancel_conversation)],
+        fallbacks=[private_command('cancel', cancel_conversation)],
     )
     application.add_handler(stock_mgmt_handler)
     
     # NEW: Transactions Command
-    application.add_handler(CommandHandler(["transactions", "lichsugiaodich"], transactions_command))
+    application.add_handler(private_command(["transactions", "lichsugiaodich"], transactions_command))
     
     # Create Giveaway Conversation
     create_ga_handler = ConversationHandler(
-        entry_points=[CommandHandler('create_ga', create_ga_start)],
+        entry_points=[private_command('create_ga', create_ga_start)],
         states={
             GA_TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_ga_title)],
             GA_PRIZE: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_ga_prize)],
@@ -116,7 +99,7 @@ def main() -> None:
             GA_BANNER: [MessageHandler(filters.PHOTO | filters.VIDEO | filters.TEXT, receive_ga_banner)],
             GA_CHANNEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_ga_channel)],
         },
-        fallbacks=[CommandHandler('cancel', cancel_conversation)],
+        fallbacks=[private_command('cancel', cancel_conversation)],
     )
 
     application.add_handler(create_ga_handler)
@@ -128,38 +111,38 @@ def main() -> None:
     
     # Register commands
     application.add_handler(CommandHandler(["start", "menu"], start_command))
-    application.add_handler(CommandHandler(["registered", "REGISTERED"], registered_command))
-    application.add_handler(CommandHandler("helpapi", helpapi_command))
-    application.add_handler(CommandHandler(["napapi", "topupapi"], napapi_command))
-    application.add_handler(CommandHandler("cancel", cancel_command))
-    application.add_handler(CommandHandler("guimail", guimail_command))  # NEW: Email submission command
-    application.add_handler(CommandHandler("lichsu", lichsu_command))
-    application.add_handler(CommandHandler(["naptien", "topup", "napvi"], naptien_command))
-    application.add_handler(CommandHandler(["baoloi", "huongdanbaoloi"], huongdan_baoloi_command)) # NEW
-    application.add_handler(CommandHandler("ask", ask_command))
-    application.add_handler(CommandHandler(["dkyapi", "dkapi", "dangkyapi", "regapi"], dkyapi_command))
+    application.add_handler(private_command(["registered", "REGISTERED"], registered_command))
+    application.add_handler(private_command("helpapi", helpapi_command))
+    application.add_handler(private_command(["napapi", "topupapi"], napapi_command))
+    application.add_handler(private_command("cancel", cancel_command))
+    application.add_handler(private_command("guimail", guimail_command))  # NEW: Email submission command
+    application.add_handler(private_command("lichsu", lichsu_command))
+    application.add_handler(private_command(["naptien", "topup", "napvi"], naptien_command))
+    application.add_handler(private_command(["baoloi", "huongdanbaoloi"], huongdan_baoloi_command)) # NEW
+    application.add_handler(private_command("ask", ask_command))
+    application.add_handler(private_command(["dkyapi", "dkapi", "dangkyapi", "regapi"], dkyapi_command))
     
     # === NEW COMMANDS ===
     # Moved to admin_handlers
     
     # Manually added commands for walkthrough
-    application.add_handler(CommandHandler("mystats", lambda u, c: show_my_stats(u, c, is_callback=False)))
-    application.add_handler(CommandHandler("myref", lambda u, c: show_my_referral(u, c, is_callback=False)))
-    application.add_handler(CommandHandler("toprefs", lambda u, c: show_top_referrers(u, c, is_callback=False)))
-    
+    application.add_handler(private_command("mystats", lambda u, c: show_my_stats(u, c, is_callback=False)))
+    application.add_handler(private_command("myref", lambda u, c: show_my_referral(u, c, is_callback=False)))
+    application.add_handler(private_command("toprefs", lambda u, c: show_top_referrers(u, c, is_callback=False)))
+
     # Dice Game Command
-    application.add_handler(CommandHandler("wheel", wheel_command))
-    application.add_handler(CommandHandler("vongquay", wheel_command))
-    application.add_handler(CommandHandler("dice", dice_game_command))
-    application.add_handler(CommandHandler("choi", dice_game_command))
-    application.add_handler(CommandHandler("xucxac", dice_game_command))
+    application.add_handler(private_command("wheel", wheel_command))
+    application.add_handler(private_command("vongquay", wheel_command))
+    application.add_handler(private_command("dice", dice_game_command))
+    application.add_handler(private_command("choi", dice_game_command))
+    application.add_handler(private_command("xucxac", dice_game_command))
 
     # Withdrawal Commands
-    application.add_handler(CommandHandler("ruttien", withdrawal_command))
+    application.add_handler(private_command("ruttien", withdrawal_command))
     # pending_withdrawals moved to admin_handlers
-    
+
     # NEW: Rank commands (user-facing)
-    application.add_handler(CommandHandler(["rank", "vip", "hang"], rank_command))
+    application.add_handler(private_command(["rank", "vip", "hang"], rank_command))
     
     # Admin Money Commands
     # addmoney, submoney moved to admin_handlers
@@ -170,10 +153,10 @@ def main() -> None:
     # application.add_handler(MessageHandler(filters.REPLY & ~filters.COMMAND, ticket_reply_handler))
     
     # Use text_message_handler as the main handler (it calls chat_with_ai internally)
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_message_handler))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND & PRIVATE, text_message_handler))
     
     # Unified Photo Handler (Handles both Report Error & Warranty Claims)
-    application.add_handler(MessageHandler(filters.PHOTO, photo_message_handler))
+    application.add_handler(MessageHandler(filters.PHOTO & PRIVATE, photo_message_handler))
     
     # === JOB SCHEDULERS ===
     if application.job_queue:
@@ -272,7 +255,37 @@ def main() -> None:
     }
 
     for command, func in admin_handlers.items():
-        application.add_handler(CommandHandler(command, lambda u, c, f=func: admin_command_wrapper(u, c, f)))
+        application.add_handler(private_command(command, lambda u, c, f=func: admin_command_wrapper(u, c, f)))
+
+def main() -> None:
+    if not TELEGRAM_TOKEN or (ENABLE_PAYMENT_SEPAY and not SEPAY_WEBHOOK_API_KEY):
+        logger.critical("!!! CẢNH BÁO: Thiếu biến cấu hình cần thiết !!!")
+        return
+
+    if not acquire_single_instance_lock():
+        logger.critical(
+            "❌ Bot instance lock is active. Có thể đang có 1 process local khác chạy bot này."
+        )
+        logger.critical(
+            "<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Hãy tắt instance cũ trước khi chạy lại để tránh conflict getUpdates."
+        )
+        return
+
+    load_data()
+    # FIX: Thêm post_shutdown để cleanup resources đúng cách
+    # FIX: Increase connection timeout to avoid ConnectTimeout error
+    request = HTTPXRequest(
+        connection_pool_size=8, 
+        connect_timeout=45.0, 
+        read_timeout=45.0, 
+        write_timeout=30.0, 
+        pool_timeout=30.0
+    )
+    application = Application.builder().token(TELEGRAM_TOKEN).request(request).post_init(post_init).post_shutdown(pre_shutdown).build()
+
+    # Đăng ký trình xử lý lỗi toàn cục
+    # Đăng ký trình xử lý lỗi và toàn bộ handler
+    register_handlers(application)
 
     job_queue = application.job_queue
     if job_queue:
