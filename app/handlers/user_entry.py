@@ -35,12 +35,13 @@ async def _send_registration_challenge(update, context, referrer_id: int | None 
         if referrer_id:
             context.user_data["pending_referrer_id"] = referrer_id
 
-    user_id = update.effective_user.id if update.effective_user else None
+    # Profile chưa tồn tại ở bước này nên phải lấy ngôn ngữ từ client Telegram.
+    lang = resolve_lang(update.effective_user)
     await update.message.reply_html(
-        f"{E_TIP} <b>{t('verify_title', user_id=user_id)}</b>\n\n"
-        f"{t('verify_prompt', user_id=user_id)}\n\n"
+        f"{E_TIP} <b>{t('verify_title', lang=lang)}</b>\n\n"
+        f"{t('verify_prompt', lang=lang)}\n\n"
         f"<b>{challenge['question']} = ?</b>\n\n"
-        f"{t('verify_example', user_id=user_id)}"
+        f"{t('verify_example', lang=lang)}"
     )
 
 
@@ -68,6 +69,7 @@ async def _register_user_profile(context, user, referrer_id: int | None = None) 
             "last_name": user.last_name,
             "username": user.username,
             "is_premium": bool(getattr(user, "is_premium", False)),
+            "lang": resolve_lang(user),
             "first_seen": now_iso,
             "balance": 0,
             "total_spent": 0,
@@ -115,18 +117,20 @@ async def handle_registration_challenge_answer(update, context, user_input: str)
         await _send_registration_challenge(update, context)
         return True
 
+    lang = resolve_lang(user)
+
     try:
         answer = int(str(user_input or "").strip())
     except ValueError:
         await update.message.reply_html(
-            f"{E_TIP} {t('verify_number_only', user_id=user.id)}\n\n"
+            f"{E_TIP} {t('verify_number_only', lang=lang)}\n\n"
             f"<b>{challenge.get('question')} = ?</b>"
         )
         return True
 
     if answer != int(challenge.get("answer", -1)):
         await update.message.reply_html(
-            f"{E_ERROR} {t('verify_wrong', user_id=user.id)}\n\n"
+            f"{E_ERROR} {t('verify_wrong', lang=lang)}\n\n"
             f"<b>{challenge.get('question')} = ?</b>"
         )
         return True
@@ -179,7 +183,7 @@ async def registered_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if await check_if_banned(update): return
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
         await update.message.reply_text(
-            t("maintenance", user_id=update.effective_user.id),
+            t("maintenance", lang=resolve_lang(update.effective_user)),
             parse_mode=ParseMode.HTML
         )
         return
@@ -250,7 +254,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     # Kiểm tra chế độ bảo trì
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
-        await update.message.reply_text(t("maintenance", user_id=update.effective_user.id), parse_mode=ParseMode.HTML)
+        await update.message.reply_text(t("maintenance", lang=resolve_lang(update.effective_user)), parse_mode=ParseMode.HTML)
         return
 
     await clear_user_state(context)
@@ -344,6 +348,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             "last_name": user.last_name,
             "username": user.username,
             "is_premium": bool(getattr(user, "is_premium", False)),
+            "lang": resolve_lang(user),
             "first_seen": now_iso,
             "balance": 0,
             "total_spent": 0,
