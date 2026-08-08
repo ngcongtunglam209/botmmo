@@ -263,6 +263,13 @@ def get_policy_text(user_id=None) -> str:
     return {"vi": CHINHSACH_TEXT_VI, "en": CHINHSACH_TEXT_EN, "zh": CHINHSACH_TEXT_ZH}[get_user_lang(user_id)]
 
 
+_BUTTON_ACTION_FIELDS = (
+    'callback_data', 'url', 'copy_text', 'web_app', 'login_url', 'pay',
+    'callback_game', 'switch_inline_query', 'switch_inline_query_current_chat',
+    'switch_inline_query_chosen_chat',
+)
+
+
 def _btn(text, icon_id=None, **kwargs):
     api_kwargs = dict(kwargs.pop('api_kwargs', {}) or {})
     style = kwargs.pop('style', None)
@@ -272,7 +279,36 @@ def _btn(text, icon_id=None, **kwargs):
         api_kwargs['style'] = style
     if api_kwargs:
         kwargs['api_kwargs'] = api_kwargs
+
+    # Mot action rong (vi du url=SUPPORT_GROUP_LINK khi bien .env chua dien) van
+    # duoc PTB gui len duoi dang {"url": ""}. Telegram doc do la nut chi co chu
+    # va tu choi NGUYEN CA ban phim: "text buttons are unallowed in the inline
+    # keyboard". Mot bien moi truong bo trong khong duoc phep lam sap ca menu,
+    # nen bo action rong va rot ve nut vo hai.
+    dropped = [name for name in _BUTTON_ACTION_FIELDS if name in kwargs and _is_blank_action(kwargs[name])]
+    for name in dropped:
+        kwargs.pop(name)
+    if not any(name in kwargs for name in _BUTTON_ACTION_FIELDS):
+        if dropped:
+            logger.warning(
+                "Nut '%s' bi bo action rong (%s) -> chuyen thanh nut tro. Kiem tra cau hinh.",
+                text, ", ".join(dropped),
+            )
+        kwargs['callback_data'] = 'ignore'
     return InlineKeyboardButton(text, **kwargs)
+
+
+def _is_blank_action(value) -> bool:
+    """True khi gia tri action rong theo nghia Telegram se bo qua no."""
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
+    # WebAppInfo/LoginUrl rong url cung bi Telegram tu choi y het.
+    url = getattr(value, 'url', None)
+    if isinstance(url, str):
+        return not url.strip()
+    return False
 
 
 def _normalize_public_api_url(value: str) -> str:
@@ -341,10 +377,18 @@ def create_main_menu(user_id=None):
             _btn(t("btn_support", user_id=user_id), icon_id="5462921117423384478", callback_data='lienhe_admin', style="primary"),
             _btn(t("btn_report", user_id=user_id), icon_id="5273914604752216432", callback_data='guide_baoloi_menu', style="primary"),
         ],
-        [
-            _btn(t("btn_community", user_id=user_id), icon_id="5443038326535759644", url=SUPPORT_GROUP_LINK, style="primary"), _btn(t("btn_language", user_id=user_id), icon_id="5816436147525522455", callback_data='language_menu', style="primary"),
-        ],
     ]
+
+    language_button = _btn(t("btn_language", user_id=user_id), icon_id="5816436147525522455", callback_data='language_menu', style="primary")
+    if str(SUPPORT_GROUP_LINK or "").strip():
+        keyboard.append([
+            _btn(t("btn_community", user_id=user_id), icon_id="5443038326535759644", url=SUPPORT_GROUP_LINK, style="primary"),
+            language_button,
+        ])
+    else:
+        # Chua dat SUPPORT_GROUP_LINK: bo han nut thay vi hien mot nut bam khong
+        # ra gi.
+        keyboard.append([language_button])
 
     status_button_text = build_main_menu_status_button_text(user_id)
     if status_button_text:
@@ -380,9 +424,13 @@ def create_main_menu(user_id=None):
         keyboard.append([
             _btn(t("btn_admin", user_id=user_id), icon_id="6129805886383723340", callback_data='adm:home', style="primary")
         ])
-        keyboard.append([
-            _btn(t("btn_admin_web", user_id=user_id), icon_id="5231489647946768652", web_app=WebAppInfo(url=admin_web_url), style="primary")
-        ])
+        # Telegram chi mo web app qua HTTPS. Khi PUBLIC_API_URL chua dat,
+        # get_public_api_base_url() tra ve placeholder http://YOUR_VPS_IP:...,
+        # va Telegram tu choi ca ban phim chu khong rieng nut nay.
+        if admin_web_url.startswith("https://"):
+            keyboard.append([
+                _btn(t("btn_admin_web", user_id=user_id), icon_id="5231489647946768652", web_app=WebAppInfo(url=admin_web_url), style="primary")
+            ])
     return InlineKeyboardMarkup(keyboard)
 
 

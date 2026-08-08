@@ -443,7 +443,12 @@ async def _show_store_product_detail(
         if not price_vnd: return "0đ" if lang == "vi" else "0 USDT"
         if lang == "vi": return f"{price_vnd:,}đ"
         try:
-            rate = float(globals().get("_cached_live_usdt_rate") or USDT_RATE_VND_PER_USDT)
+            # Phai goi qua ham cua payments_core: `_cached_live_usdt_rate` la bien
+            # module cua no, duoc gan lai luc chay. Runtime loader chi dong bo bien
+            # giua cac module MOT LAN luc nap, nen doc globals() o day luon thay None
+            # roi rot ve USDT_RATE_VND_PER_USDT (mac dinh 0) -> chia cho 0 -> khach
+            # EN/ZH thay gia VND thay vi USDT.
+            rate = float(get_cached_usdt_rate())
             return f"{price_vnd / rate:.2f} USDT"
         except (TypeError, ValueError, ZeroDivisionError):
             return f"{price_vnd:,} VND"
