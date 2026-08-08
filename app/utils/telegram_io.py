@@ -1245,11 +1245,21 @@ async def send_start_welcome_with_video(update: Update, context: ContextTypes.DE
             return
         except asyncio.TimeoutError:
             logger.warning(f"Welcome video send timeout after {WELCOME_VIDEO_SEND_TIMEOUT}s. Fallback to text menu.")
+        except Forbidden:
+            # Bot bi chan: menu text ben duoi cung se hong, khoi thu.
+            logger.info(f"Khong gui duoc video /start cho {getattr(user, 'id', 'unknown')}: bot bi chan")
+            return
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
             logger.warning(f"Welcome video send failed: {e}")
 
-    await safe_reply_html(
-        msg,
-        menu_text,
-        reply_markup=menu_kb,
-    )
+    try:
+        await safe_reply_html(
+            msg,
+            menu_text,
+            reply_markup=menu_kb,
+        )
+    except Forbidden:
+        # Khach chan bot roi /start (thuong la update cu con trong hang doi).
+        # Khong con duong nao gui duoc cho ho, va mot traceback day man hinh log
+        # cho moi lan nhu vay che mat cac loi that su.
+        logger.info(f"Khong gui duoc menu /start cho {getattr(user, 'id', 'unknown')}: bot bi chan")
