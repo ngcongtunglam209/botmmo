@@ -185,8 +185,11 @@ async def test_navigation_callback_is_acknowledged_before_rendering(monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_membership_check_uses_cache_but_explicit_recheck_is_fresh():
+async def test_membership_check_uses_cache_but_explicit_recheck_is_fresh(monkeypatch):
     payments = load_modules()["app.integrations.payments_core"]
+    # _is_required_group_member short-circuits when no group is configured, so the
+    # test has to set one instead of inheriting whatever .env this machine has.
+    monkeypatch.setattr(payments, "REQUIRED_GROUP_ID", -1001234567890, raising=False)
     payments._required_group_membership_cache.clear()
 
     class FakeBot:
