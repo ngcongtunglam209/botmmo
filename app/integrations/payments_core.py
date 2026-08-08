@@ -446,7 +446,7 @@ def convert_vnd_to_usdt(amount_vnd: int, rate: Decimal = None, quantizer=None):
     return (amount_decimal / rate).quantize(quantizer, rounding=ROUND_UP)
 
 
-async def create_rpay_order(order_code: str, amount_vnd: int, goods_name: str, goods_detail: str, network: str = "") -> dict:
+async def create_rpay_order(order_code: str, amount_vnd: int, goods_name: str, goods_detail: str, network: str = "", expire_minutes: int | None = None) -> dict:
     """Quy doi VND -> USDT roi tao hoa don RPay cho `order_code`.
 
     Tra ve khoi `data` cua RPay, bo sung cac khoa ta tu tinh:
@@ -465,7 +465,7 @@ async def create_rpay_order(order_code: str, amount_vnd: int, goods_name: str, g
         amount_usdt=amount_usdt,
         name=_sanitize_invoice_text(goods_name, "Digital Goods"),
         description=_sanitize_invoice_text(goods_detail, order_code),
-        expire_minutes=ORDER_EXPIRATION_SECONDS // 60,
+        expire_minutes=expire_minutes or (ORDER_EXPIRATION_SECONDS // 60),
         network=network,
     )
     invoice["request_id"] = request_id
