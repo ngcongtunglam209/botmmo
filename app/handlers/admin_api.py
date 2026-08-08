@@ -491,82 +491,27 @@ def _mask_bank_account(account_no: str) -> str:
     return f"{'*' * (len(digits) - 4)}{digits[-4:]}"
 
 
-def _mbbank_model_to_dict(value) -> dict:
-    if isinstance(value, dict):
-        return value
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if hasattr(value, "dict"):
-        return value.dict()
-    return dict(getattr(value, "__dict__", {}) or {})
-
-
-def _parse_mbbank_amount(value) -> int:
-    from decimal import Decimal, InvalidOperation
-
-    normalized = str(value or "0").strip().replace(",", "")
-    try:
-        return int(Decimal(normalized))
-    except (InvalidOperation, ValueError, TypeError):
-        return 0
-
-
-def _extract_mbbank_account_balance(balance_response, account_no: str) -> dict | None:
-    payload = _mbbank_model_to_dict(balance_response)
-    accounts = payload.get("acct_list") or payload.get("acctList") or []
-    expected_account = str(account_no or "").strip()
-    for raw_account in accounts:
-        account = _mbbank_model_to_dict(raw_account)
-        current_account = str(account.get("acctNo") or account.get("accountNo") or "").strip()
-        if current_account == expected_account:
-            return {
-                "account_no": current_account,
-                "account_name": str(account.get("acctNm") or account.get("accountName") or "").strip(),
-                "currency": str(account.get("ccyCd") or account.get("currency") or "VND").strip() or "VND",
-                "current_balance": _parse_mbbank_amount(account.get("currentBalance")),
-            }
-    return None
-
-
-def _fetch_mbbank_account_balance(login_username: str, password: str, account_no: str) -> dict | None:
-    import mbbank
-
-    client = mbbank.MBBank(
-        username=login_username,
-        password=password,
-        retry_times=3,
-        timeout=BANK_API_TIMEOUT_SECONDS,
-    )
-    return _extract_mbbank_account_balance(client.getBalance(), account_no)
-
-
 async def sodumb_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Admin-only command: display the configured MBBank account balance."""
+    """Admin-only command: so du luy ke cua tai khoan ngan hang gan tren SePay."""
     import asyncio
     import datetime
     import html as html_lib
-    import os
+
+    from app.integrations.sepay_api import sepay_fetch_account_balance
 
     user = getattr(update, "effective_user", None)
     if not user or user.id != ADMIN_USER_ID:
         return
 
-    account_no = str(BANK_ACCOUNT_NUMBER or "").strip()
-    password = str(API_PASSWORD or "").strip()
-    login_username = os.getenv("BANK_LOGIN_USERNAME", account_no).strip()
-    if not account_no or not password or not login_username:
-        await update.message.reply_text("❌ Chưa cấu hình đầy đủ tài khoản MBBank.")
+    account_no = str(SEPAY_ACCOUNT_NUMBER or BANK_ACCOUNT_NUMBER or "").strip()
+    if not str(SEPAY_API_TOKEN or "").strip():
+        await update.message.reply_text("❌ Chưa cấu hình SEPAY_API_TOKEN.")
         return
 
-    status_message = await update.message.reply_text("⏳ Đang kiểm tra số dư MBBank...")
+    status_message = await update.message.reply_text("⏳ Đang kiểm tra số dư SePay...")
     try:
         balance = await asyncio.wait_for(
-            asyncio.to_thread(
-                _fetch_mbbank_account_balance,
-                login_username,
-                password,
-                account_no,
-            ),
+            sepay_fetch_account_balance(account_no),
             timeout=max(10.0, float(BANK_API_TIMEOUT_SECONDS) + 5.0),
         )
         if not balance:
@@ -576,21 +521,23 @@ async def sodumb_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             )
         else:
             checked_at = datetime.datetime.now().strftime("%H:%M:%S %d/%m/%Y")
-            account_name = html_lib.escape(balance.get("account_name") or "MBBank")
+            account_name = html_lib.escape(balance.get("account_name") or "SePay")
+            bank_name = html_lib.escape(balance.get("bank") or "")
             currency = html_lib.escape(balance.get("currency") or "VND")
             result_text = (
-                "🏦 <b>SỐ DƯ TÀI KHOẢN MBBANK</b>\n\n"
+                "🏦 <b>SỐ DƯ TÀI KHOẢN SEPAY</b>\n\n"
                 f"👤 Chủ tài khoản: <b>{account_name}</b>\n"
+                f"🏛 Ngân hàng: <b>{bank_name or 'N/A'}</b>\n"
                 f"💳 Số tài khoản: <code>{_mask_bank_account(balance['account_no'])}</code>\n"
-                f"💰 Số dư hiện tại: <b>{int(balance['current_balance']):,} {currency}</b>\n"
+                f"💰 Số dư lũy kế: <b>{int(balance['current_balance']):,} {currency}</b>\n"
                 f"🕒 Kiểm tra lúc: <code>{checked_at}</code>"
             )
         await status_message.edit_text(result_text, parse_mode=ParseMode.HTML)
     except Exception as exc:
         # Never include the exception body: upstream errors may contain account data.
-        logger.warning("MBBank balance check failed (%s)", type(exc).__name__)
+        logger.warning("SePay balance check failed (%s)", type(exc).__name__)
         await status_message.edit_text(
-            "❌ Không kiểm tra được số dư MBBank. Vui lòng kiểm tra đăng nhập hoặc thử lại sau."
+            "❌ Không kiểm tra được số dư SePay. Vui lòng kiểm tra SEPAY_API_TOKEN hoặc thử lại sau."
         )
 
 

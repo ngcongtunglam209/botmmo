@@ -1,13 +1,13 @@
 # Huong Dan Setup BotMMO
 
-Tai lieu nay huong dan setup source bot sau khi da lam sach secret, data cu va cac API nguon ngoai. Mac dinh source chi con bot Telegram, API server noi bo va tuy chon thanh toan MBBank.
+Tai lieu nay huong dan setup source bot sau khi da lam sach secret, data cu va cac API nguon ngoai. Mac dinh source chi con bot Telegram, API server noi bo va tuy chon thanh toan ngan hang qua SePay.
 
 ## 1. Yeu Cau
 
 - Python 3.11 tro len
 - Windows PowerShell hoac terminal tuong duong
 - Token bot Telegram tu BotFather
-- Neu dung thanh toan ngan hang: thong tin MBBank API hop le
+- Neu dung thanh toan ngan hang: tai khoan SePay da lien ket ngan hang
 
 Kiem tra Python:
 
@@ -69,31 +69,20 @@ TELEGRAM_LOGIN_CLIENT_SECRET=
 TELEGRAM_LOGIN_REDIRECT_URI=
 ```
 
-### Bat/tat MBBank
-
-Mac dinh nen de tat neu chua cau hinh:
+### Thong tin tai khoan nhan tien
 
 ```env
-ENABLE_PAYMENT_MBBANK=false
-```
-
-Khi muon bat:
-
-```env
-ENABLE_PAYMENT_MBBANK=true
-BANK_API_PASSWORD=...
-BANK_API_TOKEN=...
-BANK_LOGIN_USERNAME=...
 BANK_ID=MB
 BANK_ACCOUNT_NUMBER=...
 ACCOUNT_NAME=...
 ```
 
-### Bat SePay (khuyen nghi hon MBBank)
+Dung de sinh ma QR chuyen khoan hien cho khach.
 
-MBBank scrape doi hoi luu mat khau Internet Banking that trong `.env` - rui ro.
+### Bat SePay (duong thanh toan ngan hang duy nhat)
+
 SePay dung webhook chinh thuc (SePay tu push giao dich ve server), khong can
-mat khau ngan hang. Poll chi la du phong khi webhook bi mat (VPS restart,
+mat khau Internet Banking. Poll chi la du phong khi webhook bi mat (VPS restart,
 mang loi) hoac chua kip cau hinh webhook.
 
 1. Vao `my.sepay.vn` -> lien ket tai khoan ngan hang can nhan tien.
@@ -112,10 +101,8 @@ mang loi) hoac chua kip cau hinh webhook.
    SEPAY_API_TOKEN=<API Token o buoc 2>
    SEPAY_ACCOUNT_NUMBER=<so tai khoan da lien ket SePay>
    ```
-5. Sau khi xac nhan webhook nhan on dinh, tat MBBank de khong con luu mat khau ngan hang:
-   ```env
-   ENABLE_PAYMENT_MBBANK=false
-   ```
+5. Kiem tra bang lenh admin `/sodumb` trong bot - lenh nay doc so du luy ke qua
+   `GET /userapi/bankaccounts/list` cua SePay (can `SEPAY_API_TOKEN`).
 
 Ma QR chuyen khoan (`create_vietqr_link`) da dung san endpoint anh mien phi cua
 SePay tu truoc, khong can doi gi them buoc nay.
@@ -242,7 +229,7 @@ Neu terminal bao thieu `TELEGRAM_TOKEN`, `API_SECRET_KEY` hoac bien bank, hay ki
 Neu chua dung bank, dat:
 
 ```env
-ENABLE_PAYMENT_MBBANK=false
+ENABLE_PAYMENT_SEPAY=false
 ```
 
 ### Conflict getUpdates

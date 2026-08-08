@@ -60,7 +60,7 @@ def sepay_verify_webhook_key(auth_header: str | None) -> bool:
 
 
 def sepay_normalize_webhook_payload(body: dict) -> dict | None:
-    """Chuan hoa payload webhook SePay ve dang dung chung voi mbbank/crypto scan.
+    """Chuan hoa payload webhook SePay ve dang dung chung voi cac scan crypto.
 
     Chi nhan giao dich tien VAO (`transferType == "in"`). Tra None neu bo qua.
     """
@@ -84,24 +84,13 @@ def sepay_normalize_webhook_payload(body: dict) -> dict | None:
     }
 
 
-async def sepay_fetch_history(limit: int = 200, lookback_minutes: int | None = None) -> list:
-    """Doi soat lai (docs.sepay.vn -> API Giao dich): GET /userapi/transactions/list.
-
-    Chi dung de vet giao dich webhook bi sot. Loi mang/thieu token -> tra []
-    (caller tu log, khong lam gian doan cac scan khac).
-    """
-    import datetime
-
+async def _sepay_api_get(path: str, params: dict, log_label: str) -> dict | None:
+    """GET mot endpoint userapi cua SePay. Thieu token / loi mang -> None."""
     token = (SEPAY_API_TOKEN or "").strip()
     if not token:
-        return []
+        return None
 
-    window_minutes = lookback_minutes or SEPAY_POLL_LOOKBACK_MINUTES
-    date_min = (datetime.datetime.now() - datetime.timedelta(minutes=window_minutes)).strftime("%Y-%m-%d")
-    params = {"limit": str(limit), "transaction_date_min": date_min}
-    if SEPAY_ACCOUNT_NUMBER:
-        params["account_number"] = SEPAY_ACCOUNT_NUMBER
-    url = f"{SEPAY_API_BASE_URL}/userapi/transactions/list"
+    url = f"{SEPAY_API_BASE_URL}{path}"
     headers = {"Authorization": f"Bearer {token}"}
 
     import httpx
@@ -116,10 +105,28 @@ async def sepay_fetch_history(limit: int = 200, lookback_minutes: int | None = N
             if owns_client:
                 await client.aclose()
     except Exception as e:
-        logger.warning(f"SePay API poll request failed: {e}")
-        return []
+        logger.warning(f"SePay API {log_label} request failed: {e}")
+        return None
 
-    if not isinstance(payload, dict):
+    return payload if isinstance(payload, dict) else None
+
+
+async def sepay_fetch_history(limit: int = 200, lookback_minutes: int | None = None) -> list:
+    """Doi soat lai (docs.sepay.vn -> API Giao dich): GET /userapi/transactions/list.
+
+    Chi dung de vet giao dich webhook bi sot. Loi mang/thieu token -> tra []
+    (caller tu log, khong lam gian doan cac scan khac).
+    """
+    import datetime
+
+    window_minutes = lookback_minutes or SEPAY_POLL_LOOKBACK_MINUTES
+    date_min = (datetime.datetime.now() - datetime.timedelta(minutes=window_minutes)).strftime("%Y-%m-%d")
+    params = {"limit": str(limit), "transaction_date_min": date_min}
+    if SEPAY_ACCOUNT_NUMBER:
+        params["account_number"] = SEPAY_ACCOUNT_NUMBER
+
+    payload = await _sepay_api_get("/userapi/transactions/list", params, "poll")
+    if not payload:
         return []
     raw_list = payload.get("transactions") or []
     if not isinstance(raw_list, list):
@@ -142,3 +149,42 @@ async def sepay_fetch_history(limit: int = 200, lookback_minutes: int | None = N
         except (TypeError, ValueError, KeyError, AttributeError):
             continue
     return results
+
+
+def sepay_extract_account_balance(payload: dict | None, account_no: str) -> dict | None:
+    """Loc tai khoan dang cau hinh ra khoi payload /userapi/bankaccounts/list.
+
+    `account_no` rong -> lay tai khoan dau tien (shop chi gan 1 tai khoan).
+    """
+    if not isinstance(payload, dict):
+        return None
+    accounts = payload.get("bankaccounts") or payload.get("bank_accounts") or []
+    if not isinstance(accounts, list):
+        return None
+
+    expected = str(account_no or "").strip()
+    for raw_account in accounts:
+        if not isinstance(raw_account, dict):
+            continue
+        current = str(raw_account.get("account_number") or raw_account.get("accountNumber") or "").strip()
+        if expected and current != expected:
+            continue
+        return {
+            "account_no": current,
+            "account_name": str(raw_account.get("account_holder_name") or raw_account.get("label") or "").strip(),
+            "bank": str(raw_account.get("bank_short_name") or raw_account.get("bank_full_name") or "").strip(),
+            "currency": "VND",
+            "current_balance": _sepay_parse_amount(raw_account.get("accumulated")),
+        }
+    return None
+
+
+async def sepay_fetch_account_balance(account_no: str | None = None) -> dict | None:
+    """So du luy ke cua tai khoan ngan hang gan tren SePay.
+
+    Nguon: docs.sepay.vn -> API Tai khoan ngan hang (GET /userapi/bankaccounts/list),
+    truong `accumulated`. Thieu token / loi mang / khong khop tai khoan -> None.
+    """
+    target = str(account_no if account_no is not None else SEPAY_ACCOUNT_NUMBER or "").strip()
+    payload = await _sepay_api_get("/userapi/bankaccounts/list", {}, "bankaccounts")
+    return sepay_extract_account_balance(payload, target)

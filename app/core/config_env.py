@@ -46,9 +46,6 @@ def _require_env(name: str) -> str:
 
 # --- Secrets (BẮT BUỘC — không có default) ---
 TELEGRAM_TOKEN = _require_env("TELEGRAM_TOKEN")
-ENABLE_PAYMENT_MBBANK = os.getenv("ENABLE_PAYMENT_MBBANK", "true").strip().lower() in {"1", "true", "yes", "on"}
-API_PASSWORD = _require_env("BANK_API_PASSWORD") if ENABLE_PAYMENT_MBBANK else os.getenv("BANK_API_PASSWORD", "").strip()
-API_TOKEN = os.getenv("BANK_API_TOKEN", "").strip()
 API_SECRET_KEY = _require_env("API_SECRET_KEY")
 ADMIN_WEB_USERNAME = os.getenv("ADMIN_WEB_USERNAME", "").strip() or "telegram-admin"
 _ADMIN_WEB_PASSWORD_PLAINTEXT = os.getenv("ADMIN_WEB_PASSWORD", "").strip()
@@ -87,8 +84,9 @@ BANK_ID = os.getenv("BANK_ID", "MB").strip()
 BANK_ACCOUNT_NUMBER = os.getenv("BANK_ACCOUNT_NUMBER", "").strip()
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME", "").strip()
 
-# --- SePay (webhook la chinh, poll chi la du phong doi soat lai) ---
-ENABLE_PAYMENT_SEPAY = os.getenv("ENABLE_PAYMENT_SEPAY", "false").strip().lower() in {"1", "true", "yes", "on"}
+# --- SePay: duong thanh toan ngan hang duy nhat (webhook la chinh, poll chi
+# la du phong doi soat lai) ---
+ENABLE_PAYMENT_SEPAY = os.getenv("ENABLE_PAYMENT_SEPAY", "true").strip().lower() in {"1", "true", "yes", "on"}
 SEPAY_WEBHOOK_API_KEY = os.getenv("SEPAY_WEBHOOK_API_KEY", "").strip()
 SEPAY_API_TOKEN = os.getenv("SEPAY_API_TOKEN", "").strip()
 SEPAY_API_BASE_URL = os.getenv("SEPAY_API_BASE_URL", "https://my.sepay.vn").strip().rstrip("/")
@@ -270,8 +268,6 @@ AI_TEMPERATURE = float(os.getenv("AI_TEMPERATURE", "0.9"))
 def _iter_log_secrets():
     candidates = (
         TELEGRAM_TOKEN,
-        API_PASSWORD,
-        API_TOKEN,
         API_SECRET_KEY,
         SEPAY_WEBHOOK_API_KEY,
         SEPAY_API_TOKEN,

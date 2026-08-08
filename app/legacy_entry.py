@@ -1,5 +1,5 @@
 def main() -> None:
-    if not TELEGRAM_TOKEN or (ENABLE_PAYMENT_MBBANK and not API_PASSWORD):
+    if not TELEGRAM_TOKEN or (ENABLE_PAYMENT_SEPAY and not SEPAY_WEBHOOK_API_KEY):
         logger.critical("!!! CẢNH BÁO: Thiếu biến cấu hình cần thiết !!!")
         return
 

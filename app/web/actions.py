@@ -559,8 +559,8 @@ SYSTEM_TOGGLES = {
 }
 
 ENV_TOGGLES = {
-    "mbbank_on": ("ENABLE_PAYMENT_MBBANK", True, "Đã bật MBBank."),
-    "mbbank_off": ("ENABLE_PAYMENT_MBBANK", False, "Đã tắt MBBank."),
+    "sepay_on": ("ENABLE_PAYMENT_SEPAY", True, "Đã bật SePay."),
+    "sepay_off": ("ENABLE_PAYMENT_SEPAY", False, "Đã tắt SePay."),
     "binance_on": ("ENABLE_PAYMENT_BINANCE_SPOT", True, "Đã bật Binance Spot."),
     "binance_off": ("ENABLE_PAYMENT_BINANCE_SPOT", False, "Đã tắt Binance Spot."),
 }

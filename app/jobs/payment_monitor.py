@@ -428,7 +428,7 @@ async def _scan_binance_spot_payments(synthetic_transactions: list) -> None:
         logger.exception(f"Binance Spot scan failed: {e}", exc_info=e)
 
 
-async def _scan_sepay_payments(synthetic_transactions: list) -> None:
+async def _scan_sepay_payments(synthetic_transactions: list) -> dict:
     """SePay: rut het giao dich webhook da nhan (duong chinh, gan tuc thi),
     roi doi soat lai bang poll API (du phong khi webhook bi mat/chua bat).
 
@@ -436,16 +436,22 @@ async def _scan_sepay_payments(synthetic_transactions: list) -> None:
     `synthetic_transactions`, dung chung pipeline khop-don/cong-tien ben duoi
     (check_payment_job) - trung tx_id giua webhook va poll van chi cong 1 lan
     nho db_claim_transaction() khoa theo transactionID.
+
+    Tra ve trang thai suc khoe cho check_payment_job cap nhat thong ke va canh
+    bao admin: {"enabled": bool, "ok": bool, "error": str, "count": int}.
     """
     from app.integrations.sepay_api import sepay_webhook_inbox, sepay_fetch_history
 
     if not ENABLE_PAYMENT_SEPAY:
-        return
+        return {"enabled": False, "ok": True, "error": "", "count": 0}
+
+    found = 0
 
     # 1) Webhook inbox - rut het (khong co await xen giua doc/xoa nen an toan).
     if sepay_webhook_inbox:
         drained, sepay_webhook_inbox[:] = list(sepay_webhook_inbox), []
         synthetic_transactions.extend(drained)
+        found += len(drained)
 
     # 2) Poll du phong - chi chay khi co cau hinh SEPAY_API_TOKEN.
     try:
@@ -454,8 +460,12 @@ async def _scan_sepay_payments(synthetic_transactions: list) -> None:
             if db_check_tx_exists(tx["transactionID"]):
                 continue
             synthetic_transactions.append(tx)
+            found += 1
     except Exception as e:
         logger.warning(f"SePay poll scan failed: {e}")
+        return {"enabled": True, "ok": False, "error": str(e), "count": found}
+
+    return {"enabled": True, "ok": True, "error": "", "count": found}
 
 
 async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -483,113 +493,38 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     await _scan_binance_pay_id_payments(synthetic_transactions)
     await _scan_binance_pay_payments(synthetic_transactions)
     await _scan_binance_spot_payments(synthetic_transactions)
-    await _scan_sepay_payments(synthetic_transactions)
+    sepay_status = await _scan_sepay_payments(synthetic_transactions)
 
     try:
-        # Strip whitespace to prevent copy-paste errors
-        clean_password = API_PASSWORD.strip()
-        clean_account = BANK_ACCOUNT_NUMBER.strip()
-        login_username = os.getenv("BANK_LOGIN_USERNAME", clean_account).strip()
-        
         transactions = list(synthetic_transactions)
 
-        if not ENABLE_PAYMENT_MBBANK:
-            api_data = {"transactions": []}
-            api_key_info = ["transactions"]
-        else:
-         try:
-            import mbbank
-            import datetime
-            import asyncio
-            
-            def _fetch_mb_history():
-                mb = mbbank.MBBank(username=login_username, password=clean_password)
-                now = datetime.datetime.now()
-                return mb.getTransactionAccountHistory(accountNo=clean_account, from_date=now - datetime.timedelta(days=2), to_date=now)
-                
-            history = await asyncio.to_thread(_fetch_mb_history)
-            
-            # map them to the same format
-            bank_txs = []
-            tx_list = getattr(history, 'transactionHistoryList', getattr(history, 'transactionHistoryList', []))
-            if not tx_list and isinstance(history, dict):
-                tx_list = history.get('transactionHistoryList', [])
-                
-            import warnings
-            for tx in tx_list:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    if isinstance(tx, dict):
-                        tx_dict = tx
-                    elif hasattr(tx, 'model_dump'):
-                        tx_dict = tx.model_dump()
-                    elif hasattr(tx, 'dict'):
-                        tx_dict = tx.dict()
-                    else:
-                        tx_dict = tx.__dict__
-                    
-                tx_id = tx_dict.get('refNo') or tx_dict.get('transactionId') or tx_dict.get('posappId') or ""
-                desc = tx_dict.get('description', '')
-                credit = tx_dict.get('creditAmount', 0)
-                
-                if int(credit) > 0:
-                    bank_txs.append({
-                        "transactionID": str(tx_id),
-                        "description": str(desc),
-                        "amount": int(credit)
-                    })
-            api_data = {"transactions": bank_txs}
-            api_key_info = ["transactions"]
-
-         except Exception as bank_err:
-            bank_error_msg = str(bank_err)
-            is_temporary_bank_error = True
-            log_bank_error = logger.warning if is_temporary_bank_error else logger.error
-            err_parts = [bank_error_msg]
-            log_bank_error(
-                f"❌ Bank API request failed: {' | '.join(err_parts)}"
-            )
-            api_data = {
-                "msg": " | ".join(err_parts),
-                "_temporary_bank_api_error": is_temporary_bank_error,
-            }
-            api_key_info = []
-            _bank_api_last_status = "error"
-            _bank_api_last_error = bank_error_msg[:240]
-        
-        # Log full response if pending orders exist to debug
-        if pending_orders or pending_api_deposits or pending_user_topups:
-             logger.debug(f"DEBUG: API Response keys: {str(api_key_info)[:30]}...")
-
-        # Check for API Error
-        if "transactions" not in api_data:
-            msg = api_data.get("msg", "Unknown Error")
-            is_temporary_bank_error = bool(api_data.get("_temporary_bank_api_error"))
-            log_bank_api_error = logger.warning if is_temporary_bank_error else logger.error
-            log_bank_api_error(f"❌ LỖI API BANK: {msg} | Keys: {str(api_key_info)[:30]}...")
-            # Notify Admin if critical - with backoff to prevent spam
-            _bank_api_fail_count += 1
-            now_ts = time.time()
-            if len(pending_orders) > 0 and (_bank_api_fail_count <= 3 or (now_ts - _bank_api_last_alert_time) >= 600):
-                 _bank_api_last_alert_time = now_ts
-                 await context.bot.send_message(
-                     ADMIN_USER_ID,
-                     f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>LỖI KẾT NỐI BANK API</b> (lần {_bank_api_fail_count})\n\nServer trả về: {msg}",
-                     parse_mode=ParseMode.HTML
-                 )
-            if not transactions:
-                return
-        else:
-            _bank_api_fail_count = 0
-            tx_count_now = len(api_data.get("transactions", []))
-            transactions.extend(api_data.get("transactions", []))
-            logger.debug(f"LAM SHOP CRON: Tìm thấy {tx_count_now} giao dịch từ API.")
-            _bank_api_last_status = "ok"
-            _bank_api_last_error = ""
-            _bank_api_last_tx_count = tx_count_now
-            _bank_api_total_success += 1
+        # Suc khoe duong ngan hang = suc khoe SePay (webhook + poll doi soat).
         _bank_api_last_check_time = time.time()
         _bank_api_total_checks += 1
+        if sepay_status["ok"]:
+            _bank_api_fail_count = 0
+            _bank_api_last_status = "ok" if sepay_status["enabled"] else "disabled"
+            _bank_api_last_error = ""
+            _bank_api_last_tx_count = sepay_status["count"]
+            _bank_api_total_success += 1
+        else:
+            msg = sepay_status["error"] or "Unknown Error"
+            logger.warning(f"❌ LỖI API SEPAY: {msg}")
+            _bank_api_last_status = "error"
+            _bank_api_last_error = msg[:240]
+            _bank_api_fail_count += 1
+            # Canh bao admin co backoff de khong spam.
+            now_ts = time.time()
+            if len(pending_orders) > 0 and (_bank_api_fail_count <= 3 or (now_ts - _bank_api_last_alert_time) >= 600):
+                _bank_api_last_alert_time = now_ts
+                await context.bot.send_message(
+                    ADMIN_USER_ID,
+                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>LỖI KẾT NỐI SEPAY API</b> (lần {_bank_api_fail_count})\n\nServer trả về: {msg}",
+                    parse_mode=ParseMode.HTML
+                )
+            # Webhook van co the da day giao dich ve -> chi thoat khi rong.
+            if not transactions:
+                return
 
         if synthetic_transactions:
             logger.info(f"LAM SHOP CRON: Tìm thấy {len(synthetic_transactions)} giao dịch thanh toán đã xác nhận từ crypto/bank scan.")
