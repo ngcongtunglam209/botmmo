@@ -27,7 +27,7 @@ def sample_order_data() -> dict:
         "quantity": 1,
         "items": ["https://example.com/link1"],
         "email": "test@example.com",
-        "delivery_method": "auto_stock",
+        "delivery_method": "stock_items",
         "payment_method": "bank_transfer",
         "full_name": "Test User",
         "username": "testuser",

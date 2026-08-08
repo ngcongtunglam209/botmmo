@@ -65,7 +65,12 @@ class Order(BaseModel):
     items: list[str] = Field(default_factory=list, description="Delivered items (links, accounts)")
     link: str = Field("", description="Legacy single link field")
     email: str = Field("", description="Customer email for delivery")
-    delivery_method: str = Field("", description="auto_stock | manual_completed")
+    # Written by several unrelated paths, so the value set is wider than it looks:
+    # order_pipeline writes instant_items/stock_items/manual_pending, admin_orders
+    # writes manual_completed, store_callback writes pending, and anything taking
+    # delivery_result["method"] writes document/text/failed. Older rows may also
+    # carry pending_source. Kept as a free string on purpose.
+    delivery_method: str = Field("", description="instant_items | stock_items | manual_pending | manual_completed | pending | document | text | failed")
 
     # Payment
     payment_method: str = Field("bank_transfer", description="bank_transfer | usdt_rpay | binance_pay | balance")
