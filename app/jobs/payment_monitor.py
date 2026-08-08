@@ -189,10 +189,10 @@ async def _cleanup_expired_pending_orders(context: ContextTypes.DEFAULT_TYPE, cu
                 except Exception as e:
                     logger.exception(f"Cannot close expired Binance order {code}: {e}", exc_info=e)
 
+            user_id = details.get('user_id')
             refund_text = ""
             balance_used = details.get('balance_used', 0)
             if balance_used > 0:
-                user_id = details['user_id']
                 current_user_data = user_data_db.get(str(user_id))
                 if current_user_data:
                     current_balance = current_user_data.get('balance', 0)
@@ -218,7 +218,7 @@ async def _cleanup_expired_pending_orders(context: ContextTypes.DEFAULT_TYPE, cu
             if details.get('message_id'):
                 if details.get("message_kind") == "text":
                     await context.bot.edit_message_text(
-                        chat_id=details['user_id'],
+                        chat_id=user_id,
                         message_id=details['message_id'],
                         text=caption,
                         parse_mode=ParseMode.HTML,
@@ -226,7 +226,7 @@ async def _cleanup_expired_pending_orders(context: ContextTypes.DEFAULT_TYPE, cu
                     )
                 else:
                     await context.bot.edit_message_caption(
-                        chat_id=details['user_id'],
+                        chat_id=user_id,
                         message_id=details['message_id'],
                         caption=caption,
                         parse_mode=ParseMode.HTML,
