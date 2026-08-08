@@ -88,7 +88,7 @@ async def handle_games_callbacks(update, context, command):
                         '<tg-emoji emoji-id="5449800250032143374">🎉</tg-emoji> <b>恭喜！</b>\n\n<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji> <b>奖品：</b> {product}\n<tg-emoji emoji-id="5350481781306958339">🧾</tg-emoji> <b>编号：</b> <code>{code}</code>',
                         product=p['name'], code=order_code,
                     ),
-                    reply_markup=create_back_button_menu(text=lt(user_id, "Quay lại", "Back", "返回")),
+                    reply_markup=create_back_button_menu(text=lt(user_id, "Quay lại", "Back", "返回"), user_id=user_id),
                 )
                 delivery_success = delivery_result.get("delivered")
 
@@ -118,7 +118,7 @@ async def handle_games_callbacks(update, context, command):
                                 '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>奖品自动发放失败</b>\n\n<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji> <b>奖品：</b> {product}\n<tg-emoji emoji-id="5350481781306958339">🧾</tg-emoji> <b>处理编号：</b> <code>{code}</code>\n\n管理员已收到通知，将尽快手动发放。',
                                 product=p['name'], code=order_code,
                             ), parse_mode='HTML',
-                            reply_markup=create_back_button_menu(text=lt(user_id, "Quay lại", "Back", "返回"))
+                            reply_markup=create_back_button_menu(text=lt(user_id, "Quay lại", "Back", "返回"), user_id=user_id)
                         )
                     except BadRequest:
                         pass
@@ -195,7 +195,7 @@ async def handle_games_callbacks(update, context, command):
                     "❌ <b>Prize skipped</b>\n\nYou declined the prize.\nGood luck next time!",
                     "❌ <b>已跳过奖品</b>\n\n您已放弃领取奖品。\n下次好运！",
                 ), parse_mode='HTML',
-                reply_markup=create_back_button_menu(text=lt(user_id, "Quay lại", "Back", "返回"))
+                reply_markup=create_back_button_menu(text=lt(user_id, "Quay lại", "Back", "返回"), user_id=user_id)
             )
         except BadRequest:
             pass

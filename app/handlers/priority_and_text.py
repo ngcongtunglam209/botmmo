@@ -120,9 +120,12 @@ async def priority_email_handler(update: Update, context: ContextTypes.DEFAULT_T
             
             # 2. Notify User
             await message.reply_text(
-                f"{E_SUCCESS} <b>ĐÃ NHẬN EMAIL:</b> {extracted_email}\n"
-                f"{E_LOADING} Đơn hàng <code>{user_pending_code}</code> đã được chuyển cho Admin xử lý.\n"
-                f"{E_LOADING} Vui lòng đợi trong 1-30 phút...",
+                lt(
+                    user.id,
+                    f"{E_SUCCESS} <b>ĐÃ NHẬN EMAIL:</b> {extracted_email}\n{E_LOADING} Đơn hàng <code>{user_pending_code}</code> đã được chuyển cho Admin xử lý.\n{E_LOADING} Vui lòng đợi trong 1-30 phút.",
+                    f"{E_SUCCESS} <b>EMAIL RECEIVED:</b> {extracted_email}\n{E_LOADING} Order <code>{user_pending_code}</code> has been passed to the admin.\n{E_LOADING} This usually takes 1-30 minutes.",
+                    f"{E_SUCCESS} <b>已收到邮箱：</b>{extracted_email}\n{E_LOADING} 订单 <code>{user_pending_code}</code> 已转交管理员处理。\n{E_LOADING} 通常需要 1-30 分钟。",
+                ),
                 parse_mode=ParseMode.HTML
             )
             
@@ -167,7 +170,11 @@ async def _auto_reject_expired_support_message(message, context, order: dict, or
     try:
         if message:
             await message.reply_text(
-                build_auto_warranty_rejection_text(order_code, warranty_info),
+                build_auto_warranty_rejection_text(
+                    order_code,
+                    warranty_info,
+                    user_id=getattr(getattr(message, "from_user", None), "id", None),
+                ),
                 parse_mode=ParseMode.HTML,
             )
     except (TelegramError, ValueError, TypeError, KeyError, AttributeError) as e:
@@ -320,7 +327,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     
     # Kiểm tra chế độ bảo trì
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
-        await update.message.reply_text("<tg-emoji emoji-id=\"5215392879320505675\">🛠️</tg-emoji> <b>HỆ THỐNG ĐANG BẢO TRÌ</b>\n\nChúng tôi đang nâng cấp hệ thống để phục vụ bạn tốt hơn. Vui lòng quay lại sau ít phút.\n\nXin lỗi vì sự bất tiện này!", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(t("maintenance", user_id=update.effective_user.id), parse_mode=ParseMode.HTML)
         return
 
     # FIX BUG: Check if message exists (edited messages might be handled differently or ignored here if needed)
@@ -389,7 +396,12 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 try:
                     await context.bot.send_message(
                         chat_id=target_id,
-                        text=f"<tg-emoji emoji-id=\"5422896593412035313\">🎁</tg-emoji> <b>BẠN ĐƯỢC CỘNG TIỀN</b>\n\n<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> Số tiền: <code>+{amount:,} VNĐ</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Số dư mới: <code>{user_info['balance']:,} VNĐ</code>\n\n<i>(Cộng bởi Admin)</i>",
+                        text=lt(
+                            target_id,
+                            f"<tg-emoji emoji-id=\"5422896593412035313\">🎁</tg-emoji> <b>BẠN ĐƯỢC CỘNG TIỀN</b>\n\n<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> Số tiền: <code>+{amount:,} VNĐ</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Số dư mới: <code>{user_info['balance']:,} VNĐ</code>\n\n<i>(Cộng bởi Admin)</i>",
+                            f"<tg-emoji emoji-id=\"5422896593412035313\">🎁</tg-emoji> <b>YOUR BALANCE WENT UP</b>\n\n<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> Amount: <code>+{amount:,} VND</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> New balance: <code>{user_info['balance']:,} VND</code>\n\n<i>(Added by the admin)</i>",
+                            f"<tg-emoji emoji-id=\"5422896593412035313\">🎁</tg-emoji> <b>余额已增加</b>\n\n<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> 金额：<code>+{amount:,} VND</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> 新余额：<code>{user_info['balance']:,} VND</code>\n\n<i>（由管理员添加）</i>",
+                        ),
                         parse_mode='HTML'
                     )
                 except (ValueError, TypeError, KeyError, IndexError):
@@ -404,7 +416,12 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 try:
                     await context.bot.send_message(
                         chat_id=target_id,
-                        text=f"<tg-emoji emoji-id=\"5409062331583842187\">💸</tg-emoji> <b>TÀI KHOẢN BỊ TRỪ TIỀN</b>\n\n<tg-emoji emoji-id=\"5406745771280187626\">➖</tg-emoji> Số tiền: <code>-{amount:,} VNĐ</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Số dư mới: <code>{user_info['balance']:,} VNĐ</code>\n\n<i>(Trừ bởi Admin)</i>",
+                        text=lt(
+                            target_id,
+                            f"<tg-emoji emoji-id=\"5409062331583842187\">💸</tg-emoji> <b>TÀI KHOẢN BỊ TRỪ TIỀN</b>\n\n<tg-emoji emoji-id=\"5406745771280187626\">➖</tg-emoji> Số tiền: <code>-{amount:,} VNĐ</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Số dư mới: <code>{user_info['balance']:,} VNĐ</code>\n\n<i>(Trừ bởi Admin)</i>",
+                            f"<tg-emoji emoji-id=\"5409062331583842187\">💸</tg-emoji> <b>YOUR BALANCE WENT DOWN</b>\n\n<tg-emoji emoji-id=\"5406745771280187626\">➖</tg-emoji> Amount: <code>-{amount:,} VND</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> New balance: <code>{user_info['balance']:,} VND</code>\n\n<i>(Deducted by the admin)</i>",
+                            f"<tg-emoji emoji-id=\"5409062331583842187\">💸</tg-emoji> <b>余额已扣减</b>\n\n<tg-emoji emoji-id=\"5406745771280187626\">➖</tg-emoji> 金额：<code>-{amount:,} VND</code>\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> 新余额：<code>{user_info['balance']:,} VND</code>\n\n<i>（由管理员扣减）</i>",
+                        ),
                         parse_mode='HTML'
                     )
                 except (TelegramError, ValueError, KeyError, AttributeError):
@@ -561,7 +578,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             f"{E_SOS} Bạn sẽ nhận thông báo khi hoàn tất!\n\n"
             f"{E_TIP} <b>Mã đơn:</b> <code>{order_code}</code>",
             parse_mode='HTML',
-            reply_markup=create_back_button_menu()
+            reply_markup=create_back_button_menu(user_id=update.effective_user.id if update.effective_user else None)
         )
         
         # 4. Log order
@@ -637,7 +654,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             f"{E_SOS} Bạn sẽ nhận thông báo khi hoàn tất\n\n"
             f"{E_TIP} <b>Mã đơn:</b> <code>{order_code}</code>",
             parse_mode=ParseMode.HTML,
-            reply_markup=create_back_button_menu()
+            reply_markup=create_back_button_menu(user_id=update.effective_user.id if update.effective_user else None)
         )
         
         # Gửi cho Admin
@@ -656,13 +673,28 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         qty = context.user_data.get('store_coupon_qty', 1)
         await clear_user_state(context)
         if not prod_id or prod_id not in products:
-            await update.message.reply_text("\u274c S\u1ea3n ph\u1ea9m kh\xf4ng t\u1ed3n t\u1ea1i. Vui l\xf2ng th\u1eed l\u1ea1i.")
+            await update.message.reply_text(
+                lt(
+                    user.id,
+                    "❌ Sản phẩm không tồn tại. Vui lòng thử lại.",
+                    "❌ This product no longer exists. Please try again.",
+                    "❌ 该商品不存在，请重试。",
+                )
+            )
             return
         p = products[prod_id]
         coupon_input = user_input.strip().upper()
         coupon_details = coupons.get(coupon_input)
         if not coupon_details:
-            await update.message.reply_text(f"\u274c M\xe3 <b>{html.escape(coupon_input)}</b> kh\xf4ng h\u1ee3p l\u1ec7.", parse_mode=ParseMode.HTML)
+            await update.message.reply_text(
+                lt(
+                    user.id,
+                    f"❌ Mã <b>{html.escape(coupon_input)}</b> không hợp lệ.",
+                    f"❌ The code <b>{html.escape(coupon_input)}</b> is not valid.",
+                    f"❌ 优惠码 <b>{html.escape(coupon_input)}</b> 无效。",
+                ),
+                parse_mode=ParseMode.HTML,
+            )
             return
         qty_limit = coupon_details.get('quantity', 0)
         used = coupon_details.get('used', 0)
@@ -676,7 +708,15 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             except (TelegramError, ValueError, KeyError, AttributeError):
                 logger.debug("Suppressed error at L9433")
         if is_used_up or is_expired:
-            await update.message.reply_text(f"\u274c M\xe3 <b>{coupon_input}</b> \u0111\xe3 h\u1ebft h\u1ea1n ho\u1eb7c h\u1ebft l\u01b0\u1ee3t s\u1eed d\u1ee5ng.", parse_mode=ParseMode.HTML)
+            await update.message.reply_text(
+                lt(
+                    user.id,
+                    f"❌ Mã <b>{coupon_input}</b> đã hết hạn hoặc hết lượt sử dụng.",
+                    f"❌ The code <b>{coupon_input}</b> has expired or has no uses left.",
+                    f"❌ 优惠码 <b>{coupon_input}</b> 已过期或已用完。",
+                ),
+                parse_mode=ParseMode.HTML,
+            )
             return
         discount_val = coupon_details.get('discount', 0)
         base_price = p['price']
@@ -698,7 +738,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         context.user_data['store_coupon_prod_id'] = prod_id
         context.user_data['store_coupon_qty'] = qty
         btns = []
-        bal_text = f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư ({balance_c:,}đ)"
+        bal_text = lt(user.id, f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư ({balance_c:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Wallet ({balance_c:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> 钱包 ({balance_c:,}đ)")
         if balance_c >= total_price:
             btns.append([InlineKeyboardButton(bal_text, callback_data=f"pay_prod_bal_{prod_id}_{qty}")])
         elif balance_c > 0:
@@ -708,36 +748,67 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 callback_data=f"pay_prod_combo_{prod_id}_{qty}"
             )])
         else:
-            btns.append([_btn("Không", icon_id="5273914604752216432", callback_data="ignore")])
+            btns.append([_btn(lt(user.id, "Không", "No", "否"), icon_id="5273914604752216432", callback_data="ignore")])
         from app.integrations.payments_core import is_usdt_trc20_enabled, is_binance_pay_id_enabled
         if is_usdt_trc20_enabled() or is_binance_pay_id_enabled():
             btns.append([_btn("USDT (Binance ID / BEP20)", icon_id="5281029063459234079", callback_data=f"pay_prod_usdt_trc20_{prod_id}_{qty}")])
         from app.core.config_env import ENABLE_PAYMENT_MBBANK
         if ENABLE_PAYMENT_MBBANK:
-            btns.append([_btn("Chuyển khoản (QR)", icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
-        btns.append([InlineKeyboardButton("\u2b05\ufe0f Quay l\u1ea1i", callback_data=f"buy_prod_confirm_{prod_id}_{qty}")])
+            btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
+        btns.append([InlineKeyboardButton(lt(user.id, "⬅️ Quay lại", "⬅️ Back", "⬅️ 返回"), callback_data=f"buy_prod_confirm_{prod_id}_{qty}")])
         await update.message.reply_text(
-            f"\u2705 <b>M\xc3 GI\u1ea2M GI\xc1 \u0110\xc3 \xc1P D\u1ee4NG!</b>\n\n"
-            f"\U0001f3f7 S\u1ea3n ph\u1ea9m: {html.escape(p['name'])}\n"
-            f"\U0001f522 S\u1ed1 l\u01b0\u1ee3ng: {qty}\n"
-            f"\U0001f3ab M\xe3: <code>{coupon_input}</code> (Gi\u1ea3m {discount_text})\n"
-            f"\U0001f4b0 \u0110\u01a1n gi\xe1: <s>{base_price_text}</s> \u2192 <b>{discounted_unit_text}</b>\n"
-            f"\U0001f4b5 T\u1ed5ng: <b>{total_price:,}\u0111</b>\n\n"
-            f"Ch\u1ecdn ph\u01b0\u01a1ng th\u1ee9c thanh to\xe1n:",
+            lt(
+                user.id,
+                f"✅ <b>ĐÃ ÁP DỤNG MÃ GIẢM GIÁ</b>\n\n"
+                f"🏷 Sản phẩm: {html.escape(p['name'])}\n"
+                f"🔢 Số lượng: {qty}\n"
+                f"🎫 Mã: <code>{coupon_input}</code> (giảm {discount_text})\n"
+                f"💰 Đơn giá: <s>{base_price_text}</s> → <b>{discounted_unit_text}</b>\n"
+                f"💵 Tổng: <b>{total_price:,}đ</b>\n\n"
+                f"Chọn phương thức thanh toán:",
+                f"✅ <b>DISCOUNT CODE APPLIED</b>\n\n"
+                f"🏷 Product: {html.escape(p['name'])}\n"
+                f"🔢 Quantity: {qty}\n"
+                f"🎫 Code: <code>{coupon_input}</code> (saves {discount_text})\n"
+                f"💰 Unit price: <s>{base_price_text}</s> → <b>{discounted_unit_text}</b>\n"
+                f"💵 Total: <b>{total_price:,}đ</b>\n\n"
+                f"Choose a payment method:",
+                f"✅ <b>优惠码已生效</b>\n\n"
+                f"🏷 商品: {html.escape(p['name'])}\n"
+                f"🔢 数量: {qty}\n"
+                f"🎫 优惠码: <code>{coupon_input}</code> (减 {discount_text})\n"
+                f"💰 单价: <s>{base_price_text}</s> → <b>{discounted_unit_text}</b>\n"
+                f"💵 合计: <b>{total_price:,}đ</b>\n\n"
+                f"请选择支付方式：",
+            ),
             parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(btns)
         )
     elif user_state == 'awaiting_report_order_code':
         order_code = user_input.upper()
         if not USER_ORDER_CODE_REGEX.match(order_code):  # Tối ưu: compiled regex
-            await update.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Mã đơn hàng không hợp lệ. Vui lòng nhập lại hoặc /cancel để hủy."); return
+            await update.message.reply_text(lt(
+                user.id,
+                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Mã đơn hàng không hợp lệ. Vui lòng nhập lại hoặc /cancel để hủy.",
+                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> That order code is not valid. Send it again or /cancel to stop.",
+                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> 订单号无效。请重新输入，或输入 /cancel 取消。",
+            )); return
         # FIX: Dùng index O(1)
         found_order = order_index.get(order_code)
-        if not found_order or found_order.get("user_id") != user.id: await update.message.reply_text("❌ Không tìm thấy đơn hàng này hoặc đơn hàng không thuộc về bạn. Vui lòng kiểm tra lại mã hoặc /cancel để hủy."); return
+        if not found_order or found_order.get("user_id") != user.id: await update.message.reply_text(lt(
+                user.id,
+                "❌ Không tìm thấy đơn hàng này hoặc đơn hàng không thuộc về bạn. Vui lòng kiểm tra lại mã hoặc /cancel để hủy.",
+                "❌ We cannot find that order, or it does not belong to you. Check the code or /cancel to stop.",
+                "❌ 未找到该订单，或该订单不属于您。请检查订单号，或输入 /cancel 取消。",
+            )); return
         if found_order.get('refunded_at'):
             await update.message.reply_text(
-                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng này đã được hoàn tiền nên không thể báo lỗi nữa.\n"
-                "Vui lòng nhập mã đơn khác hoặc gõ /cancel để hủy."
+                lt(
+                    user.id,
+                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng này đã được hoàn tiền nên không thể báo lỗi nữa.\nVui lòng nhập mã đơn khác hoặc gõ /cancel để hủy.",
+                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> This order was refunded, so it can no longer be reported.\nSend another order code or /cancel to stop.",
+                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> 该订单已退款，无法再提交问题报告。\n请输入其他订单号，或输入 /cancel 取消。",
+                )
             )
             return
         
@@ -745,17 +816,23 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         support_status = found_order.get('support_status', 'active')
         if support_status == 'rejected_expired':
             await update.message.reply_text(
-                "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>TỪ CHỐI HỖ TRỢ</b>\n\n"
-                "Đơn hàng này đã bị từ chối bảo hành do <b>HẾT HẠN BẢO HÀNH</b>.\n"
-                "Vui lòng không tiếp tục báo lỗi spam.", parse_mode=ParseMode.HTML
+                lt(
+                    user.id,
+                    "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>TỪ CHỐI HỖ TRỢ</b>\n\nĐơn hàng này đã bị từ chối bảo hành do <b>HẾT HẠN BẢO HÀNH</b>.\nVui lòng không gửi lại yêu cầu.",
+                    "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>SUPPORT DECLINED</b>\n\nThis order was declined because the <b>WARRANTY HAS EXPIRED</b>.\nPlease do not send the request again.",
+                    "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>支持请求已拒绝</b>\n\n该订单因<b>质保已过期</b>被拒绝。\n请勿重复提交。",
+                ), parse_mode=ParseMode.HTML
             )
             await clear_user_state(context)
             return
         elif support_status == 'rejected_policy':
             await update.message.reply_text(
-                "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>TỪ CHỐI HỖ TRỢ</b>\n\n"
-                "Đơn hàng này đã bị từ chối hỗ trợ do <b>VI PHẠM CHÍNH SÁCH</b>.\n"
-                "Vui lòng không tiếp tục báo lỗi spam.", parse_mode=ParseMode.HTML
+                lt(
+                    user.id,
+                    "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>TỪ CHỐI HỖ TRỢ</b>\n\nĐơn hàng này đã bị từ chối hỗ trợ do <b>VI PHẠM CHÍNH SÁCH</b>.\nVui lòng không gửi lại yêu cầu.",
+                    "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>SUPPORT DECLINED</b>\n\nThis order was declined for a <b>POLICY BREACH</b>.\nPlease do not send the request again.",
+                    "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>支持请求已拒绝</b>\n\n该订单因<b>违反条款</b>被拒绝。\n请勿重复提交。",
+                ), parse_mode=ParseMode.HTML
             )
             await clear_user_state(context)
             return
@@ -768,13 +845,22 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         context.user_data.pop('report_photo_message_id', None)
         context.user_data['state'] = 'awaiting_report_photo'
         await update.message.reply_text(
-            "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã xác nhận đơn hàng. "
-            "Tiếp theo, vui lòng gửi <b>một ảnh chụp màn hình</b> về lỗi bạn đang gặp phải.",
+            lt(
+                user.id,
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã xác nhận đơn hàng. Tiếp theo, vui lòng gửi <b>một ảnh chụp màn hình</b> về lỗi bạn gặp phải.",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Order confirmed. Next, please send <b>a screenshot</b> of the problem.",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> 订单已确认。接下来请发送<b>问题截图</b>。",
+            ),
             parse_mode=ParseMode.HTML
         )
     elif user_state == 'awaiting_report_photo':
         await update.message.reply_text(
-            "❌ Vui lòng gửi <b>ảnh chụp màn hình lỗi</b> trước để tiếp tục báo cáo.",
+            lt(
+                user.id,
+                "❌ Vui lòng gửi <b>ảnh chụp màn hình lỗi</b> trước để tiếp tục báo cáo.",
+                "❌ Send <b>a screenshot of the problem</b> first so the report can continue.",
+                "❌ 请先发送<b>问题截图</b>，然后才能继续提交。",
+            ),
             parse_mode=ParseMode.HTML
         )
         return
@@ -785,7 +871,12 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         photo_chat_id = context.user_data.get('report_photo_chat_id')
         photo_message_id = context.user_data.get('report_photo_message_id')
         if not all([order_code, photo_id]):
-            await update.message.reply_text("❌ Đã có lỗi trong quá trình báo cáo. Vui lòng bắt đầu lại.")
+            await update.message.reply_text(lt(
+                user.id,
+                "❌ Đã có lỗi trong quá trình báo cáo. Vui lòng bắt đầu lại.",
+                "❌ Something went wrong with the report. Please start again.",
+                "❌ 提交问题报告时出错，请重新开始。",
+            ))
             await clear_user_state(context)
             return
         if not all([photo_chat_id, photo_message_id]):
@@ -794,13 +885,23 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             context.user_data.pop('report_photo_chat_id', None)
             context.user_data.pop('report_photo_message_id', None)
             await update.message.reply_text(
-                "❌ Thiếu dữ liệu ảnh gốc. Vui lòng gửi lại ảnh lỗi để hệ thống chuyển tiếp cho admin."
+                lt(
+                    user.id,
+                    "❌ Thiếu dữ liệu ảnh gốc. Vui lòng gửi lại ảnh lỗi để hệ thống chuyển tiếp cho admin.",
+                    "❌ The original photo is missing. Send it again so we can forward it to the admin.",
+                    "❌ 缺少原始图片。请重新发送，以便转交管理员。",
+                )
             )
             return
         # FIX: Dùng index O(1)
         found_order = order_index.get(order_code)
         if not found_order:
-            await update.message.reply_text("❌ Không tìm thấy đơn hàng này trong lịch sử. Vui lòng bắt đầu lại.")
+            await update.message.reply_text(lt(
+                user.id,
+                "❌ Không tìm thấy đơn hàng này trong lịch sử. Vui lòng bắt đầu lại.",
+                "❌ That order is not in your history. Please start again.",
+                "❌ 历史记录中没有该订单，请重新开始。",
+            ))
             await clear_user_state(context)
             return
         if found_order.get('refunded_at'):
@@ -934,7 +1035,12 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             context.user_data.pop('report_photo_chat_id', None)
             context.user_data.pop('report_photo_message_id', None)
             await update.message.reply_text(
-                "❌ Không thể chuyển tiếp ảnh cho admin. Vui lòng gửi lại ảnh lỗi dưới dạng Photo."
+                lt(
+                    user.id,
+                    "❌ Không thể chuyển tiếp ảnh cho admin. Vui lòng gửi lại ảnh lỗi dưới dạng Photo.",
+                    "❌ We could not forward the photo to the admin. Send it again as a Photo.",
+                    "❌ 无法将图片转交管理员。请以图片形式重新发送。",
+                )
             )
             return
 
@@ -971,8 +1077,12 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             pending_error_reports.append(report_data)
         
         await update.message.reply_text(
-            f"{E_SUCCESS} <b>ĐÃ GỬI BÁO CÁO!</b>\n\n"
-            "Admin đã nhận được thông tin và sẽ kiểm tra sớm nhất.\n",
+            lt(
+                user.id,
+                f"{E_SUCCESS} <b>ĐÃ GỬI BÁO CÁO</b>\n\nAdmin đã nhận được thông tin và sẽ kiểm tra sớm nhất.",
+                f"{E_SUCCESS} <b>REPORT SENT</b>\n\nThe admin has the details and will look into it shortly.",
+                f"{E_SUCCESS} <b>报告已提交</b>\n\n管理员已收到信息，会尽快查看。",
+            ),
             parse_mode=ParseMode.HTML
         )
         await clear_user_state(context)
@@ -989,11 +1099,16 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         else:
             # Nếu không thể tự động giải quyết
             keyboard = [
-                [InlineKeyboardButton("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Hỏi Trợ lý AI", callback_data='ask_ai_confirm')], 
-                [InlineKeyboardButton("<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> Tạo phiếu hỗ trợ cho Admin", callback_data='create_ticket_confirm')]
+                [InlineKeyboardButton(lt(user.id, "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Hỏi Trợ lý AI", "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Ask the AI assistant", "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> 咨询 AI 助手"), callback_data='ask_ai_confirm')], 
+                [InlineKeyboardButton(lt(user.id, "<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> Tạo phiếu hỗ trợ cho Admin", "<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> Open a support ticket", "<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> 创建工单"), callback_data='create_ticket_confirm')]
             ]
             await update.message.reply_text(
-                "Câu hỏi của bạn cần sự tư vấn chi tiết hơn. Bạn có muốn hỏi Trợ lý AI của chúng tôi không?", 
+                lt(
+                    user.id,
+                    "Câu hỏi của bạn cần tư vấn chi tiết hơn. Bạn có muốn hỏi Trợ lý AI không?",
+                    "Your question needs a closer look. Would you like to ask our AI assistant?",
+                    "您的问题需要更详细的解答。要咨询我们的 AI 助手吗？",
+                ), 
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
     
@@ -1003,7 +1118,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         p = products.get(prod_id)
         
         if not p:
-            await update.message.reply_text("❌ Sản phẩm không tồn tại!")
+            await update.message.reply_text(lt(user.id, "❌ Sản phẩm không tồn tại.", "❌ This product no longer exists.", "❌ 该商品不存在。"))
             await clear_user_state(context)
             return
         
@@ -1012,9 +1127,12 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             qty = int(user_input.strip())
         except ValueError:
             await update.message.reply_text(
-                "❌ <b>Số lượng không hợp lệ!</b>\n\n"
-                "Vui lòng nhập một số nguyên.\n"
-                "Ví dụ: 200",
+                lt(
+                    user.id,
+                    "❌ <b>Số lượng không hợp lệ</b>\n\nVui lòng nhập một số nguyên.\nVí dụ: 200",
+                    "❌ <b>That quantity is not valid</b>\n\nSend a whole number.\nFor example: 200",
+                    "❌ <b>数量无效</b>\n\n请输入整数。\n例如：200",
+                ),
                 parse_mode=ParseMode.HTML
             )
             return
@@ -1025,16 +1143,18 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         # Check range
         if qty < 1:
             await update.message.reply_text(
-                "❌ Số lượng phải ít nhất là 1!",
+                lt(user.id, "❌ Số lượng phải ít nhất là 1.", "❌ The quantity must be at least 1.", "❌ 数量至少为 1。"),
                 parse_mode=ParseMode.HTML
             )
             return
         elif qty > stock_count:
             await update.message.reply_text(
-                f"❌ <b>KHÔNG ĐỦ HÀNG!</b>\n\n"
-                f"Bạn muốn: <b>{qty}</b>\n"
-                f"Tồn kho: <b>{stock_count}</b>\n\n"
-                f"Vui lòng nhập số nhỏ hơn hoặc bằng {stock_count}",
+                lt(
+                    user.id,
+                    f"❌ <b>KHÔNG ĐỦ HÀNG</b>\n\nBạn muốn: <b>{qty}</b>\nTồn kho: <b>{stock_count}</b>\n\nVui lòng nhập số nhỏ hơn hoặc bằng {stock_count}.",
+                    f"❌ <b>NOT ENOUGH STOCK</b>\n\nYou asked for: <b>{qty}</b>\nIn stock: <b>{stock_count}</b>\n\nSend a number no larger than {stock_count}.",
+                    f"❌ <b>库存不足</b>\n\n您想要：<b>{qty}</b>\n库存：<b>{stock_count}</b>\n\n请输入不超过 {stock_count} 的数字。",
+                ),
                 parse_mode=ParseMode.HTML
             )
             return
@@ -1047,19 +1167,19 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         balance = user_info.get('balance', 0) if user_info else 0
         
         btns = []
-        bal_text = f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư ({balance:,}đ)"
+        bal_text = lt(user.id, f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư ({balance:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Wallet ({balance:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> 钱包 ({balance:,}đ)")
         if balance >= total_price:
             btns.append([InlineKeyboardButton(bal_text, callback_data=f"pay_prod_bal_{prod_id}_{qty}")])
         else:
-            btns.append([_btn("Không", icon_id="5273914604752216432", callback_data="ignore")])
+            btns.append([_btn(lt(user.id, "Không", "No", "否"), icon_id="5273914604752216432", callback_data="ignore")])
         
         from app.integrations.payments_core import is_usdt_trc20_enabled, is_binance_pay_id_enabled
         if is_usdt_trc20_enabled() or is_binance_pay_id_enabled():
             btns.append([_btn("USDT (Binance ID / BEP20)", icon_id="5281029063459234079", callback_data=f"pay_prod_usdt_trc20_{prod_id}_{qty}")])
         from app.core.config_env import ENABLE_PAYMENT_MBBANK
         if ENABLE_PAYMENT_MBBANK:
-            btns.append([_btn("Chuyển khoản (QR)", icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
-        btns.append([_btn("Quay lại", icon_id="6206032691075223572", callback_data=f"sel_qty_{prod_id}")])
+            btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
+        btns.append([_btn(lt(user.id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=f"sel_qty_{prod_id}")])
         
         confirm_text = (
             f'<tg-emoji emoji-id="5247134066322447995">🛍</tg-emoji> <b>XÁC NHẬN MUA HÀNG</b>\n\n'

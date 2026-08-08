@@ -35,7 +35,7 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             f"Bạn cần chờ <b>{hours}h {mins}m</b> nữa mới được chơi tiếp!\n\n"
             f"{E_TIP} <i>Mỗi người chỉ được chơi 1 lần/24 giờ.</i>",
             parse_mode='HTML',
-            reply_markup=create_back_button_menu()
+            reply_markup=create_back_button_menu(user_id=user_id)
         )
         return
     
@@ -103,7 +103,7 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 f"<tg-emoji emoji-id=\"5386856460632201117\">😢</tg-emoji> Rất tiếc, kho đang hết hàng phù hợp.\n"
                 f"Admin sẽ liên hệ bạn để gửi phần thưởng!",
                 parse_mode='HTML',
-                reply_markup=create_back_button_menu()
+                reply_markup=create_back_button_menu(user_id=user_id)
             )
             # Notify admin
             await context.bot.send_message(
@@ -124,7 +124,7 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             callback = f"dice_prize_{prize['type']}_{prize['id']}"
             keyboard.append([InlineKeyboardButton(btn_text, callback_data=callback)])
         
-        keyboard.append([_btn("Không nhận (Bỏ qua)", icon_id="6147646987257782307", callback_data="dice_skip")])
+        keyboard.append([_btn(lt(user_id, "Không nhận (Bỏ qua)", "Skip the prize", "放弃奖励"), icon_id="6147646987257782307", callback_data="dice_skip")])
         
         await context.bot.send_message(
             chat_id,
@@ -147,7 +147,7 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             f"<tg-emoji emoji-id=\"5386856460632201117\">😢</tg-emoji> Rất tiếc, bạn chưa thắng lần này!\n\n"
             f"{E_TIP} <b>Tip:</b> Chỉ 111 hoặc 222 mới thắng\n"
             f"{E_LOADING} Thử lại sau 24 giờ nhé!",
-            reply_markup=create_back_button_menu(),
+            reply_markup=create_back_button_menu(user_id=user_id),
             parse_mode='HTML'
         )
 

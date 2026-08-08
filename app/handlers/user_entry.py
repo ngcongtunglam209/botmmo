@@ -179,7 +179,7 @@ async def registered_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if await check_if_banned(update): return
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
         await update.message.reply_text(
-            '<tg-emoji emoji-id="5215392879320505675">🛠️</tg-emoji> <b>HỆ THỐNG ĐANG BẢO TRÌ</b>',
+            t("maintenance", user_id=update.effective_user.id),
             parse_mode=ParseMode.HTML
         )
         return
@@ -200,8 +200,15 @@ async def registered_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         referrer_id = _get_pending_registration_referrer(context, user)
         await _register_user_profile(context, user, referrer_id)
         await update.message.reply_html(
-            f"{E_SUCCESS} <b>ĐÃ BẬT XÁC MINH TỰ ĐỘNG.</b>\n\n"
-            f"Dùng <code>/start</code> để mở bot."
+            f"{E_SUCCESS} <b>"
+            + lt(
+                user.id,
+                "ĐÃ XÁC MINH TỰ ĐỘNG.",
+                "VERIFIED AUTOMATICALLY.",
+                "已自动验证。",
+            )
+            + "</b>\n\n"
+            + t("use_start", user_id=user.id)
         )
         return
 

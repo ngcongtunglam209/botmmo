@@ -67,10 +67,18 @@ async def check_if_banned(update) -> bool:
         if not is_joined:
             from telegram import InlineKeyboardMarkup, InlineKeyboardButton
             markup = InlineKeyboardMarkup([
-                [InlineKeyboardButton("Tham gia nhóm", url=SUPPORT_GROUP_LINK)],
-                [InlineKeyboardButton("✅ Đã tham gia · Kiểm tra lại", callback_data="check_membership")],
+                [InlineKeyboardButton(lt(user_id, "Tham gia nhóm", "Join the group", "加入群组"), url=SUPPORT_GROUP_LINK)],
+                [InlineKeyboardButton(
+                    lt(user_id, "✅ Đã tham gia · Kiểm tra lại", "✅ Joined · Check again", "✅ 已加入 · 重新检查"),
+                    callback_data="check_membership",
+                )],
             ])
-            msg = "⚠️ Bạn phải tham gia nhóm Lâm Shop để có thể sử dụng Bot!"
+            msg = lt(
+                user_id,
+                "⚠️ Bạn cần tham gia nhóm Lâm Shop trước khi dùng bot.",
+                "⚠️ Please join the Lâm Shop group before using the bot.",
+                "⚠️ 使用机器人前请先加入 Lâm Shop 群组。",
+            )
             if update.message:
                 await update.message.reply_text(msg, reply_markup=markup)
             elif update.callback_query:
@@ -86,22 +94,44 @@ async def check_if_banned(update) -> bool:
 async def handle_membership_check(update) -> None:
     from telegram import InlineKeyboardMarkup, InlineKeyboardButton
     query = update.callback_query
+    user_id = update.effective_user.id if update.effective_user else None
     try:
         is_joined = await _is_required_group_member(update, force_refresh=True)
     except Exception as e:
-        logger.exception("Membership callback check failed for user_id=%s: %s", update.effective_user.id, e)
-        await query.answer(f"Không kiểm tra được thành viên: {e}", show_alert=True)
+        logger.exception("Membership callback check failed for user_id=%s: %s", user_id, e)
+        await query.answer(
+            lt(
+                user_id,
+                f"Không kiểm tra được tư cách thành viên: {e}",
+                f"Could not check your membership: {e}",
+                f"无法检查群成员身份：{e}",
+            ),
+            show_alert=True,
+        )
         return
     if is_joined:
-        await query.answer("Xác minh thành công!")
+        await query.answer(lt(user_id, "Xác minh thành công", "Verified", "验证成功"))
         await query.edit_message_text(
-            "✅ Đã xác minh bạn tham gia nhóm. Bấm tiếp tục để dùng bot.",
+            lt(
+                user_id,
+                "✅ Đã xác minh bạn tham gia nhóm. Bấm tiếp tục để dùng bot.",
+                "✅ Membership verified. Tap continue to use the bot.",
+                "✅ 已验证您已加入群组。点击继续即可使用机器人。",
+            ),
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("🚀 Tiếp tục", callback_data="back_to_main")
+                InlineKeyboardButton(lt(user_id, "🚀 Tiếp tục", "🚀 Continue", "🚀 继续"), callback_data="back_to_main")
             ]]),
         )
     else:
-        await query.answer("Bot chưa thấy bạn trong nhóm. Hãy tham gia rồi thử lại.", show_alert=True)
+        await query.answer(
+            lt(
+                user_id,
+                "Bot chưa thấy bạn trong nhóm. Hãy tham gia rồi thử lại.",
+                "We cannot see you in the group yet. Join it and try again.",
+                "机器人尚未在群里看到您，请加入后重试。",
+            ),
+            show_alert=True,
+        )
 
 
 async def clear_user_state(context):
@@ -286,13 +316,17 @@ async def fetch_binance_spot_deposits(start_timestamp_ms: int = 0) -> list[dict]
         if owns_client:
             await client.aclose()
 
-def build_binance_checkout_keyboard(binance_order: dict, order_code: str):
+def _cancel_payment_label(user_id=None) -> str:
+    return lt(user_id, "⬅️ Hủy giao dịch", "⬅️ Cancel payment", "⬅️ 取消付款")
+
+
+def build_binance_checkout_keyboard(binance_order: dict, order_code: str, user_id=None):
     rows = []
     checkout_url = str(binance_order.get("checkoutUrl") or "").strip()
     universal_url = str(binance_order.get("universalUrl") or "").strip()
     if checkout_url: rows.append([InlineKeyboardButton("Open Binance Checkout", url=checkout_url)])
     elif universal_url: rows.append([InlineKeyboardButton("Open Binance Pay", url=universal_url)])
-    rows.append([InlineKeyboardButton("⬅️ Hủy giao dịch", callback_data=f"cancel_order:{order_code}")])
+    rows.append([InlineKeyboardButton(_cancel_payment_label(user_id), callback_data=f"cancel_order:{order_code}")])
     return InlineKeyboardMarkup(rows)
 
 def _get_usdt_trc20_quantizer():
@@ -358,17 +392,20 @@ async def get_usdt_trc20_order_quote(order_code: str, amount_vnd: int) -> dict:
         "live_rate": live_rate
     }
 
-def _legacy_build_usdt_trc20_checkout_keyboard(order_code: str):
-    return InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Hủy giao dịch", callback_data=f"cancel_order:{order_code}")]])
-
-def build_usdt_trc20_checkout_keyboard(order_code: str, wallet_address: str = ""):
+def build_usdt_trc20_checkout_keyboard(order_code: str, wallet_address: str = "", user_id=None):
     rows = []
     wallet_address = str(wallet_address or "").strip()
     if BINANCE_PAY_ID:
-        rows.append([InlineKeyboardButton("📋 Sao chép ID Binance", copy_text=CopyTextButton(BINANCE_PAY_ID))])
+        rows.append([InlineKeyboardButton(
+            lt(user_id, "📋 Sao chép ID Binance", "📋 Copy Binance ID", "📋 复制 Binance ID"),
+            copy_text=CopyTextButton(BINANCE_PAY_ID),
+        )])
     if wallet_address:
-        rows.append([InlineKeyboardButton("📋 Sao chép địa chỉ ví BEP20", copy_text=CopyTextButton(wallet_address))])
-    rows.append([InlineKeyboardButton("⬅️ Hủy giao dịch", callback_data=f"cancel_order:{order_code}")])
+        rows.append([InlineKeyboardButton(
+            lt(user_id, "📋 Sao chép địa chỉ ví BEP20", "📋 Copy BEP20 wallet address", "📋 复制 BEP20 钱包地址"),
+            copy_text=CopyTextButton(wallet_address),
+        )])
+    rows.append([InlineKeyboardButton(_cancel_payment_label(user_id), callback_data=f"cancel_order:{order_code}")])
     return InlineKeyboardMarkup(rows)
 
 async def _bsc_rpc(client, method: str, params: list):

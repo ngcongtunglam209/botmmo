@@ -11,20 +11,25 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
 
     # Kiểm tra chế độ bảo trì
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
-        await update.message.reply_text("<tg-emoji emoji-id=\"5215392879320505675\">🛠️</tg-emoji> <b>HỆ THỐNG ĐANG BẢO TRÌ</b>\n\nChúng tôi đang nâng cấp hệ thống để phục vụ bạn tốt hơn. Vui lòng quay lại sau ít phút.", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(t("maintenance", user_id=update.effective_user.id), parse_mode=ParseMode.HTML)
         return
 
     user_state = context.user_data.get('state')
     
     if user_state == 'awaiting_report_photo':
         if not update.message or not update.message.photo:
-             await update.message.reply_text("❌ Vui lòng gửi ảnh hợp lệ.")
+             await update.message.reply_text(lt(update.effective_user.id, "❌ Vui lòng gửi ảnh hợp lệ.", "❌ Please send a valid photo.", "❌ 请发送有效的图片。"))
              return
         order_code = context.user_data.get('report_order_code')
         found_order = order_index.get(order_code) if order_code else None
         if found_order and found_order.get('refunded_at'):
             await update.message.reply_text(
-                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng này đã được hoàn tiền nên không thể báo lỗi nữa."
+                lt(
+                    update.effective_user.id,
+                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng này đã được hoàn tiền nên không thể báo lỗi nữa.",
+                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> This order was refunded, so it can no longer be reported.",
+                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> 该订单已退款，无法再提交问题报告。",
+                )
             )
             await clear_user_state(context)
             return
@@ -37,7 +42,12 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
             logger.warning(f"[REPORT] ảnh báo lỗi không hợp lệ ở bước nhận ({e})")
             await update.message.reply_text(
-                "❌ Ảnh không hợp lệ. Vui lòng gửi lại ảnh dạng <b>Photo</b> (không phải file/document).",
+                lt(
+                    update.effective_user.id,
+                    "❌ Ảnh không hợp lệ. Vui lòng gửi lại ảnh dạng <b>Photo</b> (không phải file/document).",
+                    "❌ That photo is not valid. Send it as a <b>Photo</b>, not as a file.",
+                    "❌ 图片无效。请以<b>图片</b>形式发送，而不是文件。",
+                ),
                 parse_mode=ParseMode.HTML
             )
             return
@@ -47,7 +57,15 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
         context.user_data['report_photo_message_id'] = update.message.message_id
         context.user_data['state'] = 'awaiting_report_description'
 
-        await update.message.reply_text("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã nhận ảnh. Cuối cùng, vui lòng <b>mô tả ngắn gọn</b> vấn đề của bạn là gì.", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(
+            lt(
+                update.effective_user.id,
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã nhận ảnh. Cuối cùng, vui lòng <b>mô tả ngắn gọn</b> vấn đề của bạn.",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Photo received. Last step: <b>describe the problem briefly</b>.",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> 已收到图片。最后请<b>简要描述问题</b>。",
+            ),
+            parse_mode=ParseMode.HTML,
+        )
  
     elif user_state == 'awaiting_warranty_photo':
         order_code = context.user_data.get('warranty_claim_order')
@@ -85,397 +103,16 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
         except (ValueError, TypeError, KeyError, IndexError) as e:
             logger.warning(f"Cannot notify admin about warranty claim {claim_id}: {e}")
         
-        await update.message.reply_text("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Yêu cầu bảo hành đã được gửi. Admin sẽ xem xét sớm.", reply_markup=create_main_menu(user_id=update.effective_user.id))
+        await update.message.reply_text(
+            lt(
+                update.effective_user.id,
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã gửi yêu cầu bảo hành. Admin sẽ xem xét sớm.",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Your warranty request was sent. The admin will review it shortly.",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> 质保申请已提交，管理员会尽快处理。",
+            ),
+            reply_markup=create_main_menu(user_id=update.effective_user.id),
+        )
         await clear_user_state(context)
-
-def _build_my_stats_panel(user):
-    user_id = user.id
-    stats = calculate_user_stats(user_id)
-    badges = calculate_badges(user_id)
-    rank_info = get_user_rank(user_id)
-    current_rank = rank_info.get('rank') or {}
-    base_rank = rank_info.get('base_rank') or current_rank
-    next_rank = rank_info.get('next_rank')
-    user_info = db_get_user(user_id)
-    balance = user_info.get('balance', 0) if user_info else 0
-    maintenance_status = rank_info.get('maintenance_status') or {}
-    current_rank_name = format_rank_entry_premium(current_rank)
-    base_rank_name = format_rank_entry_premium(base_rank)
-    next_rank_name = format_rank_entry_premium(next_rank) if next_rank else ""
-    discount_suffix = ""
-
-    try:
-        current_rank_threshold = int(current_rank.get("min_spent", current_rank.get("min_spend", 0)) or 0)
-    except (TypeError, ValueError, AttributeError):
-        current_rank_threshold = 0
-
-    try:
-        base_rank_threshold = int(base_rank.get("min_spent", base_rank.get("min_spend", 0)) or 0)
-    except (TypeError, ValueError, AttributeError):
-        base_rank_threshold = 0
-
-    maintenance_minimum = int(
-        maintenance_status.get("minimum_required", VIP_MONTHLY_MAINTENANCE_MIN_SPEND)
-        or VIP_MONTHLY_MAINTENANCE_MIN_SPEND
-    )
-    show_maintenance_status = base_rank_threshold > 0 or current_rank_threshold > 0
-
-    achievements_block = ""
-    if badges:
-        badge_rows = []
-        for idx in range(0, len(badges), 2):
-            badge_rows.append("   ".join(badges[idx:idx + 2]))
-        badge_text = "\n".join(badge_rows)
-        achievements_block = (
-            f'<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji> <b>Thành tựu</b>\n'
-            f'<blockquote>{badge_text}</blockquote>\n\n'
-        )
-
-    rank_lines = [
-        f'<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> Hạng hiện tại: {current_rank_name}{discount_suffix}',
-    ]
-
-    if show_maintenance_status:
-        maintenance_icon = "6269163801178804220" if maintenance_status.get("met_requirement") else "5447644880824181073"
-        maintenance_glyph = "✅" if maintenance_status.get("met_requirement") else "⚠️"
-        rank_lines.append(
-            f'<tg-emoji emoji-id="{maintenance_icon}">{maintenance_glyph}</tg-emoji> '
-            f'Duy trì {maintenance_status.get("period_label", "tháng trước")}: '
-            f'<b>{maintenance_status.get("monthly_spend", 0):,} VNĐ</b> / '
-            f'<b>{maintenance_minimum:,} VNĐ</b>'
-        )
-
-    if rank_info.get("demoted_by_maintenance"):
-        rank_lines.append(
-            f'<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> '
-            f'Đang tạm tụt 1 bậc, cần thêm <b>{rank_info.get("remaining_to_next", 0):,} VNĐ</b> '
-            f'để lấy lại {base_rank_name} vào tháng sau'
-        )
-    elif next_rank:
-        rank_lines.append(
-            f'<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> '
-            f'Cần thêm <b>{rank_info.get("remaining_to_next", 0):,} VNĐ</b> để lên {next_rank_name}'
-        )
-    elif current_rank_threshold > 0:
-        rank_lines.append(
-            '<tg-emoji emoji-id="6124902618574625426">👑</tg-emoji> Bạn đang ở hạng VIP cao nhất.'
-        )
-
-    rank_text = "\n".join(rank_lines)
-
-    msg = (
-        f'<tg-emoji emoji-id="6059654836918423763">📊</tg-emoji> <b>THỐNG KÊ CÁ NHÂN</b>\n'
-        f'━━━━━━━━━━━━━━━━━━\n\n'
-        f'<tg-emoji emoji-id="5350778980158956492">👤</tg-emoji> <b>Tài khoản</b>\n'
-        f'<blockquote>'
-        f'<tg-emoji emoji-id="5350778980158956492">👤</tg-emoji> Tên: <b>{format_user_name_html(user=user)}</b>\n'
-        f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> Số dư: <b>{balance:,} VNĐ</b>\n'
-        f'<tg-emoji emoji-id="5334890573281114250">🆔</tg-emoji> ID: <code>{user_id}</code>'
-        f'</blockquote>\n\n'
-        f'<tg-emoji emoji-id="5247134066322447995">🛒</tg-emoji> <b>Mua sắm</b>\n'
-        f'<blockquote>'
-        f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> Tổng chi tiêu: <b>{stats["total_spent"]:,} VNĐ</b>\n'
-        f'<tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> Đơn hoàn thành: <b>{stats["order_count"]}</b>\n'
-        f'<tg-emoji emoji-id="6260059243605398502">🏷️</tg-emoji> Tiết kiệm mã giảm: <b>{stats["coupon_savings"]:,} VNĐ</b>'
-        f'</blockquote>\n\n'
-        f'<tg-emoji emoji-id="6293853394910057834">🤝</tg-emoji> <b>Giới thiệu ({REFERRAL_COMMISSION_PERCENT}% hoa hồng)</b>\n'
-        f'<blockquote>'
-        f'<tg-emoji emoji-id="5350778980158956492">👥</tg-emoji> Đã giới thiệu: <b>{stats["referral_count"]}</b> người\n'
-        f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> Hoa hồng nhận: <b>{stats["commission_earned"]:,} VNĐ</b>'
-        f'</blockquote>\n\n'
-        f'{achievements_block}'
-        f'<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> <b>Hạng VIP</b>\n'
-        f'<blockquote>{rank_text}</blockquote>'
-    )
-
-    btns = [[_btn("Link giới thiệu", icon_id="5193085063998224234", callback_data='my_referral')]]
-    return msg, btns
-
-
-def _build_my_stats_text_with_entities(user):
-    import html
-    import re
-    from telegram import MessageEntity
-
-    def _strip_markup(value):
-        text = str(value or "")
-        text = re.sub(r'<tg-emoji[^>]*>(.*?)</tg-emoji>', r'\1', text)
-        text = re.sub(r'<[^>]+>', '', text)
-        return html.unescape(text).strip()
-
-    def _utf16_len(value: str) -> int:
-        return len((value or "").encode("utf-16-le")) // 2
-
-    stats = calculate_user_stats(user.id)
-    badges = calculate_badges(user.id)
-    rank_info = get_user_rank(user.id)
-    current_rank = rank_info.get('rank') or {}
-    base_rank = rank_info.get('base_rank') or current_rank
-    next_rank = rank_info.get('next_rank')
-    user_info = db_get_user(user.id)
-    balance = user_info.get('balance', 0) if user_info else 0
-    maintenance_status = rank_info.get('maintenance_status') or {}
-
-    current_rank_name = _strip_markup(format_rank_entry_premium(current_rank))
-    base_rank_name = _strip_markup(format_rank_entry_premium(base_rank))
-    next_rank_name = _strip_markup(format_rank_entry_premium(next_rank)) if next_rank else ""
-
-    badge_names = [_strip_markup(badge) for badge in badges]
-    badge_rows = []
-    for idx in range(0, len(badge_names), 2):
-        badge_rows.append(" | ".join(badge_names[idx:idx + 2]))
-
-    discount_suffix = ""
-
-    try:
-        current_rank_threshold = int(current_rank.get("min_spent", current_rank.get("min_spend", 0)) or 0)
-    except (TypeError, ValueError, AttributeError):
-        current_rank_threshold = 0
-
-    try:
-        base_rank_threshold = int(base_rank.get("min_spent", base_rank.get("min_spend", 0)) or 0)
-    except (TypeError, ValueError, AttributeError):
-        base_rank_threshold = 0
-
-    maintenance_minimum = int(
-        maintenance_status.get("minimum_required", VIP_MONTHLY_MAINTENANCE_MIN_SPEND)
-        or VIP_MONTHLY_MAINTENANCE_MIN_SPEND
-    )
-
-    parts = []
-    entities = []
-
-    def _add(text: str):
-        parts.append(text)
-
-    def _offset() -> int:
-        return _utf16_len("".join(parts))
-
-    def _add_custom(glyph: str, emoji_id: str):
-        start = _offset()
-        parts.append(glyph)
-        entities.append(
-            MessageEntity(
-                type=MessageEntity.CUSTOM_EMOJI,
-                offset=start,
-                length=_utf16_len(glyph),
-                custom_emoji_id=str(emoji_id),
-            )
-        )
-
-    def _line(glyph: str, emoji_id: str, text: str):
-        _add_custom(glyph, emoji_id)
-        _add(f" {text}\n")
-
-    _line("📊", "6059654836918423763", "THONG KE CA NHAN")
-    _add("━━━━━━━━━━━━━━━━━━\n\n")
-
-    _line("👤", "5350778980158956492", "Tai khoan")
-    if getattr(user, "is_premium", False):
-        _add_custom("💎", "5240228673738527951")
-        _add(" ")
-    _line("👤", "5350778980158956492", f"Ten: {getattr(user, 'full_name', None) or getattr(user, 'first_name', 'N/A')}")
-    _line("💰", "5278467510604160626", f"So du: {balance:,} VNĐ")
-    _line("🆔", "5334890573281114250", f"ID: {user.id}")
-    _add("\n")
-
-    _line("🛒", "5247134066322447995", "Mua sam")
-    _line("💰", "5278467510604160626", f"Tong chi tieu: {stats['total_spent']:,} VNĐ")
-    _line("📦", "5854908544712707500", f"Don hoan thanh: {stats['order_count']}")
-    _line("🏷️", "6260059243605398502", f"Tiet kiem ma giam: {stats['coupon_savings']:,} VNĐ")
-    _add("\n")
-
-    _line("🤝", "6293853394910057834", f"Gioi thieu ({REFERRAL_COMMISSION_PERCENT}% hoa hong)")
-    _line("👥", "5350778980158956492", f"Da gioi thieu: {stats['referral_count']} nguoi")
-    _line("💰", "5278467510604160626", f"Hoa hong nhan: {stats['commission_earned']:,} VNĐ")
-    _add("\n")
-
-    if badge_rows:
-        _line("🎁", "5449800250032143374", "Thanh tuu")
-        for row in badge_rows:
-            _add(f"• {row}\n")
-        _add("\n")
-
-    _line("💎", "5240228673738527951", "Hang VIP")
-    _line("💎", "5240228673738527951", f"Hang hien tai: {current_rank_name}{discount_suffix}")
-
-    if base_rank_threshold > 0 or current_rank_threshold > 0:
-        maintenance_ok = maintenance_status.get("met_requirement")
-        _line(
-            "✅" if maintenance_ok else "⚠️",
-            "6269163801178804220" if maintenance_ok else "5447644880824181073",
-            f"Duy tri {maintenance_status.get('period_label', 'thang truoc')}: "
-            f"{maintenance_status.get('monthly_spend', 0):,} VNĐ / {maintenance_minimum:,} VNĐ",
-        )
-
-    if rank_info.get("demoted_by_maintenance"):
-        _line(
-            "⚠️",
-            "5447644880824181073",
-            f"Dang tam tut 1 bac, can them {rank_info.get('remaining_to_next', 0):,} VNĐ "
-            f"de lay lai {base_rank_name} vao thang sau",
-        )
-    elif next_rank:
-        _line(
-            "📊",
-            "6059654836918423763",
-            f"Can them {rank_info.get('remaining_to_next', 0):,} VNĐ de len {next_rank_name}",
-        )
-    elif current_rank_threshold > 0:
-        _line("👑", "6124902618574625426", "Ban dang o hang VIP cao nhat")
-
-    text = "".join(parts).rstrip()
-    btns = [[_btn("Link giới thiệu", icon_id="5193085063998224234", callback_data='my_referral')]]
-    return text, entities, btns
-
-
-def _build_my_stats_text_with_entities_v2(user):
-    import html
-    import re
-    from telegram import MessageEntity
-
-    def _utf16_len(value: str) -> int:
-        return len((value or "").encode("utf-16-le")) // 2
-
-    def _strip_markup(value):
-        text = str(value or "")
-        text = re.sub(r'<tg-emoji[^>]*>(.*?)</tg-emoji>', r'\1', text)
-        text = re.sub(r'<[^>]+>', '', text)
-        return html.unescape(text).strip()
-
-    def _rank_label(rank):
-        if not isinstance(rank, dict):
-            return "Dong"
-        min_spent = int(rank.get("min_spent", rank.get("min_spend", 0)) or 0)
-        if min_spent >= 10000000:
-            return "Cao Thu"
-        if min_spent >= 5000000:
-            return "Kim Cuong"
-        if min_spent >= 1000000:
-            return "Vang"
-        if min_spent >= 500000:
-            return "Bac"
-        return "Dong"
-
-    stats = calculate_user_stats(user.id)
-    badges = calculate_badges(user.id)
-    rank_info = get_user_rank(user.id)
-    current_rank = rank_info.get("rank") or {}
-    base_rank = rank_info.get("base_rank") or current_rank
-    next_rank = rank_info.get("next_rank")
-    user_info = db_get_user(user.id)
-    balance = user_info.get("balance", 0) if user_info else 0
-    maintenance_status = rank_info.get("maintenance_status") or {}
-
-    current_rank_name = _rank_label(current_rank) or _strip_markup(format_rank_entry_premium(current_rank))
-    base_rank_name = _rank_label(base_rank) or _strip_markup(format_rank_entry_premium(base_rank))
-    next_rank_name = _rank_label(next_rank) if next_rank else ""
-
-    discount_suffix = ""
-
-    try:
-        current_rank_threshold = int(current_rank.get("min_spent", current_rank.get("min_spend", 0)) or 0)
-    except (TypeError, ValueError, AttributeError):
-        current_rank_threshold = 0
-
-    try:
-        base_rank_threshold = int(base_rank.get("min_spent", base_rank.get("min_spend", 0)) or 0)
-    except (TypeError, ValueError, AttributeError):
-        base_rank_threshold = 0
-
-    maintenance_minimum = int(
-        maintenance_status.get("minimum_required", VIP_MONTHLY_MAINTENANCE_MIN_SPEND)
-        or VIP_MONTHLY_MAINTENANCE_MIN_SPEND
-    )
-
-    badge_names = [_strip_markup(badge) for badge in badges]
-
-    parts = []
-    entities = []
-
-    def _append(text: str):
-        parts.append(text)
-
-    def _offset() -> int:
-        return _utf16_len("".join(parts))
-
-    def _emoji(glyph: str, emoji_id: str):
-        start = _offset()
-        parts.append(glyph)
-        entities.append(
-            MessageEntity(
-                type=MessageEntity.CUSTOM_EMOJI,
-                offset=start,
-                length=_utf16_len(glyph),
-                custom_emoji_id=str(emoji_id),
-            )
-        )
-
-    def _line(glyph: str, emoji_id: str, text: str):
-        _emoji(glyph, emoji_id)
-        _append(f" {text}\n")
-
-    _line("\U0001F4CA", "6059654836918423763", "THONG KE CA NHAN")
-    _append("━━━━━━━━━━━━━━━━━━\n\n")
-
-    _line("\U0001F464", "5350778980158956492", "Tai khoan")
-    if getattr(user, "is_premium", False):
-        _emoji("\U0001F48E", "5240228673738527951")
-        _append(" ")
-    _line("\U0001F464", "5350778980158956492", f"Ten: {getattr(user, 'full_name', None) or getattr(user, 'first_name', 'N/A')}")
-    _line("\U0001F4B0", "5278467510604160626", f"So du: {balance:,} VND")
-    _line("\U0001F194", "5334890573281114250", f"ID: {user.id}")
-    _append("\n")
-
-    _line("\U0001F6D2", "5247134066322447995", "Mua sam")
-    _line("\U0001F4B0", "5278467510604160626", f"Tong chi tieu: {stats['total_spent']:,} VND")
-    _line("\U0001F4E6", "5854908544712707500", f"Don hoan thanh: {stats['order_count']}")
-    _line("\U0001F3F7\uFE0F", "6260059243605398502", f"Tiet kiem ma giam: {stats['coupon_savings']:,} VND")
-    _append("\n")
-
-    _line("\U0001F91D", "6293853394910057834", f"Gioi thieu ({REFERRAL_COMMISSION_PERCENT}% hoa hong)")
-    _line("\U0001F465", "5350778980158956492", f"Da gioi thieu: {stats['referral_count']} nguoi")
-    _line("\U0001F4B0", "5278467510604160626", f"Hoa hong nhan: {stats['commission_earned']:,} VND")
-    _append("\n")
-
-    if badge_names:
-        _line("\U0001F381", "5449800250032143374", "Thanh tuu")
-        for idx in range(0, len(badge_names), 2):
-            _append(f"* {' | '.join(badge_names[idx:idx + 2])}\n")
-        _append("\n")
-
-    _line("\U0001F48E", "5240228673738527951", "Hang VIP")
-    _line("\U0001F48E", "5240228673738527951", f"Hang hien tai: {current_rank_name}{discount_suffix}")
-
-    if base_rank_threshold > 0 or current_rank_threshold > 0:
-        maintenance_ok = maintenance_status.get("met_requirement")
-        _line(
-            "\u2705" if maintenance_ok else "\u26A0\uFE0F",
-            "6269163801178804220" if maintenance_ok else "5447644880824181073",
-            f"Duy tri {maintenance_status.get('period_label', 'thang truoc')}: "
-            f"{maintenance_status.get('monthly_spend', 0):,} VND / {maintenance_minimum:,} VND",
-        )
-
-    if rank_info.get("demoted_by_maintenance"):
-        _line(
-            "\u26A0\uFE0F",
-            "5447644880824181073",
-            f"Dang tam tut 1 bac, can them {rank_info.get('remaining_to_next', 0):,} VND "
-            f"de lay lai {base_rank_name} vao thang sau",
-        )
-    elif next_rank:
-        _line(
-            "\U0001F4CA",
-            "6059654836918423763",
-            f"Can them {rank_info.get('remaining_to_next', 0):,} VND de len {next_rank_name}",
-        )
-    elif current_rank_threshold > 0:
-        _line("\U0001F451", "6124902618574625426", "Ban dang o hang VIP cao nhat")
-
-    text = "".join(parts)
-    btns = [[_btn("Link giới thiệu", icon_id="5193085063998224234", callback_data='my_referral')]]
-    return text, entities, btns
-
 
 async def show_my_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, is_callback=False):
     if await check_if_banned(update): return

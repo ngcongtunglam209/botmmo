@@ -293,17 +293,28 @@ async def record_wallet_refund(
         try:
             await context.bot.send_message(
                 chat_id=int(user_id),
-                text=(
+                text=lt(
+                    user_id,
                     f"🏦 <b>TÙY CHỌN NHẬN TIỀN HOÀN</b>\n\n"
                     f"Mã đơn: <code>{safe_code}</code>\n"
                     f"Sản phẩm: {safe_product}\n"
                     f"Số tiền: <b>{refund_amount:,} VNĐ</b>\n\n"
-                    "Tiền đã được hoàn vào Ví Bot. Bạn có thể yêu cầu chuyển khoản hoàn này về ngân hàng."
+                    "Tiền đã được hoàn vào Ví Bot. Bạn có thể yêu cầu chuyển khoản hoàn này về ngân hàng.",
+                    f"🏦 <b>HOW WOULD YOU LIKE THE REFUND</b>\n\n"
+                    f"Order code: <code>{safe_code}</code>\n"
+                    f"Product: {safe_product}\n"
+                    f"Amount: <b>{refund_amount:,} VND</b>\n\n"
+                    "The money is back in your bot wallet. You can ask for it to be transferred to your bank instead.",
+                    f"🏦 <b>退款方式</b>\n\n"
+                    f"订单号：<code>{safe_code}</code>\n"
+                    f"商品：{safe_product}\n"
+                    f"金额：<b>{refund_amount:,} VND</b>\n\n"
+                    "款项已退回机器人钱包。您也可以申请转账到银行账户。",
                 ),
                 parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup([[
                     _btn(
-                        "Yêu cầu hoàn về ngân hàng",
+                        lt(user_id, "Yêu cầu hoàn về ngân hàng", "Request a bank transfer", "申请银行转账"),
                         icon_id="5278467510604160626",
                         callback_data=f"refund_bank:{normalized_code}",
                     )
