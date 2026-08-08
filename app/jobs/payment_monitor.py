@@ -786,7 +786,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             except (TelegramError, ValueError, KeyError, AttributeError) as e:
                                 logger.error(f"Lỗi gửi header message: {e}")
                             
-                            purchase_date = datetime.datetime.fromtimestamp(current_time).strftime('%d/%m/%Y %H:%M:%S')
+                            purchase_date = datetime.fromtimestamp(current_time).strftime('%d/%m/%Y %H:%M:%S')
                             product_description_txt = format_product_description_for_txt(p)
                             file_content = "="*60 + "\n"
                             file_content += "           THÔNG TIN ĐƠN HÀNG\n"
