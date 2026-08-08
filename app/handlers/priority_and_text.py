@@ -324,7 +324,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     
     # Kiểm tra chế độ bảo trì
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
-        await update.message.reply_text("<tg-emoji emoji-id=\"5215392879320505675\">🛠️</tg-emoji> <b>HỆ THỐNG ĐANG BẢO TRÌ</b>\n\nChúng tôi đang nâng cấp hệ thống để phục vụ bạn tốt hơn. Vui lòng quay lại sau ít phút.\n\nXin lỗi vì sự bất tiện này!", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(t("maintenance", user_id=update.effective_user.id), parse_mode=ParseMode.HTML)
         return
 
     # FIX BUG: Check if message exists (edited messages might be handled differently or ignored here if needed)
@@ -660,13 +660,28 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         qty = context.user_data.get('store_coupon_qty', 1)
         await clear_user_state(context)
         if not prod_id or prod_id not in products:
-            await update.message.reply_text("\u274c S\u1ea3n ph\u1ea9m kh\xf4ng t\u1ed3n t\u1ea1i. Vui l\xf2ng th\u1eed l\u1ea1i.")
+            await update.message.reply_text(
+                lt(
+                    user.id,
+                    "❌ Sản phẩm không tồn tại. Vui lòng thử lại.",
+                    "❌ This product no longer exists. Please try again.",
+                    "❌ 该商品不存在，请重试。",
+                )
+            )
             return
         p = products[prod_id]
         coupon_input = user_input.strip().upper()
         coupon_details = coupons.get(coupon_input)
         if not coupon_details:
-            await update.message.reply_text(f"\u274c M\xe3 <b>{html.escape(coupon_input)}</b> kh\xf4ng h\u1ee3p l\u1ec7.", parse_mode=ParseMode.HTML)
+            await update.message.reply_text(
+                lt(
+                    user.id,
+                    f"❌ Mã <b>{html.escape(coupon_input)}</b> không hợp lệ.",
+                    f"❌ The code <b>{html.escape(coupon_input)}</b> is not valid.",
+                    f"❌ 优惠码 <b>{html.escape(coupon_input)}</b> 无效。",
+                ),
+                parse_mode=ParseMode.HTML,
+            )
             return
         qty_limit = coupon_details.get('quantity', 0)
         used = coupon_details.get('used', 0)
@@ -680,7 +695,15 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             except (TelegramError, ValueError, KeyError, AttributeError):
                 logger.debug("Suppressed error at L9433")
         if is_used_up or is_expired:
-            await update.message.reply_text(f"\u274c M\xe3 <b>{coupon_input}</b> \u0111\xe3 h\u1ebft h\u1ea1n ho\u1eb7c h\u1ebft l\u01b0\u1ee3t s\u1eed d\u1ee5ng.", parse_mode=ParseMode.HTML)
+            await update.message.reply_text(
+                lt(
+                    user.id,
+                    f"❌ Mã <b>{coupon_input}</b> đã hết hạn hoặc hết lượt sử dụng.",
+                    f"❌ The code <b>{coupon_input}</b> has expired or has no uses left.",
+                    f"❌ 优惠码 <b>{coupon_input}</b> 已过期或已用完。",
+                ),
+                parse_mode=ParseMode.HTML,
+            )
             return
         discount_val = coupon_details.get('discount', 0)
         base_price = p['price']
@@ -702,7 +725,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         context.user_data['store_coupon_prod_id'] = prod_id
         context.user_data['store_coupon_qty'] = qty
         btns = []
-        bal_text = f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư ({balance_c:,}đ)"
+        bal_text = lt(user.id, f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư ({balance_c:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Wallet ({balance_c:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> 钱包 ({balance_c:,}đ)")
         if balance_c >= total_price:
             btns.append([InlineKeyboardButton(bal_text, callback_data=f"pay_prod_bal_{prod_id}_{qty}")])
         elif balance_c > 0:
@@ -712,22 +735,39 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 callback_data=f"pay_prod_combo_{prod_id}_{qty}"
             )])
         else:
-            btns.append([_btn("Không", icon_id="5273914604752216432", callback_data="ignore")])
+            btns.append([_btn(lt(user.id, "Không", "No", "否"), icon_id="5273914604752216432", callback_data="ignore")])
         from app.integrations.payments_core import is_usdt_trc20_enabled, is_binance_pay_id_enabled
         if is_usdt_trc20_enabled() or is_binance_pay_id_enabled():
             btns.append([_btn("USDT (Binance ID / BEP20)", icon_id="5281029063459234079", callback_data=f"pay_prod_usdt_trc20_{prod_id}_{qty}")])
         from app.core.config_env import ENABLE_PAYMENT_MBBANK
         if ENABLE_PAYMENT_MBBANK:
-            btns.append([_btn("Chuyển khoản (QR)", icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
-        btns.append([InlineKeyboardButton("\u2b05\ufe0f Quay l\u1ea1i", callback_data=f"buy_prod_confirm_{prod_id}_{qty}")])
+            btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
+        btns.append([InlineKeyboardButton(lt(user.id, "⬅️ Quay lại", "⬅️ Back", "⬅️ 返回"), callback_data=f"buy_prod_confirm_{prod_id}_{qty}")])
         await update.message.reply_text(
-            f"\u2705 <b>M\xc3 GI\u1ea2M GI\xc1 \u0110\xc3 \xc1P D\u1ee4NG!</b>\n\n"
-            f"\U0001f3f7 S\u1ea3n ph\u1ea9m: {html.escape(p['name'])}\n"
-            f"\U0001f522 S\u1ed1 l\u01b0\u1ee3ng: {qty}\n"
-            f"\U0001f3ab M\xe3: <code>{coupon_input}</code> (Gi\u1ea3m {discount_text})\n"
-            f"\U0001f4b0 \u0110\u01a1n gi\xe1: <s>{base_price_text}</s> \u2192 <b>{discounted_unit_text}</b>\n"
-            f"\U0001f4b5 T\u1ed5ng: <b>{total_price:,}\u0111</b>\n\n"
-            f"Ch\u1ecdn ph\u01b0\u01a1ng th\u1ee9c thanh to\xe1n:",
+            lt(
+                user.id,
+                f"✅ <b>ĐÃ ÁP DỤNG MÃ GIẢM GIÁ</b>\n\n"
+                f"🏷 Sản phẩm: {html.escape(p['name'])}\n"
+                f"🔢 Số lượng: {qty}\n"
+                f"🎫 Mã: <code>{coupon_input}</code> (giảm {discount_text})\n"
+                f"💰 Đơn giá: <s>{base_price_text}</s> → <b>{discounted_unit_text}</b>\n"
+                f"💵 Tổng: <b>{total_price:,}đ</b>\n\n"
+                f"Chọn phương thức thanh toán:",
+                f"✅ <b>DISCOUNT CODE APPLIED</b>\n\n"
+                f"🏷 Product: {html.escape(p['name'])}\n"
+                f"🔢 Quantity: {qty}\n"
+                f"🎫 Code: <code>{coupon_input}</code> (saves {discount_text})\n"
+                f"💰 Unit price: <s>{base_price_text}</s> → <b>{discounted_unit_text}</b>\n"
+                f"💵 Total: <b>{total_price:,}đ</b>\n\n"
+                f"Choose a payment method:",
+                f"✅ <b>优惠码已生效</b>\n\n"
+                f"🏷 商品: {html.escape(p['name'])}\n"
+                f"🔢 数量: {qty}\n"
+                f"🎫 优惠码: <code>{coupon_input}</code> (减 {discount_text})\n"
+                f"💰 单价: <s>{base_price_text}</s> → <b>{discounted_unit_text}</b>\n"
+                f"💵 合计: <b>{total_price:,}đ</b>\n\n"
+                f"请选择支付方式：",
+            ),
             parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(btns)
         )
@@ -1007,7 +1047,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         p = products.get(prod_id)
         
         if not p:
-            await update.message.reply_text("❌ Sản phẩm không tồn tại!")
+            await update.message.reply_text(lt(user.id, "❌ Sản phẩm không tồn tại.", "❌ This product no longer exists.", "❌ 该商品不存在。"))
             await clear_user_state(context)
             return
         
@@ -1016,9 +1056,12 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             qty = int(user_input.strip())
         except ValueError:
             await update.message.reply_text(
-                "❌ <b>Số lượng không hợp lệ!</b>\n\n"
-                "Vui lòng nhập một số nguyên.\n"
-                "Ví dụ: 200",
+                lt(
+                    user.id,
+                    "❌ <b>Số lượng không hợp lệ</b>\n\nVui lòng nhập một số nguyên.\nVí dụ: 200",
+                    "❌ <b>That quantity is not valid</b>\n\nSend a whole number.\nFor example: 200",
+                    "❌ <b>数量无效</b>\n\n请输入整数。\n例如：200",
+                ),
                 parse_mode=ParseMode.HTML
             )
             return
@@ -1029,16 +1072,18 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         # Check range
         if qty < 1:
             await update.message.reply_text(
-                "❌ Số lượng phải ít nhất là 1!",
+                lt(user.id, "❌ Số lượng phải ít nhất là 1.", "❌ The quantity must be at least 1.", "❌ 数量至少为 1。"),
                 parse_mode=ParseMode.HTML
             )
             return
         elif qty > stock_count:
             await update.message.reply_text(
-                f"❌ <b>KHÔNG ĐỦ HÀNG!</b>\n\n"
-                f"Bạn muốn: <b>{qty}</b>\n"
-                f"Tồn kho: <b>{stock_count}</b>\n\n"
-                f"Vui lòng nhập số nhỏ hơn hoặc bằng {stock_count}",
+                lt(
+                    user.id,
+                    f"❌ <b>KHÔNG ĐỦ HÀNG</b>\n\nBạn muốn: <b>{qty}</b>\nTồn kho: <b>{stock_count}</b>\n\nVui lòng nhập số nhỏ hơn hoặc bằng {stock_count}.",
+                    f"❌ <b>NOT ENOUGH STOCK</b>\n\nYou asked for: <b>{qty}</b>\nIn stock: <b>{stock_count}</b>\n\nSend a number no larger than {stock_count}.",
+                    f"❌ <b>库存不足</b>\n\n您想要：<b>{qty}</b>\n库存：<b>{stock_count}</b>\n\n请输入不超过 {stock_count} 的数字。",
+                ),
                 parse_mode=ParseMode.HTML
             )
             return
@@ -1051,19 +1096,19 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         balance = user_info.get('balance', 0) if user_info else 0
         
         btns = []
-        bal_text = f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư ({balance:,}đ)"
+        bal_text = lt(user.id, f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư ({balance:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Wallet ({balance:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> 钱包 ({balance:,}đ)")
         if balance >= total_price:
             btns.append([InlineKeyboardButton(bal_text, callback_data=f"pay_prod_bal_{prod_id}_{qty}")])
         else:
-            btns.append([_btn("Không", icon_id="5273914604752216432", callback_data="ignore")])
+            btns.append([_btn(lt(user.id, "Không", "No", "否"), icon_id="5273914604752216432", callback_data="ignore")])
         
         from app.integrations.payments_core import is_usdt_trc20_enabled, is_binance_pay_id_enabled
         if is_usdt_trc20_enabled() or is_binance_pay_id_enabled():
             btns.append([_btn("USDT (Binance ID / BEP20)", icon_id="5281029063459234079", callback_data=f"pay_prod_usdt_trc20_{prod_id}_{qty}")])
         from app.core.config_env import ENABLE_PAYMENT_MBBANK
         if ENABLE_PAYMENT_MBBANK:
-            btns.append([_btn("Chuyển khoản (QR)", icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
-        btns.append([_btn("Quay lại", icon_id="6206032691075223572", callback_data=f"sel_qty_{prod_id}")])
+            btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
+        btns.append([_btn(lt(user.id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=f"sel_qty_{prod_id}")])
         
         confirm_text = (
             f'<tg-emoji emoji-id="5247134066322447995">🛍</tg-emoji> <b>XÁC NHẬN MUA HÀNG</b>\n\n'
