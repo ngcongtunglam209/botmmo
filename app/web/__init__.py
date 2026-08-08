@@ -11,7 +11,6 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from .db import ensure_schema
 from .deps import LoginRequired
 from .settings import WEB_ROOT, get_settings
 
@@ -34,7 +33,8 @@ def register(app: FastAPI, mount_static: bool = True) -> None:
     """Gắn router, static và exception handler của web admin vào một app FastAPI."""
     from .routers import admin, auth, catalog, commands, partners
 
-    ensure_schema()
+    # Cố ý không mở database ở đây: register() chạy trong lúc runtime_loader nạp
+    # module, trước khi bot init_db. Schema được dựng lười ở request đầu tiên.
     get_settings()
 
     for router in (

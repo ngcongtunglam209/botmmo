@@ -11,6 +11,7 @@ import sqlite3
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any
 
 from .settings import get_settings
@@ -26,12 +27,35 @@ def _configure(conn: sqlite3.Connection) -> None:
     conn.execute("PRAGMA foreign_keys=ON")
 
 
+def _connect() -> sqlite3.Connection:
+    path = Path(get_settings().db_path)
+    if path.is_dir():
+        # docker-compose bind-mount `./database.sqlite:/app/database.sqlite`: nếu
+        # file trên host chưa tồn tại, Docker tạo một *thư mục* trùng tên và
+        # sqlite chỉ báo "unable to open database file".
+        raise RuntimeError(
+            f"{path} là thư mục chứ không phải file SQLite. "
+            "Tạo file rỗng trên host (`touch database.sqlite`) rồi dựng lại container."
+        )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(path), timeout=10, check_same_thread=False)
+    _configure(conn)
+    _create_tables(conn)
+    return conn
+
+
 def get_connection() -> sqlite3.Connection:
-    """Một connection cho mỗi thread (FastAPI chạy sync handler trong threadpool)."""
+    """Một connection cho mỗi thread (FastAPI chạy sync handler trong threadpool).
+
+    Database chỉ được mở ở lần dùng thật đầu tiên, không phải lúc import: web
+    chạy chung process với bot và không được chạm đĩa trước khi bot init_db.
+
+    Schema dựng theo từng connection chứ không theo cờ toàn cục — cờ toàn cục
+    sẽ bỏ qua việc tạo bảng khi database bị thay (mỗi test một file tạm).
+    """
     conn = getattr(_local, "conn", None)
     if conn is None:
-        conn = sqlite3.connect(get_settings().db_path, timeout=10, check_same_thread=False)
-        _configure(conn)
+        conn = _connect()
         _local.conn = conn
     return conn
 
@@ -90,8 +114,17 @@ def kv_write(key: str, value: Any, conn: sqlite3.Connection | None = None) -> No
 
 
 def ensure_schema() -> None:
-    """Tạo bảng web cần nếu bot chưa chạy init_db (ví dụ khi chạy test)."""
-    with transaction() as conn:
+    """Tạo bảng ngay lập tức. Đường chạy bình thường dùng bản lười trong
+    `get_connection()`; hàm này để test dựng sẵn database."""
+    _create_tables(get_connection())
+
+
+def _create_tables(conn: sqlite3.Connection) -> None:
+    """Bảng web cần, nếu bot chưa chạy init_db (test, hoặc web chạy riêng).
+
+    Chỉ CREATE IF NOT EXISTS — không đụng gì tới bảng bot đã tạo.
+    """
+    with conn:
         conn.execute("CREATE TABLE IF NOT EXISTS kv_store (key TEXT PRIMARY KEY, value TEXT)")
         conn.execute(
             "CREATE TABLE IF NOT EXISTS admin_sessions ("

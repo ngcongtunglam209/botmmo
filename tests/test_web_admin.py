@@ -60,6 +60,45 @@ def csrf_of(token: str) -> str:
     return security.csrf_token_for(token)
 
 
+# --- Khởi động --------------------------------------------------------------
+
+def test_create_app_does_not_touch_the_database(tmp_path, monkeypatch):
+    """register() chạy lúc runtime_loader nạp module, trước khi bot init_db.
+
+    Mở SQLite ở đó làm bot chết ngay lúc khởi động với "unable to open database
+    file". Dựng app phải không chạm đĩa.
+    """
+    from app.web import create_app, db, settings
+
+    unopenable = tmp_path / "khong-mo-duoc.sqlite"
+    unopenable.mkdir()  # thư mục trùng tên: sqlite không mở được
+    monkeypatch.setenv("DB_PATH", str(unopenable))
+    settings.get_settings.cache_clear()
+    db.close_connection()
+    try:
+        create_app()  # không được ném lỗi
+    finally:
+        db.close_connection()
+        settings.get_settings.cache_clear()
+
+
+def test_directory_instead_of_database_gives_a_clear_error(tmp_path, monkeypatch):
+    """Bind-mount thiếu file trên host khiến Docker tạo thư mục trùng tên."""
+    from app.web import db, settings
+
+    as_directory = tmp_path / "database.sqlite"
+    as_directory.mkdir()
+    monkeypatch.setenv("DB_PATH", str(as_directory))
+    settings.get_settings.cache_clear()
+    db.close_connection()
+    try:
+        with pytest.raises(RuntimeError, match="thư mục"):
+            db.get_connection()
+    finally:
+        db.close_connection()
+        settings.get_settings.cache_clear()
+
+
 # --- Xác thực ---------------------------------------------------------------
 
 def test_guest_is_redirected_to_login(web):
