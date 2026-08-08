@@ -25,8 +25,30 @@
 BINANCE_PAY_TRANSACTION_IN = "IN"
 
 
+_binance_pay_url_warned = False
+
+
 def is_binance_pay_enabled() -> bool:
-    return bool(ENABLE_PAYMENT_BINANCE_PAY and BINANCE_PAY_ID and BINANCE_PAY_HISTORY_URL)
+    """Binance Pay chi bat khi co ID, va feed la mot URL day du.
+
+    Feed thieu scheme (vi du dat `/historyapibinancev3/<TOKEN>` thay vi ca
+    domain) lam httpx nem "unknown url type" o MOI vong quet, con khach van bam
+    duoc nut Binance Pay va tra tien vao mot don khong bao gio doi soat duoc.
+    Tha tat cong con hon nhan tien ma khong cong duoc.
+    """
+    global _binance_pay_url_warned
+    if not (ENABLE_PAYMENT_BINANCE_PAY and BINANCE_PAY_ID and BINANCE_PAY_HISTORY_URL):
+        return False
+    if not str(BINANCE_PAY_HISTORY_URL).strip().lower().startswith(("http://", "https://")):
+        if not _binance_pay_url_warned:
+            _binance_pay_url_warned = True
+            logger.error(
+                "BINANCE_PAY_HISTORY_URL phai la URL day du bat dau bang https:// "
+                "(vi du https://sieuthicode.com/historyapibinancev3/<TOKEN>). "
+                "Gia tri hien tai thieu scheme -> tat Binance Pay."
+            )
+        return False
+    return True
 
 
 def binance_pay_normalize_ref(transaction_id) -> str:

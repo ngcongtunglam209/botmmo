@@ -391,3 +391,21 @@ async def test_a_topup_outside_its_own_expiry_window_is_not_matched(monkeypatch)
     await monitor._scan_binance_pay_payments(synthetic_transactions)
 
     assert synthetic_transactions == []
+
+
+def test_a_feed_url_without_a_scheme_turns_the_gateway_off(monkeypatch):
+    binance, _ = _load()
+    _configure(monkeypatch, binance)
+    monkeypatch.setattr(binance, "_binance_pay_url_warned", False, raising=False)
+
+    # httpx raises "unknown url type" on a bare path, once per scan, while the
+    # Binance Pay button stays live — customers pay into orders that can never
+    # be reconciled.
+    monkeypatch.setattr(binance, "BINANCE_PAY_HISTORY_URL", "/historyapibinancev3/TOKEN", raising=False)
+    assert binance.is_binance_pay_enabled() is False
+
+    monkeypatch.setattr(binance, "BINANCE_PAY_HISTORY_URL", "sieuthicode.com/historyapibinancev3/TOKEN", raising=False)
+    assert binance.is_binance_pay_enabled() is False
+
+    monkeypatch.setattr(binance, "BINANCE_PAY_HISTORY_URL", "https://sieuthicode.com/historyapibinancev3/TOKEN", raising=False)
+    assert binance.is_binance_pay_enabled() is True
