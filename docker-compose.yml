@@ -23,10 +23,18 @@ services:
     env_file:
       - .env
       - .env.admin
+    environment:
+      # Phai tro vao thu muc duoc mount ben duoi, xem chu thich o volumes.
+      DB_PATH: /app/data/database.sqlite
+      LOG_FILE: /app/logs/bot.log
     volumes:
-      # Persist SQLite database and allow one-time admin credential migration.
-      - ./database.sqlite:/app/database.sqlite
-      - ./bot.log:/app/bot.log
+      # Mount ca thu muc chu khong phai rieng file .sqlite: SQLite chay WAL nen
+      # con ghi database.sqlite-wal va -shm ben canh. Neu chi mount file thi hai
+      # file kia nam trong lop ephemeral cua container va WAL chua checkpoint se
+      # mat khi `docker compose down`. Mount file don cung de vo khi file tren
+      # host chua ton tai: Docker se tao mot *thu muc* trung ten.
+      - ./data:/app/data
+      - ./logs:/app/logs
       - ./.env.admin:/app/.env.admin
     # Chi Caddy goi duoc port nay qua Docker network noi bo - khong public truc tiep ra VPS.
     expose:

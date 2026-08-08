@@ -112,6 +112,38 @@ async def test_notify_admin_is_noop_without_bot(monkeypatch):
     assert await bridge.notify_admin("xin chào") is False
 
 
+def test_web_and_bot_resolve_the_same_database(tmp_path, monkeypatch):
+    """Lệch đường dẫn = hai database song song, bot và web không thấy dữ liệu nhau."""
+    from app.core.runtime_loader import load_modules
+    from app.web import settings
+
+    target = tmp_path / "data" / "database.sqlite"
+    monkeypatch.setenv("DB_PATH", str(target))
+    settings.get_settings.cache_clear()
+    try:
+        bot_path = load_modules(force_reload=True)["app.integrations.payments_core"].DB_PATH
+        assert str(settings.get_settings().db_path) == str(bot_path) == str(target)
+    finally:
+        settings.get_settings.cache_clear()
+        load_modules(force_reload=True)
+
+
+def test_empty_db_path_env_var_falls_back_to_the_default(monkeypatch):
+    """`DB_PATH=` rỗng phải rơi về mặc định, không thành đường dẫn rỗng.
+
+    os.getenv(name, default) trả "" khi biến tồn tại nhưng rỗng, và .env.example
+    từng ship sẵn một dòng như vậy — web sẽ mở database khác bot mà không báo gì.
+    """
+    from app.web import settings
+
+    monkeypatch.setenv("DB_PATH", "")
+    settings.get_settings.cache_clear()
+    try:
+        assert settings.get_settings().db_path.endswith("database.sqlite")
+    finally:
+        settings.get_settings.cache_clear()
+
+
 def test_every_mapped_field_exists_on_app_state():
     """Sai tên field sẽ khiến bridge im lặng bỏ qua — bắt lỗi đó ngay ở test."""
     from app.state import AppState

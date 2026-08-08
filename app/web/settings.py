@@ -16,7 +16,13 @@ WEB_ROOT = Path(__file__).resolve().parent
 
 
 def _env(name: str, default: str = "") -> str:
-    return str(os.getenv(name, default) or "").strip()
+    """Biến tồn tại nhưng rỗng phải rơi về default.
+
+    `.env.example` ship sẵn `DB_PATH=` rỗng, và `os.getenv(name, default)` trả
+    chuỗi rỗng chứ không trả default trong trường hợp đó — web sẽ mở một
+    database khác với bot mà không báo gì.
+    """
+    return str(os.getenv(name) or "").strip() or default
 
 
 def _env_int(name: str, default: int, minimum: int | None = None) -> int:
@@ -60,7 +66,7 @@ class Settings:
     asset_dir: Path
 
     notify_admin: bool
-    log_dir: Path
+    log_file: Path
 
     product_table_limit: int = 3000
     order_table_limit: int = 260
@@ -120,7 +126,7 @@ def get_settings() -> Settings:
         category_image_dir=upload_dir / "categories",
         asset_dir=PROJECT_ROOT / "app" / "api" / "assets",
         notify_admin=_env_bool("ADMIN_WEB_NOTIFY", True),
-        log_dir=PROJECT_ROOT / "logs",
+        log_file=Path(_env("LOG_FILE") or PROJECT_ROOT / "bot.log"),
     )
     settings.product_image_dir.mkdir(parents=True, exist_ok=True)
     settings.category_image_dir.mkdir(parents=True, exist_ok=True)
