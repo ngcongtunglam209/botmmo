@@ -120,29 +120,54 @@ PUBLIC_API_SCHEME = os.getenv("PUBLIC_API_SCHEME", "https").strip().lower()
 # otherwise drop those headers and report every HTTPS request as plain http.
 TRUSTED_PROXY_IPS = os.getenv("TRUSTED_PROXY_IPS", "*").strip() or "*"
 AUTO_PUBLIC_IP_DETECT = os.getenv("AUTO_PUBLIC_IP_DETECT", "true").strip().lower() in {"1", "true", "yes", "on"}
-BINANCE_PAY_CERT_SN = os.getenv("BINANCE_PAY_CERT_SN", os.getenv("BINANCE_PAY_API_KEY", "")).strip()
-BINANCE_PAY_SECRET_KEY = os.getenv("BINANCE_PAY_SECRET_KEY", "").strip()
-BINANCE_PAY_RATE_VND_PER_USDT_RAW = os.getenv("BINANCE_PAY_RATE_VND_PER_USDT", "0").strip()
-BINANCE_PAY_TERMINAL_TYPE = os.getenv("BINANCE_PAY_TERMINAL_TYPE", "APP").strip().upper() or "APP"
-BINANCE_PAY_SUPPORT_PAY_CURRENCY = os.getenv("BINANCE_PAY_SUPPORT_PAY_CURRENCY", "USDT,USDC,FDUSD,BNB").strip().upper()
-BINANCE_PAY_GOODS_CATEGORY = os.getenv("BINANCE_PAY_GOODS_CATEGORY", "Z000").strip().upper() or "Z000"
-BINANCE_PAY_SUB_MERCHANT_ID = os.getenv("BINANCE_PAY_SUB_MERCHANT_ID", "").strip()
+# --- RPay: cong thanh toan USDT duy nhat (callback la chinh, poll
+# GetInvoiceStatus chi la du phong doi soat lai) ---
+ENABLE_PAYMENT_RPAY = os.getenv("ENABLE_PAYMENT_RPAY", "true").strip().lower() in {"1", "true", "yes", "on"}
+RPAY_MERCHANT_ID = os.getenv("RPAY_MERCHANT_ID", "").strip()
+RPAY_API_KEY = os.getenv("RPAY_API_KEY", "").strip()
+RPAY_API_BASE_URL = os.getenv("RPAY_API_BASE_URL", "https://api.rpay.vn/api").strip().rstrip("/")
+# Token/network/address deu tuy chon: de trong thi RPay dung vi mac dinh cua
+# cua hang. Chi bat buoc `address` khi 1 network/token co nhieu vi active.
+RPAY_TOKEN = os.getenv("RPAY_TOKEN", "USDT").strip().upper()
+RPAY_NETWORK = os.getenv("RPAY_NETWORK", "").strip().lower()
+RPAY_WALLET_ADDRESS = os.getenv("RPAY_WALLET_ADDRESS", "").strip()
+# De trong -> bam theo PUBLIC_API_URL + /webhook/rpay (xem rpay_callback_url()).
+RPAY_CALLBACK_URL = os.getenv("RPAY_CALLBACK_URL", "").strip()
+RPAY_TIMEOUT_SECONDS = get_env_float("RPAY_TIMEOUT_SECONDS", 15.0, minimum=3.0)
+# Tra thieu bao nhieu USDT thi van chap nhan (phi mang lam hut vai cent).
+RPAY_UNDERPAY_TOLERANCE_RAW = os.getenv("RPAY_UNDERPAY_TOLERANCE", "0.01").strip()
+# So le USDT hien cho khach va gui len RPay. 2 la du cho moi network.
+USDT_DISPLAY_DECIMALS = get_env_int("USDT_DISPLAY_DECIMALS", 2, minimum=1)
+
+# --- Binance Pay: khach chuyen thang vao Binance ID cua shop, doi soat bang
+# feed lich su sieuthicode.com (poll, khong co callback) ---
+ENABLE_PAYMENT_BINANCE_PAY = os.getenv("ENABLE_PAYMENT_BINANCE_PAY", "false").strip().lower() in {"1", "true", "yes", "on"}
+# Binance ID (Pay ID) khach se chuyen toi. Hien trong hoa don va QR.
 BINANCE_PAY_ID = os.getenv("BINANCE_PAY_ID", "").strip()
-BINANCE_PAY_HOST = "https://bpay.binanceapi.com"
-BINANCE_SPOT_API_KEY = os.getenv("BINANCE_SPOT_API_KEY", "").strip()
-BINANCE_SPOT_API_SECRET = os.getenv("BINANCE_SPOT_API_SECRET", "").strip()
-ENABLE_PAYMENT_BINANCE_SPOT = os.getenv("ENABLE_PAYMENT_BINANCE_SPOT", "true").strip().lower() in {"1", "true", "yes", "on"}
-USDT_BEP20_WALLET_ADDRESS = os.getenv("USDT_BEP20_WALLET_ADDRESS", "").strip()
-USDT_BEP20_RATE_VND_PER_USDT_RAW = os.getenv("USDT_BEP20_RATE_VND_PER_USDT", BINANCE_PAY_RATE_VND_PER_USDT_RAW).strip()
-# Legacy aliases keep older checkout helpers compatible while BEP20 replaces TRC20.
-USDT_TRC20_WALLET_ADDRESS = USDT_BEP20_WALLET_ADDRESS
-USDT_TRC20_RATE_VND_PER_USDT_RAW = USDT_BEP20_RATE_VND_PER_USDT_RAW
-BSC_RPC_URL = os.getenv("BSC_RPC_URL", "https://bsc.rpc.blxrbdn.com").strip()
-BSC_USDT_CONTRACT_ADDRESS = os.getenv("BSC_USDT_CONTRACT_ADDRESS", "0x55d398326f99059fF775485246999027B3197955").strip()
-BSC_CONFIRMATIONS = get_env_int("BSC_CONFIRMATIONS", 5, minimum=1)
-USDT_TRC20_TOKEN_DECIMALS = get_env_int("USDT_BEP20_TOKEN_DECIMALS", 18, minimum=1)
+# URL feed lich su day du, ke ca token. Vi du:
+#   https://sieuthicode.com/historyapibinancev3/<TOKEN>
+# Token nam trong path nen no se lot vao log truy cap cua moi proxy tren duong
+# di - coi nhu bi mat yeu, va vi vay no khong bao gio duoc phep quyet dinh so
+# tien cong cho khach (xem _scan_binance_pay_payments).
+BINANCE_PAY_HISTORY_URL = os.getenv("BINANCE_PAY_HISTORY_URL", "").strip()
+BINANCE_PAY_TIMEOUT_SECONDS = get_env_float("BINANCE_PAY_TIMEOUT_SECONDS", 10.0, minimum=3.0)
+# Feed KHONG tra ve noi dung chuyen khoan (`description` gan nhu luon rong), nen
+# khong the khop don theo ma ICLD. Cach khop duy nhat con lai la so tien chinh
+# xac + cua so thoi gian. Vi vay moi don duoc gan mot so le rieng o chu so thu
+# BINANCE_PAY_AMOUNT_DECIMALS de khong hai don nao trung so tien.
+BINANCE_PAY_AMOUNT_DECIMALS = get_env_int("BINANCE_PAY_AMOUNT_DECIMALS", 4, minimum=3)
+# Giao dich duoc coi la cua don neu roi trong [tao don - LEEWAY, het han + LEEWAY].
+BINANCE_PAY_MATCH_LEEWAY_SECONDS = get_env_int("BINANCE_PAY_MATCH_LEEWAY_SECONDS", 120, minimum=30)
+# Ty gia du phong khi khong lay duoc gia P2P live (0 = bat buoc phai co live).
+USDT_RATE_VND_PER_USDT_RAW = os.getenv("USDT_RATE_VND_PER_USDT", "0").strip()
+# Nguon gia USDT/VND tham khao. San pham niem yet VND con RPay thu USDT nen
+# van phai quy doi; day chi la bang gia cong khai, khong phai cong thanh toan.
+USDT_RATE_SOURCE_URL = os.getenv(
+    "USDT_RATE_SOURCE_URL",
+    "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
+).strip()
 BANK_BUTTON_ICON_ID = os.getenv("BANK_BUTTON_ICON_ID", "6201627300170043826").strip()
-BINANCE_BUTTON_ICON_ID = os.getenv("BINANCE_BUTTON_ICON_ID", "5280763862113592324").strip()
+CRYPTO_BUTTON_ICON_ID = os.getenv("CRYPTO_BUTTON_ICON_ID", "5280763862113592324").strip()
 VIP_PREMIUM_ICON_ID = os.getenv("VIP_PREMIUM_ICON_ID", "5240228673738527951").strip()
 
 # Advanced Features Configuration
@@ -178,14 +203,16 @@ DAILY_PROMO_MIN_BUDGET = 20000
 daily_promo_tracker = {}
 
 try:
-    BINANCE_PAY_RATE_VND_PER_USDT = Decimal(BINANCE_PAY_RATE_VND_PER_USDT_RAW or "0")
+    USDT_RATE_VND_PER_USDT = Decimal(USDT_RATE_VND_PER_USDT_RAW or "0")
 except InvalidOperation:
-    BINANCE_PAY_RATE_VND_PER_USDT = Decimal("0")
+    USDT_RATE_VND_PER_USDT = Decimal("0")
 
 try:
-    USDT_TRC20_RATE_VND_PER_USDT = Decimal(USDT_TRC20_RATE_VND_PER_USDT_RAW or "0")
+    RPAY_UNDERPAY_TOLERANCE = Decimal(RPAY_UNDERPAY_TOLERANCE_RAW or "0")
 except InvalidOperation:
-    USDT_TRC20_RATE_VND_PER_USDT = Decimal("0")
+    RPAY_UNDERPAY_TOLERANCE = Decimal("0.01")
+if RPAY_UNDERPAY_TOLERANCE < 0:
+    RPAY_UNDERPAY_TOLERANCE = Decimal("0")
 
 def _get_today_key():
     return datetime.now().strftime('%Y-%m-%d')
@@ -273,6 +300,8 @@ def _iter_log_secrets():
         API_SECRET_KEY,
         SEPAY_WEBHOOK_API_KEY,
         SEPAY_API_TOKEN,
+        RPAY_API_KEY,
+        BINANCE_PAY_HISTORY_URL,
         ADMIN_WEB_PASSWORD_HASH,
         ADMIN_WEB_SESSION_SECRET,
         AI_API_KEY,

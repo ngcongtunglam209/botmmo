@@ -569,8 +569,10 @@ SYSTEM_TOGGLES = {
 ENV_TOGGLES = {
     "sepay_on": ("ENABLE_PAYMENT_SEPAY", True, "Đã bật SePay."),
     "sepay_off": ("ENABLE_PAYMENT_SEPAY", False, "Đã tắt SePay."),
-    "binance_on": ("ENABLE_PAYMENT_BINANCE_SPOT", True, "Đã bật Binance Spot."),
-    "binance_off": ("ENABLE_PAYMENT_BINANCE_SPOT", False, "Đã tắt Binance Spot."),
+    "rpay_on": ("ENABLE_PAYMENT_RPAY", True, "Đã bật RPay (USDT)."),
+    "rpay_off": ("ENABLE_PAYMENT_RPAY", False, "Đã tắt RPay (USDT)."),
+    "binance_pay_on": ("ENABLE_PAYMENT_BINANCE_PAY", True, "Đã bật Binance Pay."),
+    "binance_pay_off": ("ENABLE_PAYMENT_BINANCE_PAY", False, "Đã tắt Binance Pay."),
 }
 
 

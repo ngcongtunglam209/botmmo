@@ -37,7 +37,8 @@
       {{ csrf(csrf_token) }}
       {{ select('Thao tác', 'mode', [
         ('sepay_on', 'Bật SePay'), ('sepay_off', 'Tắt SePay'),
-        ('binance_on', 'Bật Binance Spot'), ('binance_off', 'Tắt Binance Spot')]) }}
+        ('rpay_on', 'Bật RPay (USDT)'), ('rpay_off', 'Tắt RPay (USDT)'),
+        ('binance_pay_on', 'Bật Binance Pay'), ('binance_pay_off', 'Tắt Binance Pay')]) }}
       <div class="form-actions"><button type="submit">Áp dụng</button></div>
     </form>
   </section>

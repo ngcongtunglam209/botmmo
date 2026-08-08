@@ -428,15 +428,7 @@ async def handle_cancel_order_payment(query, context, command):
         except (Forbidden, BadRequest) as e:
             logger.debug(f"Cannot delete pending message on cancel order {order_code}: {e}")
 
-        if details.get("provider") == "binance_pay":
-            try:
-                await close_binance_pay_order(
-                    order_code=order_code,
-                    prepay_id=str(details.get("binance_prepay_id") or ""),
-                )
-            except Exception as e:
-                logger.exception(f"Cannot close Binance order {order_code}: {e}")
-
+        # RPay tu het han hoa don theo expireMinutes; khong co endpoint huy.
         refunded_amount = 0
         balance_used = int(details.get('balance_used', 0) or 0)
         if balance_used > 0:

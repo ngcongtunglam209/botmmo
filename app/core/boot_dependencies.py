@@ -127,7 +127,7 @@ import hashlib
 import hmac
 import secrets
 import ipaddress
-from decimal import Decimal, ROUND_UP, InvalidOperation
+from decimal import Decimal, ROUND_DOWN, ROUND_UP, InvalidOperation
 from collections import Counter
 from contextlib import closing
 from email.mime.text import MIMEText
