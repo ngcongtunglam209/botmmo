@@ -17,28 +17,33 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts import import_customers as importer  # noqa: E402
 
+HEADER = ["chatId", "balance", "username", "firstName", "lastName", "isBlocked"]
+
 ROWS = [
-    # chatId, balance, username, firstName, lastName
-    ("111", 50_000, "khach_a", "An", "Nguyen"),
-    ("222", 0, "khach_b", "Binh", ""),
-    ("333", 3542.4, "khach_c", "Cuong", "Le"),
-    ("444", 10**32, "admin_row", "Admin", ""),
-    ("555", -1000, "khach_am", "Am", ""),
-    ("khong-phai-so", 9000, "khach_hong", "Hong", ""),
+    ("111", 50_000, "khach_a", "An", "Nguyen", False),
+    ("222", 0, "khach_b", "Binh", "", False),
+    ("333", 3542.4, "khach_c", "Cuong", "Le", False),
+    ("444", 10**32, "admin_row", "Admin", "", False),
+    ("555", -1000, "khach_am", "Am", "", False),
+    ("666", 0, "khach_chan", "Chan", "", True),
+    ("khong-phai-so", 9000, "khach_hong", "Hong", "", False),
 ]
+
+
+def write_workbook(path, rows):
+    openpyxl = pytest.importorskip("openpyxl")
+    book = openpyxl.Workbook()
+    sheet = book.active
+    sheet.append(HEADER)
+    for row in rows:
+        sheet.append(list(row))
+    book.save(path)
+    return path
 
 
 @pytest.fixture()
 def workbook(tmp_path):
-    openpyxl = pytest.importorskip("openpyxl")
-    path = tmp_path / "customers.xlsx"
-    book = openpyxl.Workbook()
-    sheet = book.active
-    sheet.append(["chatId", "balance", "username", "firstName", "lastName"])
-    for row in ROWS:
-        sheet.append(list(row))
-    book.save(path)
-    return path
+    return write_workbook(tmp_path / "customers.xlsx", ROWS)
 
 
 @pytest.fixture()
@@ -80,39 +85,74 @@ def _invoke(workbook, *extra):
         sys.argv = original
 
 
-# --- Chọn dòng nào để cộng ---------------------------------------------------
+# --- Chọn ai vào, ai được cộng tiền ------------------------------------------
 
-def test_plan_keeps_only_sane_positive_balances(workbook):
+def test_every_numeric_id_is_imported_for_broadcast(workbook):
+    """Ai cũng phải có id trong user_data_db thì /broadcast mới gửi tới được."""
     rows = importer.read_rows(workbook)
-    credits, skipped = importer.plan(rows, include_absurd=False)
+    profiles, _ = importer.plan(rows, include_absurd=False)
 
-    assert {credit["id"] for credit in credits} == {"111", "333"}
+    assert {entry["id"] for entry in profiles} == {"111", "222", "333", "444", "555", "666"}
+
+
+def test_only_sane_positive_balances_are_credited(workbook):
+    rows = importer.read_rows(workbook)
+    profiles, skipped = importer.plan(rows, include_absurd=False)
+
+    credited = {entry["id"] for entry in profiles if entry["amount"] > 0}
+    assert credited == {"111", "333"}
+
     reasons = {item["label"]: item["reason"] for item in skipped}
     assert "số dư bất thường" in reasons["admin_row"]
     assert "số dư âm" in reasons["khach_am"]
     assert "chatId không phải số" in reasons["khach_hong"]
 
 
-def test_zero_balance_is_skipped_silently(workbook):
+def test_non_numeric_id_is_dropped_entirely(workbook):
     rows = importer.read_rows(workbook)
-    credits, skipped = importer.plan(rows, include_absurd=False)
+    profiles, _ = importer.plan(rows, include_absurd=False)
 
-    assert all(credit["id"] != "222" for credit in credits)
+    assert all(entry["id"] != "khong-phai-so" for entry in profiles)
+
+
+def test_zero_balance_is_imported_without_a_warning(workbook):
+    rows = importer.read_rows(workbook)
+    profiles, skipped = importer.plan(rows, include_absurd=False)
+
+    entry = next(entry for entry in profiles if entry["id"] == "222")
+    assert entry["amount"] == 0
     assert all(item["label"] != "khach_b" for item in skipped)
 
 
 def test_fractional_balance_is_rounded(workbook):
     rows = importer.read_rows(workbook)
-    credits, _ = importer.plan(rows, include_absurd=False)
+    profiles, _ = importer.plan(rows, include_absurd=False)
 
-    assert next(c["amount"] for c in credits if c["id"] == "333") == 3542
+    assert next(e["amount"] for e in profiles if e["id"] == "333") == 3542
 
 
 def test_absurd_balance_can_be_forced_in(workbook):
     rows = importer.read_rows(workbook)
-    credits, _ = importer.plan(rows, include_absurd=True)
+    profiles, _ = importer.plan(rows, include_absurd=True)
 
-    assert any(credit["id"] == "444" for credit in credits)
+    # Excel lưu số này dưới dạng float nên giá trị đọc lại không khớp tuyệt đối.
+    assert next(e["amount"] for e in profiles if e["id"] == "444") > 10**31
+
+
+def test_optional_columns_may_be_absent(tmp_path):
+    """Export khác có thể không có username/isBlocked — vẫn phải nhập được id."""
+    openpyxl = pytest.importorskip("openpyxl")
+    path = tmp_path / "toi_gian.xlsx"
+    book = openpyxl.Workbook()
+    book.active.append(["chatId", "balance"])
+    book.active.append(["777", 1234])
+    book.save(path)
+
+    profiles, _ = importer.plan(importer.read_rows(path), include_absurd=False)
+
+    assert profiles == [
+        {"id": "777", "amount": 1234, "username": "", "name": "", "blocked": False}
+    ]
 
 
 # --- Ghi dữ liệu -------------------------------------------------------------
@@ -130,6 +170,31 @@ def test_apply_creates_missing_users(workbook, database):
     assert users["111"]["balance"] == 50_000
     assert users["111"]["username"] == "khach_a"
     assert users["111"]["first_name"] == "An Nguyen"
+
+
+def test_apply_imports_zero_balance_users_too(workbook, database):
+    _invoke(workbook, "--apply")
+
+    users = read_kv(database, importer.USERS_KEY)
+    assert users["222"]["balance"] == 0
+    assert users["222"]["username"] == "khach_b"
+
+
+def test_users_who_blocked_the_old_bot_are_left_out_of_broadcasts(workbook, database):
+    _invoke(workbook, "--apply")
+
+    users = read_kv(database, importer.USERS_KEY)
+    assert users["666"]["broadcast_disabled"] is True
+    assert "broadcast_disabled" not in users["111"]
+
+
+def test_absurd_balance_row_still_gets_an_id(workbook, database):
+    """Bỏ số dư rác nhưng vẫn phải nhận được thông báo."""
+    _invoke(workbook, "--apply")
+
+    users = read_kv(database, importer.USERS_KEY)
+    assert users["444"]["balance"] == 0
+    assert "444" in users
 
 
 def test_apply_adds_to_an_existing_balance(workbook, database):
@@ -177,16 +242,11 @@ def test_force_overrides_the_receipt(workbook, database):
 
 
 def test_a_different_file_is_not_blocked(workbook, database, tmp_path):
-    openpyxl = pytest.importorskip("openpyxl")
     _invoke(workbook, "--apply")
 
-    other = tmp_path / "khac.xlsx"
-    book = openpyxl.Workbook()
-    sheet = book.active
-    sheet.append(["chatId", "balance", "username", "firstName", "lastName"])
-    sheet.append(["999", 7_000, "khach_moi", "Moi", ""])
-    book.save(other)
-
+    other = write_workbook(
+        tmp_path / "khac.xlsx", [("999", 7_000, "khach_moi", "Moi", "", False)]
+    )
     _invoke(other, "--apply")
 
     assert read_kv(database, importer.USERS_KEY)["999"]["balance"] == 7_000
@@ -197,7 +257,8 @@ def test_receipt_totals_are_recorded(workbook, database):
 
     receipts = read_kv(database, importer.RECEIPTS_KEY)
     receipt = next(iter(receipts.values()))
-    assert receipt["customers"] == 2
+    assert receipt["customers"] == 6  # moi id, ke ca nguoi khong co tien
+    assert receipt["credited"] == 2
     assert receipt["total_credited"] == 53_542
 
 
