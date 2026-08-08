@@ -42,7 +42,7 @@ class PendingPayment(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "PendingPayment":
+    def from_dict(cls, data: dict[str, Any]) -> PendingPayment:
         return cls.model_validate(data)
 
 
@@ -68,7 +68,7 @@ class WithdrawalRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "WithdrawalRequest":
+    def from_dict(cls, data: dict[str, Any]) -> WithdrawalRequest:
         return cls.model_validate(data)
 
 
@@ -82,7 +82,7 @@ class WheelPrize(BaseModel):
     emoji: str = Field("🎁", description="Display emoji with optional tg-emoji tag")
 
     @staticmethod
-    def default_prizes() -> list["WheelPrize"]:
+    def default_prizes() -> list[WheelPrize]:
         """Return the default wheel prize configuration."""
         return [
             WheelPrize(name="5,000đ", type="balance", value=5000, weight=30, emoji='<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji>'),

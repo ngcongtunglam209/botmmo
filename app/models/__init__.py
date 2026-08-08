@@ -1,9 +1,9 @@
 """Data models for the Lâm Shop Bot application."""
 
-from .order import Order, PendingOrder, OrderStatus
-from .user import UserProfile, VIPRank, TransactionRecord
-from .product import Product, StockItem, ComboD, FlashSale
+from .order import Order, OrderStatus, PendingOrder
 from .payment import PaymentMethod, PendingPayment, WithdrawalRequest, WithdrawalStatus
+from .product import ComboD, FlashSale, Product, StockItem
+from .user import TransactionRecord, UserProfile, VIPRank
 
 __all__ = [
     # Order

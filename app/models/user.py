@@ -16,7 +16,7 @@ class VIPRank(BaseModel):
     discount: int = Field(0, ge=0, le=100, description="Discount percentage for this rank")
 
     @staticmethod
-    def default_ranks() -> list["VIPRank"]:
+    def default_ranks() -> list[VIPRank]:
         """Return the default VIP rank ladder."""
         return [
             VIPRank(name="⭐️ Đồng", min_spend=0, discount=0),
@@ -50,7 +50,7 @@ class UserProfile(BaseModel):
     model_config = ConfigDict(extra="allow")  # Allow legacy fields
 
     @classmethod
-    def from_dict(cls, user_id: int | str, data: dict[str, Any]) -> "UserProfile":
+    def from_dict(cls, user_id: int | str, data: dict[str, Any]) -> UserProfile:
         """Create from the legacy dict format, injecting user_id."""
         merged = {"user_id": user_id, **data}
         return cls.model_validate(merged)

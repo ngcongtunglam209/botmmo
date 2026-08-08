@@ -1,6 +1,5 @@
 """/start from someone who blocked the bot must not raise."""
 
-import pytest
 from telegram.error import Forbidden
 
 from app.core.runtime_loader import load_modules

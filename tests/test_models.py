@@ -8,16 +8,14 @@ import pytest
 from pydantic import ValidationError
 
 from app.models.order import Order, OrderStatus, PendingOrder
-from app.models.user import UserProfile, VIPRank, TransactionRecord
-from app.models.product import Product, FlashSale, ComboD
 from app.models.payment import (
-    PendingPayment,
+    PaymentMethod,
+    WheelPrize,
     WithdrawalRequest,
     WithdrawalStatus,
-    WheelPrize,
-    PaymentMethod,
 )
-
+from app.models.product import FlashSale, Product
+from app.models.user import TransactionRecord, UserProfile, VIPRank
 
 # ============================================================
 #  Order Model Tests

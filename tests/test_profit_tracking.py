@@ -28,7 +28,8 @@ def test_cost_snapshots_and_profit_summary():
 
         products["local"]["cost_price"] = 9999
         replacement = dict(local, amount=13000)
-        replacement.pop("cost_total"); replacement.pop("cost_unit"); replacement.pop("cost_source"); replacement.pop("cost_snapshot_at")
+        for snapshot_field in ("cost_total", "cost_unit", "cost_source", "cost_snapshot_at"):
+            replacement.pop(snapshot_field)
         db.db_add_order(replacement, schedule_save=False)
         assert replacement["cost_total"] == 8000
 
