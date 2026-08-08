@@ -47,17 +47,12 @@ def workbook(tmp_path):
 
 
 @pytest.fixture()
-def database(tmp_path, monkeypatch):
+def database(tmp_path):
     """Database rỗng, đã có bảng kv_store."""
-    from app.web import db, settings
-
-    monkeypatch.setenv("DB_PATH", str(tmp_path / "test.sqlite"))
-    settings.get_settings.cache_clear()
-    db.close_connection()
-    db.ensure_schema()
-    yield tmp_path / "test.sqlite"
-    db.close_connection()
-    settings.get_settings.cache_clear()
+    path = tmp_path / "test.sqlite"
+    with sqlite3.connect(path) as conn:
+        conn.execute("CREATE TABLE kv_store (key TEXT PRIMARY KEY, value TEXT)")
+    return path
 
 
 def read_kv(path, key):
@@ -74,11 +69,10 @@ def seed_users(path, users):
         )
 
 
-def _invoke(workbook, *extra):
+def _invoke(workbook, database, *extra):
     """Gọi script như chạy từ dòng lệnh, trả về exit code."""
-    argv = ["import_customers.py", str(workbook), *extra]
     original = sys.argv
-    sys.argv = argv
+    sys.argv = ["import_customers.py", str(workbook), "--db", str(database), *extra]
     try:
         return importer.main()
     finally:
@@ -158,13 +152,13 @@ def test_optional_columns_may_be_absent(tmp_path):
 # --- Ghi dữ liệu -------------------------------------------------------------
 
 def test_dry_run_writes_nothing(workbook, database):
-    _invoke(workbook)
+    _invoke(workbook, database)
 
     assert read_kv(database, importer.USERS_KEY) is None
 
 
 def test_apply_creates_missing_users(workbook, database):
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
 
     users = read_kv(database, importer.USERS_KEY)
     assert users["111"]["balance"] == 50_000
@@ -173,7 +167,7 @@ def test_apply_creates_missing_users(workbook, database):
 
 
 def test_apply_imports_zero_balance_users_too(workbook, database):
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
 
     users = read_kv(database, importer.USERS_KEY)
     assert users["222"]["balance"] == 0
@@ -181,7 +175,7 @@ def test_apply_imports_zero_balance_users_too(workbook, database):
 
 
 def test_users_who_blocked_the_old_bot_are_left_out_of_broadcasts(workbook, database):
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
 
     users = read_kv(database, importer.USERS_KEY)
     assert users["666"]["broadcast_disabled"] is True
@@ -190,7 +184,7 @@ def test_users_who_blocked_the_old_bot_are_left_out_of_broadcasts(workbook, data
 
 def test_absurd_balance_row_still_gets_an_id(workbook, database):
     """Bỏ số dư rác nhưng vẫn phải nhận được thông báo."""
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
 
     users = read_kv(database, importer.USERS_KEY)
     assert users["444"]["balance"] == 0
@@ -200,7 +194,7 @@ def test_absurd_balance_row_still_gets_an_id(workbook, database):
 def test_apply_adds_to_an_existing_balance(workbook, database):
     seed_users(database, {"111": {"user_id": 111, "balance": 20_000, "username": "cu"}})
 
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
 
     assert read_kv(database, importer.USERS_KEY)["111"]["balance"] == 70_000
 
@@ -208,13 +202,13 @@ def test_apply_adds_to_an_existing_balance(workbook, database):
 def test_existing_username_is_not_overwritten(workbook, database):
     seed_users(database, {"111": {"user_id": 111, "balance": 0, "username": "ten_dang_dung"}})
 
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
 
     assert read_kv(database, importer.USERS_KEY)["111"]["username"] == "ten_dang_dung"
 
 
 def test_apply_records_a_transaction_line(workbook, database):
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
 
     entry = read_kv(database, importer.TRANSACTIONS_KEY)["111"][-1]
     assert entry["amount"] == 50_000
@@ -226,34 +220,34 @@ def test_apply_records_a_transaction_line(workbook, database):
 # --- Chống cộng đôi ----------------------------------------------------------
 
 def test_second_run_refuses_and_changes_nothing(workbook, database):
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
     before = read_kv(database, importer.USERS_KEY)
 
-    assert _invoke(workbook, "--apply") == 1
+    assert _invoke(workbook, database, "--apply") == 1
     assert read_kv(database, importer.USERS_KEY) == before
 
 
 def test_force_overrides_the_receipt(workbook, database):
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
 
-    _invoke(workbook, "--apply", "--force")
+    _invoke(workbook, database, "--apply", "--force")
 
     assert read_kv(database, importer.USERS_KEY)["111"]["balance"] == 100_000
 
 
 def test_a_different_file_is_not_blocked(workbook, database, tmp_path):
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
 
     other = write_workbook(
         tmp_path / "khac.xlsx", [("999", 7_000, "khach_moi", "Moi", "", False)]
     )
-    _invoke(other, "--apply")
+    _invoke(other, database, "--apply")
 
     assert read_kv(database, importer.USERS_KEY)["999"]["balance"] == 7_000
 
 
 def test_receipt_totals_are_recorded(workbook, database):
-    _invoke(workbook, "--apply")
+    _invoke(workbook, database, "--apply")
 
     receipts = read_kv(database, importer.RECEIPTS_KEY)
     receipt = next(iter(receipts.values()))

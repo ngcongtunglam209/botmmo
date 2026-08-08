@@ -8,12 +8,15 @@ Nhập hai thứ:
 
 Người đã chặn bot cũ được đánh dấu broadcast_disabled để khỏi phí lượt gửi.
 
+Chỉ dùng thư viện chuẩn: bot chạy trong Docker nên host không có fastapi hay
+openpyxl, và Debian mới chặn `pip install` ngoài venv.
+
 Chạy khi bot ĐANG DỪNG. Bot giữ dữ liệu trong RAM và save_data() ghi đè kv_store
 từ đó, nên mọi thay đổi script này ghi trong lúc bot chạy sẽ bị xóa.
 
     docker compose down
-    python scripts/import_customers.py customers.xlsx           # thử, không ghi
-    python scripts/import_customers.py customers.xlsx --apply   # ghi thật
+    python3 scripts/import_customers.py customers.xlsx           # thử, không ghi
+    python3 scripts/import_customers.py customers.xlsx --apply   # ghi thật
     docker compose up -d
 
 Cộng dồn: số dư cũ được CỘNG vào số dư hiện có. Để chạy hai lần không cộng đôi
@@ -25,20 +28,23 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
+import sqlite3
 import sys
 import time
-from contextlib import suppress
+from contextlib import closing, suppress
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # Console Windows mặc định cp1252 và sẽ ném UnicodeEncodeError khi in tiếng Việt.
 for _stream in (sys.stdout, sys.stderr):
     with suppress(AttributeError, ValueError):
         _stream.reconfigure(encoding="utf-8", errors="replace")
 
-from app.web.db import kv_read, kv_write  # noqa: E402
-from app.web.repo.base import as_int  # noqa: E402
+import xlsx_reader  # noqa: E402
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 RECEIPTS_KEY = "data_import_receipts.json"
 USERS_KEY = "data_users.json"
@@ -52,9 +58,18 @@ REQUIRED_COLUMNS = ("chatId", "balance")
 OPTIONAL_COLUMNS = ("username", "firstName", "lastName", "isBlocked")
 
 
+def default_database() -> Path:
+    """Ưu tiên data/database.sqlite (bản mount trong Docker), rồi mới goc project."""
+    candidate = PROJECT_ROOT / "data" / "database.sqlite"
+    return candidate if candidate.is_file() else PROJECT_ROOT / "database.sqlite"
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("workbook", type=Path, help="File .xlsx export từ MongoDB")
+    parser.add_argument(
+        "--db", type=Path, default=None, help=f"Database SQLite (mặc định {default_database()})"
+    )
     parser.add_argument(
         "--apply", action="store_true", help="Ghi thật. Không có cờ này thì chỉ in ra."
     )
@@ -71,21 +86,43 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def read_rows(path: Path) -> list[dict]:
-    """Đọc sheet đầu tiên, trả về list dict chỉ gồm cột cần dùng."""
-    try:
-        import openpyxl
-    except ImportError:
-        sys.exit("Thiếu openpyxl. Cài bằng: pip install openpyxl")
+# --- kv_store ---------------------------------------------------------------
 
-    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    sheet = workbook.worksheets[0]
-    rows = sheet.iter_rows(values_only=True)
+def kv_read(database: Path, key: str, default):
+    with closing(sqlite3.connect(database)) as conn:
+        row = conn.execute("SELECT value FROM kv_store WHERE key=?", (key,)).fetchone()
+    if row is None:
+        return default
     try:
-        header = [str(cell or "") for cell in next(rows)]
-    except StopIteration:
+        return json.loads(row[0])
+    except (json.JSONDecodeError, TypeError):
+        return default
+
+
+def kv_write_many(database: Path, pairs: dict) -> None:
+    """Ghi nhiều khóa trong một transaction: không được để nửa vời khi có tiền."""
+    with closing(sqlite3.connect(database, timeout=10)) as conn:
+        conn.execute("PRAGMA busy_timeout=10000")
+        with conn:
+            for key, value in pairs.items():
+                conn.execute(
+                    "INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)",
+                    (key, json.dumps(value, ensure_ascii=False)),
+                )
+
+
+# --- Đọc và lọc -------------------------------------------------------------
+
+def read_rows(path: Path) -> list[dict]:
+    """Sheet đầu tiên thành list dict, chỉ gồm cột script dùng."""
+    try:
+        raw_rows = xlsx_reader.read_rows(path)
+    except Exception as error:
+        sys.exit(f"Không đọc được {path}: {error}")
+    if not raw_rows:
         sys.exit(f"{path} không có dữ liệu.")
 
+    header = [str(cell or "") for cell in raw_rows[0]]
     missing = [name for name in REQUIRED_COLUMNS if name not in header]
     if missing:
         sys.exit(f"{path} thiếu cột: {', '.join(missing)}")
@@ -95,11 +132,14 @@ def read_rows(path: Path) -> list[dict]:
         for name in REQUIRED_COLUMNS + OPTIONAL_COLUMNS
         if name in header
     }
-    chat_id_at = index["chatId"]
+
+    def cell(row, position):
+        return row[position] if position < len(row) else None
+
     return [
-        {name: row[position] for name, position in index.items()}
-        for row in rows
-        if row and row[chat_id_at] is not None
+        {name: cell(row, position) for name, position in index.items()}
+        for row in raw_rows[1:]
+        if row and cell(row, index["chatId"]) is not None
     ]
 
 
@@ -109,6 +149,13 @@ def to_amount(value) -> int | None:
         return int(round(float(value or 0)))
     except (TypeError, ValueError):
         return None
+
+
+def as_int(value, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def workbook_fingerprint(path: Path) -> str:
@@ -139,7 +186,7 @@ def plan(rows: list[dict], include_absurd: bool) -> tuple[list[dict], list[dict]
         elif amount < 0:
             amount, note = 0, f"số dư âm ({amount:,}), chỉ nhập id"
         elif amount >= SANE_BALANCE_CEILING and not include_absurd:
-            note = f"số dư bất thường ({amount:,.0f}), chỉ nhập id"
+            note = f"số dư bất thường ({amount:,}), chỉ nhập id"
             amount = 0
         if note:
             skipped.append({"id": chat_id, "label": label, "reason": note})
@@ -160,10 +207,12 @@ def plan(rows: list[dict], include_absurd: bool) -> tuple[list[dict], list[dict]
     return profiles, skipped
 
 
-def apply_profiles(profiles: list[dict], fingerprint: str) -> dict:
+# --- Ghi --------------------------------------------------------------------
+
+def apply_profiles(database: Path, profiles: list[dict], fingerprint: str) -> dict:
     """Tạo/cập nhật hồ sơ, cộng số dư và ghi lịch sử giao dịch khi có tiền."""
-    users = kv_read(USERS_KEY, {})
-    history = kv_read(TRANSACTIONS_KEY, {})
+    users = kv_read(database, USERS_KEY, {})
+    history = kv_read(database, TRANSACTIONS_KEY, {})
     now = int(time.time())
     counts = {"created": 0, "updated": 0, "credited": 0, "blocked": 0}
 
@@ -209,22 +258,23 @@ def apply_profiles(profiles: list[dict], fingerprint: str) -> dict:
 
         users[user_id] = profile
 
-    kv_write(USERS_KEY, users)
-    kv_write(TRANSACTIONS_KEY, history)
-    return counts
-
-
-def save_receipt(fingerprint: str, profiles: list[dict], counts: dict) -> None:
-    receipts = kv_read(RECEIPTS_KEY, {})
+    receipts = kv_read(database, RECEIPTS_KEY, {})
     receipts[fingerprint] = {
-        "applied_at": int(time.time()),
+        "applied_at": now,
         "customers": len(profiles),
         "total_credited": sum(entry["amount"] for entry in profiles),
         "created": counts["created"],
         "updated": counts["updated"],
         "credited": counts["credited"],
     }
-    kv_write(RECEIPTS_KEY, receipts)
+
+    # Một transaction cho cả ba: đứt giữa chừng không được để tiền vào ví mà
+    # thiếu biên lai, lần chạy sau sẽ cộng đôi.
+    kv_write_many(
+        database,
+        {USERS_KEY: users, TRANSACTIONS_KEY: history, RECEIPTS_KEY: receipts},
+    )
+    return counts
 
 
 def main() -> int:
@@ -232,8 +282,15 @@ def main() -> int:
     if not args.workbook.is_file():
         sys.exit(f"Không tìm thấy {args.workbook}")
 
+    database = args.db or default_database()
+    if not database.is_file():
+        sys.exit(
+            f"Không tìm thấy database {database}.\n"
+            "Chạy script ở thư mục gốc project, hoặc chỉ đường bằng --db."
+        )
+
     fingerprint = workbook_fingerprint(args.workbook)
-    receipt = kv_read(RECEIPTS_KEY, {}).get(fingerprint)
+    receipt = kv_read(database, RECEIPTS_KEY, {}).get(fingerprint)
     if receipt and not args.force:
         stamp = time.strftime("%d/%m/%Y %H:%M", time.localtime(receipt["applied_at"]))
         print(f"File này đã được nhập lúc {stamp}:")
@@ -247,6 +304,7 @@ def main() -> int:
     blocked = sum(1 for entry in profiles if entry["blocked"])
     total = sum(entry["amount"] for entry in profiles)
 
+    print(f"Database: {database}")
     print(f"Đọc {len(rows)} dòng từ {args.workbook.name} (mã {fingerprint})")
     print(f"Nhập id cho {len(profiles)} khách để /broadcast gửi tới được")
     print(f"Cộng tiền cho {len(with_money)} khách, tổng {total:,} VND")
@@ -272,8 +330,7 @@ def main() -> int:
         print("\nKhông có gì để ghi.")
         return 0
 
-    counts = apply_profiles(profiles, fingerprint)
-    save_receipt(fingerprint, profiles, counts)
+    counts = apply_profiles(database, profiles, fingerprint)
     print(
         f"\nĐã ghi: {counts['created']} khách mới, {counts['updated']} khách đã có. "
         f"Cộng tiền cho {counts['credited']} người, tổng {total:,} VND."
