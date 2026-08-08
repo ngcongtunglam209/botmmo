@@ -128,6 +128,22 @@ def test_web_and_bot_resolve_the_same_database(tmp_path, monkeypatch):
         load_modules(force_reload=True)
 
 
+def test_empty_db_path_env_var_falls_back_to_the_default(monkeypatch):
+    """`DB_PATH=` rỗng phải rơi về mặc định, không thành đường dẫn rỗng.
+
+    os.getenv(name, default) trả "" khi biến tồn tại nhưng rỗng, và .env.example
+    từng ship sẵn một dòng như vậy — web sẽ mở database khác bot mà không báo gì.
+    """
+    from app.web import settings
+
+    monkeypatch.setenv("DB_PATH", "")
+    settings.get_settings.cache_clear()
+    try:
+        assert settings.get_settings().db_path.endswith("database.sqlite")
+    finally:
+        settings.get_settings.cache_clear()
+
+
 def test_every_mapped_field_exists_on_app_state():
     """Sai tên field sẽ khiến bridge im lặng bỏ qua — bắt lỗi đó ngay ở test."""
     from app.state import AppState

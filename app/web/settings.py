@@ -16,7 +16,13 @@ WEB_ROOT = Path(__file__).resolve().parent
 
 
 def _env(name: str, default: str = "") -> str:
-    return str(os.getenv(name, default) or "").strip()
+    """Biến tồn tại nhưng rỗng phải rơi về default.
+
+    `.env.example` ship sẵn `DB_PATH=` rỗng, và `os.getenv(name, default)` trả
+    chuỗi rỗng chứ không trả default trong trường hợp đó — web sẽ mở một
+    database khác với bot mà không báo gì.
+    """
+    return str(os.getenv(name) or "").strip() or default
 
 
 def _env_int(name: str, default: int, minimum: int | None = None) -> int:

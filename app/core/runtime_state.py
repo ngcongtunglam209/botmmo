@@ -131,7 +131,10 @@ file_handler = None
 if "unittest" not in sys.modules:
     # Rotation tao them bot.log.1/.2/.3 ben canh, nen duong dan phai nam trong
     # thu muc duoc mount ra host chu khong phai mot file don le.
-    _log_path = os.getenv("LOG_FILE", "").strip() or "bot.log"
+    _log_path = os.getenv("LOG_FILE", "").strip() or os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "bot.log",
+    )
     os.makedirs(os.path.dirname(_log_path) or ".", exist_ok=True)
     file_handler = logging.handlers.RotatingFileHandler(
         _log_path, maxBytes=5*1024*1024, backupCount=3, encoding='utf-8'

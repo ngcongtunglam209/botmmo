@@ -522,4 +522,11 @@ async def fetch_binance_pay_id_transactions(start_timestamp_ms: int = 0) -> list
 # SQLite chay WAL nen con ghi them <db>-wal va <db>-shm ben canh file. Ca ba
 # phai nam cung mot thu muc duoc mount ra host, khong thi WAL chua checkpoint
 # se mat khi container dung. Dat DB_PATH tro vao thu muc do.
-DB_PATH = os.getenv("DB_PATH", "").strip() or "database.sqlite"
+#
+# Mac dinh la duong dan tuyet doi theo goc project, khong phai "database.sqlite"
+# tuong doi: app/web/settings.py cung giai ra dung duong nay, va mot duong tuong
+# doi se tro sang file khac neu process doi working directory.
+DB_PATH = os.getenv("DB_PATH", "").strip() or os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "database.sqlite",
+)
