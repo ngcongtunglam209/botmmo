@@ -29,10 +29,8 @@ def get_env_float(name: str, default: float, minimum: float = 0.0) -> float:
 #  LOAD .ENV FILE — Tất cả secrets phải nằm trong file .env
 # ==============================================================================
 from dotenv import load_dotenv
-import hashlib as _hashlib
 import secrets as _secrets
 load_dotenv(override=True)  # Load .env từ thư mục hiện tại (override system env)
-load_dotenv(".env.admin", override=True)  # Tài khoản web admin riêng, không commit Git
 
 def _require_env(name: str) -> str:
     """Yêu cầu biến môi trường bắt buộc. Thoát ngay nếu thiếu."""
@@ -48,31 +46,17 @@ def _require_env(name: str) -> str:
 TELEGRAM_TOKEN = _require_env("TELEGRAM_TOKEN")
 API_SECRET_KEY = _require_env("API_SECRET_KEY")
 ADMIN_WEB_USERNAME = os.getenv("ADMIN_WEB_USERNAME", "").strip() or "telegram-admin"
-_ADMIN_WEB_PASSWORD_PLAINTEXT = os.getenv("ADMIN_WEB_PASSWORD", "").strip()
-ADMIN_WEB_PASSWORD_HASH = os.getenv("ADMIN_WEB_PASSWORD_HASH", "").strip()
+# Khoa ky cookie phien admin. Phai co dinh: sinh moi moi lan khoi dong nghia la
+# da het admin dang dang nhap ra ngoai sau mot lan restart.
 ADMIN_WEB_SESSION_SECRET = os.getenv("ADMIN_WEB_SESSION_SECRET", "").strip()
-if not ADMIN_WEB_PASSWORD_HASH and _ADMIN_WEB_PASSWORD_PLAINTEXT:
-    _salt = _secrets.token_bytes(16)
-    _digest = _hashlib.pbkdf2_hmac("sha256", _ADMIN_WEB_PASSWORD_PLAINTEXT.encode(), _salt, 600_000)
-    ADMIN_WEB_PASSWORD_HASH = f"pbkdf2_sha256$600000${_salt.hex()}${_digest.hex()}"
 if not ADMIN_WEB_SESSION_SECRET:
     ADMIN_WEB_SESSION_SECRET = _secrets.token_hex(32)
-if _ADMIN_WEB_PASSWORD_PLAINTEXT or not os.getenv("ADMIN_WEB_SESSION_SECRET", "").strip():
-    _admin_env_path = ".env.admin"
-    _admin_lines = []
-    if os.path.exists(_admin_env_path):
-        with open(_admin_env_path, "r", encoding="utf-8") as _admin_file:
-            _admin_lines = [line for line in _admin_file.readlines() if not line.startswith(("ADMIN_WEB_PASSWORD=", "ADMIN_WEB_PASSWORD_HASH=", "ADMIN_WEB_SESSION_SECRET="))]
-    if ADMIN_WEB_PASSWORD_HASH:
-        _admin_lines.append(f"ADMIN_WEB_PASSWORD_HASH={ADMIN_WEB_PASSWORD_HASH}\n")
-    _admin_lines.append(f"ADMIN_WEB_SESSION_SECRET={ADMIN_WEB_SESSION_SECRET}\n")
-    with open(_admin_env_path, "w", encoding="utf-8") as _admin_file:
-        _admin_file.writelines(_admin_lines)
-        _admin_file.flush()
-        os.fsync(_admin_file.fileno())
-    os.environ.pop("ADMIN_WEB_PASSWORD", None)
-    os.environ["ADMIN_WEB_PASSWORD_HASH"] = ADMIN_WEB_PASSWORD_HASH
     os.environ["ADMIN_WEB_SESSION_SECRET"] = ADMIN_WEB_SESSION_SECRET
+    print(
+        "\n⚠️  ADMIN_WEB_SESSION_SECRET chưa được đặt — đang dùng khóa ngẫu nhiên tạm.\n"
+        "   Mọi phiên đăng nhập admin sẽ mất sau mỗi lần restart.\n"
+        "   Sinh khóa cố định rồi thêm vào .env:  openssl rand -hex 32\n"
+    )
 ADMIN_WEB_SESSION_HOURS = get_env_int("ADMIN_WEB_SESSION_HOURS", 8, minimum=1)
 TELEGRAM_LOGIN_CLIENT_ID = os.getenv("TELEGRAM_LOGIN_CLIENT_ID", "").strip() or TELEGRAM_TOKEN.split(":", 1)[0]
 TELEGRAM_LOGIN_CLIENT_SECRET = os.getenv("TELEGRAM_LOGIN_CLIENT_SECRET", "").strip()
@@ -302,7 +286,6 @@ def _iter_log_secrets():
         SEPAY_API_TOKEN,
         RPAY_API_KEY,
         BINANCE_PAY_HISTORY_URL,
-        ADMIN_WEB_PASSWORD_HASH,
         ADMIN_WEB_SESSION_SECRET,
         AI_API_KEY,
         SENDER_APP_PASSWORD,
