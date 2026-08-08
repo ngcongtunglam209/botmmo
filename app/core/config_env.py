@@ -149,16 +149,22 @@ RPAY_API_BASE_URL = get_env_str("RPAY_API_BASE_URL", "https://api.rpay.vn/api").
 # Token/network/address deu tuy chon: de trong thi RPay dung vi mac dinh cua
 # cua hang. Chi bat buoc `address` khi 1 network/token co nhieu vi active.
 RPAY_TOKEN = get_env_str("RPAY_TOKEN", "USDT").upper()
-RPAY_NETWORK = os.getenv("RPAY_NETWORK", "").strip().lower()
+def _split_rpay_networks(raw: str) -> list:
+    return [network for network in re.split(r"[,\s;]+", str(raw or "").lower()) if network]
 RPAY_WALLET_ADDRESS = os.getenv("RPAY_WALLET_ADDRESS", "").strip()
 # Nhieu vi cung luc: liet ke cac network cho khach tu chon luc thanh toan,
-# vi du "bsc,tron,polygon". De trong thi rot ve RPAY_NETWORK (mot mang), va
-# neu ca hai deu trong thi RPay dung vi mac dinh cua cua hang.
-RPAY_NETWORKS = [
-    network
-    for network in re.split(r"[,\s;]+", get_env_str("RPAY_NETWORKS", "").lower())
-    if network
-] or ([RPAY_NETWORK] if RPAY_NETWORK else [])
+# vi du "bsc,tron,polygon". De trong thi rot ve RPAY_NETWORK.
+#
+# RPAY_NETWORK cung nhan duoc danh sach. Hai ten chi khac nhau mot chu S, va
+# viet danh sach vao ten so it la nham rat de xay ra - truoc day ca chuoi
+# "bsc,tron,polygon" bi gui len lam ten mang va RPay tra "Mang crypto khong
+# duoc ho tro" ngay khi khach bam mua. Doc ca hai theo cung mot cach thi khong
+# con cho de go sai.
+RPAY_NETWORKS = _split_rpay_networks(get_env_str("RPAY_NETWORKS", "")) or _split_rpay_networks(
+    get_env_str("RPAY_NETWORK", "")
+)
+# Mang mac dinh khi khach khong duoc hoi (chi cau hinh mot mang).
+RPAY_NETWORK = RPAY_NETWORKS[0] if RPAY_NETWORKS else ""
 # Vi rieng cho tung mang khi mot network/token co nhieu vi active:
 # RPAY_WALLET_ADDRESS_BSC=0x..., RPAY_WALLET_ADDRESS_TRON=T...
 RPAY_WALLET_ADDRESS_BY_NETWORK = {

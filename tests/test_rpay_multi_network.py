@@ -143,3 +143,110 @@ def test_the_network_list_parses_however_it_is_typed(monkeypatch, raw, expected)
     parsed = [n for n in re.split(r"[,\s;]+", config.get_env_str("RPAY_NETWORKS", "").lower()) if n]
 
     assert parsed == expected
+
+
+def _reset_verified(monkeypatch, rpay, value=None):
+    monkeypatch.setattr(rpay, "_rpay_verified_networks", value, raising=False)
+
+
+async def test_invalid_network_keys_are_dropped_from_the_picker(monkeypatch):
+    rpay, _ = _load()
+    # "trc" and "pol" are what a human writes; RPay calls them tron and polygon.
+    _configure(monkeypatch, rpay, ["bsc", "trc", "pol"])
+    _reset_verified(monkeypatch, rpay)
+
+    async def fake_networks():
+        return [
+            {"key": "bsc", "status": "active"},
+            {"key": "tron", "status": "active"},
+            {"key": "polygon", "status": "active"},
+        ]
+
+    monkeypatch.setattr(rpay, "rpay_get_networks", fake_networks, raising=False)
+
+    remaining = await rpay.rpay_verify_networks()
+
+    # Otherwise the bad keys only surface as HTTP 400 after a customer has
+    # already chosen one and the order is dead.
+    assert remaining == ["bsc"]
+    assert rpay.rpay_available_networks() == ["bsc"]
+
+
+async def test_valid_keys_all_survive(monkeypatch):
+    rpay, _ = _load()
+    _configure(monkeypatch, rpay, ["bsc", "tron", "polygon"])
+    _reset_verified(monkeypatch, rpay)
+
+    async def fake_networks():
+        return [
+            {"key": "bsc", "status": "active"},
+            {"key": "tron", "status": "active"},
+            {"key": "polygon", "status": "active"},
+            {"key": "base", "status": "active"},
+        ]
+
+    monkeypatch.setattr(rpay, "rpay_get_networks", fake_networks, raising=False)
+
+    assert await rpay.rpay_verify_networks() == ["bsc", "tron", "polygon"]
+
+
+async def test_an_inactive_network_is_not_offered(monkeypatch):
+    rpay, _ = _load()
+    _configure(monkeypatch, rpay, ["bsc", "kava"])
+    _reset_verified(monkeypatch, rpay)
+
+    async def fake_networks():
+        return [
+            {"key": "bsc", "status": "active"},
+            {"key": "kava", "status": "disabled"},
+        ]
+
+    monkeypatch.setattr(rpay, "rpay_get_networks", fake_networks, raising=False)
+
+    assert await rpay.rpay_verify_networks() == ["bsc"]
+
+
+async def test_a_failed_check_leaves_the_configuration_alone(monkeypatch):
+    rpay, _ = _load()
+    _configure(monkeypatch, rpay, ["bsc", "tron"])
+    _reset_verified(monkeypatch, rpay)
+
+    async def boom():
+        raise RuntimeError("network down")
+
+    monkeypatch.setattr(rpay, "rpay_get_networks", boom, raising=False)
+
+    # A blip reaching RPay at startup must not silently disable USDT checkout.
+    assert await rpay.rpay_verify_networks() == ["bsc", "tron"]
+    assert rpay.rpay_available_networks() == ["bsc", "tron"]
+
+
+@pytest.mark.parametrize(
+    "network, networks, expected",
+    [
+        # The singular name with a list in it. One missing "S" between the two
+        # variable names used to send "bsc,tron,polygon" as a single network
+        # name, and RPay answered HTTP 400 the moment a customer tried to pay.
+        ("bsc,tron,polygon", "", ["bsc", "tron", "polygon"]),
+        ("BSC, TRON ; Polygon", "", ["bsc", "tron", "polygon"]),
+        # The plural name, as documented.
+        ("", "bsc,tron,polygon", ["bsc", "tron", "polygon"]),
+        # A genuine single network.
+        ("bsc", "", ["bsc"]),
+        # Plural wins when both are set.
+        ("tron", "bsc,polygon", ["bsc", "polygon"]),
+        ("", "", []),
+    ],
+)
+def test_either_variable_name_accepts_a_list(monkeypatch, network, networks, expected):
+    config = load_modules()["app.core.config_env"]
+    monkeypatch.setenv("RPAY_NETWORK", network)
+    monkeypatch.setenv("RPAY_NETWORKS", networks)
+
+    resolved = config._split_rpay_networks(
+        config.get_env_str("RPAY_NETWORKS", "")
+    ) or config._split_rpay_networks(config.get_env_str("RPAY_NETWORK", ""))
+
+    assert resolved == expected
+    # The single-network default is the first entry, never the raw string.
+    assert (resolved[0] if resolved else "") == (expected[0] if expected else "")

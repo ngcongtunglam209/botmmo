@@ -86,9 +86,68 @@ def rpay_network_label(network: str) -> str:
     return RPAY_NETWORK_LABELS.get(key, key.upper() or "USDT")
 
 
+_rpay_verified_networks = None
+
+
 def rpay_available_networks() -> list:
-    """Cac mang khach duoc chon. Rong = de RPay tu chon vi mac dinh."""
-    return [network for network in (RPAY_NETWORKS or []) if network]
+    """Cac mang khach duoc chon. Rong = de RPay tu chon vi mac dinh.
+
+    Sau khi rpay_verify_networks() chay luc khoi dong, danh sach nay chi con cac
+    khoa RPay that su nhan. Truoc do dung nguyen cau hinh de khong chan thanh
+    toan neu viec kiem tra that bai.
+    """
+    configured = [network for network in (RPAY_NETWORKS or []) if network]
+    if _rpay_verified_networks is None:
+        return configured
+    return [network for network in configured if network in _rpay_verified_networks]
+
+
+async def rpay_verify_networks() -> list:
+    """Doi chieu RPAY_NETWORKS voi danh sach that cua RPay, goi luc khoi dong.
+
+    Khoa sai chi lo ra khi mot khach da bam mua va AddInvoice tra "Mang crypto
+    khong duoc ho tro" - luc do don da hong roi. Kiem tra som cho phep bo khoa
+    sai khoi menu va noi thang khoa dung la gi.
+
+    Loi mang -> khong loc gi ca, giu nguyen cau hinh.
+    """
+    global _rpay_verified_networks
+    configured = [network for network in (RPAY_NETWORKS or []) if network]
+    if not is_rpay_enabled() or not configured:
+        return configured
+    try:
+        items = await rpay_get_networks()
+    except Exception as e:
+        logger.warning(f"RPay: khong kiem tra duoc danh sach network ({e}) -> giu nguyen cau hinh")
+        return configured
+
+    active = {
+        str(item.get("key") or "").strip().lower()
+        for item in items
+        if isinstance(item, dict) and str(item.get("status") or "").strip().lower() == "active"
+    }
+    if not active:
+        return configured
+
+    _rpay_verified_networks = active
+    unknown = [network for network in configured if network not in active]
+    if unknown:
+        logger.error(
+            "RPay: khoa mang khong hop le trong RPAY_NETWORKS: %s. Da bo khoi menu. "
+            "Khoa RPay dang bat: %s",
+            ", ".join(unknown),
+            ", ".join(sorted(active)),
+        )
+    remaining = rpay_available_networks()
+    if not remaining:
+        logger.error(
+            "RPay: khong con mang nao hop le -> thanh toan USDT se khong dung duoc. "
+            "Sua RPAY_NETWORKS theo cac khoa: %s",
+            ", ".join(sorted(active)),
+        )
+    else:
+        logger.info("RPay: mang kha dung -> %s", ", ".join(remaining))
+    return remaining
 
 
 def rpay_wallet_address_for(network: str) -> str:

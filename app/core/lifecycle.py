@@ -95,6 +95,15 @@ async def post_init(application: Application):
     if not _normalize_public_api_url(PUBLIC_API_URL):
         await auto_detect_public_api_url()
 
+    # Doi chieu RPAY_NETWORKS voi danh sach RPay that su nhan. Khoa go sai chi
+    # lo ra khi khach da bam mua va AddInvoice tra loi - kiem tra o day de no
+    # thanh mot dong log luc khoi dong thay vi mot don hang hong.
+    try:
+        from app.integrations.rpay_api import rpay_verify_networks
+        await rpay_verify_networks()
+    except Exception as _rpay_err:
+        logger.debug(f"Bo qua kiem tra network RPay: {_rpay_err}")
+
     if FASTAPI_ENABLED and uvicorn:
         create_background_task(run_api_server(), fatal=True)
         logger.info(f"<tg-emoji emoji-id=\"5231489647946768652\">🌐</tg-emoji> API Server đang chạy tại port {API_SERVER_PORT}")
