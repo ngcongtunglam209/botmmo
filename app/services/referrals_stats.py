@@ -16,33 +16,33 @@ async def process_referral_commission(context, user_id: int, amount: int, order_
     Returns: commission amount nếu có, 0 nếu không
     """
     user_id_str = str(user_id)
-    
+
     # Check if user was referred by someone
     if user_id_str not in referral_data:
         return 0
-    
+
     ref_info = referral_data[user_id_str]
     if 'referrer_id' not in ref_info:
         return 0
-    
+
     referrer_id = ref_info['referrer_id']
     referrer_id_str = str(referrer_id)
-    
+
     if order_code and referrer_id_str in referral_data:
         history = referral_data[referrer_id_str].get('commission_history', [])
         if any(h.get('order_code') == order_code for h in history):
             logger.info(f'[COMMISSION] Skipping duplicate commission for order {order_code}')
             return 0
-    
+
     # Calculate commission
     commission = int(amount * REFERRAL_COMMISSION_PERCENT / 100)
-    
+
     # Add to referrer's balance
     referrer_user = db_get_user(referrer_id)
     if referrer_user:
         new_balance = referrer_user.get('balance', 0) + commission
         db_update_balance(referrer_id, new_balance, reason=f"Commission: {commission:,} VNĐ verified user")
-        
+
         # Track commission in referral_data
         if referrer_id_str not in referral_data:
             referral_data[referrer_id_str] = {
@@ -50,7 +50,7 @@ async def process_referral_commission(context, user_id: int, amount: int, order_
                 'total_commission': 0,
                 'commission_history': []
             }
-        
+
         referral_data[referrer_id_str]['total_commission'] += commission
         referral_data[referrer_id_str]['commission_history'].append({
             'from_user_id': user_id,
@@ -58,9 +58,9 @@ async def process_referral_commission(context, user_id: int, amount: int, order_
             'order_code': order_code,
             'timestamp': time.time()
         })
-        
+
         await save_data()
-        
+
         # Notify referrer
         try:
             await context.bot.send_message(
@@ -73,9 +73,9 @@ async def process_referral_commission(context, user_id: int, amount: int, order_
             )
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
             logger.error(f"Cannot notify referrer {referrer_id}: {e}")
-        
+
         return commission
-    
+
     return 0
 
 
@@ -143,7 +143,7 @@ def get_rank_maintenance_status(user_id: int, reference_dt=None):
 def calculate_user_stats(user_id: int):
     """Tính toán thống kê user"""
     orders = _get_user_merged_orders(user_id)
-    
+
     total_spent = 0
     order_count = 0
     for o in orders:
@@ -164,12 +164,12 @@ def calculate_user_stats(user_id: int):
                     coupon_savings += int(coupons[code].get('discount', 0))
                 except (ValueError, TypeError):
                     pass
-    
+
     # Referral stats
     user_id_str = str(user_id)
     referral_count = len(referral_data.get(user_id_str, {}).get('referred_users', []))
     total_commission = referral_data.get(user_id_str, {}).get('total_commission', 0)
-    
+
     return {
         'total_spent': total_spent,
         'order_count': order_count,
@@ -182,7 +182,7 @@ def _legacy_calculate_badges(user_id: int):
     """Tính toán badges cho user"""
     stats = calculate_user_stats(user_id)
     badges = []
-    
+
     # Order-based badges
     if stats['order_count'] >= 1:
         badges.append('<tg-emoji emoji-id=\"5334890573281114250\">🆕</tg-emoji> Newbie')
@@ -192,17 +192,17 @@ def _legacy_calculate_badges(user_id: int):
         badges.append('<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> VIP')
     if stats['order_count'] >= 50 or stats['total_spent'] >= 5000000:
         badges.append('<tg-emoji emoji-id=\"6124902618574625426\">👑</tg-emoji> Legend')
-    
+
     # Referral badges
     if stats['referral_count'] >= 5:
         badges.append('<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> Influencer')
     if stats['referral_count'] >= 20:
         badges.append('<tg-emoji emoji-id="5449800250032143374">🎁</tg-emoji> Super Influencer')
-    
+
     # Deal hunter
     if stats['coupon_savings'] >= 100000:
         badges.append('<tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> Deal Hunter')
-    
+
     return badges
 
 def calculate_badges(user_id: int):
@@ -426,11 +426,11 @@ def calculate_warranty_expiry(purchase_timestamp: float, warranty_text: str):
     """
     if not warranty_text or warranty_text.lower() in ['không', 'none', 'n/a']:
         return None
-    
+
     # Parse warranty text (e.g., "30 ngày", "1 tháng", "6 tháng")
     warranty_lower = warranty_text.lower()
     days = 0
-    
+
     if 'ngày' in warranty_lower:
         try:
             days = int(''.join(filter(str.isdigit, warranty_lower)))
@@ -448,10 +448,10 @@ def calculate_warranty_expiry(purchase_timestamp: float, warranty_text: str):
             days = years * 365
         except (TypeError, ValueError):
             pass
-    
+
     if days > 0:
         return purchase_timestamp + (days * 24 * 60 * 60)
-    
+
     return None
 
 
@@ -461,33 +461,33 @@ def get_top_referrers(limit=10):
     Returns: List of {user_id, full_name, referral_count, total_commission, rank}
     """
     top_list = []
-    
+
     for user_id_str, data in referral_data.items():
         total_commission = data.get('total_commission', 0)
-        
+
         # Skip users with 0 commission
         if total_commission <= 0:
             continue
-        
+
         # Get user info
         user_info = user_data_db.get(user_id_str, {})
         full_name = user_info.get('first_name', 'Unknown User')
-        
+
         top_list.append({
             'user_id': user_id_str,
             'full_name': full_name,
             'referral_count': len(data.get('referred_users', [])),
             'total_commission': total_commission
         })
-    
+
     # Sort by commission descending
     top_list.sort(key=lambda x: x['total_commission'], reverse=True)
-    
-    
+
+
     # Add rank
     for idx, item in enumerate(top_list[:limit], 1):
         item['rank'] = idx
-    
+
     return top_list[:limit]
 
 

@@ -21,7 +21,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 "VD: <code>/duyet ICLD123456</code>"
             )
             return
-        
+
         # Hiển thị danh sách đơn chờ
         message = "<b><tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> DANH SÁCH ĐƠN HÀNG CHỜ DUYỆT</b>\n\n"
         for order_code, details in await pending_items_snapshot():
@@ -33,19 +33,19 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 f"   • Chờ: <b>{time_ago} phút</b>\n"
                 f"   • User: {details.get('full_name', 'N/A')}\n\n"
             )
-        
+
         message += (
             "\n<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> <b>Để duyệt thủ công:</b>\n"
             "<code>/duyet [mã đơn]</code>\n"
             "VD: <code>/duyet ICLD123456</code>"
         )
-        
+
         await update.message.reply_html(message)
         return
-    
+
     # Duyệt đơn hàng thủ công
     order_code = context.args[0].upper()
-    
+
     # Validate mã đơn
     if not ORDER_CODE_REGEX.match(order_code):
         await update.message.reply_html(
@@ -53,7 +53,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             "Mã đơn phải có dạng: <code>ICLD123456</code>"
         )
         return
-    
+
     # Kiểm tra đơn hàng có trong pending không
     order_details = await pending_get(order_code)
     if not order_details:
@@ -63,15 +63,15 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             f"<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> Dùng <code>/duyet</code> để xem tất cả đơn chờ."
         )
         return
-    
+
     # Lấy thông tin đơn hàng
     user_id = order_details["user_id"]
     email = order_details.get("email", "N/A")
     amount = order_details["amount"]
     full_name = order_details.get("full_name", "Khách hàng")
-    
+
     current_time = time.time()
-    
+
     # Handle Store Product
     if order_details.get("type") == "store_product":
         prod_id = order_details.get("product_id")
@@ -91,7 +91,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                     items_bought.append(current_stock.pop(0))
                 products[prod_id]['stock'] = current_stock
                 await save_data(force=True, tables=[PRODUCTS_FILE])
-            
+
             completed_order = {
                 "user_id": user_id,
                 "order_code": order_code,
@@ -106,7 +106,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 "items": items_bought,
                 "manual_approval": True
             }
-            
+
             # Send to User với thông tin chi tiết
             try:
                 await context.bot.send_message(
@@ -206,7 +206,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                     parse_mode=ParseMode.HTML,
                     reply_markup=create_success_menu(user_id=user_id),
                 )
-            
+
             # Notifications
             await send_live_order_notification(context, full_name, amount, product_name=p['name'], quantity=qty, order_code=order_code)
             if delivery_result.get("delivered"):
@@ -265,16 +265,16 @@ async def find_order_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
 
     order_code = context.args[0].upper()
-    
+
     # Tìm trong pending_orders
     details = await pending_get(order_code)
     if details:
         status = "<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Đang chờ thanh toán"
         timestamp = details.get("time", 0)
-        
+
         # Format time
         time_str = datetime.fromtimestamp(timestamp).strftime('%H:%M:%S %d/%m/%Y')
-        
+
         msg = (
             f"<tg-emoji emoji-id=\"5429571366384842791\">🔎</tg-emoji> <b>KẾT QUẢ TÌM KIẾM (PENDING)</b>\n\n"
             f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n"
@@ -291,17 +291,17 @@ async def find_order_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
     # Tìm trong order_history
     # FIX: Dùng index O(1) thay vì loop O(n)
     found_order = order_index.get(order_code)
-            
+
     if found_order:
         timestamp = found_order.get("timestamp", 0)
         time_str = datetime.fromtimestamp(timestamp).strftime('%H:%M:%S %d/%m/%Y')
         status = status_text(found_order.get("status"))
-        
+
         email = found_order.get("email") # For auto orders
         if not email:
             # Maybe manual order stored input
             email = found_order.get("user_input_email", "Không có")
-            
+
         msg = (
             f"<tg-emoji emoji-id=\"5429571366384842791\">🔎</tg-emoji> <b>KẾT QUẢ TÌM KIẾM (HISTORY)</b>\n\n"
             f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n"
@@ -312,7 +312,7 @@ async def find_order_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
             f"<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>Thời gian:</b> {time_str}\n"
             f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>Trạng thái:</b> {status}"
         )
-        
+
         if found_order.get("refunded_at"):
             refund_time = datetime.fromtimestamp(found_order.get("refunded_at")).strftime('%H:%M:%S %d/%m/%Y')
             msg += f"\n<tg-emoji emoji-id=\"5863724849851011383\">💸</tg-emoji> <b>Hoàn tiền lúc:</b> {refund_time}"
@@ -362,7 +362,7 @@ async def find_order_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> "
                 f"<b>Nguồn:</b> {html.escape(replacement_source)}"
             )
-            
+
         reply_markup = None
         if not found_order.get("refunded_at") and "Hoàn thành" in status_text(found_order.get("status", "")):
             keyboard = [
@@ -371,7 +371,7 @@ async def find_order_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
             if _resolve_order_duration_days(found_order) > 0:
                 keyboard.append([InlineKeyboardButton("Hoàn số ngày chưa sử dụng", callback_data=f"admrf_p_{order_code}")])
             reply_markup = InlineKeyboardMarkup(keyboard)
-            
+
         await update.message.reply_html(msg, reply_markup=reply_markup)
         return
 
@@ -383,15 +383,15 @@ async def setemail_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     Admin: Đổi email khách hàng cho đơn hàng
     Cú pháp: /setemail <Mã Đơn> <Email Mới>
     """
-    
+
     args = context.args
     if len(args) < 2:
         await update.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Cú pháp sai. Dùng: <code>/setemail &lt;Mã Đơn&gt; &lt;Email Mới&gt;</code>", parse_mode='HTML')
         return
-        
+
     order_code = args[0].upper()
     new_email = args[1].strip()
-    
+
     # Check if email is valid
     if "@" not in new_email:
         await update.message.reply_text("❌ Email không hợp lệ.")
@@ -400,31 +400,31 @@ async def setemail_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     # Find Order (Priority: Pending -> History)
     target_order = None
     source = None
-    
+
     target_order = await pending_get(order_code)
     if target_order:
         source = 'pending'
     elif order_code in order_index:
         target_order = order_index[order_code]
         source = 'history'
-        
+
     if not target_order:
         await update.message.reply_text("❌ Không tìm thấy đơn hàng này.")
         return
-        
+
     # Update Email
     old_email = target_order.get("email") or target_order.get("user_input_email") or "Trống"
-    
+
     if source == 'pending':
-        target_order['email'] = new_email 
+        target_order['email'] = new_email
     else:
         if 'user_input_email' in target_order:
             target_order['user_input_email'] = new_email
         else:
             target_order['email'] = new_email
-            
+
     await save_data()
-    
+
     await update.message.reply_html(
         f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ CẬP NHẬT EMAIL KHÁCH HÀNG</b>\n\n"
         f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Đơn hàng:</b> <code>{order_code}</code>\n"
@@ -439,14 +439,14 @@ async def baotri_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     Cú pháp: /baotri [on/off]
     """
     global MAINTENANCE_MODE
-    
+
     if not context.args:
         status = "BẬT" if MAINTENANCE_MODE else "TẮT"
         await update.message.reply_text(f"<tg-emoji emoji-id=\"5264919878082509254\">ℹ️</tg-emoji> Chế độ bảo trì đang: <b>{status}</b>\n\nDùng <code>/baotri on</code> hoặc <code>/baotri off</code> để thay đổi.", parse_mode=ParseMode.HTML)
         return
 
     action = context.args[0].lower()
-    
+
     if action == "on":
         MAINTENANCE_MODE = True
         from app.core.runtime_loader import sync_runtime_bindings
@@ -466,11 +466,11 @@ async def aimode_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     Cú pháp: /aimode [on/off]
     """
     global AI_AUTO_REPLY
-    
+
     if not context.args:
         status = "BẬT <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji>" if AI_AUTO_REPLY else "TẮT ❌"
         ai_status = "<tg-emoji emoji-id=\"5303145396254563405\">🤖</tg-emoji> Bot sẽ tự động trả lời mọi tin nhắn bằng AI" if AI_AUTO_REPLY else "<tg-emoji emoji-id=\"6129860303619363484\">💬</tg-emoji> Chỉ trả lời khi có /ask"
-        
+
         await update.message.reply_html(
             f"<tg-emoji emoji-id=\"5264919878082509254\">ℹ️</tg-emoji> <b>TRẠNG THÁI AI AUTO-REPLY</b>\n\n"
             f"Hiện tại: <b>{status}</b>\n"
@@ -482,7 +482,7 @@ async def aimode_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     action = context.args[0].lower()
-    
+
     if action == "on":
         AI_AUTO_REPLY = True
         from app.core.runtime_loader import sync_runtime_bindings

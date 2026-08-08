@@ -241,8 +241,8 @@ def _legacy_build_admin_userinfo_panel(target_id: int, order_page: int = 0):
             message += f"• <code>{order_code}</code> | {order_date} | {amount:,}đ | {status}\n"
     else:
         message += (
-            f"<b><tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> LỊCH SỬ ĐƠN HÀNG (0/0)</b>\n"
-            f"<i>Chưa có đơn hàng nào.</i>"
+            "<b><tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> LỊCH SỬ ĐƠN HÀNG (0/0)</b>\n"
+            "<i>Chưa có đơn hàng nào.</i>"
         )
 
     message = upgrade_text_to_premium_emoji(message)
@@ -367,7 +367,7 @@ def _build_admin_userinfo_panel(target_id: int, order_page: int = 0):
     else:
         message += (
             '<b><tg-emoji emoji-id="5373251851074415873">📋</tg-emoji> LỊCH SỬ ĐƠN HÀNG (0/0)</b>\n'
-            f"<i>Chưa có đơn hàng nào.</i>"
+            "<i>Chưa có đơn hàng nào.</i>"
         )
 
     message = upgrade_text_to_premium_emoji(message)
@@ -419,20 +419,20 @@ async def handle_admin_user_orders_pagination(query, context: ContextTypes.DEFAU
 async def pending_withdrawals_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.effective_user.id != ADMIN_USER_ID: return
     """Admin command: List pending withdrawals"""
-    
+
     pending = [(req_id, req) for req_id, req in withdrawal_requests.items() if req.get('status') == 'pending']
-    
+
     if not pending:
         await update.message.reply_text("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Không có yêu cầu rút tiền nào đang chờ.")
         return
-        
+
     await update.message.reply_text(f"<tg-emoji emoji-id=\"5863724849851011383\">💸</tg-emoji> <b>DANH SÁCH YÊU CẦU RÚT TIỀN ({len(pending)})</b>", parse_mode=ParseMode.HTML)
-    
+
     for req_id, req in pending:
         safe_full_name = html.escape(str(req.get('full_name', 'Unknown')))
         safe_username = html.escape(str(req.get('username', 'N/A')))
         safe_bank_info = html.escape(str(req.get('bank_info', 'N/A')))
-        
+
         msg = (
             f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> User: {safe_full_name} (@{safe_username})\n"
             f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Số tiền: <b>{req.get('amount', 0):,} VNĐ</b>\n"
@@ -502,25 +502,25 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if not update.message.reply_to_message:
         await update.message.reply_html("<b><tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> Hướng dẫn:</b>\n1. Soạn sẵn tin nhắn bạn muốn gửi.\n2. Gửi tin nhắn đó vào đây.\n3. Trả lời (Reply) lại tin nhắn vừa gửi bằng lệnh <code>/broadcast</code>.")
         return
-    
+
     message_to_broadcast = update.message.reply_to_message
     all_users_ids = list(user_data_db.keys())
-    
+
     # Thông báo admin NGAY - bot không đơ!
     status_msg = await update.message.reply_text(
         f"<tg-emoji emoji-id=\"5303290914041505430\">🚀</tg-emoji> Bắt đầu gửi broadcast đến {len(all_users_ids)} người dùng...\n"
         f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Bot vẫn hoạt động bình thường, broadcast chạy nền!"
     )
-    
+
     # <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> FIX: CHẠY TRONG BACKGROUND TASK - KHÔNG BLOCK BOT!
     async def _broadcast_background(msg_obj):
         """Background task để broadcast - không block bot"""
         success, fail, errors = 0, 0, []
         blocked_user_ids = []
         total_users = len(all_users_ids)
-        
+
         start_time = time.time()
-        
+
         for idx, user_id in enumerate(all_users_ids, 1):
             try:
                 if getattr(message_to_broadcast, "text", None):
@@ -549,7 +549,7 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 fail += 1
                 if len(errors) < 5:
                     errors.append(f"ID {user_id}: {type(e).__name__} - {e}")
-            
+
             if idx % 20 == 0 or idx == total_users:
                 try:
                     progress = generate_progress_bar(idx, total_users)
@@ -562,11 +562,11 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                     )
                 except (ValueError, TypeError, KeyError, IndexError, TelegramError) as e:
                     logger.debug(f"Cannot update broadcast progress at {idx}/{total_users}: {e}")
-        
+
         cleaned_count = 0
         if blocked_user_ids:
             cleaned_count = await _cleanup_blocked_users(blocked_user_ids)
-        
+
         duration = int(time.time() - start_time)
         summary = (
             f"{E_SUCCESS} <b>GỬI BROADCAST HOÀN TẤT!</b>\n\n"
@@ -579,7 +579,7 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             summary += f"\n\n<tg-emoji emoji-id=\"5462956611033117422\">🧹</tg-emoji> <b>Đã tự động xoá {cleaned_count} user block bot</b>"
         if errors:
             summary += "\n\n<tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> <b>Chi tiết 5 lỗi đầu tiên:</b>\n" + "\n".join([f"- <code>{error}</code>" for error in errors])
-        
+
         try:
             await msg_obj.edit_text(summary, parse_mode=ParseMode.HTML)
         except (ValueError, TypeError, KeyError, IndexError, TelegramError) as e:
@@ -588,7 +588,7 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 await context.bot.send_message(chat_id=update.effective_chat.id, text=summary, parse_mode=ParseMode.HTML)
             except (ValueError, TypeError, KeyError, IndexError, TelegramError) as fallback_error:
                 logger.error(f"Cannot send broadcast fallback report: {fallback_error}")
-    
+
     # Chạy broadcast trong background
     create_background_task(_broadcast_background(status_msg))
 
@@ -853,21 +853,21 @@ async def promobudget_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     details_text = ""
     tracker = daily_promo_tracker.get(today, {})
     details = tracker.get('details', [])
-    
+
     type_totals = {}
     for d in details:
         t = d.get('type', 'other')
         type_totals[t] = type_totals.get(t, 0) + d.get('amount', 0)
-    
+
     if type_totals:
         details_text = "\n".join(f"  • {t}: {v:,}đ" for t, v in type_totals.items())
     else:
         details_text = "  Chưa có chi phí KM nào"
-    
+
     pct = status['percent_used']
     bar_filled = int(pct / 10)
     bar = "█" * bar_filled + "░" * (10 - bar_filled)
-    
+
     msg = (
         f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>NGÂN SÁCH KHUYẾN MÃI HÔM NAY</b>\n\n"
         f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Doanh thu hôm nay: <b>{status['revenue']:,}đ</b>\n"

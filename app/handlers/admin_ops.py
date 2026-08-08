@@ -115,37 +115,37 @@ async def notify_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if not products:
             await update.message.reply_text("❌ Chưa có sản phẩm nào.")
             return
-        
+
         msg = "<b><tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> DANH SÁCH SẢN PHẨM</b>\n\n"
         msg += "Cú pháp: <code>/notify [product_id] [out/back]</code>\n\n"
-        
+
         for pid, p in products.items():
             stock = len(p.get('stock', []))
             status = "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji>" if stock > 0 else "❌"
             msg += f"{status} <code>{pid}</code> - {p['name']} ({stock})\n"
-        
+
         msg += "\n<b>Ví dụ:</b>\n"
         msg += "<code>/notify p_123 out</code> - Thông báo hết hàng\n"
         msg += "<code>/notify p_123 back</code> - Thông báo có hàng"
-        
+
         await update.message.reply_html(msg)
         return
-    
+
     # Parse arguments
     prod_id = context.args[0]
     action = context.args[1].lower() if len(context.args) > 1 else "out"
-    
+
     # Validate product
     if prod_id not in products:
         await update.message.reply_text(f"❌ Không tìm thấy sản phẩm ID: {prod_id}")
         return
-    
+
     p = products[prod_id]
     product_name = p['name']
     stock_count = len(p.get('stock', []))
-    
+
     await update.message.reply_text(f"<tg-emoji emoji-id=\"6129860303619363484\">📢</tg-emoji> Đang broadcast thông báo cho <b>{product_name}</b>...", parse_mode=ParseMode.HTML)
-    
+
     # Broadcast
     if action == "out":
         await broadcast_out_of_stock(context, product_name, prod_id)
@@ -154,7 +154,7 @@ async def notify_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     else:
         await update.message.reply_text("❌ Action phải là 'out' hoặc 'back'")
         return
-    
+
     await update.message.reply_text("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã broadcast thông báo!")
 
 async def pending_manual_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -167,9 +167,9 @@ async def pending_manual_command(update: Update, context: ContextTypes.DEFAULT_T
             "Tất cả đơn hàng đã được xử lý."
         )
         return
-    
+
     msg = f"<b><tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> ĐƠN HÀNG MANUAL CHỜ XỬ LÝ ({len(pending_manual_orders)})</b>\n\n"
-    
+
     # Group by product
     by_product = {}
     for order_code, info in pending_manual_orders.items():
@@ -177,18 +177,18 @@ async def pending_manual_command(update: Update, context: ContextTypes.DEFAULT_T
         if prod_id not in by_product:
             by_product[prod_id] = []
         by_product[prod_id].append((order_code, info))
-    
+
     for prod_id, orders in by_product.items():
         p = products.get(prod_id)
         prod_name = p['name'] if p else "Sản phẩm đã xóa"
         max_limit = p.get('max_pending_orders', 10) if p else 10
-        
+
         msg += f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>{prod_name}</b> ({len(orders)}/{max_limit})\n"
-        
+
         for order_code, info in orders:
             time_ago = int((time.time() - info.get('timestamp', 0)) / 60)
             email_status = "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji>" if info.get('email') else "<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji>"
-            
+
             msg += (
                 f"   {email_status} <code>{order_code}</code>\n"
                 f"      • Email: <code>{info.get('email', 'Chưa nhập')}</code>\n"
@@ -196,7 +196,7 @@ async def pending_manual_command(update: Update, context: ContextTypes.DEFAULT_T
                 f"      • Chờ: {time_ago}'\n"
             )
         msg += "\n"
-    
+
     msg += (
         "<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> <b>Hành động:</b>\n"
         "1. Xử lý đơn (gửi email, setup...)\n"
@@ -204,7 +204,7 @@ async def pending_manual_command(update: Update, context: ContextTypes.DEFAULT_T
         "3. Bấm <b><tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã hoàn thành</b>\n\n"
         f"<tg-emoji emoji-id=\"5462956611033117422\">🔄</tg-emoji> Tổng: {len(pending_manual_orders)} đơn chờ"
     )
-    
+
     await update.message.reply_html(msg)
 
 async def clearpending_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -217,25 +217,25 @@ async def clearpending_command(update: Update, context: ContextTypes.DEFAULT_TYP
         if not pending_manual_orders:
             await update.message.reply_text("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Không có đơn manual nào.")
             return
-        
+
         msg = "<b><tg-emoji emoji-id=\"5424857974784925603\">🗑️</tg-emoji> XÓA ĐƠN MANUAL</b>\n\n"
         msg += f"Tổng: {len(pending_manual_orders)} đơn\n\n"
-        
+
         for code, info in list(pending_manual_orders.items())[:10]:
             time_ago = int((time.time() - info.get('timestamp', 0)) / 60)
             msg += f"• <code>{code}</code> - {info.get('product_name')} ({time_ago}')\n"
-        
+
         msg += (
             "\n<b>Cú pháp:</b>\n"
             "<code>/clearpending [order_code]</code> - Xóa 1 đơn\n"
             "<code>/clearpending all</code> - Xóa tất cả"
         )
-        
+
         await update.message.reply_html(msg)
         return
-    
+
     action = context.args[0]
-    
+
     if action.lower() == "all":
         count = len(pending_manual_orders)
         pending_manual_orders.clear()
@@ -261,10 +261,10 @@ async def resetnotify_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     Để có thể broadcast lại
     """
 
-    
+
     count = len(notified_out_of_stock)
     notified_out_of_stock.clear()
-    
+
     await update.message.reply_html(
         f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ RESET DANH SÁCH THÔNG BÁO</b>\n\n"
         f"Đã xóa {count} sản phẩm khỏi danh sách đã thông báo.\n"
@@ -352,26 +352,26 @@ async def analytics_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def chats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_USER_ID: return
     """Admin: List all active chats"""
-    
+
     active_chats = [(uid, chat) for uid, chat in live_chats.items() if chat['status'] == 'active']
-    
+
     if not active_chats:
         await update.message.reply_text("Không có chat đang hoạt động")
         return
-    
+
     header = "<tg-emoji emoji-id=\"6129860303619363484\">💬</tg-emoji> <b>DANH SÁCH CHAT</b>\n\n"
     entries = []
     for uid_str, chat in active_chats:
         unread = chat.get('unread_by_admin', 0)
         last_msg = chat['messages'][-1] if chat['messages'] else None
-        
+
         try:
             user = db_get_user(int(uid_str))
             name = user.get('first_name', 'User') if user else 'Unknown'
         except (TypeError, ValueError) as e:
             logger.debug(f"Cannot parse chat user id '{uid_str}': {e}")
             name = 'User'
-        
+
         badge = f"<tg-emoji emoji-id=\"5318840353510408444\">🔴</tg-emoji> {unread}" if unread > 0 else "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji>"
         safe_name = html.escape(name)
         entry = f"{badge} {safe_name} (ID: <code>{uid_str}</code>)\n"
@@ -381,7 +381,7 @@ async def chats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             entry += f"   {safe_preview}...\n"
         entry += "\n"
         entries.append(entry)
-    
+
     # Chia nhỏ message để tránh lỗi "Message is too long" (Telegram max 4096 chars)
     msg = header
     for entry in entries:
@@ -389,28 +389,28 @@ async def chats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_html(msg)
             msg = ""
         msg += entry
-    
+
     msg += "\nDùng /chat {user_id} để mở chat"
     await update.message.reply_html(msg)
 
 async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_USER_ID: return
     """Admin: Open specific chat"""
-    
+
     if not context.args:
         await update.message.reply_text("Dùng: /chat {user_id}")
         return
-    
+
     target_user_id = context.args[0]
-    
+
     if target_user_id not in live_chats:
         await update.message.reply_text("Chat không tồn tại")
         return
-    
+
     chat = live_chats[target_user_id]
     chat['unread_by_admin'] = 0
     await save_data()
-    
+
     # Show messages
     msg = f"<tg-emoji emoji-id=\"6129860303619363484\">💬</tg-emoji> Chat với User ID: <code>{target_user_id}</code>\n\n"
     for m in chat['messages'][-20:]:
@@ -419,9 +419,9 @@ async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         content = m.get('text', '[Image]')
         safe_content = html.escape(str(content))
         msg += f"<b>{from_who}</b> ({time_str}):\n{safe_content}\n\n"
-    
+
     msg += "Reply tin nhắn này để trả lời user"
-    
+
     kb = [[_btn("Chat", icon_id="5443038326535759644", callback_data=f"admin_close_chat:{target_user_id}")]]
     await update.message.reply_html(msg, reply_markup=InlineKeyboardMarkup(kb))
     context.user_data['admin_chatting_with'] = target_user_id
@@ -483,13 +483,13 @@ async def _legacy_nhapdata_command(update: Update, context: ContextTypes.DEFAULT
                     # Security check: only allow json files in root directory
                     if file_info.filename.endswith('.json') and '/' not in file_info.filename and '\\' not in file_info.filename:
                         zipf.extract(file_info, path=base_dir)
-            
+
             # Remove temp zip
             os.remove(temp_zip_path)
-        
+
         # Reload DB into memory
         await msg.edit_text("<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Đang nạp lại dữ liệu vào bộ nhớ Cache...")
-        
+
         # Clear SQLite DB so it is forced to read from the newly extracted JSON files
         try:
             with closing(sqlite3.connect(DB_PATH)) as conn:
@@ -497,7 +497,7 @@ async def _legacy_nhapdata_command(update: Update, context: ContextTypes.DEFAULT
                 conn.commit()
         except (sqlite3.Error, aiosqlite.Error, ValueError) as e:
             logger.error(f"Lỗi khi xóa DB cũ: {e}")
-            
+
         load_data()
         await save_data(force=True) # Force full save to SQLite to sync new state
 
@@ -677,14 +677,14 @@ async def _legacy_backup_command(update: Update, context: ContextTypes.DEFAULT_T
     NEW: Manual Backup Trigger
     Cú pháp: /backup
     """
-    
+
     msg = await update.message.reply_text("<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Đang khởi tạo tiến trình sao lưu...")
-    
+
     # Flush data then create ZIP dưới file lock để tránh race với save_data trên Windows
     await save_data(force=True)
     async with file_lock:
         zip_path = await asyncio.get_running_loop().run_in_executor(None, create_backup_zip)
-    
+
     if zip_path and os.path.exists(zip_path):
         try:
             caption = (
@@ -700,13 +700,13 @@ async def _legacy_backup_command(update: Update, context: ContextTypes.DEFAULT_T
                     parse_mode=ParseMode.HTML
                 )
             await msg.delete()
-            
+
             # Cleanup
             try:
                 os.remove(zip_path)
             except OSError as e:
                 logger.debug(f"Cannot remove backup zip '{zip_path}': {e}")
-            
+
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
             await msg.edit_text(f"❌ Lỗi gửi file: {e}")
     else:

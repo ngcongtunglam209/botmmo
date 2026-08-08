@@ -20,23 +20,23 @@ def is_dice_winning_combination(dice_values):
     # CHỈ CHECK TRIPLES - 111, 222
     if dice_values in WINNING_TRIPLES:
         return True
-    
+
     # ĐÃ TẮT sequences để giảm tỷ lệ thắng (tránh lỗ vốn)
     # if dice_values in WINNING_SEQUENCES:
     #     return True
-    
+
     return False
 
 def get_available_dice_products():
     """Get all products under DICE_MAX_PRODUCT_PRICE with stock available"""
     eligible = []
-    
+
     # Check store products
     for pid, p in products.items():
         price = p.get('price', 0)
         stock = p.get('stock', [])
         requires_gmail = p.get('requires_gmail', False)
-        
+
         # Only AUTO products with stock and price < 36k
         if price < DICE_MAX_PRODUCT_PRICE and not requires_gmail and len(stock) > 0:
             eligible.append({
@@ -46,7 +46,7 @@ def get_available_dice_products():
                 'price': price,
                 'stock_count': len(stock)
             })
-    
+
     return eligible
 
 
@@ -147,7 +147,7 @@ async def handle_withdrawal_input(update: Update, context: ContextTypes.DEFAULT_
             ), parse_mode=ParseMode.HTML,
         )
         await notify_admin_withdrawal(context, request_id)
-        
+
         # Clear state
         context.user_data.pop('state', None)
         context.user_data.pop('withdrawal_amount', None)
@@ -178,7 +178,7 @@ async def notify_admin_withdrawal(context: ContextTypes.DEFAULT_TYPE, request_id
     """Notify admin about new withdrawal request"""
     req = withdrawal_requests.get(request_id)
     if not req: return
-    
+
     is_order_refund = req.get("source") == "order_refund"
     request_title = "YÊU CẦU HOÀN VỀ NGÂN HÀNG" if is_order_refund else "YÊU CẦU RÚT TIỀN MỚI"
     safe_order_code = html.escape(str(req.get("order_code") or ""))
@@ -195,12 +195,12 @@ async def notify_admin_withdrawal(context: ContextTypes.DEFAULT_TYPE, request_id
         f"{E_TAG} Bank: <code>{safe_bank_info}</code>\n"
         f"{E_ID} ID: <code>{safe_request_id}</code>"
     )
-    
+
     keyboard = [
         [_btn("ĐÃ CHUYỂN KHOẢN", icon_id="6129870117619634982", callback_data=f"approve_withdraw:{request_id}")],
         [_btn("TỪ CHỐI", icon_id="5445353829304387411", callback_data=f"reject_withdraw:{request_id}")]
     ]
-    
+
     try:
         await context.bot.send_message(
             ADMIN_USER_ID,
@@ -222,34 +222,34 @@ async def ga_comment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
     """Handle comments (replies) to Giveaway posts"""
     message = update.message
     if not message or not message.reply_to_message: return
-    
+
     # FIX BUG: Skip private chats - GA chỉ hoạt động trong groups/channels
     # Điều này giúp email replies trong private chat không bị chặn
     if message.chat.type == 'private':
         return
     reply_to = message.reply_to_message
-    
+
     # Simple case: Direct reply in Group
     ga_key = f"{message.chat.id}_{reply_to.message_id}"
-    
+
     # If not found, try to see if it's a linked channel post (more complex, skip for now or assume simple)
     # Let's assume the bot is in the group/channel where GA is posted.
-    
+
     if ga_key not in active_giveaways:
          return # Not a GA post
 
     ga = active_giveaways[ga_key]
     if ga['status'] != 'active': return
     if ga.get('mode') != 'comment': return # Only for Prediction/Comment mode
-    
+
     # Record the entry
     user = message.from_user
     text = message.text.strip()
-    
-    # Check if user already commented? 
+
+    # Check if user already commented?
     # For prediction, maybe allow multiple? Or only first?
     # Let's simple: Record ALL, filtering logic will decide (e.g., take Earliest valid).
-    
+
     entry = {
         'user_id': user.id,
         'full_name': user.full_name,
@@ -259,15 +259,15 @@ async def ga_comment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         'message_id': message.message_id,
         'edited': False
     }
-    
+
     ga.setdefault('comments', []).append(entry)
-    
+
     # Add to participants list for stats
     if user.id not in ga['participants']:
         ga['participants'].append(user.id)
-        
+
     await save_data()
-    
+
     # Feedback (React to message to confirm)
     try:
         await message.set_reaction("<tg-emoji emoji-id=\"6269163801178804220\">👍</tg-emoji>")
@@ -278,15 +278,15 @@ async def ga_edit_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle edited messages to disqualify"""
     edited_msg = update.edited_message
     if not edited_msg or not edited_msg.reply_to_message: return
-    
+
     reply_to = edited_msg.reply_to_message
     ga_key = f"{edited_msg.chat.id}_{reply_to.message_id}"
-    
+
     if ga_key not in active_giveaways: return
-    
+
     ga = active_giveaways[ga_key]
     if ga.get('mode') != 'comment': return
-    
+
     # Find entry and mark edited
     if 'comments' in ga:
         for entry in ga['comments']:
@@ -294,7 +294,7 @@ async def ga_edit_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 entry['edited'] = True
                 entry['text'] = edited_msg.text # Update text but flag as edited
                 await save_data()
-                
+
                 # feedback
                 try:
                     await edited_msg.reply_text(
@@ -321,14 +321,14 @@ def db_upsert_user(user_id, username, full_name, first_seen, balance=0):
     if not user_id_str:
         logger.error(f"Invalid user_id provided to db_upsert_user: {user_id}")
         return
-    
+
     if user_id_str not in user_data_db:
          user_data_db[user_id_str] = {
-             "user_id": int(user_id_str), 
-             "username": username, 
+             "user_id": int(user_id_str),
+             "username": username,
              "full_name": full_name, # Fallback
              "first_name": full_name, # Consistent key
-             "first_seen": first_seen, 
+             "first_seen": first_seen,
              "balance": int(balance)
          }
     else:

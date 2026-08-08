@@ -43,7 +43,7 @@ def register_handlers(application) -> None:
         per_user=True
     )
     application.add_handler(add_prod_handler)
-    
+
     add_stock_handler = ConversationHandler(
         entry_points=[private_command('addstock', add_stock_start)],
         states={
@@ -56,7 +56,7 @@ def register_handlers(application) -> None:
         per_user=True
     )
     application.add_handler(add_stock_handler)
-    
+
     # NEW: Edit Product Handler
     edit_prod_handler = ConversationHandler(
         entry_points=[private_command('editproduct', edit_product_start)],
@@ -70,7 +70,7 @@ def register_handlers(application) -> None:
         fallbacks=[private_command('cancel', cancel_conversation)],
     )
     application.add_handler(edit_prod_handler)
-    
+
     # NEW: Stock Management Handler
     stock_mgmt_handler = ConversationHandler(
         entry_points=[
@@ -84,10 +84,10 @@ def register_handlers(application) -> None:
         fallbacks=[private_command('cancel', cancel_conversation)],
     )
     application.add_handler(stock_mgmt_handler)
-    
+
     # NEW: Transactions Command
     application.add_handler(private_command(["transactions", "lichsugiaodich"], transactions_command))
-    
+
     # Create Giveaway Conversation
     create_ga_handler = ConversationHandler(
         entry_points=[private_command('create_ga', create_ga_start)],
@@ -103,12 +103,12 @@ def register_handlers(application) -> None:
     )
 
     application.add_handler(create_ga_handler)
-    
+
     # NEW: GA Comment & Edit Handlers (Before other handlers)
     # FIX: Thêm ~filters.ChatType.PRIVATE để không chặn email replies trong private chat
     application.add_handler(MessageHandler(filters.TEXT & filters.REPLY & ~filters.COMMAND & ~filters.ChatType.PRIVATE, ga_comment_handler))
     application.add_handler(MessageHandler(filters.UpdateType.EDITED_MESSAGE, ga_edit_handler))
-    
+
     # Register commands
     application.add_handler(CommandHandler(["start", "menu"], start_command))
     application.add_handler(private_command(["registered", "REGISTERED"], registered_command))
@@ -121,10 +121,10 @@ def register_handlers(application) -> None:
     application.add_handler(private_command(["baoloi", "huongdanbaoloi"], huongdan_baoloi_command)) # NEW
     application.add_handler(private_command("ask", ask_command))
     application.add_handler(private_command(["dkyapi", "dkapi", "dangkyapi", "regapi"], dkyapi_command))
-    
+
     # === NEW COMMANDS ===
     # Moved to admin_handlers
-    
+
     # Manually added commands for walkthrough
     application.add_handler(private_command("mystats", lambda u, c: show_my_stats(u, c, is_callback=False)))
     application.add_handler(private_command("myref", lambda u, c: show_my_referral(u, c, is_callback=False)))
@@ -143,21 +143,21 @@ def register_handlers(application) -> None:
 
     # NEW: Rank commands (user-facing)
     application.add_handler(private_command(["rank", "vip", "hang"], rank_command))
-    
+
     # Admin Money Commands
     # addmoney, submoney moved to admin_handlers
 
     application.add_handler(CallbackQueryHandler(priority_button_handler), group=-3)
-    
+
     # FIX 1: Dòng gây lỗi NameError đã được vô hiệu hóa.
     # application.add_handler(MessageHandler(filters.REPLY & ~filters.COMMAND, ticket_reply_handler))
-    
+
     # Use text_message_handler as the main handler (it calls chat_with_ai internally)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND & PRIVATE, text_message_handler))
-    
+
     # Unified Photo Handler (Handles both Report Error & Warranty Claims)
     application.add_handler(MessageHandler(filters.PHOTO & PRIVATE, photo_message_handler))
-    
+
     # === JOB SCHEDULERS ===
     if application.job_queue:
 
@@ -166,16 +166,16 @@ def register_handlers(application) -> None:
         # NEW: Auto remind pending emails
         application.job_queue.run_repeating(auto_remind_email_job, interval=300, first=10)
         application.job_queue.run_repeating(auto_close_inactive_chats_job, interval=60, first=30, name="auto_close_chats")
-    
+
     admin_handlers = {
         # "show": show_command, # REPLACED BY ADMIN
         "admin": admin_command,
         "helpadmin": admin_command,
         "backup": backup_command,
         "nhapdata": nhapdata_command,
-        
+
         # --- KHO LINK ---
-        
+
         # --- STORE ---
         "products": listproducts_command,
         "setlimit": setlimit_command,
@@ -190,40 +190,40 @@ def register_handlers(application) -> None:
         # --- COUPON & KHUYẾN MÃI ---
         "sale": sale_command,
         "addcoupon": addcoupon_command,
-        "delcoupon": delcoupon_command, 
+        "delcoupon": delcoupon_command,
         "listcoupons": listcoupons_command,
         "rewardtop": rewardtop_command,
-        
+
         # --- QUẢN LÝ USER ---
         "users": listusers_command,
-        "info": userinfo_command, 
-        "ban": ban_command, 
+        "info": userinfo_command,
+        "ban": ban_command,
         "unban": unban_command,
         "bc": broadcast_command,
         "bcsp": bcsp_command,
-        "broadcastsp": bcsp_command, 
-        
+        "broadcastsp": bcsp_command,
+
         # --- ĐƠN HÀNG & DOANH THU ---
         "duyet": duyet_command,
         "pending": pending_manual_command,
         "clearpending": clearpending_command,
-        "refund": refund_command, 
-        "find": find_order_command, 
+        "refund": refund_command,
+        "find": find_order_command,
         "doanhthu": doanhthu_command,
         "promobudget": promobudget_command,
         "ngansachkm": promobudget_command,
         "setemail": setemail_command, # NEW
-        
+
         # --- HỆ THỐNG & API ADMIN ---
         "baotri": baotri_command,
         "xacminh": xacminh_command,
         "verify": xacminh_command,
         "aimode": aimode_command,
         "api": listapi_command,
-        "addapi": addapi_command, 
-        "delapi": delapi_command, 
+        "addapi": addapi_command,
+        "delapi": delapi_command,
         "napi": napi_command,
-        
+
         # --- BROADCAST NOTIFICATIONS ---
         "notify": notify_command,
         "resetnotify": resetnotify_command,
@@ -233,22 +233,22 @@ def register_handlers(application) -> None:
         # --- NEW ADMIN COMMANDS ---
         "analytics": analytics_command,
         "chats": chats_command,
-        "chat": chat_command, 
+        "chat": chat_command,
         "closechat": lambda u, c: clear_user_state(c),
         "pending_withdrawals": pending_withdrawals_command,
         "addmoney": addmoney_command,
         "submoney": submoney_command,
         "sodumb": sodumb_command,
-        
+
         "icon": icon_command,
-        
+
         # --- TESTING ---
         "testing": testing_command,
-        
+
         # --- FLASH SALE & COMBO ---
         "flashsale": flashsale_command,
         "combo": combo_command,
-        
+
         # --- SYSTEM MONITORING ---
         "uptime": uptime_command,
         "status": uptime_command,
@@ -275,10 +275,10 @@ def main() -> None:
     # FIX: Thêm post_shutdown để cleanup resources đúng cách
     # FIX: Increase connection timeout to avoid ConnectTimeout error
     request = HTTPXRequest(
-        connection_pool_size=8, 
-        connect_timeout=45.0, 
-        read_timeout=45.0, 
-        write_timeout=30.0, 
+        connection_pool_size=8,
+        connect_timeout=45.0,
+        read_timeout=45.0,
+        write_timeout=30.0,
         pool_timeout=30.0
     )
     application = Application.builder().token(TELEGRAM_TOKEN).request(request).post_init(post_init).post_shutdown(pre_shutdown).build()
@@ -299,13 +299,13 @@ def main() -> None:
         job_queue.run_repeating(cleanup_flash_sales_job, interval=60, first=30, name="flash_sale_cleanup")
         # NEW: Auto-Backup Job (Telegram 6h, Email 3d)
         # job_queue.run_repeating(auto_backup_job, interval=BACKUP_INTERVAL_TELEGRAM, first=60, name="auto_backup")
-        
+
         # NEW: Payment Reminder Job (check mỗi 3 phút)
         job_queue.run_repeating(payment_reminder_job, interval=180, first=60, name="payment_reminder")
-        
+
         # Batch Error Reporting Job (1h)
         job_queue.run_repeating(send_batched_error_reports, interval=3600, first=60, name="batch_error_report")
-        
+
         # Tỉ giá hiển thị (VND/USD/CNY) cho menu và thống kê - cache 5 phút
         job_queue.run_repeating(refresh_display_rates_job, interval=300, first=1, name="display_rates")
 
@@ -336,19 +336,19 @@ def main() -> None:
         print(startup_banner)
     except UnicodeEncodeError:
         print("[LAM SHOP] LAM SHOP BOT STARTING...")
-    
+
     logger.info(f"<tg-emoji emoji-id=\"5303145396254563405\">🦖</tg-emoji> AI Model:      {AI_MODEL}")
     logger.info(f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Products:      {len(products)}")
     logger.info(f"<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> Users:         {len(user_data_db)}")
     logger.info(f"<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Orders:        {len(order_history)}")
-    logger.info(f"<tg-emoji emoji-id=\"5350481781306958339\">💾</tg-emoji> Database:      SQLite KV Store (WAL)")
+    logger.info("<tg-emoji emoji-id=\"5350481781306958339\">💾</tg-emoji> Database:      SQLite KV Store (WAL)")
     logger.info(f"<tg-emoji emoji-id=\"5436359785534466562\">🔌</tg-emoji> API Port:      {API_SERVER_PORT}")
     logger.info(f"<tg-emoji emoji-id=\"5213349767672769194\">⏱</tg-emoji> Bank Cron:     {BANK_CHECK_INTERVAL_SECONDS}s")
     logger.info(f"<tg-emoji emoji-id=\"5231489647946768652\">🌍</tg-emoji> USDT (RPay):   {'ON' if is_usdt_payment_enabled() else 'OFF'} | Binance Pay: {'ON' if is_binance_pay_enabled() else 'OFF'}")
     logger.info(f"<tg-emoji emoji-id=\"5303145396254563405\">🤖</tg-emoji> AI Auto-Reply: {'ON' if AI_AUTO_REPLY else 'OFF'}")
-    
+
     logger.info("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> LAM SHOP: Bot started successfully! Ready to serve... <tg-emoji emoji-id=\"5303145396254563405\">🦖</tg-emoji>")
-    
+
     # Tối ưu: Cấu hình polling để phản hồi nhanh hơn
     try:
         application.run_polling(

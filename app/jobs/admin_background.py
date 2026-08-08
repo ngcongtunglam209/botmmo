@@ -7,7 +7,7 @@ async def admin_command_wrapper(update: Update, context: ContextTypes.DEFAULT_TY
     if user_id != ADMIN_USER_ID:
         # Không phản hồi hoặc báo lỗi
         return
-        
+
     try:
         await func(update, context)
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -27,67 +27,67 @@ async def send_batched_error_reports(context: ContextTypes.DEFAULT_TYPE):
     Cron Job: Nhắc nhở Admin về các đơn báo lỗi CHƯA XỬ LÝ (Unresolved)
     """
     global pending_error_reports
-    
+
     # Filter unresolved reports
     unresolved = [r for r in pending_error_reports if not r.get('resolved', False)]
-    
+
     if not unresolved:
         # Cleanup resolved ones to save memory
-        pending_error_reports = [] 
+        pending_error_reports = []
         return
-    
+
     # Gửi thông báo nhắc nhở
     count = len(unresolved)
     summary_msg = f"{E_TIP} <b>SẾP ƠI! CÒN {count} ĐƠN LỖI CHƯA XỬ LÝ:</b>\n\n"
-    
+
     for i, report in enumerate(unresolved, 1):
         waiting_time_min = int((time.time() - report['timestamp']) / 60)
         time_str = f"{waiting_time_min}p trước" if waiting_time_min < 60 else f"{int(waiting_time_min/60)}h trước"
-        
+
         summary_msg += (
             f"{i}. <code>{report['order_code']}</code> - {html.escape(report['product_name'])}\n"
             f"   {E_USER} {html.escape(report['username'] or 'N/A')} (Báo lần {report.get('report_count', 1)})\n"
             f"   {E_CALENDAR} Mua: {report.get('purchase_date', 'N/A')} - <tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> {time_str}\n"
         )
-        
+
     summary_msg += "\n<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> Vui lòng check tin nhắn trên để xử lý!"
-    
+
     try:
         await safe_send_admin(context.bot, summary_msg)
     except (ValueError, TypeError, KeyError, IndexError) as e:
         logger.error(f"Cannot send reminder summary: {e}")
-    
+
     # Cleanup: Keep only unresolved
     pending_error_reports = unresolved
-    
+
 async def auto_remind_email_job(context: ContextTypes.DEFAULT_TYPE):
     """
     Cron Job: Tự động nhắc user nhập email nếu quên (Mỗi 5 phút)
     """
     current_time = time.time()
-    
+
     # Iterate copy to avoid runtime error if dict changes
     for order_code, order in list(pending_manual_orders.items()):
-        
+
         # Chỉ check đơn đang chờ email
         if order.get('status') == 'awaiting_email' and not order.get('email'):
-            
+
             user_id = order.get('user_id')
             start_time = order.get('timestamp', 0)
             last_reminded = order.get('last_reminded', 0)
-            
+
             # Điều kiện nhắc:
             # 1. Đã qua 2 phút kể từ lúc mua (để họ kịp nhập)
             # 2. Đã qua 15 phút kể từ lần nhắc cuối (tránh spam)
             # 3. Tổng thời gian chờ < 24h (sau 24h thôi nhắc)
-            
+
             minutes_waiting = (current_time - start_time) / 60
             minutes_since_last = (current_time - last_reminded) / 60
-            
+
             if minutes_waiting > 2 and minutes_since_last > 15 and minutes_waiting < 1440:
                 try:
                     product_name = order.get('product_name', 'Sản phẩm')
-                    
+
                     await context.bot.send_message(
                         chat_id=user_id,
                         text=(
@@ -101,12 +101,12 @@ async def auto_remind_email_job(context: ContextTypes.DEFAULT_TYPE):
                         ),
                         parse_mode=ParseMode.HTML
                     )
-                    
+
                     # Update status
                     pending_manual_orders[order_code]['last_reminded'] = current_time
                     await save_data()
                     logger.info(f"<tg-emoji emoji-id=\"5447644880824181073\">🔔</tg-emoji> Đã nhắc user {user_id} nhập email cho đơn {order_code}")
-                    
+
                 except (TelegramError, ValueError, KeyError, AttributeError) as e:
                     logger.warning(f"Không thể nhắc user {user_id}: {e}")
                     # Có thể đánh dấu failed để không nhắc lại ngay
@@ -233,23 +233,23 @@ async def uptime_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     days = delta.days
     hours, remainder = divmod(delta.seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
-    
+
     uptime_str = ""
     if days > 0:
         uptime_str += f"{days} ngày "
     uptime_str += f"{hours}h {minutes}m {seconds}s"
-    
+
     # System info
     try:
         import psutil
         cpu_percent = psutil.cpu_percent(interval=0.5)
         mem = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
-        
+
         # Process info
         proc = psutil.Process()
         proc_mem = proc.memory_info().rss / (1024 * 1024)  # MB
-        
+
         sys_info = (
             f"\n<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>HỆ THỐNG</b>\n"
             f"├ CPU: <b>{cpu_percent}%</b>\n"
@@ -262,12 +262,12 @@ async def uptime_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     except Exception as e:
         logger.exception(f"Loi doc system info: {e}", exc_info=e)
         sys_info = f"\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <i>Lỗi đọc system info: {e}</i>\n"
-    
+
     # Bot stats
     total_users = len(user_data_db)
     total_orders = len(order_history)
     total_products = len(products)
-    
+
     msg = (
         f"<tg-emoji emoji-id=\"5303145396254563405\">🤖</tg-emoji> <b>BOT STATUS</b>\n"
         f"{'━' * 28}\n\n"
@@ -280,11 +280,11 @@ async def uptime_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         f"├ Sản phẩm: <b>{total_products}</b>\n"
         f"└ Pending: <b>{len(pending_orders)}</b>\n"
     )
-    
+
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
 # ==============================================================================
-#  PAYMENT REMINDER JOB — Nhắc thanh toán đơn pending > 15 phút  
+#  PAYMENT REMINDER JOB — Nhắc thanh toán đơn pending > 15 phút
 # ==============================================================================
 
 _payment_reminded = set()  # Track đã nhắc để không spam
@@ -293,25 +293,25 @@ async def payment_reminder_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Cron job: Nhắc user thanh toán nếu đơn pending > 15 phút."""
     if not pending_orders:
         return
-    
+
     current_time = time.time()
     REMIND_AFTER_SECONDS = 15 * 60  # 15 phút
     MAX_PENDING_SECONDS = 60 * 60   # 1 giờ — auto hủy
-    
+
     orders_to_remove = []
-    
+
     for order_code, order_details in list(pending_orders.items()):
         start_time = order_details.get('timestamp', 0)
         if not start_time:
             continue
-        
+
         elapsed = current_time - start_time
         user_id = order_details.get('user_id')
         if not user_id:
             continue
-        
+
         reminder_key = f"{order_code}_{user_id}"
-        
+
         # Quá 1 giờ → tự hủy
         if elapsed > MAX_PENDING_SECONDS:
             orders_to_remove.append(order_code)
@@ -332,7 +332,7 @@ async def payment_reminder_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             except Exception as e:
                 logger.exception(f"Payment reminder send_message cancelled order failed for user {user_id}: {e}", exc_info=e)
             continue
-        
+
         # Quá 15 phút + chưa nhắc → gửi nhắc nhở
         if elapsed > REMIND_AFTER_SECONDS and reminder_key not in _payment_reminded:
             _payment_reminded.add(reminder_key)
@@ -355,11 +355,11 @@ async def payment_reminder_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                 pass
             except Exception as e:
                 logger.exception(f"Payment reminder send_message remind order failed for user {user_id}: {e}", exc_info=e)
-    
+
     # Xóa các đơn hết hạn
     for code in orders_to_remove:
         pending_orders.pop(code, None)
-    
+
     if orders_to_remove:
         create_background_task(save_data())
         logger.info(f"<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> Payment reminder: Đã hủy {len(orders_to_remove)} đơn hết hạn.")
@@ -372,15 +372,15 @@ async def rank_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Hiển thị VIP rank của user."""
     from app.services.games_withdrawals_db import check_if_banned
     if await check_if_banned(update): return
-    
+
     user_id = update.effective_user.id
     vip = get_user_vip_rank(user_id)
-    
+
     rank = vip["rank"]
     base_rank = vip.get("base_rank") or rank
     next_rank = vip["next_rank"]
     maintenance_status = vip.get("maintenance_status") or {}
-    
+
     msg = (
         f"⭐️ <b>HẠNG THÀNH VIÊN CỦA BẠN</b>\n"
         f"{'━' * 28}\n\n"
@@ -416,7 +416,7 @@ async def rank_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             )
     else:
         msg += "\n<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> <b>Bạn đã đạt hạng cao nhất!</b> <tg-emoji emoji-id=\"6124902618574625426\">👑</tg-emoji>\n"
-    
+
     # Bảng xếp hạng
     msg += (
         f"\n{'━' * 28}\n"
@@ -426,7 +426,7 @@ async def rank_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         marker = " ← Bạn" if r["name"] == rank["name"] else ""
         msg += f"  {r['name']} — {r['min_orders']}+ đơn{marker}\n"
     msg += f"\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Quy tắc duy trì: nếu tháng trước chi dưới <b>{VIP_MONTHLY_MAINTENANCE_MIN_SPEND:,} VNĐ</b> thì sẽ tụt 1 bậc trong tháng này."
-    
+
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
 # ==============================================================================

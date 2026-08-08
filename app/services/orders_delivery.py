@@ -438,7 +438,7 @@ async def generate_unique_order_code(prefix="ICLD", length=6, charset: str = '01
                 continue
             reserved_order_codes.add(code)
             return code
-    
+
     # Fallback vẫn phải giữ đúng format ICLD + 6 số để các regex parser hoạt động.
     for _ in range(100):
         if charset == '0123456789':
@@ -508,7 +508,7 @@ def _load_warranty_fallback_products_catalog() -> dict:
         try:
             if not _os.path.exists(candidate_path):
                 continue
-            with open(candidate_path, "r", encoding="utf-8") as handle:
+            with open(candidate_path, encoding="utf-8") as handle:
                 loaded = _json.load(handle)
             if isinstance(loaded, dict):
                 _warranty_fallback_products_cache = loaded
@@ -766,10 +766,10 @@ def is_under_warranty(order):
     """
     # Ưu tiên check warranty_expires nếu có
     warranty_expires = order.get('warranty_expires')
-    
+
     if warranty_expires:
         return time.time() < warranty_expires
-    
+
     # Fallback: Tính từ timestamp nếu không có warranty_expires
     # Giả định 20 ngày bảo hành mặc định
     timestamp = order.get('timestamp', 0)
@@ -777,7 +777,7 @@ def is_under_warranty(order):
         default_warranty_days = 20
         expiry = timestamp + (default_warranty_days * 24 * 60 * 60)
         return time.time() < expiry
-    
+
     # Nếu không có thông tin gì, coi như hết bảo hành
     return False
 
@@ -787,7 +787,7 @@ def get_warranty_status_text(order):
     Returns: tuple (status_emoji, status_text, days_left)
     """
     warranty_expires = order.get('warranty_expires')
-    
+
     if not warranty_expires:
         # Fallback: tính từ timestamp
         timestamp = order.get('timestamp', 0)
@@ -795,14 +795,14 @@ def get_warranty_status_text(order):
             warranty_expires = timestamp + (20 * 24 * 60 * 60)
         else:
             return (E_LIMIT, "Hết bảo hành", 0)
-    
+
     time_left = warranty_expires - time.time()
-    
+
     if time_left <= 0:
         return (E_LIMIT, "Hết bảo hành", 0)
-    
+
     days_left = int(time_left / (24 * 60 * 60))
-    
+
     if days_left > 14:
         return (E_SUCCESS, f"Còn {days_left} ngày", days_left)
     elif days_left > 7:

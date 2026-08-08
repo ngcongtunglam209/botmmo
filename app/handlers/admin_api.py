@@ -8,14 +8,14 @@ async def addapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     partner_name = context.args[0]
     # Tạo key ngẫu nhiên
     new_key = "LAMSHOP-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
-    
+
     # Lưu dưới dạng Dict để chứa cả số dư
     api_keys[new_key] = {
         "name": partner_name,
         "balance": 0  # Số dư ví dùng chung
     }
     await save_data(force=True)
-    
+
     await update.message.reply_html(
         f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ TẠO API KEY MỚI</b>\n\n"
         f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Đối tác:</b> {partner_name}\n"
@@ -30,7 +30,7 @@ async def helpapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if update.effective_user and update.effective_user.id != ADMIN_USER_ID:
         await update.message.reply_text("Ban khong co quyen xem tai lieu API. Vui long lien he Admin.")
         return
-    
+
     # Lấy Public URL hiện tại (nếu có)
     base_url = get_public_api_base_url()
     base_url_note = (
@@ -88,7 +88,7 @@ async def helpapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         "• <code>GET /api/status</code>\n"
         "• <code>POST /api/buy</code>"
     )
-    
+
     await update.message.reply_html(msg)
 
 async def napi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -138,7 +138,7 @@ async def napi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             if name == target:
                 found_key = k
                 break
-    
+
     if not found_key:
         await update.message.reply_text("❌ Không tìm thấy Partner/Key này.")
         return
@@ -160,18 +160,18 @@ async def napi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         if not adjusted:
             await update.message.reply_text("❌ Không thể cộng tiền vào API key này.")
             return
-        
+
         await update.message.reply_html(
             f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ CỘNG TIỀN THỦ CÔNG!</b>\n\n"
             f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Partner:</b> {partner_name}\n"
             f"<tg-emoji emoji-id=\"5397916757333654639\">➕</tg-emoji> <b>Nạp thêm:</b> {amount:,} VNĐ\n"
             f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số dư mới:</b> {int(new_balance):,} VNĐ"
         )
-    
+
     else: # mode == "qr"
         # Tạo mã memo nạp tiền duy nhất
         deposit_code = f"NAPI{int(time.time())}{random.randint(10,99)}"
-        
+
         # Lưu vào danh sách chờ nạp
         pending_api_deposits[deposit_code] = {
             "api_key": found_key,
@@ -181,11 +181,11 @@ async def napi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             "user_id": update.effective_user.id  # Lưu lại user_id để gửi thông báo
         }
         await save_data(force=True)
-        
+
         # Tạo link QR VietQR
         _encoded_partner = quote(f"Nap {partner_name}")
         qr_url = f"https://img.vietqr.io/image/{BANK_ID}-{BANK_ACCOUNT_NUMBER}-print.png?amount={amount}&addInfo={deposit_code}&accountName={quote(ACCOUNT_NAME)}"
-        
+
         caption = (
             f"<tg-emoji emoji-id=\"5278467510604160626\">🏦</tg-emoji> <b>QR Code Nạp Ví Chung</b>\n\n"
             f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Partner:</b> {partner_name}\n"
@@ -193,7 +193,7 @@ async def napi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Nội dung:</b> <code>{deposit_code}</code>\n\n"
             f"<i><tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Hệ thống sẽ tự động cộng tiền khi nhận được chuyển khoản có nội dung <b>{deposit_code}</b>.</i>"
         )
-        
+
         await update.message.reply_photo(photo=qr_url, caption=caption, parse_mode=ParseMode.HTML)
 
 def build_partner_api_topup_qr_url(transfer_content: str, amount: int | None = None) -> str:
@@ -237,17 +237,17 @@ async def napapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     Cú pháp: /napapi <Số_tiền> (Tự động nhận diện User)
     """
     user_id = update.effective_user.id
-    
+
     # 1. Tự động tìm API Key của user
     found_key = None
     partner_name = "Unknown"
-    
+
     for k, v in api_keys.items():
         if isinstance(v, dict) and v.get("user_id") == user_id:
             found_key = k
             partner_name = v.get("name")
             break
-            
+
     if not found_key:
         await update.message.reply_html(
             "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>BẠN CHƯA CÓ TÀI KHOẢN ĐẠI LÝ (API)</b>\n\n"
@@ -285,7 +285,7 @@ async def napapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         update.effective_user.id,
         amount=amount,
     )
-    
+
     caption = (
         f"<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>YÊU CẦU NẠP VÍ CHUNG</b>\n\n"
         f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Partner:</b> {partner_name}\n"
@@ -345,7 +345,7 @@ async def listapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     if current_part:
         message_parts.append(current_part)
-    
+
     await save_data() # Lưu lại nếu có migrate data
     for part in message_parts:
         await update.message.reply_html(part)
@@ -365,7 +365,7 @@ async def addmoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     try:
         target_id = int(context.args[0])
         amount = int(context.args[1].replace(',', '').replace('.', ''))
-        
+
         if amount <= 0:
             await update.message.reply_text("❌ Số tiền phải lớn hơn 0.")
             return
@@ -374,11 +374,11 @@ async def addmoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         if not user_info:
             await update.message.reply_text(f"❌ Không tìm thấy user ID: {target_id}")
             return
-            
+
         current_balance = user_info.get('balance', 0)
         new_balance = current_balance + amount
         db_update_balance(target_id, new_balance, reason=f"Admin Add: {amount:,} VNĐ")
-        
+
         # Notify Admin
         await update.message.reply_text(
             f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ CỘNG TIỀN THÀNH CÔNG</b>\n\n"
@@ -387,7 +387,7 @@ async def addmoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư mới: {new_balance:,} VNĐ",
             parse_mode=ParseMode.HTML
         )
-        
+
         # Notify User
         try:
             await context.bot.send_message(
@@ -400,7 +400,7 @@ async def addmoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         except (Forbidden, BadRequest) as e:
             logger.warning(f"Cannot notify user {target_id} after addmoney: {e}")
             await update.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Không thể gửi thông báo cho user (Block bot?)")
-            
+
     except ValueError:
         await update.message.reply_text("❌ ID hoặc số tiền không hợp lệ.")
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -420,7 +420,7 @@ async def submoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     try:
         target_id = int(context.args[0])
         amount = int(context.args[1].replace(',', '').replace('.', ''))
-        
+
         if amount <= 0:
             await update.message.reply_text("❌ Số tiền phải lớn hơn 0.")
             return
@@ -429,17 +429,17 @@ async def submoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         if not user_info:
             await update.message.reply_text(f"❌ Không tìm thấy user ID: {target_id}")
             return
-            
+
         current_balance = user_info.get('balance', 0)
         new_balance = current_balance - amount
-        
+
         # Cho phép âm tiền nếu admin muốn phạt, hoặc chặn âm tùy policy. Ở đây cho phép.
         # Nhưng thường ví không nên âm. Warning nếu âm.
         if new_balance < 0:
             await update.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Lưu ý: Sau khi trừ, số dư user sẽ bị âm.")
-            
+
         db_update_balance(target_id, new_balance, reason=f"Admin Subtract: {amount:,} VNĐ")
-        
+
         # Notify Admin
         await update.message.reply_text(
             f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ TRỪ TIỀN THÀNH CÔNG</b>\n\n"
@@ -448,7 +448,7 @@ async def submoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư mới: {new_balance:,} VNĐ",
             parse_mode=ParseMode.HTML
         )
-        
+
         # Notify User
         try:
             await context.bot.send_message(
@@ -461,7 +461,7 @@ async def submoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         except (Forbidden, BadRequest) as e:
             logger.warning(f"Cannot notify user {target_id} after submoney: {e}")
             await update.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Không thể gửi thông báo cho user (Block bot?)")
-            
+
     except ValueError:
         await update.message.reply_text("❌ ID hoặc số tiền không hợp lệ.")
     except (TelegramError, ValueError, KeyError, AttributeError) as e:

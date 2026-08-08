@@ -412,12 +412,12 @@ def load_from_db(key, default_value, migrate_file=None):
             row = cursor.fetchone()
             if row:
                 return json.loads(row[0])
-            
+
             # Migrate từ JSON cũ nếu tồn tại
             value_to_save = default_value
             if migrate_file and os.path.exists(migrate_file):
                 try:
-                    with open(migrate_file, 'r', encoding='utf-8') as f: 
+                    with open(migrate_file, encoding='utf-8') as f:
                         value_to_save = json.load(f)
                     bak_path = f"{migrate_file}.bak"
                     os.replace(migrate_file, bak_path)
@@ -430,7 +430,7 @@ def load_from_db(key, default_value, migrate_file=None):
                         pass
                 except (json.JSONDecodeError, OSError) as e:
                     logger.error(f"Lỗi đọc JSON {migrate_file}: {e}")
-            
+
             # Lưu vào DB
             cursor.execute("INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)", (key, json.dumps(value_to_save, ensure_ascii=False)))
             conn.commit()
@@ -448,18 +448,18 @@ async def _apply_wal_pragmas(db):
 async def save_data(force=False, tables=None):
     """Lưu dữ liệu an toàn vào SQLite KV với WAL mode và atomic transaction."""
     current_time = time.time()
-    
+
     if not force and not tables and (current_time - _cache["last_save_time"]) < _cache["save_debounce"]:
         _cache["pending_save"] = True
         return
-    
+
     async with file_lock:
         try:
             def json_dumps_optimized(data):
                 return json.dumps(data, separators=(',', ':'), ensure_ascii=False)
-                
 
-            
+
+
             need_cleanup = (current_time - _cache["last_cleanup_time"]) >= 3600
             if need_cleanup:
                 removed_duplicates = _dedupe_order_history_in_place()
@@ -467,7 +467,7 @@ async def save_data(force=False, tables=None):
                 if removed_duplicates:
                     logger.warning(f"Da loai bo {removed_duplicates} ban ghi don hang trung ma trong qua trinh cleanup.")
                 _cache["last_cleanup_time"] = current_time
-            
+
             should_update_product_stock_flags = (
                 tables is None
                 or PRODUCTS_FILE in set(tables)
@@ -485,13 +485,13 @@ async def save_data(force=False, tables=None):
                                 p["out_of_stock_since"] = current_time
                         else:
                             p.pop("out_of_stock_since", None)
-                
+
             files_to_save = [
-                (HISTORY_FILE, order_history), 
-                (PROCESSED_TX_FILE, list(processed_transaction_ids)), 
-                (USERS_FILE, user_data_db), 
-                (BANNED_USERS_FILE, list(banned_users)), 
-                (COUPONS_FILE, coupons), 
+                (HISTORY_FILE, order_history),
+                (PROCESSED_TX_FILE, list(processed_transaction_ids)),
+                (USERS_FILE, user_data_db),
+                (BANNED_USERS_FILE, list(banned_users)),
+                (COUPONS_FILE, coupons),
                 (API_KEYS_FILE, api_keys),
                 (PENDING_ORDERS_FILE, pending_orders),
                 (USER_TOPUP_FILE, pending_user_topups),
@@ -503,11 +503,11 @@ async def save_data(force=False, tables=None):
                 (WARRANTY_CLAIMS_FILE, warranty_claims),
                 (PRODUCT_RATINGS_FILE, product_ratings),
                 (REFERRAL_DATA_FILE, referral_data),
-                ("data_giveaways.json", active_giveaways), 
+                ("data_giveaways.json", active_giveaways),
                 (LIVE_CHATS_FILE, live_chats),
                 (DICE_GAME_FILE, dice_game_data),
-                (PROMO_BUDGET_FILE, daily_promo_tracker),  
-                (WITHDRAWALS_FILE, withdrawal_requests),  
+                (PROMO_BUDGET_FILE, daily_promo_tracker),
+                (WITHDRAWALS_FILE, withdrawal_requests),
                 (STOCK_WAITLIST_FILE, stock_waitlist),
                 (FLASH_SALES_FILE, flash_sales),
                 (COMBO_DEALS_FILE, combo_deals),
@@ -516,25 +516,25 @@ async def save_data(force=False, tables=None):
                 (TRANSACTION_HISTORY_FILE, transaction_history),
                 (ADMIN_ACTION_LOG_FILE, admin_action_log)
             ]
-            
+
             if tables:
                 files_to_save = [f for f in files_to_save if f[0] in tables]
-            
+
             serialized_data = []
             for key, data in files_to_save:
                 content = await asyncio.to_thread(json_dumps_optimized, data)
                 serialized_data.append((key, content))
-                
+
             async with aiosqlite.connect(DB_PATH) as db:
                 await _apply_wal_pragmas(db)
                 await db.execute('BEGIN TRANSACTION')
                 for key, content in serialized_data:
                     await db.execute("INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)", (key, content))
                 await db.commit()
-                
+
             _cache["last_save_time"] = current_time
             _cache["pending_save"] = False
-            
+
             logger.debug(
                 "Saved %s table(s) to SQLite. orders=%s",
                 len(serialized_data),
@@ -562,7 +562,7 @@ def load_data():
     global pending_user_topups
     global order_history, processed_transaction_ids, user_data_db, banned_users, coupons, pending_orders, api_keys, pending_api_deposits, products, custom_store_icons, store_categories, pending_manual_orders, stock_waitlist, flash_sales, combo_deals, wheel_data, bot_settings
     global warranty_claims, product_ratings, referral_data, live_chats, active_giveaways, dice_game_data, withdrawal_requests, transaction_history, admin_action_log, daily_promo_tracker
-    
+
     init_db()
 
     order_history = load_from_db(HISTORY_FILE, [], HISTORY_FILE)
@@ -585,7 +585,7 @@ def load_data():
         store_categories = {}
     pending_api_deposits = load_from_db("data_pending_api_deposits.json", {}, "data_pending_api_deposits.json")
     pending_manual_orders = load_from_db(PENDING_MANUAL_ORDERS_FILE, {}, PENDING_MANUAL_ORDERS_FILE)
-    
+
     # Load Advanced Features Data
     warranty_claims = load_from_db(WARRANTY_CLAIMS_FILE, {}, WARRANTY_CLAIMS_FILE)
     product_ratings = load_from_db(PRODUCT_RATINGS_FILE, {}, PRODUCT_RATINGS_FILE)
@@ -685,7 +685,7 @@ def load_data():
         logger.info(f"Da bo sung metadata cho {legacy_refunds_backfilled} ban ghi hoan tien cu.")
     if removed_duplicates:
         logger.warning(f"Da loai bo {removed_duplicates} ban ghi don hang trung ma de giu index nhat quan.")
-            
+
     if not isinstance(active_giveaways, dict): active_giveaways = {}
 
     try:
@@ -694,7 +694,7 @@ def load_data():
         sync_runtime_bindings(globals(), runtime_binding_names)
     except (ValueError, TypeError, KeyError, AttributeError, ImportError) as sync_error:
         logger.debug(f"Runtime binding sync skipped: {sync_error}")
-             
+
     try:
         from app.state import app_state
         app_state.bridge_from_globals(globals())

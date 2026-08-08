@@ -4,7 +4,7 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
     # <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> FIX: SKIP channel posts/edited posts - context.user_data is None!
     if update.channel_post or update.edited_channel_post:
         return  # Ignore channel posts, chỉ xử lý user messages
-    
+
     # <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> FIX: SKIP khi không có user_data (edge case)
     if context.user_data is None:
         return  # Không có user context, skip
@@ -15,7 +15,7 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
         return
 
     user_state = context.user_data.get('state')
-    
+
     if user_state == 'awaiting_report_photo':
         if not update.message or not update.message.photo:
              await update.message.reply_text(lt(update.effective_user.id, "❌ Vui lòng gửi ảnh hợp lệ.", "❌ Please send a valid photo.", "❌ 请发送有效的图片。"))
@@ -66,7 +66,7 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             ),
             parse_mode=ParseMode.HTML,
         )
- 
+
     elif user_state == 'awaiting_warranty_photo':
         order_code = context.user_data.get('warranty_claim_order')
         found_order = order_index.get(order_code) if order_code else None
@@ -74,7 +74,7 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             return
         photo_id = update.message.photo[-1].file_id
         desc = context.user_data.get('warranty_description', 'No description')
-        
+
         # Save claim
         claim_id = f"CLM-{int(time.time())}"
         warranty_claims[claim_id] = {
@@ -86,7 +86,7 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             'timestamp': time.time()
         }
         await save_data()
-        
+
         # Notify Admin
         admin_msg = (
             f"<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>YÊU CẦU BẢO HÀNH MỚI</b>\n"
@@ -102,7 +102,7 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
             await context.bot.send_photo(ADMIN_USER_ID, photo_id, caption=admin_msg, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(btns))
         except (ValueError, TypeError, KeyError, IndexError) as e:
             logger.warning(f"Cannot notify admin about warranty claim {claim_id}: {e}")
-        
+
         await update.message.reply_text(
             lt(
                 update.effective_user.id,

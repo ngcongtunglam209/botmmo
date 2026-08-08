@@ -163,13 +163,13 @@ def _collect_pending_manual_count_by_pid():
 def _is_product_visible_in_store(product) -> bool:
     if not isinstance(product, dict):
         return False
-    
+
     out_of_stock_since = product.get("out_of_stock_since")
     if out_of_stock_since:
         import time
         if time.time() - out_of_stock_since > 7 * 86400:
             return False
-            
+
     return True
 
 

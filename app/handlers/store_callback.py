@@ -492,7 +492,7 @@ async def _show_store_product_detail(
         return True
 
     requires_gmail = p.get('requires_gmail', False)
-    
+
     raw_name = str(p.get("name") or prod_id)
     get_effective_category = globals().get("get_effective_store_category")
     effective_category = get_effective_category(p) if callable(get_effective_category) else (p.get("store_category") or get_product_category(raw_name))
@@ -537,18 +537,18 @@ async def _show_store_product_detail(
     localized_name = str(p.get(f"name_{lang}") or p.get("name") or prod_id)
     localized_description = p.get(f"description_{lang}") or p.get("description") or ""
     desc_text = _format_store_description_text(localized_description)
-    
+
     default_duration = "Không giới hạn" if lang == "vi" else ("Unlimited" if lang == "en" else "无限制")
     default_warranty = "Không" if lang == "vi" else ("No" if lang == "en" else "无")
-    
+
     def_dur_val = p.get("duration", default_duration)
     if def_dur_val == "Theo thông tin sản phẩm":
         def_dur_val = "Theo thông tin sản phẩm" if lang == "vi" else ("See product info" if lang == "en" else "查看产品信息")
-    
+
     def_war_val = p.get("warranty", default_warranty)
     if def_war_val == "Bảo hành theo quy định":
         def_war_val = "Bảo hành theo quy định" if lang == "vi" else ("Standard warranty" if lang == "en" else "标准保修")
-        
+
     duration_text = html.escape(p.get(f"duration_{lang}") or def_dur_val)
     warranty_text = html.escape(p.get(f"warranty_{lang}") or def_war_val)
 
@@ -623,7 +623,7 @@ def _get_store_category_panel_text(category_name: str, user_id: int, refresh_sum
 async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     data = query.data
-    
+
     if data == "store_main":
         # Acknowledge early to stop Telegram spinner immediately.
         await safe_answer(query)
@@ -683,7 +683,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             parse_mode='HTML',
         )
         return True
-        
+
     elif data.startswith("waitlist_"):
         wl_prod_id = data.replace("waitlist_", "")
         await handle_waitlist_callback(update, context, wl_prod_id)
@@ -739,7 +739,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             parse_mode='HTML'
         )
         return True
-        
+
     elif data.startswith("view_prod_"):
         await safe_answer(query)
         prod_id = data.replace("view_prod_", "")
@@ -749,7 +749,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         prod_id = data.replace("sel_qty_", "")
         p = products.get(prod_id)
         if not p: return True
-        
+
         requires_gmail = p.get('requires_gmail', False)
 
         if requires_gmail:
@@ -815,7 +815,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             await _show_store_panel(query, context, msg_text, InlineKeyboardMarkup(btns))
             return True
-        
+
         # AUTO PRODUCTS - Cho chọn số lượng
         stock_count = int(get_local_stock_available_count(p) or 0)
         effective_stock = stock_count
@@ -826,22 +826,22 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             return True
 
         _max_buy = min(effective_stock, 100) if effective_stock > 0 else 100
-        
+
         btns = []
         row = []
-        
+
         # Tạo nút 1-5
         for q in [1, 2, 3, 4, 5]:
             if q <= effective_stock:
                 row.append(_btn(f"{q}", callback_data=f"buy_prod_confirm_{prod_id}_{q}", style="success"))
-            
+
             if len(row) == 3:
                 btns.append(row)
                 row = []
-                
+
         if row:
             btns.append(row)
-            
+
         # Nút lớn hơn
         large_qty = []
         for q in [10, 20]:
@@ -849,7 +849,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 large_qty.append(_btn(f"{q}", callback_data=f"buy_prod_confirm_{prod_id}_{q}", style="success"))
         if large_qty:
             btns.append(large_qty)
-        
+
         btns.append([_btn(labels["enter_qty"], icon_id="5364075889669718872", callback_data=f"custom_qty_{prod_id}")])
         btns.append([_btn(labels["back"], icon_id="6206032691075223572", callback_data=f"view_prod_{prod_id}")])
 
@@ -879,7 +879,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 prod_id = clean_data; qty = 1
         else:
             prod_id = clean_data; qty = 1
-        
+
         labels = _checkout_labels(query.from_user.id)
         p = products.get(prod_id)
         if not p:
@@ -888,13 +888,13 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
         unit_price, discount_type, discount_info = get_best_discount(update.effective_user.id, prod_id, p['price'])
         total_price = unit_price * qty
-        
+
         user_id = update.effective_user.id
         user_info = db_get_user(user_id)
         balance = user_info.get('balance', 0) if user_info else 0
-        
+
         btns = []
-        
+
         bal_text = f"{labels['balance']} ({balance:,}đ)"
         if balance >= total_price:
             btns.append([_btn(bal_text, icon_id="5458774648621643551", callback_data=f"pay_prod_bal_{prod_id}_{qty}", style="success")])
@@ -939,7 +939,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             InlineKeyboardMarkup(btns),
         )
         return True
-    
+
     elif data.startswith("custom_qty_"):
         # Handle custom quantity input
         prod_id = data.replace("custom_qty_", "")
@@ -978,7 +978,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                  prod_id = clean_data; qty = 1
         else:
              prod_id = clean_data; qty = 1
-        
+
         p = products.get(prod_id)
         if not p:
             await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
@@ -990,31 +990,31 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             coupon_unit_price = max(0, p['price'] - store_coupon_discount)
             unit_price = min(unit_price, coupon_unit_price)
         total_price = unit_price * qty
-    
+
         user_id = update.effective_user.id
         user_info = db_get_user(user_id)
         balance = user_info.get('balance', 0) if user_info else 0
-        
+
         if balance < total_price:
             await safe_answer(query, "❌ Số dư không đủ!", show_alert=True)
             return True
 
         # FIX: Check requires_gmail TRƯỚC để bỏ qua stock check nếu manual
         requires_gmail = p.get('requires_gmail', False)
-        
+
         if not requires_gmail:
             available_count = int(get_local_stock_available_count(p) or 0)
             if available_count < qty:
                 await safe_answer(query, f"❌ Chỉ còn {available_count} sản phẩm, không đủ số lượng {qty}!", show_alert=True)
                 return True
-    
+
         if requires_gmail:
             # FLOW MỚI: Hỏi email → Báo Admin → Admin xử lý
-            
+
             # Trừ tiền trước
             new_balance = balance - total_price
             db_update_balance(user_id, new_balance)
-            
+
             # Lưu thông tin tạm thời & GLOBAL (Persistent)
             order_code = await generate_unique_order_code(
                 prefix="MANUAL",
@@ -1022,7 +1022,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 charset=string.ascii_uppercase + string.digits,
                 extra_reserved=pending_manual_orders,
             )
-            
+
             # Save to global storage immediately
             pending_manual_orders[order_code] = {
                 'order_code': order_code,
@@ -1042,10 +1042,10 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 coupons[store_coupon_code]['used'] = coupons[store_coupon_code].get('used', 0) + 1
             await save_data(force=True)
             clear_store_coupon_context(context)
-            
+
             context.user_data['pending_manual_order'] = pending_manual_orders[order_code]
             context.user_data['state'] = 'awaiting_manual_email'
-            
+
             await query.message.reply_text(
                 lt(
                     user_id,
@@ -1070,7 +1070,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 ),
                 parse_mode='HTML'
             )
-            
+
             # Edit message và lưu message_id để xóa sau
             waiting_msg = await query.edit_message_text(
                 "<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <b>CHỜ NHẬP EMAIL...</b>",
@@ -1078,7 +1078,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             )
             context.user_data['waiting_message_id'] = waiting_msg.message_id
             context.user_data['waiting_chat_id'] = waiting_msg.chat_id
-            
+
             # Gửi thông báo cho admin rằng đang chờ email
             admin_notif = await context.bot.send_message(
                 ADMIN_USER_ID,
@@ -1092,14 +1092,14 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             # Lưu message_id của thông báo admin để update sau
             context.user_data['admin_waiting_message_id'] = admin_notif.message_id
             return True
-        
+
         # FLOW CŨ: Giao hàng tự động
         items_bought = []
         actual_qty = qty
         refunded_qty = 0
         refund_amount = 0
         charged_amount = total_price
-        
+
         # === REGULAR LOCAL STOCK FLOW ===
         stock_result = await consume_local_stock_items(
             prod_id,
@@ -1125,7 +1125,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         new_balance = balance - charged_amount
         db_update_balance(user_id, new_balance, reason=f"Purchase: {p['name']} x{actual_qty} (refunded {refunded_qty} duplicates)")
 
-    
+
         # === CHUNG CHO CẢ 2 FLOW (Delivery & Logging) ===
         # Log Order
         order_code = await generate_unique_order_code(
@@ -1184,7 +1184,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             f"{refund_notice}\n\n"
             f"{delivery_notice}"
         )
-        
+
         await query.message.reply_text(info_msg, parse_mode='HTML')
         delivery_result = {"delivered": False, "method": "failed"}
 
@@ -1213,7 +1213,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 file_content += f"Tài khoản {idx_f}:\n{item_f}\n\n"
             file_content += "Cảm ơn quý khách đã mua hàng. Chúc quý khách sử dụng dịch vụ vui vẻ!\n"
             file_content += "\n" + "="*60 + "\n"
-            
+
             delivery_result = await deliver_items_as_txt(
                 context,
                 user_id,
@@ -1256,7 +1256,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 f"{E_TAG} SP: {html.escape(p['name'])} x{qty}\n"
                 f"{E_STAT} Trạng thái: {html.escape(order_data.get('status', 'pending'))}",
             )
-        
+
         await query.edit_message_text(
             lt(
                 user_id,
@@ -1266,7 +1266,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             ),
             reply_markup=create_back_button_menu(user_id=user_id)
         )
-        
+
         # Post-purchase follow-ups are delayed so they do not visually drown out the delivery file.
         if delivery_result.get("delivered"):
             await send_live_order_notification(
@@ -1291,9 +1291,9 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 delivery_method=delivery_result.get("method", "failed"),
             )
             create_background_task(send_post_purchase_followups(context, user_id, prod_id))
-        
+
         return True
-        
+
     elif data.startswith("store_coupon_"):
         clean_data = data.replace("store_coupon_", "")
         if "_" in clean_data:
@@ -1522,7 +1522,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             return True
 
         requires_gmail = p.get('requires_gmail', False)
-        
+
         if not requires_gmail:
             # Auto product - phải có stock với lock protection
             lock = await get_product_lock(prod_id)
@@ -1536,11 +1536,11 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             # Manual product - check pending limit
             pending_count = sum(1 for o in pending_manual_orders.values() if o.get('product_id') == prod_id)
             max_pending = p.get('max_pending_orders', 10)
-            
+
             if pending_count >= max_pending:
                 await safe_answer(query, f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Admin đang bận ({pending_count}/{max_pending})!", show_alert=True)
                 return True
-             
+
         qr_sent = await generate_product_payment_qr(update, context, prod_id, qty)
         if qr_sent is False:
             return True
@@ -1550,6 +1550,6 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         except BadRequest:
             pass
         return True
-    
+
     return False
 

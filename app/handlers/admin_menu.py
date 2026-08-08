@@ -391,14 +391,14 @@ async def handle_admin_quick_action(query, context: ContextTypes.DEFAULT_TYPE):
 
 async def warranty_photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_state = context.user_data.get('state')
-    
+
     if user_state == 'awaiting_warranty_photo':
         order_code = context.user_data.get('warranty_claim_order')
         description = context.user_data.get('warranty_description')
         if not update.message.photo: return
-        
+
         photo = update.message.photo[-1].file_id
-        
+
         # Create warranty claim
         claim_id = f"WRC{int(time.time())}"
         warranty_claims[claim_id] = {
@@ -411,10 +411,10 @@ async def warranty_photo_handler(update: Update, context: ContextTypes.DEFAULT_T
             'timestamp': time.time(),
             'admin_notes': ''
         }
-        
+
         await save_data()
         await clear_user_state(context)
-        
+
         # Notify user
         await update.message.reply_text(
             f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ GỬI YÊU CẦU BẢO HÀNH</b>\n\n"
@@ -423,7 +423,7 @@ async def warranty_photo_handler(update: Update, context: ContextTypes.DEFAULT_T
             parse_mode=ParseMode.HTML,
             reply_markup=create_main_menu(user_id=update.effective_user.id)
         )
-        
+
         # Notify admin
         try:
             await context.bot.send_photo(

@@ -236,21 +236,21 @@ async def safe_edit_message(query, text=None, caption=None, reply_markup=None, p
                 await query.edit_message_caption(caption=caption, reply_markup=reply_markup, parse_mode=parse_mode)
             else:
                 await query.edit_caption(caption=caption, reply_markup=reply_markup, parse_mode=parse_mode)
-                
+
         elif text is not None:
             # Edit text
             if hasattr(query, 'edit_message_text'):
                 await query.edit_message_text(text=text, reply_markup=reply_markup, parse_mode=parse_mode)
             else:
                 await query.edit_text(text=text, reply_markup=reply_markup, parse_mode=parse_mode)
-                
+
         else:
             # Chỉ edit reply_markup
             if hasattr(query, 'edit_message_reply_markup'):
                 await query.edit_message_reply_markup(reply_markup=reply_markup)
             else:
                 await query.edit_reply_markup(reply_markup=reply_markup)
-                
+
         return True
     except BadRequest as e:
         err = str(e or "")
@@ -492,13 +492,13 @@ async def _send_caption_overflow_as_messages(bot, chat_id, caption_text, parse_m
             final_chunk = html.escape(chunk)
         else:
             final_chunk = chunk
-            
+
         chunk_kwargs = {"chat_id": chat_id, "text": final_chunk}
         if parse_mode is not None:
             chunk_kwargs["parse_mode"] = parse_mode
         if idx == 0 and reply_to_message_id:
             chunk_kwargs["reply_to_message_id"] = reply_to_message_id
-            
+
         try:
             await bot.send_message(**chunk_kwargs)
         except (BadRequest, TelegramError, ValueError, KeyError, AttributeError) as chunk_error:
@@ -747,10 +747,10 @@ def _patch_bot_send_message():
         call_kwargs, markup_transformed = _prepare_reply_markup(kwargs)
         call_args, call_kwargs, payload_transformed = _prepare_payload(args, call_kwargs, field_name, arg_index)
         transformed = markup_transformed or payload_transformed
-        
+
         if method_name and method_name.endswith("reply_html") and "parse_mode" in call_kwargs:
             del call_kwargs["parse_mode"]
-            
+
         try:
             return await original_func(bot_self, *call_args, **call_kwargs)
         except TypeError as e:
@@ -812,18 +812,18 @@ def _patch_bot_send_message():
                     sanitized = strip_tg_emoji(plain_text)
                     sanitized = re.sub(r"(?is)<script.*?</script>", "", sanitized)
                     sanitized = re.sub(r"(?is)<style.*?</style>", "", sanitized)
-                    
+
                     # FIX BUG Mảng 4: Áp dụng html.escape để chống lỗi tag
-                    # Nếu parse entity lỗi (có thể do chunk cắt trúng thẻ HTML), 
+                    # Nếu parse entity lỗi (có thể do chunk cắt trúng thẻ HTML),
                     # ta dùng html.escape để hiện nguyên mẫu chứ không xóa đi
                     sanitized = html.escape(sanitized)
-                    
+
                     if not sanitized:
                         sanitized = "[message omitted due to parse error]"
                     if len(sanitized) > TELEGRAM_TEXT_LIMIT:
                         sanitized = sanitized[:TELEGRAM_TEXT_LIMIT - 1] + "…"
                     safe_args, safe_kwargs = _inject_field(call_args, call_kwargs, field_name, arg_index, sanitized)
-                    
+
                     safe_kwargs["parse_mode"] = getattr(ParseMode, 'HTML', 'HTML')
                     safe_kwargs.pop("entities", None)
                     safe_kwargs.pop("caption_entities", None)
@@ -972,7 +972,7 @@ def _patch_plain_surface_methods():
                 call_args, call_kwargs = _inject_field(args, kwargs, "text", 1, normalized)
                 return await __orig(self, *call_args, **call_kwargs)
 
-            setattr(target_cls, "answer_callback_query", _answer_wrapped)
+            target_cls.answer_callback_query = _answer_wrapped
 
         original_set_commands = target_cls.__dict__.get("set_my_commands")
         if original_set_commands is not None:
@@ -984,7 +984,7 @@ def _patch_plain_surface_methods():
                     call_args, call_kwargs = _inject_field(args, kwargs, "commands", 0, normalized_commands)
                 return await __orig(self, *call_args, **call_kwargs)
 
-            setattr(target_cls, "set_my_commands", _set_commands_wrapped)
+            target_cls.set_my_commands = _set_commands_wrapped
 
         target_cls._plain_surface_patch_applied = True
 

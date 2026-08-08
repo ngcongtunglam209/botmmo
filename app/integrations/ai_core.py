@@ -22,13 +22,13 @@ class GroqAssistant:
             return False
         logger.info(f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Groq AI initialized: {self.model_name}")
         return True
-    
+
     def get_chat_history(self, user_id: int):
         """Get or create chat history"""
         if user_id not in self.chat_sessions:
             self.chat_sessions[user_id] = []
         return self.chat_sessions[user_id]
-    
+
     def clear_chat(self, user_id: int):
         """Clear chat history for user"""
         if user_id in self.chat_sessions:
@@ -111,7 +111,7 @@ class GroqAssistant:
             disable_seconds=120,
         )
         return None
-            
+
     async def ask(self, question: str, user_id: int = 0, system_prompt: str = None) -> str:
         """Send message and get response using Groq OpenAI-compatible API"""
         if not self.api_key:
@@ -119,23 +119,23 @@ class GroqAssistant:
 
         if getattr(self, "provider_unavailable_until", 0.0) > self._now_ts():
             return None
-            
+
         history = self.get_chat_history(user_id)
-        
+
         # Build messages array (OpenAI format)
         messages = []
-        
+
         # System prompt
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
-        
+
         # Add chat history
         for msg in history:
             messages.append({"role": msg["role"], "content": msg["content"]})
-            
+
         # Add current question
         messages.append({"role": "user", "content": question})
-        
+
         # Payload (OpenAI-compatible)
         payload = {
             "model": self.model_name,
@@ -145,7 +145,7 @@ class GroqAssistant:
             "top_p": 1,
             "stream": False
         }
-        
+
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
@@ -162,7 +162,7 @@ class GroqAssistant:
                     headers=headers,
                     timeout=15.0
                 )
-                    
+
                 if response.status_code in {429, 500, 502, 503, 504}:
                     wait_time = 2 * (attempt + 1)
                     logger.warning(
@@ -180,32 +180,32 @@ class GroqAssistant:
                         disable_seconds=120,
                     )
                     return None
-                    
+
                 if response.status_code != 200:
                     return self._handle_http_failure(response.status_code, response.text)
-                    
+
                 data = response.json()
-                
+
                 # Parse OpenAI-format response
                 try:
                     choices = data.get("choices", [])
                     if not choices:
                         return "AI không phản hồi."
-                        
+
                     reply_text = choices[0].get("message", {}).get("content", "")
                     if not reply_text:
                         return "..."
-                        
+
                     # Update History (OpenAI format: role=user/assistant)
                     history.append({"role": "user", "content": question})
                     history.append({"role": "assistant", "content": reply_text})
-                    
+
                     # Keep history limited (last 20 messages)
                     if len(history) > 20:
                         self.chat_sessions[user_id] = history[-20:]
-                        
+
                     return reply_text
-                    
+
                 except (httpx.HTTPError, ValueError, KeyError) as parse_err:
                     logger.error(f"❌ Error parsing Groq response: {parse_err}")
                     return None
@@ -228,7 +228,7 @@ class GroqAssistant:
                 if attempt == max_retries - 1:
                     break
 
-                
+
         return None
 
 gemini_assistant = GroqAssistant()
@@ -246,12 +246,12 @@ async def ask_ai(question: str, user_context: dict = None, user_id: int = 0) -> 
         fallback_response = automated_support_handler(question)
         if fallback_response:
             return fallback_response
-        
+
         # Fallback cuối cùng - Thân thiện, tự nhiên
         return "Xin chào! Mình là trợ lý Lâm Shop <tg-emoji emoji-id=\"6293853394910057834\">😊</tg-emoji> Bạn cần tư vấn gì về ChatGPT, Netflix, Spotify hay sản phẩm nào không? Hoặc cứ chat thoải mái, mình trả lời được mọi thứ nha! ⭐️"
-    
+
     current_time = datetime.now()
-    
+
     # Time context
     time_context = f"""
     **THỜI GIAN HIỆN TẠI:**
@@ -259,14 +259,14 @@ async def ask_ai(question: str, user_context: dict = None, user_id: int = 0) -> 
     - Thứ: {current_time.strftime('%A')}
     - Múi giờ: UTC+7 (Việt Nam)
     """
-    
+
     # Lấy thông tin sản phẩm REAL-TIME từ database
     products_info = ""
     if products:
         products_info = "\n**SẢN PHẨM ĐANG BÁN (REAL-TIME):**\n"
         for pid, p in list(products.items())[:10]:  # Top 10 products
             requires_gmail = p.get('requires_gmail', False)
-            
+
             if requires_gmail:
                 # Manual product - Check pending count
                 pending_count = sum(1 for o in pending_manual_orders.values() if o.get('product_id') == pid)
@@ -277,10 +277,10 @@ async def ask_ai(question: str, user_context: dict = None, user_id: int = 0) -> 
                 # Auto product - Check stock
                 stock_count = len(p.get('stock', []))
                 stock_status = f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Còn {stock_count} sản phẩm" if stock_count > 0 else "❌ Hết hàng"
-            
+
             products_info += f"- {p['name']}: {p['price']:,}đ | {stock_status}\n"
-    
-    
+
+
     # Context về đơn hàng đang chờ
     pending_info = f"""
     **TÌNH TRẠNG ĐƠN HÀNG:**
@@ -288,15 +288,15 @@ async def ask_ai(question: str, user_context: dict = None, user_id: int = 0) -> 
     - Đơn manual chờ xử lý: {len(pending_manual_orders)}
     - Tổng users: {len(user_data_db)}
     """
-    
+
     # Context về user nếu có
     user_info = ""
     if user_context:
         orders_count = user_context.get('orders_count', 0)
         balance = user_context.get('balance', 0)
         user_info = f"\n**THÔNG TIN KHÁCH HÀNG NÀY:** Đã mua {orders_count} đơn, Số dư: {balance:,}đ"
-        
-    
+
+
     # Context về coupon đang active
     active_coupons = 0
     for code, details in coupons.items():
@@ -311,9 +311,9 @@ async def ask_ai(question: str, user_context: dict = None, user_id: int = 0) -> 
                         active_coupons += 1
         except (TypeError, ValueError) as e:
             logger.debug(f"Skip invalid coupon entry '{code}': {e}")
-    
+
     coupon_info = f"\n**MÃ GIẢM GIÁ:** Đang có {active_coupons} mã còn hiệu lực" if active_coupons > 0 else ""
-    
+
     # SYSTEM PROMPT: Trợ lý Lâm Shop siêu nhiệt tình, hài hước, lịch sự
     system_prompt = f"""
 <tg-emoji emoji-id=\"5303145396254563405\">🦕</tg-emoji> BẠN LÀ TRỢ LÝ CỦA LÂM SHOP
@@ -372,7 +372,7 @@ LƯU Ý QUAN TRỌNG:
 
 Hãy là trợ lý vui vẻ nhất mà khách hàng từng gặp! <tg-emoji emoji-id=\"5303145396254563405\">🦕</tg-emoji>⭐️
 """
-    
+
     # Gọi Groq AI với chat history
     try:
         response_text = await gemini_assistant.ask(
@@ -380,7 +380,7 @@ Hãy là trợ lý vui vẻ nhất mà khách hàng từng gặp! <tg-emoji emoj
             user_id=user_id,
             system_prompt=system_prompt
         )
-        
+
         if response_text:
             return response_text
 
@@ -408,7 +408,7 @@ async def intelligent_ticket_classifier(query: str, user_id: int) -> dict:
     Returns: {"type": TicketType, "confidence": float, "auto_resolved": bool, "response": str, "action": str}
     """
     query_lower = query.lower()
-    
+
     # Patterns for each ticket type với confidence scoring
     patterns = {
         TicketType.EMAIL_NOT_FOUND: {
@@ -420,20 +420,20 @@ async def intelligent_ticket_classifier(query: str, user_id: int) -> dict:
             "confidence_boost": 0.85
         }
     }
-    
+
     # Calculate confidence for each type
     best_match = {"type": TicketType.OTHER, "confidence": 0.0}
-    
+
     for ticket_type, pattern in patterns.items():
         confidence = 0.0
         keyword_matches = sum(1 for keyword in pattern["keywords"] if keyword in query_lower)
-        
+
         if keyword_matches > 0:
             confidence = (keyword_matches / len(pattern["keywords"])) * pattern["confidence_boost"]
-            
+
         if confidence > best_match["confidence"]:
             best_match = {"type": ticket_type, "confidence": confidence}
-    
+
     # Auto-resolve nếu confidence >= 0.3
     if best_match["confidence"] >= 0.3:
         auto_response = await auto_resolve_ticket(best_match["type"], query, user_id)
@@ -444,12 +444,12 @@ async def intelligent_ticket_classifier(query: str, user_id: int) -> dict:
                 "response": auto_response["message"],
                 "action": auto_response["action"]
             }
-    
+
     return {**best_match, "auto_resolved": False, "response": None, "action": "escalate_to_admin"}
 
 async def auto_resolve_ticket(ticket_type: TicketType, query: str, user_id: int) -> dict | None:
     """Auto-resolve ticket dựa trên type"""
-    
+
     if ticket_type == TicketType.EMAIL_NOT_FOUND:
         return handle_email_not_found()
 
