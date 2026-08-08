@@ -36,7 +36,7 @@
     <form method="post" action="/admin/ops/toggle" class="form-grid">
       {{ csrf(csrf_token) }}
       {{ select('Thao tác', 'mode', [
-        ('mbbank_on', 'Bật MBBank'), ('mbbank_off', 'Tắt MBBank'),
+        ('sepay_on', 'Bật SePay'), ('sepay_off', 'Tắt SePay'),
         ('binance_on', 'Bật Binance Spot'), ('binance_off', 'Tắt Binance Spot')]) }}
       <div class="form-actions"><button type="submit">Áp dụng</button></div>
     </form>

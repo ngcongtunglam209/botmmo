@@ -752,8 +752,8 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         from app.integrations.payments_core import is_usdt_trc20_enabled, is_binance_pay_id_enabled
         if is_usdt_trc20_enabled() or is_binance_pay_id_enabled():
             btns.append([_btn("USDT (Binance ID / BEP20)", icon_id="5281029063459234079", callback_data=f"pay_prod_usdt_trc20_{prod_id}_{qty}")])
-        from app.core.config_env import ENABLE_PAYMENT_MBBANK
-        if ENABLE_PAYMENT_MBBANK:
+        from app.integrations.payments_core import is_bank_transfer_enabled
+        if is_bank_transfer_enabled():
             btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
         btns.append([InlineKeyboardButton(lt(user.id, "⬅️ Quay lại", "⬅️ Back", "⬅️ 返回"), callback_data=f"buy_prod_confirm_{prod_id}_{qty}")])
         await update.message.reply_text(
@@ -1176,8 +1176,8 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         from app.integrations.payments_core import is_usdt_trc20_enabled, is_binance_pay_id_enabled
         if is_usdt_trc20_enabled() or is_binance_pay_id_enabled():
             btns.append([_btn("USDT (Binance ID / BEP20)", icon_id="5281029063459234079", callback_data=f"pay_prod_usdt_trc20_{prod_id}_{qty}")])
-        from app.core.config_env import ENABLE_PAYMENT_MBBANK
-        if ENABLE_PAYMENT_MBBANK:
+        from app.integrations.payments_core import is_bank_transfer_enabled
+        if is_bank_transfer_enabled():
             btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
         btns.append([_btn(lt(user.id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=f"sel_qty_{prod_id}")])
         

@@ -161,6 +161,11 @@ def clear_store_coupon_context(context):
     for key in ('store_coupon_applied', 'store_coupon_discount', 'store_coupon_prod_id', 'store_coupon_qty'):
         context.user_data.pop(key, None)
 
+def is_bank_transfer_enabled() -> bool:
+    """QR chuyen khoan chay qua SePay (webhook + poll doi soat)."""
+    from app.core.config_env import ENABLE_PAYMENT_SEPAY
+    return bool(ENABLE_PAYMENT_SEPAY)
+
 def is_binance_pay_enabled() -> bool:
     return bool(BINANCE_PAY_CERT_SN and BINANCE_PAY_SECRET_KEY and BINANCE_PAY_RATE_VND_PER_USDT > 0)
 

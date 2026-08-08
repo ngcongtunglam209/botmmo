@@ -799,8 +799,8 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             from app.integrations.payments_core import is_usdt_trc20_enabled, is_binance_pay_id_enabled
             if is_usdt_trc20_enabled() or is_binance_pay_id_enabled():
                 btns.append([_btn("USDT (Binance ID / BEP20)", icon_id="5281029063459234079", callback_data=f"pay_prod_usdt_trc20_{prod_id}_1", style="success")])
-            from app.core.config_env import ENABLE_PAYMENT_MBBANK
-            if ENABLE_PAYMENT_MBBANK:
+            from app.integrations.payments_core import is_bank_transfer_enabled
+            if is_bank_transfer_enabled():
                 btns.append([_btn(labels["bank"], icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_1", style="success")])
             btns.append([_btn(labels["coupon"], icon_id="5377624166436445368", callback_data=f"store_coupon_{prod_id}_1")])
             btns.append([_btn(labels["back"], icon_id="6206032691075223572", callback_data=f"view_prod_{prod_id}")])
@@ -904,8 +904,8 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         from app.integrations.payments_core import is_usdt_trc20_enabled, is_binance_pay_id_enabled
         if is_usdt_trc20_enabled() or is_binance_pay_id_enabled():
             btns.append([_btn("USDT (Binance ID / BEP20)", icon_id="5281029063459234079", callback_data=f"pay_prod_usdt_trc20_{prod_id}_{qty}", style="success")])
-        from app.core.config_env import ENABLE_PAYMENT_MBBANK
-        if ENABLE_PAYMENT_MBBANK:
+        from app.integrations.payments_core import is_bank_transfer_enabled
+        if is_bank_transfer_enabled():
             btns.append([_btn(labels["bank"], icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}", style="success")])
         btns.append([_btn(labels["coupon"], icon_id="5447364299200678034", callback_data=f"store_coupon_{prod_id}_{qty}")])
         btns.append([_btn(labels["back"], icon_id="6206032691075223572", callback_data=f"sel_qty_{prod_id}")])
