@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```powershell
 python main.py                       # run bot + API server (single process)
-pytest                               # full suite (401 tests)
+pytest                               # full suite (460 tests)
 pytest tests/test_business_logic.py -v          # one file
 pytest tests/test_i18n.py::test_name -v         # one test
 ruff check app/ tests/               # lint (CI gate; line-length 120, E501 ignored)
@@ -35,7 +35,8 @@ This is the single most important thing to know before editing anything under `a
 - These files have *almost no import statements*. `logger`, `Update`, `ContextTypes`, `datetime`, `products`, `app` (the FastAPI instance) etc. arrive from earlier sections via the shared namespace. `app/core/boot_dependencies.py` (first in the list) does the real imports; `config_env.py` and `runtime_state.py` define the globals everything else reads.
 - **Order in `SECTION_FILES` is load order and is load-bearing.** A new section file must be inserted after everything it references. Plain `import app.handlers.foo` on a section module gives you a half-built module or `NameError`.
 - After each section loads, its public symbols are copied into *every* already-loaded module's `__dict__`. So a global re-binding at runtime does not propagate by itself — use `runtime_loader.sync_runtime_bindings(globals(), ["name", ...])` (see `app/core/lifecycle.py`).
-- Ruff sees undefined names here; existing code uses `# noqa: F821` where needed.
+- Ruff sees undefined names here; existing code uses `# noqa: F821` where needed. `pyproject.toml` also ignores `F821`, `F401` and `E402` on every file in `SECTION_FILES`, and `tests/test_lint_config.py` fails if that list and the ignores drift apart.
+- **Never run `ruff check --fix` on a section file without `--select`ing the rules yourself.** The `F401` fix deletes "unused" imports, and in `boot_dependencies.py` every import is unused *in that file* — it exists so the other 57 sections can see it. An unrestricted `--fix` emptied that file's import block plus `json` in `config_env.py` and `Decimal` in `games_withdrawals_db.py`, **and the full test suite still passed**. Diff the imported names before and after (`ast.Import` / `ast.ImportFrom`) rather than trusting green tests.
 
 **2. Normal Python packages — regular imports, no loader.**
 `app/web/**` (admin panel + partner API), `app/models/**`, `app/state.py`, `app/services/business_logic.py`, `brand_matching.py`, `warranty_history.py`, and `app/core/{runtime_loader,section_manifest}.py`. Write these as ordinary typed modules; they are the direction the codebase is migrating toward.
