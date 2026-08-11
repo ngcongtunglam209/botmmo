@@ -67,7 +67,7 @@ async def _mark_pending_payment_message_completed(context, order_details: dict):
 def _find_pending_api_deposit_reference(description: str):
     raw_description = str(description or "")
     no_space_description = raw_description.replace(" ", "")
-    
+
     match_api = NAPI_PATTERN.search(raw_description) or NAPI_PATTERN.search(no_space_description)
     if match_api:
         return match_api.group(1).upper()
@@ -80,13 +80,13 @@ def _find_pending_api_deposit_reference(description: str):
         transfer_content = str(details.get("transfer_content") or pending_ref or "").strip()
         if not transfer_content:
             continue
-            
+
         if re.search(rf"(?<!\d){re.escape(transfer_content)}(?!\d)", raw_description):
             return str(pending_ref)
-            
+
         if re.search(rf"(?<!\d){re.escape(transfer_content.replace(' ', ''))}(?!\d)", no_space_description):
             return str(pending_ref)
-            
+
     return None
 
 
@@ -284,9 +284,9 @@ async def _scan_rpay_payments(synthetic_transactions: list) -> dict:
 
 
 async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
-    """Binance Pay: doi soat bang feed lich su (khong co callback).
+    """Binance Pay: doi soat bang lich su giao dich (khong co callback).
 
-    Feed khong tra ve noi dung chuyen khoan nen khong khop duoc theo ma ICLD.
+    Binance khong tra ve noi dung chuyen khoan nen khong khop duoc theo ma ICLD.
     Chi con SO TIEN + CUA SO THOI GIAN. Ba rang buoc giu cho no an toan:
 
       1. So tien phai trung tuyet doi. Moi don da duoc cap so le rieng luc tao
@@ -297,7 +297,7 @@ async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
          tay.
       3. Giao dich phai roi trong [tao don - leeway, het han + leeway].
 
-    So tien cong cho khach luon lay tu don pending, khong bao gio tu feed.
+    So tien cong cho khach luon lay tu don pending, khong bao gio tu Binance.
     """
     from app.integrations.binancepay_api import (
         fetch_binance_pay_transactions,
@@ -384,6 +384,78 @@ async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
     return {"enabled": True, "ok": True, "error": "", "count": found}
 
 
+async def _scan_nowpayments_payments(synthetic_transactions: list) -> dict:
+    """NOWPayments: IPN la duong chinh, poll tung payment la luoi do.
+
+    Khac Binance Pay: `order_id` quay ve nguyen ven trong payload nen khop don
+    la tra cuu truc tiep, khong phai doan theo so tien. Nhung SO TIEN VND cong
+    cho khach van lay tu don pending cua ta - payload chi noi "da tra du USDT",
+    khong duoc phep quyet dinh cong bao nhieu dong.
+
+    Cac chot chan tra thieu / re-deposit / trang thai chua xong nam trong
+    nowpayments_normalize_payment(), tuc la ap dung cho ca hai duong.
+    """
+    from app.integrations.nowpayments_api import (
+        is_nowpayments_enabled,
+        nowpayments_ipn_inbox,
+        nowpayments_poll_pending_payments,
+    )
+
+    if not is_nowpayments_enabled():
+        return {"enabled": False, "ok": True, "error": "", "count": 0}
+
+    expected_vnd_by_code: dict = {}
+    for order_code, order_details in await pending_items_snapshot():
+        if order_details.get("provider") == "nowpayments" and order_details.get("status") == "pending_payment":
+            expected_vnd_by_code[str(order_code)] = int(order_details.get("amount", 0) or 0)
+    for topup_code, topup_details in list(pending_user_topups.items()):
+        if isinstance(topup_details, dict) and topup_details.get("provider") == "nowpayments":
+            expected_vnd_by_code[str(topup_code)] = int(topup_details.get("amount", 0) or 0)
+
+    found = 0
+    error = ""
+
+    def _accept(record) -> bool:
+        order_code = record["order_code"]
+        expected_vnd = expected_vnd_by_code.get(order_code, 0)
+        if expected_vnd <= 0:
+            # Don da het han, da huy, hoac da duoc cong o vong truoc. Khong doan
+            # so tien tu payload - de admin doi soat tay.
+            logger.warning(
+                "NOWPayments: payment %s tro toi don %s khong con cho -> bo qua",
+                record["payment_id"],
+                order_code,
+            )
+            return False
+        if db_check_tx_exists(record["transaction_ref"]):
+            return False
+        synthetic_transactions.append({
+            "transactionID": record["transaction_ref"],
+            "description": order_code,
+            "amount": expected_vnd,
+        })
+        return True
+
+    # 1) IPN inbox - rut het (khong co await xen giua doc/xoa nen an toan).
+    if nowpayments_ipn_inbox:
+        drained, nowpayments_ipn_inbox[:] = list(nowpayments_ipn_inbox), []
+        for record in drained:
+            if _accept(record):
+                found += 1
+
+    # 2) Poll du phong - NOWPayments ngung gui IPN sau khi payment het han
+    # nhung tien van vao duoc, nen khong co vong nay la mat don tra muon.
+    try:
+        for record in await nowpayments_poll_pending_payments():
+            if _accept(record):
+                found += 1
+    except Exception as e:
+        logger.warning(f"NOWPayments poll scan failed: {e}")
+        error = str(e)
+
+    return {"enabled": True, "ok": not error, "error": error, "count": found}
+
+
 async def _scan_sepay_payments(synthetic_transactions: list) -> dict:
     """SePay: rut het giao dich webhook da nhan (duong chinh, gan tuc thi),
     roi doi soat lai bang poll API (du phong khi webhook bi mat/chua bat).
@@ -451,6 +523,9 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     binance_pay_status = await _scan_binance_pay_payments(synthetic_transactions)
     if not binance_pay_status["ok"]:
         logger.warning(f"❌ LỖI FEED BINANCE PAY: {binance_pay_status['error'] or 'Unknown Error'}")
+    nowpayments_status = await _scan_nowpayments_payments(synthetic_transactions)
+    if not nowpayments_status["ok"]:
+        logger.warning(f"❌ LỖI API NOWPAYMENTS: {nowpayments_status['error'] or 'Unknown Error'}")
     sepay_status = await _scan_sepay_payments(synthetic_transactions)
 
     try:
@@ -492,14 +567,14 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             tx_id = str(tx.get("transactionID", "")) # Default to empty string if missing
             description = tx.get("description", "")
             amount = tx.get("amount", 0)
-            
+
             # Skip invalid transactions
             if not tx_id or not description:
                 continue
 
-            if db_check_tx_exists(tx_id): 
+            if db_check_tx_exists(tx_id):
                 continue
-            
+
             # FIX: Dùng compiled regex patterns để tăng tốc
             no_space_description = description.replace(" ", "")
             match_order = ICLD_PATTERN.search(description) or ICLD_PATTERN.search(no_space_description)
@@ -533,7 +608,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                     )
                 continue
 
-            if secret_order_code or match_order: 
+            if secret_order_code or match_order:
                 # === XỬ LÝ MUA LINK / QR BANK ===
                 order_code = str(secret_order_code) if secret_order_code else f"ICLD{match_order.group(1)}"
                 logger.info(f"LAM SHOP CRON: Phát hiện mã đơn {order_code} trong giao dịch {tx_id}")
@@ -541,7 +616,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                 order_details = await pending_get(order_code)
                 if order_details:
                     expected_amount, actual_amount = int(order_details["amount"]), int(amount)
-                    
+
                     logger.info(f"CRON: So sánh tiền - Mong đợi: {expected_amount}, Thực tế: {actual_amount}")
 
                     if actual_amount == expected_amount:
@@ -550,14 +625,14 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             prod_id = order_details.get("product_id")
                             qty = order_details.get("quantity", 1)
                             p = products.get(prod_id)
-                            
+
                             # FIX: Check product exists - handle deleted products gracefully
                             if not p:
                                 logger.error(f"❌ CRITICAL: Product {prod_id} không tồn tại (đã bị xóa?) cho đơn {order_code}!")
-                                
+
                                 deleted_balance_used = int(order_details.get('balance_used', 0))
                                 _deleted_total = actual_amount + deleted_balance_used
-                                
+
                                 refund_user = db_get_user(order_details['user_id'])
                                 refund_bal = refund_user.get('balance', 0) if refund_user else 0
                                 db_update_balance(
@@ -589,7 +664,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     )
                                 except (ValueError, TypeError, KeyError, IndexError) as e:
                                     logger.error(f"Không gửi được thông báo cho user {order_details['user_id']}: {e}")
-                                
+
                                 # Alert admin with action buttons
                                 try:
                                     await context.bot.send_message(
@@ -606,15 +681,15 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     )
                                 except (TelegramError, ValueError, KeyError, AttributeError) as e:
                                     logger.error(f"Không gửi được alert cho admin: {e}")
-                                
+
                                 # Mark transaction as processed to avoid re-checking
                                 db_add_tx(tx_id)
                                 await pending_pop(order_code)
                                 data_changed = True
                                 continue
-                            
+
                             requires_gmail = p.get('requires_gmail', False)
-                            
+
                             if requires_gmail:
                                 # MANUAL PRODUCT: Không cần stock, đợi email từ user
                                 await context.bot.send_message(
@@ -631,7 +706,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     f"• Hoặc dùng lệnh: <code>/guimail email@abc.com</code>",
                                     parse_mode=ParseMode.HTML
                                 )
-                                
+
                                 # Lưu vào pending_manual_orders
                                 balance_used_manual = int(order_details.get('balance_used', 0))
                                 total_paid_manual = actual_amount + balance_used_manual
@@ -656,13 +731,13 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     coupon_code_used = coupon_code_used.upper()
                                     if coupon_code_used in coupons:
                                         coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
-                                
+
                                 # Xóa khỏi pending_orders (safe delete)
                                 await _mark_pending_payment_message_completed(context, order_details)
                                 await pending_pop(order_code)
                                 db_add_tx(tx_id)
                                 data_changed = True
-                                
+
                                 # Log cho admin
                                 await context.bot.send_message(
                                     ADMIN_USER_ID,
@@ -673,11 +748,11 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Đang chờ khách nhập email...",
                                     parse_mode=ParseMode.HTML
                                 )
-                                
+
                                 # Skip phần xử lý stock bên dưới
                                 continue
 
-                            
+
                             # AUTO PRODUCT: Cần check stock (Sản phẩm có stock local)
                             # FIX BUG #5: Dùng lock để tránh race condition
                             items_bought = await _reserve_or_reuse_pending_store_items(
@@ -686,7 +761,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 prod_id,
                                 qty,
                             )
-                            
+
                             if items_bought is None:
                                 current_stock = get_local_stock_available_count(p)
                                 current_stock = int(current_stock or 0)
@@ -707,7 +782,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư mới: <b>{new_balance:,} VNĐ</b>",
                                     parse_mode=ParseMode.HTML
                                 )
-                                
+
                                 # Log cho admin
                                 await context.bot.send_message(
                                     ADMIN_USER_ID,
@@ -718,16 +793,16 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     f"Đã auto refund: {total_refund:,} VNĐ -> User {order_details['user_id']}",
                                     parse_mode=ParseMode.HTML
                                 )
-                                
+
                                 # Cleanup (safe delete)
                                 await pending_pop(order_code)
                                 db_add_tx(tx_id)
                                 data_changed = True
                                 continue
-                            
-                            
+
+
                             # Delivery cho AUTO product (manual đã được handle ở trên với continue)
-                            
+
                             # Gửi header message trước
                             try:
                                 await context.bot.send_message(
@@ -743,7 +818,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 )
                             except (TelegramError, ValueError, KeyError, AttributeError) as e:
                                 logger.error(f"Lỗi gửi header message: {e}")
-                            
+
                             purchase_date = datetime.fromtimestamp(current_time).strftime('%d/%m/%Y %H:%M:%S')
                             product_description_txt = format_product_description_for_txt(p)
                             file_content = "="*60 + "\n"
@@ -794,7 +869,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     parse_mode=ParseMode.HTML,
                                     reply_markup=create_success_menu(user_id=order_details['user_id']),
                                 )
-                            
+
                             # Tạo completed_order cho AUTO product (LƯU items để khôi phục nếu cần)
                             warranty_text = p.get('warranty', '')
                             warranty_expires = calculate_warranty_expiry(current_time, warranty_text)
@@ -831,39 +906,39 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 coupon_code_used = coupon_code_used.upper()
                                 if coupon_code_used in coupons:
                                     coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
-                            
+
                             # Live Notification
                             await send_live_order_notification(context, order_details.get("full_name", "Khách hàng"), total_paid, product_name=p['name'], quantity=qty, order_code=order_code)
-                            
+
                             db_add_order(completed_order)
                             await _mark_pending_payment_message_completed(context, order_details)
                             await pending_pop(order_code)
                             db_add_tx(tx_id)
                             data_changed = True
-                            
+
                             # Critical: force-save order + stock + tx immediately (no debounce)
                             await save_critical_tables(HISTORY_FILE, PROCESSED_TX_FILE, PRODUCTS_FILE, PENDING_ORDERS_FILE, USERS_FILE)
-                            
+
                             # === PROCESS REFERRAL COMMISSION ===
                             await process_referral_commission(context, order_details['user_id'], actual_amount)
                             # ===================================
-                            
+
                             # Auto-broadcast nếu hết hàng
                             remaining_stock = int(get_local_stock_available_count(products.get(prod_id)) or 0)
                             if delivery_result.get("delivered"):
                                 create_background_task(send_post_purchase_followups(context, order_details['user_id'], prod_id))
                             if remaining_stock == 0:
                                 create_background_task(broadcast_out_of_stock(context, p['name'], prod_id))
-                            
+
                             # Admin notification (safe - sau khi đã save)
                             try:
                                 await safe_send_admin(context.bot, f"{E_SUCCESS} <b>ĐƠN HÀNG STORE MỚI</b>\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> Mã: <code>{order_code}</code>\n{E_TAG} SP: {html.escape(p['name'])} (x{qty})\n{E_TAG} {actual_amount:,} VNĐ")
                             except (TelegramError, ValueError, KeyError, AttributeError) as admin_err:
                                 logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Store admin notification failed: {admin_err}")
-                            
+
                             # SKIP shared cleanup (đã xử lý ở trên)
                             continue
-                        
+
                         # Cac loai don khac store_product khong con luong nao tao ra
                         else:
                             logger.warning(
@@ -916,7 +991,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             f"<tg-emoji emoji-id=\"5350481781306958339\">🧾</tg-emoji> Lý do: Số tiền kỳ vọng không hợp lệ ({amount_expected})."
                         )
                         continue
-                    
+
                     if allow_flexible_amount or amount_received >= amount_expected:
                         key = details.get("api_key")
                         if not key or key not in api_keys:
@@ -963,11 +1038,11 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             )
                             continue
                         p_name = details.get("partner_name", key_data.get("name", "N/A"))
-                        
+
                         db_add_tx(tx_id)
                         pending_api_deposits.pop(deposit_code, None)
                         data_changed = True
-                        
+
                         await safe_send_admin(
                             context.bot,
                             f"{E_SUCCESS} <b>NẠP TIỀN API THÀNH CÔNG</b>\n\n"
@@ -976,7 +1051,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             f"<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> <b>Số dư mới:</b> {new_bal:,} VNĐ\n"
                             f"{E_TAG} <b>Mã GD:</b> <code>{deposit_code}</code>"
                         )
-                        
+
                         # Gửi thông báo cho user (nếu có user_id được lưu)
                         user_id_to_notify = details.get("user_id")
                         if user_id_to_notify:
@@ -1042,16 +1117,16 @@ async def automatic_reward_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Tự động trao thưởng Top tuần/tháng"""
     now = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh"))
     today = now.date()
-    
+
     # --- THƯỞNG TUẦN (Chạy vào thứ 2 hàng tuần) ---
     if today.weekday() == 0: # 0 = Thứ 2
         # Lấy dữ liệu tuần trước (Thứ 2 tuần trước -> Chủ nhật tuần trước)
         start_date = today - timedelta(days=7)
         end_date = today - timedelta(days=1)
-        
+
         start_dt = datetime.combine(start_date, dt_time.min)
         end_dt = datetime.combine(end_date, dt_time.max)
-        
+
         await process_top_buyer_reward(context, start_dt, end_dt, "WEEKLY", 2, 15)
 
     # --- THƯỞNG THÁNG (Chạy vào ngày 1 hàng tháng) ---
@@ -1060,23 +1135,23 @@ async def automatic_reward_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         first_day_this_month = today
         last_day_last_month = first_day_this_month - timedelta(days=1)
         first_day_last_month = last_day_last_month.replace(day=1)
-        
+
         start_dt = datetime.combine(first_day_last_month, dt_time.min)
         end_dt = datetime.combine(last_day_last_month, dt_time.max)
-        
+
         await process_top_buyer_reward(context, start_dt, end_dt, "MONTHLY", 1, 50)
 
 async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quantity, discount_percent):
     start_ts = start_dt.timestamp()
     end_ts = end_dt.timestamp()
-    
+
     # Lọc đơn hàng hoàn thành trong khoảng thời gian
     eligible_orders = [
-        o for o in order_history 
+        o for o in order_history
         if is_completed_order(o)
         and start_ts <= o.get("timestamp", 0) <= end_ts
     ]
-    
+
     if not eligible_orders:
         return
 
@@ -1087,19 +1162,19 @@ async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quant
     )
     if not user_counts:
         return
-        
+
     # Lấy Top 1
     top_user_id, count = user_counts.most_common(1)[0]
-    
+
     # Tạo Coupon
     coupons_created = []
     for _ in range(quantity):
         # Mã: TOPWEEK-ID-RANDOM hoặc TOPMONTH-ID-RANDOM
         prefix = "TOPWEEK" if reward_type == "WEEKLY" else "TOPMONTH"
         code = f"{prefix}-{top_user_id}-{random.randint(1000,9999)}"
-        
+
         expires_str = (datetime.now() + timedelta(days=30)).strftime('%d-%m-%Y')
-        
+
         coupons[code] = {
             "discount": discount_percent,
             "is_percent": True,
@@ -1108,16 +1183,16 @@ async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quant
             "used": 0
         }
         coupons_created.append(code)
-        
+
     await save_data()
-    
+
     # Gửi thông báo cho User
     user_info = user_data_db.get(str(top_user_id), {})
     full_name = user_info.get("first_name", "Khách hàng")
-    
+
     period_name = "TUẦN" if reward_type == "WEEKLY" else "THÁNG"
     time_range_str = f"{start_dt.strftime('%d/%m')} - {end_dt.strftime('%d/%m')}"
-    
+
     msg = (
         f"⭐️ <b>CHÚC MỪNG TOP 1 NGƯỜI MUA HÀNG {period_name} QUA!</b> ⭐️\n"
         f"<i>({time_range_str})</i>\n\n"
@@ -1126,15 +1201,15 @@ async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quant
         f"<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> <b>Phần thưởng của bạn:</b>\n"
         f"<b>{quantity}x Mã giảm giá {discount_percent}%</b>\n\n"
     )
-    
+
     for code in coupons_created:
         msg += f"<tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> <code>{code}</code>\n"
-        
+
     msg += "\n<i>(Hạn sử dụng: 30 ngày. Áp dụng cho đơn hàng tiếp theo)</i>"
-    
+
     try:
         await context.bot.send_message(top_user_id, msg, parse_mode=ParseMode.HTML)
-        
+
         # Thông báo Admin
         admin_msg = (
             f"{E_SUCCESS} <b>ĐÃ TỰ ĐỘNG TRAO THƯỞNG {period_name}</b>\n\n"
@@ -1144,7 +1219,7 @@ async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quant
             f"<tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> <b>Mã:</b> {', '.join(coupons_created)}"
         )
         await safe_send_admin(context.bot, admin_msg)
-        
+
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
         logger.error(f"Lỗi gửi thưởng {reward_type} cho user {top_user_id}: {e}")
 

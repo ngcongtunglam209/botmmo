@@ -175,19 +175,19 @@ except ImportError as e:
     FASTAPI_ENABLED = False
     FASTAPI_IMPORT_ERROR = f"{type(e).__name__}: {e}"
     uvicorn = None
-    
+
     class HTTPException(Exception):
         def __init__(self, status_code=500, detail="Internal Server Error"):
             self.status_code = status_code
             self.detail = detail
             super().__init__(detail)
-    
+
     class BaseModel:
         pass
-    
+
     def Header(default=None):
         return default
-    
+
     def Body(default=None):
         return default
 
@@ -203,17 +203,17 @@ except ImportError as e:
 
     class GZipMiddleware:
         pass
-    
+
     class FastAPI:
         """Fallback no-op FastAPI object so bot can run without API stack."""
         def __init__(self, *args, **kwargs):
             pass
-        
+
         def get(self, *args, **kwargs):
             def decorator(func):
                 return func
             return decorator
-        
+
         def post(self, *args, **kwargs):
             def decorator(func):
                 return func

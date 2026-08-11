@@ -79,25 +79,25 @@ async def priority_email_handler(update: Update, context: ContextTypes.DEFAULT_T
     """
     message = update.message or update.channel_post
     if not message or not message.text: return
-    
+
     text = message.text.strip()
-    
+
     # IMPROVED: Dùng search thay vì match để bắt được "Email của tui là abc@gmail.com"
     # Regex không có ^ và $ để tìm trong chuỗi
     email_extract_pattern = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
     match = email_extract_pattern.search(text)
-    
+
     if not match:
-        return 
-        
-    extracted_email = match.group(0).lower() 
+        return
+
+    extracted_email = match.group(0).lower()
     user = update.effective_user
     if not user: return
-    
+
     # Check Pending Manual Orders of this user
     user_pending = None
     user_pending_code = None
-    
+
     # Tìm order nào đang chờ email của user này
     for order_code, info in pending_manual_orders.items():
         # So sánh user_id dạng string cho chắc chắn
@@ -105,19 +105,19 @@ async def priority_email_handler(update: Update, context: ContextTypes.DEFAULT_T
              user_pending = info
              user_pending_code = order_code
              break
-             
+
     if user_pending:
         logging.info(f"⭐️ PRIORITY HANDLER: Found email '{extracted_email}' for Order {user_pending_code}")
-        
+
         try:
             # 1. Update Order
             user_pending['email'] = extracted_email
             user_pending['status'] = 'pending_admin'
             user_pending['timestamp_email'] = time.time()
-            
+
             # Save only the changed table to avoid full DB write in hot path.
             await save_data(force=True, tables=[PENDING_MANUAL_ORDERS_FILE])
-            
+
             # 2. Notify User
             await message.reply_text(
                 lt(
@@ -128,11 +128,11 @@ async def priority_email_handler(update: Update, context: ContextTypes.DEFAULT_T
                 ),
                 parse_mode=ParseMode.HTML
             )
-            
+
             # 3. Notify Admin
             await notify_admin_manual_order(
-                context, 
-                user_pending_code, 
+                context,
+                user_pending_code,
                 user_pending['user_id'],
                 user_pending.get('full_name', 'Unknown'),
                 extracted_email, # Use extracted email
@@ -140,7 +140,7 @@ async def priority_email_handler(update: Update, context: ContextTypes.DEFAULT_T
                 int(user_pending.get('quantity', 1)),
                 int(user_pending.get('amount', 0))
             )
-            
+
         except (ValueError, TypeError, KeyError, IndexError) as e:
             logging.error(f"❌ Error in priority_email_handler: {e}", exc_info=True)
             # Fallback: Notify user of error
@@ -148,11 +148,11 @@ async def priority_email_handler(update: Update, context: ContextTypes.DEFAULT_T
                 await message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Có lỗi xảy ra khi lưu đơn hàng. Vui lòng thử lại hoặc liên hệ Admin.")
             except (ValueError, TypeError, KeyError, IndexError) as notify_err:
                 logger.debug(f"Cannot send fallback error to user {update.effective_user.id}: {notify_err}")
-        
+
         # 4. Clear State if any (Cleanup)
         if context.user_data and context.user_data.get('state') == 'awaiting_manual_email':
              context.user_data['state'] = None
-             
+
         # 5. STOP PROPAGATION
         # Ngăn không cho các handler khác (như AI chat) xử lý tiếp
         raise ApplicationHandlerStop
@@ -317,14 +317,14 @@ async def icon_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if await check_if_banned(update): return
-    
+
     # <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> FIX: SKIP channel posts - context.user_data is None!
     if update.channel_post or update.edited_channel_post:
         return
-    
+
     if context.user_data is None:
         return
-    
+
     # Kiểm tra chế độ bảo trì
     if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
         await update.message.reply_text(t("maintenance", user_id=update.effective_user.id), parse_mode=ParseMode.HTML)
@@ -364,7 +364,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     if user.id == ADMIN_USER_ID and user_state == "awaiting_manual_warranty_replacement":
         await handle_manual_warranty_replacement_input(update, context, user_input)
         return
-    
+
     # NEW: Handle Admin Quick Action (Cộng / Trừ tiền)
     if "quick_action" in context.user_data:
         quick_action = context.user_data['quick_action']
@@ -372,7 +372,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             context.user_data.pop('quick_action', None)
             await update.message.reply_text("<tg-emoji emoji-id=\"5424857974784925603\">🚫</tg-emoji> Đã hủy thao tác.")
             return
-            
+
         parts = quick_action.split(":")
         if len(parts) >= 2:
             action = parts[0]
@@ -386,7 +386,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
             user_info = user_data_db.get(str(target_id), {})
             name = user_info.get('first_name', 'N/A')
-            
+
             if action == "addmoney":
                 old_balance = user_info.get('balance', 0)
                 user_info['balance'] = old_balance + amount
@@ -406,7 +406,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     )
                 except (ValueError, TypeError, KeyError, IndexError):
                     pass
-                    
+
             elif action == "submoney":
                 old_balance = user_info.get('balance', 0)
                 user_info['balance'] = max(0, old_balance - amount)
@@ -429,7 +429,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
         context.user_data.pop('quick_action', None)
         return
-    
+
     if user_state == 'awaiting_refund_bank_info':
         await handle_refund_bank_info_input(update, context)
         return
@@ -514,11 +514,11 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             source_message_id=source_message_id,
         )
         return
-    
+
     # NEW: Handle Manual Order Email (từ balance purchase flow)
     if user_state == 'awaiting_manual_email':
         email_input = user_input.lower()
-        
+
         if not EMAIL_REGEX.match(email_input):
             await update.message.reply_text(
                 "❌ Email không hợp lệ!\n\n"
@@ -527,23 +527,23 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 parse_mode='HTML'
             )
             return
-        
+
         # Get pending order info
         pending_order = context.user_data.get('pending_manual_order')
         if not pending_order:
             await update.message.reply_text("❌ Lỗi: Không tìm thấy đơn hàng. Vui lòng thử lại.")
             await clear_user_state(context)
             return
-        
+
         order_code = pending_order.get('order_code')
         prod_id = pending_order.get('product_id') or pending_order.get('prod_id')  # FIX: Support both keys
         qty = pending_order.get('quantity') or pending_order.get('qty', 1)  # FIX: Support both keys
         amount = pending_order.get('amount', 0)
-        
+
         # Get product info
         p = products.get(prod_id, {})
         prod_name = p.get('name', 'Sản phẩm')
-        
+
         # 1. Xóa tin nhắn "Chờ nhập email" của user
         waiting_msg_id = context.user_data.get('waiting_message_id')
         waiting_chat_id = context.user_data.get('waiting_chat_id')
@@ -552,7 +552,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 await context.bot.delete_message(waiting_chat_id, waiting_msg_id)
             except (TelegramError, ValueError, KeyError, AttributeError) as e:
                 logger.debug(f"Could not delete waiting message: {e}")
-        
+
         # 2. Xóa tin nhắn "Đang chờ email" của admin
         admin_waiting_msg_id = context.user_data.get('admin_waiting_message_id')
         if admin_waiting_msg_id:
@@ -560,14 +560,14 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 await context.bot.delete_message(ADMIN_USER_ID, admin_waiting_msg_id)
             except (TelegramError, ValueError, KeyError, AttributeError) as e:
                 logger.debug(f"Could not delete admin waiting message: {e}")
-        
+
         # Clear state và data
         context.user_data.pop('state', None)
         context.user_data.pop('pending_manual_order', None)
         context.user_data.pop('waiting_message_id', None)
         context.user_data.pop('waiting_chat_id', None)
         context.user_data.pop('admin_waiting_message_id', None)
-        
+
         # 3. Thông báo cho khách hàng
         await update.message.reply_text(
             f"{E_SUCCESS} <b>ĐÃ NHẬN EMAIL!</b>\n\n"
@@ -580,7 +580,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             parse_mode='HTML',
             reply_markup=create_back_button_menu(user_id=update.effective_user.id if update.effective_user else None)
         )
-        
+
         # 4. Log order
         order_data = {
             "order_code": order_code,
@@ -599,13 +599,13 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         }
         db_add_order(order_data)
         await save_data(force=True, tables=[HISTORY_FILE])
-        
+
         # 5. Gửi thông báo chi tiết cho Admin với button xử lý
         admin_keyboard = [
             [InlineKeyboardButton("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã xử lý", callback_data=f"manual_done_{order_code}")],
             [InlineKeyboardButton("❌ Hủy & Hoàn tiền", callback_data=f"manual_refund_{order_code}")]
         ]
-        
+
         await context.bot.send_message(
             ADMIN_USER_ID,
             f"{E_TAG} <b>ĐƠN MANUAL CẦN Xử LÝ</b>\n\n"
@@ -618,33 +618,33 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             parse_mode='HTML',
             reply_markup=InlineKeyboardMarkup(admin_keyboard)
         )
-        
+
         logger.info(f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> MANUAL ORDER: {order_code} - User {user.id} - Email: {email_input}")
         return
-    
+
     # Check nếu user đang có pending manual order cần email
     user_pending = None
     for order_code, info in pending_manual_orders.items():
         if info.get('user_id') == user.id and info.get('status') == 'awaiting_email':
             user_pending = (order_code, info)
             break
-    
+
     # FIX BUG: Bỏ điều kiện `and not user_state` để luôn ưu tiên xử lý đơn hàng đang chờ email
     # (Thanh toán QR không set context.user_data['state'] vì chạy trong background thread)
     if user_pending and EMAIL_REGEX.match(user_input):
         # User reply với email cho pending manual order
         order_code, order_info = user_pending
         email_input = user_input.lower()
-        
+
         if not EMAIL_REGEX.match(email_input):
             await update.message.reply_text("<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Email không hợp lệ. Vui lòng nhập lại email chính xác.")
             return
-        
+
         # Update order với email
         order_info['email'] = email_input
         order_info['status'] = 'pending_admin'
         await save_data(force=True, tables=[PENDING_MANUAL_ORDERS_FILE])
-        
+
         # Thông báo khách
         await update.message.reply_text(
             f"{E_SUCCESS} <b>ĐÃ NHẬN EMAIL!</b>\n\n"
@@ -656,13 +656,13 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             parse_mode=ParseMode.HTML,
             reply_markup=create_back_button_menu(user_id=update.effective_user.id if update.effective_user else None)
         )
-        
+
         # Gửi cho Admin
         await notify_admin_manual_order(
             context, order_code, user.id, user.full_name,
             email_input, order_info['product_name'], order_info['quantity'], order_info['amount']
         )
-        
+
         return
     if user_state == 'awaiting_topup_amount':
         await handle_topup_amount_input(update, context, user_input)
@@ -814,7 +814,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 )
             )
             return
-        
+
         # <tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> BLOCK SPAM: Check if order support was rejected
         support_status = found_order.get('support_status', 'active')
         if support_status == 'rejected_expired':
@@ -918,7 +918,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         email_val = found_order.get('email', 'Không có')
         purchase_time = found_order.get('timestamp', 0)
         purchase_date_str = datetime.fromtimestamp(purchase_time).strftime('%d/%m/%Y') if purchase_time else "N/A"
-        
+
         # 1. <tg-emoji emoji-id=\"5303290914041505430\">🚀</tg-emoji> SEND TO ADMIN IMMEDIATELY (Hybrid Mode)
         # Determine product type & action buttons
         btns = []
@@ -926,7 +926,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         p_check = products.get(prod_id_check) if prod_id_check else None
         product_name = found_order.get('product_name') or (p_check.get('name') if p_check else 'N/A')
         order_type = found_order.get('type', 'unknown')
-        
+
         # Fallback: tìm product bằng product_name nếu không có product_id
         if not p_check and product_name and product_name != 'N/A':
             for pid, pdata in products.items():
@@ -934,7 +934,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     p_check = pdata
                     prod_id_check = pid
                     break
-        
+
         is_auto_stock = False
         is_manual_product = False
         if order_type == 'store_product':
@@ -947,7 +947,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 is_manual_product = True
             else:
                 is_auto_stock = True
-        
+
         if is_auto_stock:
             type_label = "<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Store (Auto Stock)"
             btns.append([_btn("Cấp Acc Mới (Auto)", icon_id="6129870117619634982", callback_data=f"replace_auto:{order_code}")])
@@ -970,7 +970,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 icon_id="5278467510604160626",
                 callback_data=f"admrf_f_{order_code}",
             )])
-            
+
         btns.append([
             _btn("Từ chối: Hết BH", icon_id="5465665476971471368", callback_data=f"reject_expired:{found_order.get('user_id')}:{order_code}"),
             _btn("Từ chối: Vi phạm", icon_id="5273914604752216432", callback_data=f"reject_policy:{found_order.get('user_id')}:{order_code}")
@@ -985,19 +985,19 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         safe_description = html.escape(str(description))
 
         admin_report_text = (
-            f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>BÁO CÁO LỖI MỚI</b> <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji>\n\n" 
-            f"<b>Từ:</b> {format_user_mention_html(user)} (ID: <code>{user.id}</code>)\n" 
-            f"<b>Username:</b> {safe_username}\n\n" 
-            f"<b>CHI TIẾT ĐƠN HÀNG:</b>\n" 
-            f"  - Mã đơn: <code>{found_order.get('order_code', 'N/A')}</code>\n" 
+            f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>BÁO CÁO LỖI MỚI</b> <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji>\n\n"
+            f"<b>Từ:</b> {format_user_mention_html(user)} (ID: <code>{user.id}</code>)\n"
+            f"<b>Username:</b> {safe_username}\n\n"
+            f"<b>CHI TIẾT ĐƠN HÀNG:</b>\n"
+            f"  - Mã đơn: <code>{found_order.get('order_code', 'N/A')}</code>\n"
             f"  - Sản phẩm: <b>{html.escape(str(product_name))}</b>\n"
             f"  - Loại: {safe_type_label}\n"
-            f"  - Email: <code>{safe_email_val}</code>\n" 
-            f"  - Ngày mua: {safe_purchase_date}\n\n" 
-            f"<b>MÔ TẢ CỦA KHÁCH:</b>\n" 
+            f"  - Email: <code>{safe_email_val}</code>\n"
+            f"  - Ngày mua: {safe_purchase_date}\n\n"
+            f"<b>MÔ TẢ CỦA KHÁCH:</b>\n"
             f"<i>{safe_description}</i>"
         )
-        
+
         sent_msg = None
         image_forwarded = False
         forward_errors = []
@@ -1057,7 +1057,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         # 2. <tg-emoji emoji-id=\"5854908544712707500\">📥</tg-emoji> TRACKING FOR REMINDER (Unresolved List)
         # Check if already tracked, increment count
         existing_report = next((r for r in pending_error_reports if r['order_code'] == order_code and not r['resolved']), None)
-        
+
         if existing_report:
             existing_report['report_count'] += 1
             if sent_msg:
@@ -1078,7 +1078,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 'last_msg_id': sent_msg.message_id if sent_msg else None
             }
             pending_error_reports.append(report_data)
-        
+
         await update.message.reply_text(
             lt(
                 user.id,
@@ -1091,10 +1091,10 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         await clear_user_state(context)
     elif user_state == 'awaiting_support_query':
         query = update.message.text.strip(); context.user_data['support_query'] = query
-        
+
         # Sử dụng intelligent_ticket_classifier để xử lý truy vấn hỗ trợ
         ai_result = await intelligent_ticket_classifier(query, user.id)
-        
+
         if ai_result['auto_resolved']:
             # Nếu AI tự động giải quyết được
             await update.message.reply_html(ai_result['response'])
@@ -1102,7 +1102,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         else:
             # Nếu không thể tự động giải quyết
             keyboard = [
-                [InlineKeyboardButton(lt(user.id, "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Hỏi Trợ lý AI", "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Ask the AI assistant", "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> 咨询 AI 助手"), callback_data='ask_ai_confirm')], 
+                [InlineKeyboardButton(lt(user.id, "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Hỏi Trợ lý AI", "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Ask the AI assistant", "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> 咨询 AI 助手"), callback_data='ask_ai_confirm')],
                 [InlineKeyboardButton(lt(user.id, "<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> Tạo phiếu hỗ trợ cho Admin", "<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> Open a support ticket", "<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> 创建工单"), callback_data='create_ticket_confirm')]
             ]
             await update.message.reply_text(
@@ -1111,20 +1111,20 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     "Câu hỏi của bạn cần tư vấn chi tiết hơn. Bạn có muốn hỏi Trợ lý AI không?",
                     "Your question needs a closer look. Would you like to ask our AI assistant?",
                     "您的问题需要更详细的解答。要咨询我们的 AI 助手吗？",
-                ), 
+                ),
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
-    
+
     elif user_state and user_state.startswith('awaiting_custom_qty:'):
         # NEW: Xử lý nhập số lượng tùy chỉnh
         prod_id = user_state.split(':', 1)[1]
         p = products.get(prod_id)
-        
+
         if not p:
             await update.message.reply_text(lt(user.id, "❌ Sản phẩm không tồn tại.", "❌ This product no longer exists.", "❌ 该商品不存在。"))
             await clear_user_state(context)
             return
-        
+
         # Validate input
         try:
             qty = int(user_input.strip())
@@ -1139,10 +1139,10 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 parse_mode=ParseMode.HTML
             )
             return
-        
-        
+
+
         stock_count = len(p.get('stock', []))
-        
+
         # Check range
         if qty < 1:
             await update.message.reply_text(
@@ -1161,21 +1161,21 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 parse_mode=ParseMode.HTML
             )
             return
-        
+
         # Valid quantity - show confirmation
         await clear_user_state(context)
-        
+
         total_price = p['price'] * qty
         user_info = db_get_user(user.id)
         balance = user_info.get('balance', 0) if user_info else 0
-        
+
         btns = []
         bal_text = lt(user.id, f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư ({balance:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Wallet ({balance:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> 钱包 ({balance:,}đ)")
         if balance >= total_price:
             btns.append([InlineKeyboardButton(bal_text, callback_data=f"pay_prod_bal_{prod_id}_{qty}")])
         else:
             btns.append([_btn(lt(user.id, "Không", "No", "否"), icon_id="5273914604752216432", callback_data="ignore")])
-        
+
         from app.integrations.payments_core import is_usdt_payment_enabled
         if is_usdt_payment_enabled():
             btns.append([_btn("USDT (RPay)", icon_id="5281029063459234079", callback_data=f"pay_prod_rpay_{prod_id}_{qty}")])
@@ -1186,7 +1186,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         if is_bank_transfer_enabled():
             btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
         btns.append([_btn(lt(user.id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=f"sel_qty_{prod_id}")])
-        
+
         confirm_text = (
             f'<tg-emoji emoji-id="5247134066322447995">🛍</tg-emoji> <b>XÁC NHẬN MUA HÀNG</b>\n\n'
             f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> <b>Sản phẩm:</b> {p["name"]}\n'
@@ -1209,7 +1209,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 parse_mode=ParseMode.HTML,
             )
         return
-    
+
     elif user_state and user_state.startswith('awaiting_admin_reply'):
         if update.effective_user.id != ADMIN_USER_ID: return
         target_user_id = int(user_state.split(':', 1)[1])

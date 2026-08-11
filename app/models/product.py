@@ -44,7 +44,7 @@ class Product(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     @classmethod
-    def from_dict(cls, product_id: str, data: dict[str, Any]) -> "Product":
+    def from_dict(cls, product_id: str, data: dict[str, Any]) -> Product:
         """Create from legacy dict format."""
         merged = {"product_id": product_id, **data}
         return cls.model_validate(merged)

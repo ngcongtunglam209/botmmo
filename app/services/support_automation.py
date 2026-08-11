@@ -64,13 +64,13 @@ def handle_billing_questions(query: str) -> dict:
         )
     else:
         message = (
-            f"<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>HỖ TRỢ BILLING TỔNG QUÁT</b>\n\n"
-            f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Giá:</b> Xem trực tiếp từng sản phẩm trong cửa hàng\n'
-            f'<tg-emoji emoji-id="5458774648621643551">💳</tg-emoji> <b>Thanh toán:</b> Chuyển khoản, QR hoặc số dư ví\n'
-            f"<tg-emoji emoji-id=\"5462956611033117422\">🔄</tg-emoji> <b>Hoàn tiền:</b> Trong thời hạn bảo hành nếu lỗi từ chúng tôi\n"
-            f"<tg-emoji emoji-id=\"6129860303619363484\">📞</tg-emoji> <b>Hỗ trợ:</b> 24/7 qua bot và admin\n\n"
-            f"<tg-emoji emoji-id=\"5264919878082509254\">❓</tg-emoji> <b>Câu hỏi cụ thể khác?</b>\n"
-            f"Hãy mô tả chi tiết vấn đề của bạn để được hỗ trợ tốt nhất!"
+            "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>HỖ TRỢ BILLING TỔNG QUÁT</b>\n\n"
+            '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Giá:</b> Xem trực tiếp từng sản phẩm trong cửa hàng\n'
+            '<tg-emoji emoji-id="5458774648621643551">💳</tg-emoji> <b>Thanh toán:</b> Chuyển khoản, QR hoặc số dư ví\n'
+            "<tg-emoji emoji-id=\"5462956611033117422\">🔄</tg-emoji> <b>Hoàn tiền:</b> Trong thời hạn bảo hành nếu lỗi từ chúng tôi\n"
+            "<tg-emoji emoji-id=\"6129860303619363484\">📞</tg-emoji> <b>Hỗ trợ:</b> 24/7 qua bot và admin\n\n"
+            "<tg-emoji emoji-id=\"5264919878082509254\">❓</tg-emoji> <b>Câu hỏi cụ thể khác?</b>\n"
+            "Hãy mô tả chi tiết vấn đề của bạn để được hỗ trợ tốt nhất!"
         )
 
     return {"message": message, "action": "billing_faq"}

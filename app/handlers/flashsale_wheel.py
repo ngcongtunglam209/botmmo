@@ -8,7 +8,7 @@ async def flashsale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     """
 
     args = context.args
-    
+
     if not args:
         await update.message.reply_html(
             "<b><tg-emoji emoji-id=\"5303290914041505430\">⚡</tg-emoji> FLASH SALE</b>\n\n"
@@ -22,7 +22,7 @@ async def flashsale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             "<code>/flashsale stop [sale_id]</code> — Dừng Flash Sale"
         )
         return
-    
+
     if args[0] == "list":
         now = time.time()
         active = {sid: s for sid, s in flash_sales.items() if s.get('active', True) and s['end_time'] > now}
@@ -43,7 +43,7 @@ async def flashsale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         msg += "Dừng: <code>/flashsale stop [sale_id]</code>"
         await update.message.reply_html(msg)
         return
-    
+
     if args[0] == "stop":
         if len(args) < 2:
             await update.message.reply_html("Cú pháp: <code>/flashsale stop [sale_id]</code>")
@@ -57,11 +57,11 @@ async def flashsale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         else:
             await update.message.reply_html(f"❌ Không tìm thấy Flash Sale <code>{sale_id}</code>")
         return
-    
+
     if len(args) < 3:
         await update.message.reply_html("Cú pháp: <code>/flashsale [% giảm] [số phút] [product_id / all]</code>")
         return
-    
+
     try:
         discount_pct = int(args[0])
         duration_mins = int(args[1])
@@ -69,17 +69,17 @@ async def flashsale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     except ValueError:
         await update.message.reply_html("❌ % giảm và số phút phải là số nguyên!")
         return
-    
+
     if not 1 <= discount_pct <= 90:
         await update.message.reply_html("❌ % giảm phải từ 1-90!")
         return
     if duration_mins < 1:
         await update.message.reply_html("❌ Thời gian phải ít nhất 1 phút!")
         return
-    
+
     now = time.time()
     sale_id = f"FS{int(now)}"
-    
+
     if target.lower() == "all":
         sale_data = {
             'discount_percent': discount_pct,
@@ -105,10 +105,10 @@ async def flashsale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             'active': True
         }
         product_text = products[target]['name']
-    
+
     flash_sales[sale_id] = sale_data
     await save_data(tables=[FLASH_SALES_FILE])
-    
+
     await update.message.reply_html(
         f"<tg-emoji emoji-id=\"5303290914041505430\">⚡</tg-emoji> <b>FLASH SALE ĐÃ BẮT ĐẦU!</b>\n\n"
         f"<tg-emoji emoji-id=\"5334890573281114250\">🆔</tg-emoji> ID: <code>{sale_id}</code>\n"
@@ -117,7 +117,7 @@ async def flashsale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         f"<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> Kéo dài: {duration_mins} phút\n\n"
         f"Dừng: <code>/flashsale stop {sale_id}</code>"
     )
-    
+
     broadcast_msg = (
         f"<tg-emoji emoji-id=\"5303290914041505430\">⚡</tg-emoji> <b>FLASH SALE - GIẢM {discount_pct}%!</b> <tg-emoji emoji-id=\"5303290914041505430\">⚡</tg-emoji>\n\n"
         f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {product_text}\n"
@@ -176,7 +176,7 @@ async def combo_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     """
 
     args = context.args
-    
+
     if not args:
         await update.message.reply_html(
             "<b><tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> COMBO DEALS</b>\n\n"
@@ -189,7 +189,7 @@ async def combo_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             "<code>/combo delete [combo_id]</code> — Xóa combo"
         )
         return
-    
+
     if args[0] == "list":
         if not combo_deals:
             await update.message.reply_html("<b><tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> Chưa có combo nào.</b>")
@@ -203,7 +203,7 @@ async def combo_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             msg += f"<tg-emoji emoji-id=\"5334890573281114250\">🆔</tg-emoji> <code>{cid}</code>\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {' + '.join(p_names)}\n<tg-emoji emoji-id=\"6059654836918423763\">📉</tg-emoji> Giảm thêm: {c['discount_percent']}%\n\n"
         await update.message.reply_html(msg)
         return
-    
+
     if args[0] == "delete":
         if len(args) < 2:
             await update.message.reply_html("Cú pháp: <code>/combo delete [combo_id]</code>")
@@ -216,7 +216,7 @@ async def combo_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         else:
             await update.message.reply_html(f"❌ Không tìm thấy combo <code>{cid}</code>")
         return
-    
+
     if args[0] == "create":
         if len(args) < 4:
             await update.message.reply_html("Cú pháp: <code>/combo create [prod_id1] [prod_id2] [% giảm]</code>")
@@ -227,11 +227,11 @@ async def combo_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         except ValueError:
             await update.message.reply_html("❌ % giảm phải là số nguyên!")
             return
-        
+
         if pid1 not in products or pid2 not in products:
             await update.message.reply_html("❌ Một trong hai sản phẩm không tồn tại!")
             return
-        
+
         combo_id = f"COMBO{int(time.time())}"
         combo_deals[combo_id] = {
             'products': [pid1, pid2],
@@ -239,7 +239,7 @@ async def combo_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             'name': f"{products[pid1]['name']} + {products[pid2]['name']}"
         }
         await save_data(tables=[COMBO_DEALS_FILE])
-        
+
         total = products[pid1]['price'] + products[pid2]['price']
         combo_price = int(total * (100 - discount) / 100)
         await update.message.reply_html(
@@ -259,7 +259,7 @@ async def send_upsell_suggestion(context, user_id: int, purchased_prod_id: str):
         upsell = get_upsell_products(purchased_prod_id, limit=2)
         if not upsell:
             return
-        
+
         msg = lt(user_id, '<tg-emoji emoji-id="5226711870492126219">🎯</tg-emoji> <b>GỢI Ý CHO BẠN</b>\n\n', '<tg-emoji emoji-id="5226711870492126219">🎯</tg-emoji> <b>RECOMMENDED FOR YOU</b>\n\n', '<tg-emoji emoji-id="5226711870492126219">🎯</tg-emoji> <b>为您推荐</b>\n\n')
         btns = []
         for pid, p in upsell:
@@ -419,9 +419,9 @@ async def testing_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     """
 
     status_msg = await update.message.reply_text("<tg-emoji emoji-id=\"5462956611033117422\">🔄</tg-emoji> <b>Đang chạy kiểm tra hệ thống...</b>\n\n<i>Vui lòng chờ 5-10 giây...</i>", parse_mode=ParseMode.HTML)
-    
+
     results = []
-    
+
     # 1. TEST DATABASE (Write/Read)
     try:
         test_key = "TEST_DB_KEY"

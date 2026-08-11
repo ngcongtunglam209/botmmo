@@ -96,7 +96,7 @@ def _load_fallback_products_catalog() -> dict:
         try:
             if not _os.path.exists(candidate_path):
                 continue
-            with open(candidate_path, "r", encoding="utf-8") as handle:
+            with open(candidate_path, encoding="utf-8") as handle:
                 loaded = _json.load(handle)
             if isinstance(loaded, dict):
                 _fallback_products_cache = loaded
@@ -320,7 +320,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     # Check Store Callback
     if await handle_store_callback(update, context):
         return
-    
+
     # Check Admin Menu Callbacks
 
     # Check Admin Quick Action Callbacks (from /info panel)
@@ -340,7 +340,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
             logger.debug(f"Cannot answer rate-limit callback for user {update.effective_user.id}: {e}")
         return
-    
+
     command, user_id = query.data, update.effective_user.id
     # Navigation callbacks should stop Telegram's loading spinner before any
     # rendering or I/O. Actions that may need a success/error alert opt out via
@@ -399,7 +399,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     except (TelegramError, ValueError, KeyError, AttributeError) as e:
                         logger.debug(f"Cannot notify refunded balance while leaving checkout: {e}")
             await save_data(force=True, tables=[PENDING_ORDERS_FILE, USERS_FILE, TRANSACTION_HISTORY_FILE])
-        
+
         await clear_user_state(context)
 
         # Send main menu to private chat when possible.
@@ -435,7 +435,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             except BadRequest:
                 pass
             return
-    
+
     elif command == 'language_menu':
         current = get_user_lang(user_id)
         await safe_edit_message(
@@ -487,8 +487,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     elif command.startswith('refund_bank:'):
         await begin_bank_refund_request(query, context, command)
         return
-        
-    
+
+
     # ===== LUCKY WHEEL CALLBACKS =====
 
 
@@ -507,10 +507,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     elif command.startswith('topup_cancel:'):
         await cancel_user_topup(update, context, command.split(':', 1)[1])
-    
+
     elif command == 'my_referral':
         await show_my_referral(update, context, is_callback=True)
-    
+
     elif command == 'top_referrers':
         await show_top_referrers(update, context, is_callback=True)
 
@@ -518,11 +518,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     elif command == 'join_ga_action':
         # Derive GA ID from message
         ga_key = f"{query.message.chat.id}_{query.message.message_id}"
-        
+
         if ga_key not in active_giveaways:
             await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Giveaway này đã kết thúc hoặc bị xóa!", show_alert=True)
             return
-            
+
         ga = active_giveaways[ga_key]
         if ga['status'] != 'active':
             await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Giveaway đã kết thúc!", show_alert=True)
@@ -545,19 +545,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if user_id in ga['participants']:
             await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Bạn đã tham gia rồi!", show_alert=True)
             return
-            
+
         # Add participant
         ga['participants'].append(user_id)
         await save_data()
-        
+
         await safe_answer(query, "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Tham gia thành công! Chúc may mắn!", show_alert=True)
-        
+
         # Update UI count (Debounced preferred but simple edit here)
         try:
             ud = ga
             end_ts = ud.get('end_time', 0)
             end_str = datetime.fromtimestamp(end_ts).strftime('%H:%M %d/%m') if end_ts > 0 else "Khi Admin kết thúc"
-            
+
             msg_text = (
                 f"<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> <b>SỰ KIỆN GIVEAWAY: {ud.get('title', 'EVENT').upper()}</b> <tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji>\n\n"
                 f"<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> <b>Phần thưởng:</b> {ud.get('prize_qty', 1)}x {ud.get('prize_name', 'Món quà bí ẩn')}\n"
@@ -565,7 +565,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 f"<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>Người tham gia:</b> {len(ga['participants'])}\n\n"
                 f"<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> <i>Bấm nút bên dưới để thử vận may!</i>"
             )
-            
+
             await query.edit_message_caption(caption=msg_text, parse_mode='HTML', reply_markup=query.message.reply_markup)
         except (TelegramError, ValueError, KeyError, AttributeError):
             pass # Ignore if edit fails (e.g., race condition)
@@ -1136,7 +1136,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         # FIX: Dùng index O(1)
         order = find_order_by_code_or_supplier_id(order_code)
-        
+
         if not order:
             await safe_answer(query, lt(user_id, "Đơn hàng không tồn tại", "Order not found", "订单不存在"), show_alert=True)
             await lichsu_command(update, context, is_callback=True, page=history_page)
@@ -1148,15 +1148,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if order.get('refunded_at'):
             await safe_answer(query, lt(user_id, "Đơn hàng đã được hoàn tiền và không thể xem lại", "This order was refunded and can no longer be viewed", "此订单已退款，无法再次查看"), show_alert=True)
             return
-        
+
         await safe_answer(query)
-            
+
         # Format details
         ts = order.get('timestamp', 0)
         time_str = datetime.fromtimestamp(ts).strftime('%H:%M %d/%m/%Y') if ts else "N/A"
         amount = order.get('amount', 0)
         status = status_text(order.get('status'))
-        
+
         detail_msg = lt(
             user_id,
             '🔎 <b>CHI TIẾT ĐƠN HÀNG</b>\n\n🔸 <b>Mã đơn:</b> <code>{code}</code>\n✍️ <b>Thời gian:</b> {time}\n🏷 <b>Thanh toán:</b> {amount:,} VNĐ\n📊 <b>Trạng thái:</b> {status}\n',
@@ -1173,7 +1173,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         detail_msg += lt(user_id, '\n🏷 <b>Sản phẩm:</b> {item}\n0️⃣ <b>Số lượng:</b> {quantity}\n', '\n🏷 <b>Product:</b> {item}\n0️⃣ <b>Quantity:</b> {quantity}\n', '\n🏷 <b>商品：</b> {item}\n0️⃣ <b>数量：</b> {quantity}\n', item=html.escape(item_name), quantity=order.get('quantity', 1))
         if order.get('email') and order.get('email') != "N/A":
             detail_msg += f'🌐 <b>Email:</b> <code>{html.escape(str(order.get("email")))}</code>\n'
-            
+
         link_value = str(order.get("link") or "")
         delivery_mode = str(order.get("delivery_method") or "")
         placeholder_links = {"Store Product", "Sản phẩm khác"}
@@ -1206,7 +1206,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             detail_msg += f'🔌 <b>Delivery:</b> <code>{html.escape(delivery_mode)}</code>\n'
             if api_note:
                 detail_msg += f'<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> <b>Ghi chú:</b> {html.escape(api_note)}\n'
-             
+
         # Check warranty expiry
         warranty_info = resolve_order_warranty_info(order)
         warranty_expires = warranty_info.get("expires_at")
@@ -1240,7 +1240,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if not is_expired and not is_api_order and not is_refunded:
             btns.append([_btn(lt(user_id, "Báo lỗi đơn này", "Report This Order", "报告此订单"), icon_id="5273914604752216432", callback_data=f"report_specific_order:{order_code}")])
         btns.append([_btn(lt(user_id, "Quay lại danh sách", "Back to List", "返回列表"), icon_id="6206032691075223572", callback_data=f"lichsu_page:{history_page}")])
-        
+
         await safe_edit_message(
             query,
             text=detail_msg,
@@ -1266,7 +1266,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             history_page = 0
         back_to_history_callback = f"lichsu_page:{history_page}"
         await safe_answer(query, "<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Đang gửi lại thông tin...")
-        
+
         # Tìm order trong DB
         order = db_get_order(order_code)
         if not order:
@@ -1277,7 +1277,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 reply_markup=InlineKeyboardMarkup([[_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
             return
-        
+
         # Kiểm tra quyền. Đơn API lưu user_id theo PARTNER_<name>, không phải Telegram user_id thật.
         if _api_is_order_record(order):
             has_access = _api_user_can_access_order(user_id, order)
@@ -1314,7 +1314,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 reply_markup=InlineKeyboardMarkup([[_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
             return
-        
+
         # Gửi lại items dưới dạng file .txt
         product_name = order.get('product_name') or order.get('product', 'Sản phẩm')
         file_content = f"ĐƠN HÀNG: {order_code}\n"
@@ -1323,7 +1323,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         file_content += "=" * 40 + "\n\n"
         for idx, item in enumerate(items, 1):
             file_content += f"[{idx}] {item}\n"
-        
+
         delivery = await deliver_items_as_txt(
             context, user_id, order_code, items,
             file_content=file_content,
@@ -1335,7 +1335,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> Số lượng: {len(items)}\n"
             )
         )
-        
+
         if delivery.get('delivered'):
             await safe_edit_message(
                 query,
@@ -1349,7 +1349,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         else:
             await safe_edit_message(
                 query,
-                text=f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Không thể gửi lại thông tin. Vui lòng thử lại sau hoặc liên hệ admin.",
+                text="<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Không thể gửi lại thông tin. Vui lòng thử lại sau hoặc liên hệ admin.",
                 parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup([[_btn(lt(user_id, "Quay lại danh sách", "Back to the list", "返回列表"), icon_id="6206032691075223572", callback_data=back_to_history_callback)]])
             )
@@ -1377,19 +1377,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if await _auto_reject_expired_support_message(query.message, context, order, order_code):
             await safe_answer(query, "Don nay da het han bao hanh.", show_alert=True)
             return
-        
+
         try:
             await query.message.edit_text(
                 lt(user_id,
                    f"Đang xử lý yêu cầu báo lỗi cho đơn hàng <code>{order_code}</code>...",
                    f"Working on the problem report for order <code>{order_code}</code>...",
-                   f"正在处理订单 <code>{order_code}</code> 的问题报告…"), 
-                parse_mode=ParseMode.HTML, 
+                   f"正在处理订单 <code>{order_code}</code> 的问题报告…"),
+                parse_mode=ParseMode.HTML,
                 reply_markup=None
             )
         except BadRequest:
             pass  # Ignore if message is not modified
-            
+
         context.user_data['state'] = 'awaiting_report_photo'
         context.user_data['report_order_code'] = order_code
         context.user_data.pop('report_photo_id', None)

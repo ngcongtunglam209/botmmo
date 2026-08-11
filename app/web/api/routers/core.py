@@ -165,3 +165,47 @@ async def rpay_callback(request: Request):
             f"{normalized['amount']:,}đ",
         )
     return {"success": True}
+
+
+@router.post("/webhook/nowpayments", include_in_schema=False)
+async def nowpayments_ipn(request: Request):
+    """Nhận IPN của NOWPayments.
+
+    Chữ ký HMAC-SHA512 tính trên JSON đã sắp xếp khóa, nên phải parse body rồi
+    serialize lại đúng cách NOWPayments quy định — không ký trên raw bytes.
+    Sai chữ ký trả 401 và không ghi lại giá trị nhận được. Payload rác / chưa
+    `finished` / re-deposit / trả thiếu đều trả 200 vì retry không đổi kết quả;
+    riêng ba trường hợp sau đã được log ở nowpayments_normalize_payment.
+    Payment hợp lệ chỉ được đưa vào hàng đợi; payment_monitor khớp đơn ở vòng
+    quét kế tiếp.
+    """
+    from app.integrations.nowpayments_api import (
+        nowpayments_ipn_inbox,
+        nowpayments_normalize_payment,
+        nowpayments_verify_signature,
+    )
+
+    try:
+        body = await request.json()
+    except Exception as error:
+        logger.warning("NOWPayments IPN: body không phải JSON hợp lệ: %s", error)
+        return {"success": True}
+
+    if not nowpayments_verify_signature(body, request.headers.get("x-nowpayments-sig")):
+        return JSONResponse(status_code=401, content={"success": False})
+
+    if not engine.value(engine.CONFIG_MODULE, "ENABLE_PAYMENT_NOWPAYMENTS", False):
+        logger.warning("NOWPayments IPN: ENABLE_PAYMENT_NOWPAYMENTS=false -> bỏ qua payload")
+        return {"success": True}
+
+    normalized = nowpayments_normalize_payment(body)
+    if normalized:
+        nowpayments_ipn_inbox.append(normalized)
+        logger.info(
+            "NOWPayments IPN: payment %s cho đơn %s, đã trả %s %s",
+            normalized["payment_id"],
+            normalized["order_code"],
+            normalized["actually_paid"],
+            normalized["pay_currency"],
+        )
+    return {"success": True}

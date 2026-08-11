@@ -27,48 +27,32 @@ Authorization: Bearer YOUR_API_KEY
 4. Tra đơn bằng `/api/v2/orders/{order_code}` hoặc
    `/api/v2/orders/by-ref/{partner_ref}`.
 
-## Social Media — `/api/social/*`
-
-1. `GET /api/social/catalog` — chỉ lấy dịch vụ social.
-2. Đọc `minimum_order_quantity`, `maximum_order_quantity` và
-   `social_input_fields` của dịch vụ.
-3. `POST /api/social/orders` — tạo đơn social.
-4. Tra trạng thái nguồn bằng `/api/social/orders/{order_code}` hoặc
-   `/api/social/orders/by-ref/{partner_ref}`.
-
 ```bash
-curl -H "x-api-key: YOUR_API_KEY" \
-  "https://api.example.com/api/social/catalog?available_only=true&limit=50"
-```
-
-```bash
-curl -X POST "https://api.example.com/api/social/orders" \
+curl -X POST "https://api.example.com/api/v2/orders" \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_API_KEY" \
-  -H "x-idempotency-key: SOCIAL-2026-000001" \
+  -H "x-idempotency-key: ORDER-2026-000001" \
   -d '{
-    "partner_ref": "SOCIAL-2026-000001",
-    "product_id": "prod_8786",
-    "quantity": 100,
-    "target_link": "https://www.facebook.com/example"
+    "partner_ref": "ORDER-2026-000001",
+    "product_id": "netflix_1",
+    "quantity": 1,
+    "customer_email": "khach@example.com"
   }'
 ```
 
 `partner_ref` phải duy nhất. Khi timeout, retry nguyên request và nguyên mã;
-không tạo mã mới. Đơn social có `supplier_status`, `supplier_remains`,
-`supplier_charge` và `supplier_status_refreshed_at`.
+không tạo mã mới.
 
 ## Mã lỗi chính
 
 | HTTP | Ý nghĩa |
 |---:|---|
-| `400` | Thiếu/sai field hoặc dùng nhầm nhóm endpoint |
+| `400` | Thiếu/sai field |
 | `401` | API key sai |
 | `402` | Không đủ số dư |
 | `404` | Không thấy sản phẩm/đơn |
 | `409` | `partner_ref` đang xử lý |
 | `422` | JSON sai kiểu dữ liệu |
-| `502` | Nguồn cung cấp chưa xác nhận |
 | `503` | Hệ thống bảo trì |
 """
 
@@ -85,7 +69,6 @@ app = FastAPI(
     contact={"name": "Lâm Shop"},
     openapi_tags=[
         {"name": "Partner", "description": "Sản phẩm thường: catalog, tạo đơn và tra cứu đơn."},
-        {"name": "Social Media", "description": "Dịch vụ social: catalog riêng, tạo đơn và trạng thái supplier."},
         {"name": "Legacy", "description": "Endpoint cũ để mua link trực tiếp."},
         {"name": "Admin", "description": "Endpoint quản trị, yêu cầu admin API key."},
     ],
@@ -172,16 +155,6 @@ class DeveloperOrderRequest(BaseModel):
     customer_id: str | None = Field(None, description="ID khách cuối phía partner.")
     note: str | None = Field(None, description="Ghi chú nội bộ, tối đa 200 ký tự.")
     send_email: bool = Field(True, description="Gửi email khi luồng sản phẩm hỗ trợ.")
-
-
-class SocialOrderRequest(BaseModel):
-    partner_ref: str | None = Field(None, description="Mã đơn social duy nhất của partner.", examples=["SOCIAL_20260718_0001"])
-    product_id: str | None = Field(None, description="ID từ `GET /api/v2/catalog`.", examples=["prod_8786"])
-    quantity: int = Field(1, description="Số lượng tương tác theo giới hạn catalog.", examples=[100])
-    target_link: str | None = Field(None, description="Link mục tiêu; bắt buộc khi `social_input_fields` có `link`.", examples=["https://www.facebook.com/example"])
-    comments: str | None = Field(None, description="Danh sách comment, mỗi dòng một nội dung, khi dịch vụ yêu cầu.")
-    customer_id: str | None = Field(None, description="ID khách cuối phía partner.")
-    note: str | None = Field(None, description="Ghi chú nội bộ, tối đa 200 ký tự.")
 
 
 API_V2_VERSION = "2.0"

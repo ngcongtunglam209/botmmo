@@ -9,13 +9,13 @@ class TelegramLogHandler(logging.Handler):
         # Ignore non-error logs or if connection is not ready
         if record.levelno < logging.ERROR:
             return
-            
+
         log_entry = self.format(record)
-        
+
         # Prevent infinite loops if error comes from sending message itself
         if "TelegramLogHandler" in log_entry or "httpx" in log_entry:
             return
-        
+
         # Ignore getUpdates conflict spam (caused by multiple bot instances)
         conflict_markers = (
             "telegram.error.Conflict",
@@ -31,7 +31,7 @@ class TelegramLogHandler(logging.Handler):
                 # Escape html to prevent parse mode errors
                 safe_log = html.escape(log_entry)[:4000] # Limit length
                 await self.bot.send_message(
-                    chat_id=self.admin_id, 
+                    chat_id=self.admin_id,
                     text=f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>SYSTEM LOG: {record.levelname}</b>\n<pre>{safe_log}</pre>",
                     parse_mode=ParseMode.HTML
                 )
@@ -65,7 +65,7 @@ async def post_init(application: Application):
         bot_instance = None
         _sync_runtime_resources()
     bot_instance = application.bot
-    
+
     # FIX: Khởi tạo HTTP client properly
     http_client = httpx.AsyncClient(timeout=15.0)
     _sync_runtime_resources()
@@ -85,7 +85,7 @@ async def post_init(application: Application):
         logger.info("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Webhook đã được xóa - bot sẵn sàng polling")
     except (httpx.HTTPError, ValueError, KeyError) as _wh_err:
         logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Không thể xóa webhook: {_wh_err}")
-    
+
     # Initialize Gemini Assistant
     if gemini_assistant.initialize():
         logger.info(f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Gemini AI ready: {AI_MODEL}")
@@ -110,14 +110,14 @@ async def post_init(application: Application):
     else:
         detail = f" | detail: {FASTAPI_IMPORT_ERROR}" if FASTAPI_IMPORT_ERROR else ""
         logger.warning(f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> API server disabled do thiếu/hỏng FastAPI stack.{detail}")
-    
+
     # Đăng ký Telegram Log Handler
     telegram_handler = TelegramLogHandler(application.bot, ADMIN_USER_ID)
     telegram_handler.setLevel(logging.ERROR)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     telegram_handler.setFormatter(formatter)
     telegram_handler.addFilter(SensitiveDataFilter())
-    
+
     # Add to root logger to catch all errors
     logging.getLogger().addHandler(telegram_handler)
 
@@ -140,7 +140,7 @@ async def post_init(application: Application):
         ("mystats", "📊 Thống kê cá nhân"),
         ("myref", "🎁 Giới thiệu bạn bè"),
     ])
-    
+
     # Send startup notification
     try:
         await application.bot.send_message(
@@ -185,7 +185,7 @@ async def pre_shutdown(application: Application):
 async def error_handler_callback(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Log errors and notify admin/user appropriately."""
     global _last_conflict_report_time
-    
+
     err = context.error
     if err is None:
         return

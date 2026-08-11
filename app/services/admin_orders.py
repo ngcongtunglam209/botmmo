@@ -199,7 +199,7 @@ async def handle_legacy_manual_done_refund(query, context, command):
     is_done = command.startswith('manual_done_')
     order_code = command.replace('manual_done_', '').replace('manual_refund_', '')
     found_order = order_index.get(order_code)
-    
+
     if not found_order:
         await safe_edit_message(
             query,
@@ -211,13 +211,13 @@ async def handle_legacy_manual_done_refund(query, context, command):
     if is_done:
         found_order['status'] = '<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Hoàn thành'
         await save_data(force=True)
-        
+
         await safe_edit_message(
             query,
             f"{(query.message.text_html or query.message.text or '')}\n\n<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ HOÀN THÀNH!</b>",
             parse_mode='HTML'
         )
-        
+
         customer_id = found_order.get('user_id')
         if customer_id:
             try:
@@ -232,13 +232,13 @@ async def handle_legacy_manual_done_refund(query, context, command):
                 )
             except (TelegramError, ValueError, KeyError, AttributeError) as e:
                 logger.error(f"Could not notify customer {customer_id}: {e}")
-        
+
         logger.info(f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> MANUAL ORDER DONE: {order_code} by Admin")
     else:
         customer_id = found_order.get('user_id')
         amount = found_order.get('amount', 0)
         new_balance = user_data_db.get(str(customer_id), {}).get('balance', 0) if customer_id else 0
-        
+
         if customer_id and amount > 0:
             current_balance = user_data_db.get(str(customer_id), {}).get('balance', 0)
             new_balance = current_balance + amount
@@ -252,18 +252,18 @@ async def handle_legacy_manual_done_refund(query, context, command):
                 reason="Admin hủy đơn manual",
                 order_data=found_order,
             )
-        
+
         found_order['status'] = '❌ Đã hủy & hoàn tiền'
         found_order['refunded_at'] = time.time()
         await save_data(force=True)
-        
+
         await safe_edit_message(
             query,
             f"{(query.message.text_html or query.message.text or '')}\n\n❌ <b>ĐÃ HỦY & HOÀN TIỀN!</b>\n"
             f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Đã hoàn {amount:,} VNĐ cho khách",
             parse_mode='HTML'
         )
-        
+
         if customer_id:
             try:
                 await context.bot.send_message(
@@ -278,14 +278,14 @@ async def handle_legacy_manual_done_refund(query, context, command):
                 )
             except (TelegramError, ValueError, KeyError, AttributeError) as e:
                 logger.error(f"Could not notify customer {customer_id}: {e}")
-        
+
         logger.info(f"❌ MANUAL ORDER REFUNDED: {order_code} - Amount: {amount}")
 
 async def handle_new_manual_done_refund(query, context, command):
     """Process new manual order done/refund (acting on pending_manual_orders)."""
     is_done = command.startswith('manual_done:')
     order_code = command.split(':', 1)[1]
-    
+
     if order_code not in pending_manual_orders:
         await safe_answer(query, "❌ Đơn hàng không tồn tại hoặc đã xử lý!", show_alert=True)
         return
@@ -317,20 +317,20 @@ async def handle_new_manual_done_refund(query, context, command):
             "manual_fulfillment": True
         }
         db_add_order(order_data)
-        
+
         pending_manual_orders.pop(order_code, None)
         await save_data(force=True)
-        
+
         new_caption = get_query_message_html(query) + f"\n\n<b>--- <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> ĐÃ HOÀN THÀNH ---</b>\n<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> Lúc: {datetime.now().strftime('%H:%M %d/%m/%Y')}"
         disabled_btn = InlineKeyboardButton("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã xử lý", callback_data="ignore")
-        
+
         await safe_edit_message(
             query,
             text=new_caption,
             reply_markup=InlineKeyboardMarkup([[disabled_btn]]),
             parse_mode=ParseMode.HTML
         )
-        
+
         try:
             from app.core.emoji_runtime import upgrade_text_to_premium_emoji
             from app.handlers.flashsale_wheel import send_post_purchase_followups
@@ -361,7 +361,7 @@ async def handle_new_manual_done_refund(query, context, command):
         current_balance = user_info.get('balance', 0) if user_info else 0
         new_balance = current_balance + amount
         db_update_balance(user_id, new_balance)
-        
+
         order_data = {
             "order_code": order_code,
             "user_id": user_id,
@@ -387,16 +387,16 @@ async def handle_new_manual_done_refund(query, context, command):
             reason="Admin hủy đơn manual",
             order_data=order_data,
         )
-        
+
         pending_manual_orders.pop(order_code, None)
         await save_data(force=True)
-        
+
         await safe_edit_message(
             query,
             text=get_query_message_html(query) + f"\n\n<b>--- <tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> ĐÃ HOÀN TIỀN ---</b>\n<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> Lúc: {datetime.now().strftime('%H:%M %d/%m')}",
             parse_mode=ParseMode.HTML
         )
-        
+
         try:
             await context.bot.send_message(
                 chat_id=user_id,
@@ -456,12 +456,12 @@ async def handle_cancel_order_payment(query, context, command):
         )
     else:
         prod_id = command.replace('cancel_payment_', '')
-        
+
         try:
             await query.message.delete()
         except (Forbidden, BadRequest) as e:
             logger.debug(f"Cannot delete QR message on cancel order: {e}")
-        
+
         refunded_amount = 0
         if query.message and query.message.caption:
             match = re.search(r'ICLD(\d{6})', query.message.caption)
@@ -479,10 +479,10 @@ async def handle_cancel_order_payment(query, context, command):
                             refunded_amount = balance_used
                             logger.info(f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Hoàn {balance_used:,}đ cho user {user_id_restore}")
                     await save_data(force=True, tables=[PENDING_ORDERS_FILE, USERS_FILE, TRANSACTION_HISTORY_FILE])
-        
+
         p = products.get(prod_id)
         prod_name = p['name'] if p else "Sản phẩm"
-        
+
         refund_msg = ""
         if refunded_amount > 0:
             refund_msg = f"\n\n<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> Đã hoàn lại <b>{refunded_amount:,} VNĐ</b> vào ví."

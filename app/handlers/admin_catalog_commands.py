@@ -11,26 +11,26 @@ async def listproducts_command(update: Update, context: ContextTypes.DEFAULT_TYP
     if not visible_products:
         await update.message.reply_text("<tg-emoji emoji-id=\"5854908544712707500\">📭</tg-emoji> Chưa có sản phẩm nào trong hệ thống.\n\nDùng /newproduct để tạo mới.")
         return
-    
+
     # Phân loại products
     auto_products = {}
     manual_products = {}
-    
+
     for prod_id, p in visible_products.items():
         if p.get('requires_gmail', False):
             manual_products[prod_id] = p
         else:
             auto_products[prod_id] = p
-    
+
     msg = f"<b><tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> DANH SÁCH SẢN PHẨM ({len(visible_products)})</b>\n\n"
-    
+
     # AUTO PRODUCTS (Có stock)
     if auto_products:
         msg += "<b><tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> SẢN PHẨM TỰ ĐỘNG (Có kho hàng):</b>\n\n"
         for prod_id, p in auto_products.items():
             stock = len(p.get('stock', []))
             status_icon = "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji>" if stock > 0 else "❌"
-            
+
             prod_info = (
                 f"{status_icon} <b>{p['name']}</b>\n"
                 f"   <tg-emoji emoji-id=\"5334890573281114250\">🆔</tg-emoji> <code>{prod_id}</code>\n"
@@ -41,7 +41,7 @@ async def listproducts_command(update: Update, context: ContextTypes.DEFAULT_TYP
                 await update.message.reply_html(msg)
                 msg = ""
             msg += prod_info
-    
+
     # MANUAL PRODUCTS (Không cần stock)
     if manual_products:
         msg += "<b><tg-emoji emoji-id=\"5350778980158956492\">👨</tg-emoji>‍<tg-emoji emoji-id=\"5854908544712707500\">💼</tg-emoji> SẢN PHẨM THỦ CÔNG (Admin xử lý):</b>\n\n"
@@ -57,12 +57,12 @@ async def listproducts_command(update: Update, context: ContextTypes.DEFAULT_TYP
                 await update.message.reply_html(msg)
                 msg = ""
             msg += prod_info
-    
+
     msg += "\n<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> <b>Lệnh:</b>\n"
     msg += "• /addstock - Thêm kho (chỉ SP tự động)\n"
     msg += "• /pending - Xem đơn manual chờ xử lý\n"
     msg += "• /delproduct [id] - Xóa sản phẩm"
-    
+
     if msg.strip():
         await update.message.reply_html(msg)
 
@@ -88,7 +88,7 @@ async def rewardtop_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     await save_data(); await context.bot.send_message(update.effective_chat.id, admin_feedback, parse_mode=ParseMode.HTML)
 
 async def addcoupon_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if len(context.args) != 4: 
+    if len(context.args) != 4:
         await update.message.reply_html(
             "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>Sai cú pháp!</b>\n\n"
             "Sử dụng: <code>/addcoupon <MÃ> <LƯỢNG> <TIỀN> <SỐ_NGÀY></code>\n"
@@ -97,39 +97,39 @@ async def addcoupon_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         return
 
     code, quantity_str, amount_str, days_str = context.args
-    
-    try: 
+
+    try:
         quantity = int(quantity_str)
         discount = int(amount_str)
         days = int(days_str)
-        
+
         if quantity < 0 or discount < 0 or days < 0:
              await update.message.reply_text("❌ Lượng, tiền và ngày phải là số dương.")
              return
-             
-    except ValueError: 
+
+    except ValueError:
         await update.message.reply_text("❌ Lỗi định dạng số. Vui lòng kiểm tra lại.")
         return
 
     expires_str = (datetime.now() + timedelta(days=days)).strftime('%d-%m-%Y')
-    
+
     # Đảm bảo biến coupons là dict
     global coupons
     if not isinstance(coupons, dict):
         coupons = {}
 
     coupons[code.upper()] = {
-        "discount": discount, 
-        "quantity": quantity, 
-        "expires": expires_str, 
+        "discount": discount,
+        "quantity": quantity,
+        "expires": expires_str,
         "used": 0
     }
-    
+
     await save_data(force=True)
-    
+
     # Escape HTML để tránh lỗi
     safe_code = code.upper().replace("<", "&lt;").replace(">", "&gt;")
-    
+
     await update.message.reply_html(
         f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ THÊM MÃ GIẢM GIÁ</b>\n\n"
         f"<tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> Mã: <b>{safe_code}</b>\n"
@@ -146,7 +146,7 @@ async def delcoupon_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def listcoupons_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not coupons: await update.message.reply_text("Hiện không có mã giảm giá nào."); return
-    message = "<b><tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> DANH SÁCH MÃ GIẢM GIÁ <tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji></b>\n\n";
+    message = "<b><tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> DANH SÁCH MÃ GIẢM GIÁ <tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji></b>\n\n"
     for code, details in coupons.items(): message += (f"- <code>{code}</code> | Giảm: <b>{details.get('discount', 0):,}đ</b>\n" f"  Đã dùng: <b>{details.get('used', 0)}/{details.get('quantity', '∞')}</b> | Hết hạn: <b>{details.get('expires', 'N/A')}</b>\n")
     await update.message.reply_html(message)
 

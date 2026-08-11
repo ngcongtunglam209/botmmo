@@ -17,35 +17,35 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             "• Gửi đến tất cả users"
         )
         return
-    
+
     try:
         discount_percent = int(context.args[0])
         quantity = int(context.args[1])
         days = int(context.args[2])
-        
+
         if not (1 <= discount_percent <= 100):
             await update.message.reply_text("❌ % giảm giá phải từ 1-100%")
             return
-        
+
         if quantity < 1:
             await update.message.reply_text("❌ Số lượng phải > 0")
             return
-            
+
         if days < 1:
             await update.message.reply_text("❌ Số ngày phải > 0")
             return
-        
+
     except ValueError:
         await update.message.reply_text("❌ Vui lòng nhập số hợp lệ!")
         return
-    
+
     # Tính toán
     expires_date = datetime.now() + timedelta(days=days)
     expires_str = expires_date.strftime('%d-%m-%Y')
-    
+
     # Tạo mã coupon đẹp
     sale_code = f"SALE{discount_percent}-{''.join(random.choices(string.ascii_uppercase + string.digits, k=4))}"
-    
+
     # Lưu coupon vào database
     coupons[sale_code] = {
         "discount": discount_percent,
@@ -55,7 +55,7 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "used": 0
     }
     await save_data()
-    
+
     # Thông báo cho admin trước
     admin_preview = (
         f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ TẠO SALE EVENT THÀNH CÔNG!</b>\n\n"
@@ -67,7 +67,7 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <i>Bot vẫn hoạt động bình thường, broadcast chạy nền!</i>"
     )
     status_msg = await update.message.reply_html(admin_preview)
-    
+
     # Tạo thông báo SALE siêu đẹp cho users
     sale_message = (
         f"<tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji><tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji><tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji> <b>FLASH SALE - GIẢM GIÁ SỐC!</b> <tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji><tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji><tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji>\n\n"
@@ -81,7 +81,7 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         f"<tg-emoji emoji-id=\"5303290914041505430\">⚡️</tg-emoji> <b>NHANH TAY KẺO HẾT!</b> <tg-emoji emoji-id=\"5303290914041505430\">⚡️</tg-emoji>\n\n"
         f"<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Bấm /start để mua ngay!"
     )
-    
+
     # <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> FIX: CHẠY BROADCAST TRONG BACKGROUND TASK - KHÔNG BLOCK BOT!
     async def _broadcast_sale_background(msg_obj):
         """Background task để broadcast sale - không block bot"""
@@ -90,13 +90,13 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         blocked_ids = []
         all_keys = list(user_data_db.keys())
         total_users = len(all_keys)
-        
+
         for idx, user_id_str in enumerate(all_keys, 1):
             try:
                 user_id = int(user_id_str)
                 if user_id in banned_users:
                     continue
-                
+
                 result = await broadcast_send_message(
                     context.bot, user_id, sale_message, parse_mode=ParseMode.HTML
                 )
@@ -114,7 +114,7 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 fail_count += 1
                 if fail_count <= 3:
                     logger.warning(f"Không thể gửi SALE cho user {user_id_str}: {e}")
-            
+
             if idx % 20 == 0 or idx == total_users:
                 try:
                     progress = generate_progress_bar(idx, total_users)
@@ -127,11 +127,11 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     )
                 except (ValueError, TypeError, KeyError, IndexError) as e:
                     logger.debug(f"Cannot update sale broadcast progress at {idx}/{total_users}: {e}")
-        
+
         cleaned_count = 0
         if blocked_ids:
             cleaned_count = await _cleanup_blocked_users(blocked_ids)
-        
+
         result_message = (
             f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>BÁO CÁO BROADCAST SALE</b>\n\n"
             f"{generate_progress_bar(total_users, total_users)}\n"
@@ -153,7 +153,7 @@ async def sale_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             logger.error(f"Cannot send broadcast report to admin: {e}")
             await context.bot.send_message(chat_id=ADMIN_USER_ID, text=result_message, parse_mode=ParseMode.HTML)
-    
+
     # Chạy broadcast trong background - BOT KHÔNG BỊ ĐƠ!
     create_background_task(_broadcast_sale_background(status_msg))
 
@@ -167,10 +167,10 @@ async def refund_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     order_code = context.args[0].upper()
-    
+
     # FIX BUG #17: Tìm đơn hàng với O(1) index lookup thay vì O(n) scan
     found_order = db_get_order(order_code)
-    
+
     if not found_order:
         await update.message.reply_text(f"❌ Không tìm thấy đơn hàng {order_code}")
         return
@@ -182,7 +182,7 @@ async def refund_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     user_id = found_order.get("user_id")
     amount = found_order.get("amount")
-    
+
     # === TRƯỜNG HỢP 1: HOÀN TIỀN CHO API PARTNER ===
     if isinstance(user_id, str) and user_id.startswith("PARTNER_"):
         partner_name = user_id.replace("PARTNER_", "")
@@ -255,7 +255,7 @@ async def refund_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # Tạo user record nếu chưa tồn tại
         db_upsert_user(user_id, found_order.get("username"), found_order.get("full_name"), datetime.now().isoformat(), balance=0)
         user_info = db_get_user(user_id)
-    
+
     current_balance = user_info.get("balance", 0)
     new_balance = current_balance + amount
     db_update_balance(user_id, new_balance)

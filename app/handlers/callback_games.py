@@ -52,13 +52,13 @@ async def handle_games_callbacks(update, context, command):
                     item = current_stock.pop(0)
                     products[prize_id]['stock'] = current_stock
                     await save_data(force=True)
-                
+
                 # Clear winner flag (both ephemeral and persistent)
                 context.user_data.pop('dice_winner', None)
                 dice_game_data.pop(f"winner_{user.id}", None)
                 record_promo_cost(p.get('price', 0), 'dice_product')
                 await save_data()
-                
+
                 order_code = f"DICE{int(time.time())}"
                 item_raw = str(item)
                 delivered_at = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
@@ -176,7 +176,7 @@ async def handle_games_callbacks(update, context, command):
                 )
 
                 logger.info(f"<tg-emoji emoji-id=\"5226711870492126219\">🎲</tg-emoji> DICE PRIZE delivered: user={user.id}, prize={p['name']}, order={order_code}")
-                
+
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
             logger.error(f"Error delivering dice prize: {e}")
             try:

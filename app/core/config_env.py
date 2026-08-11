@@ -180,22 +180,48 @@ RPAY_UNDERPAY_TOLERANCE_RAW = get_env_str("RPAY_UNDERPAY_TOLERANCE", "0.01")
 # So le USDT hien cho khach va gui len RPay. 2 la du cho moi network.
 USDT_DISPLAY_DECIMALS = get_env_int("USDT_DISPLAY_DECIMALS", 2, minimum=1)
 
+# --- NOWPayments: cong USDT da mang, co IPN callback + poll du phong ---
+ENABLE_PAYMENT_NOWPAYMENTS = get_env_bool("ENABLE_PAYMENT_NOWPAYMENTS", False)
+NOWPAYMENTS_API_KEY = os.getenv("NOWPAYMENTS_API_KEY", "").strip()
+# IPN secret la thu duy nhat chung minh callback that su den tu NOWPayments.
+# Thieu no thi endpoint /webhook/nowpayments tu choi moi request.
+NOWPAYMENTS_IPN_SECRET = os.getenv("NOWPAYMENTS_IPN_SECRET", "").strip()
+NOWPAYMENTS_BASE_URL = get_env_str("NOWPAYMENTS_BASE_URL", "https://api.nowpayments.io/v1").rstrip("/")
+NOWPAYMENTS_TIMEOUT_SECONDS = get_env_float("NOWPAYMENTS_TIMEOUT_SECONDS", 15.0, minimum=3.0)
+# Ma dong tien khach tra, lay tu GET /v1/merchant/coins (viet thuong).
+# Vi du: usdtbsc,usdtmatic
+def _split_nowpayments_currencies(raw: str) -> list:
+    return [item.strip().lower() for item in str(raw or "").replace(";", ",").split(",") if item.strip()]
+
+NOWPAYMENTS_CURRENCIES = _split_nowpayments_currencies(get_env_str("NOWPAYMENTS_CURRENCIES", ""))
+# Dong ma so du NOWPayments quy ve. De trong = settle cung dong khach tra
+# (khong quy doi, khong phi chuyen doi).
+NOWPAYMENTS_PAYOUT_CURRENCY = get_env_str("NOWPAYMENTS_PAYOUT_CURRENCY", "").strip().lower()
+# Tra thieu bao nhieu USDT thi van chap nhan (phi mang lam hut vai cent).
+NOWPAYMENTS_UNDERPAY_TOLERANCE_RAW = get_env_str("NOWPAYMENTS_UNDERPAY_TOLERANCE", "0.01")
+
 # --- Binance Pay: khach chuyen thang vao Binance ID cua shop, doi soat bang
-# feed lich su sieuthicode.com (poll, khong co callback) ---
+# GET /sapi/v1/pay/transactions cua chinh Binance (poll, khong co callback) ---
 ENABLE_PAYMENT_BINANCE_PAY = get_env_bool("ENABLE_PAYMENT_BINANCE_PAY", False)
 # Binance ID (Pay ID) khach se chuyen toi. Hien trong hoa don va QR.
 BINANCE_PAY_ID = os.getenv("BINANCE_PAY_ID", "").strip()
-# URL feed lich su day du, ke ca token. Vi du:
-#   https://sieuthicode.com/historyapibinancev3/<TOKEN>
-# Token nam trong path nen no se lot vao log truy cap cua moi proxy tren duong
-# di - coi nhu bi mat yeu, va vi vay no khong bao gio duoc phep quyet dinh so
-# tien cong cho khach (xem _scan_binance_pay_payments).
-BINANCE_PAY_HISTORY_URL = os.getenv("BINANCE_PAY_HISTORY_URL", "").strip()
+# API key/secret cua chinh tai khoan Binance nhan tien (tai khoan ca nhan la du,
+# khong can merchant). Key CHI duoc bat quyen doc va NEN whitelist IP cua VPS:
+# ta chi hoi "co giao dich dung so tien nay khong", khong bao gio rut tien.
+BINANCE_API_KEY = os.getenv("BINANCE_API_KEY", "").strip()
+BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET", "").strip()
+# Doi sang api-gcp/api1..api4.binance.com neu duong toi api.binance.com chap chon.
+BINANCE_API_BASE_URL = get_env_str("BINANCE_API_BASE_URL", "https://api.binance.com").rstrip("/")
 BINANCE_PAY_TIMEOUT_SECONDS = get_env_float("BINANCE_PAY_TIMEOUT_SECONDS", 10.0, minimum=3.0)
-# Feed KHONG tra ve noi dung chuyen khoan (`description` gan nhu luon rong), nen
-# khong the khop don theo ma ICLD. Cach khop duy nhat con lai la so tien chinh
-# xac + cua so thoi gian. Vi vay moi don duoc gan mot so le rieng o chu so thu
-# BINANCE_PAY_AMOUNT_DECIMALS de khong hai don nao trung so tien.
+# Binance tu choi request co timestamp lech qua recvWindow (loi -1021). Dong ho
+# VPS lech la hong ca cong thanh toan, nen giu NTP chay.
+# Binance tu choi thang recvWindow > 60000 nen phai chan tran, khong chi chan day.
+BINANCE_PAY_RECV_WINDOW_MS = min(60000, get_env_int("BINANCE_PAY_RECV_WINDOW_MS", 5000, minimum=1000))
+# API KHONG tra ve noi dung chuyen khoan (khong he co truong memo/description),
+# va ben nhan cung chi thay nickname nguoi gui chu khong thay UID. Cach khop duy
+# nhat con lai la so tien chinh xac + cua so thoi gian. Vi vay moi don duoc gan
+# mot so le rieng o chu so thu BINANCE_PAY_AMOUNT_DECIMALS de khong hai don nao
+# trung so tien.
 BINANCE_PAY_AMOUNT_DECIMALS = get_env_int("BINANCE_PAY_AMOUNT_DECIMALS", 4, minimum=3)
 # Giao dich duoc coi la cua don neu roi trong [tao don - LEEWAY, het han + LEEWAY].
 BINANCE_PAY_MATCH_LEEWAY_SECONDS = get_env_int("BINANCE_PAY_MATCH_LEEWAY_SECONDS", 120, minimum=30)
@@ -264,6 +290,13 @@ except InvalidOperation:
     RPAY_UNDERPAY_TOLERANCE = Decimal("0.01")
 if RPAY_UNDERPAY_TOLERANCE < 0:
     RPAY_UNDERPAY_TOLERANCE = Decimal("0")
+
+try:
+    NOWPAYMENTS_UNDERPAY_TOLERANCE = Decimal(NOWPAYMENTS_UNDERPAY_TOLERANCE_RAW or "0")
+except InvalidOperation:
+    NOWPAYMENTS_UNDERPAY_TOLERANCE = Decimal("0.01")
+if NOWPAYMENTS_UNDERPAY_TOLERANCE < 0:
+    NOWPAYMENTS_UNDERPAY_TOLERANCE = Decimal("0")
 
 def _get_today_key():
     return datetime.now().strftime('%Y-%m-%d')
@@ -352,7 +385,10 @@ def _iter_log_secrets():
         SEPAY_WEBHOOK_API_KEY,
         SEPAY_API_TOKEN,
         RPAY_API_KEY,
-        BINANCE_PAY_HISTORY_URL,
+        NOWPAYMENTS_API_KEY,
+        NOWPAYMENTS_IPN_SECRET,
+        BINANCE_API_KEY,
+        BINANCE_API_SECRET,
         ADMIN_WEB_SESSION_SECRET,
         AI_API_KEY,
         SENDER_APP_PASSWORD,

@@ -249,12 +249,12 @@ async def receive_prod_ai_desc_action(update: Update, context: ContextTypes.DEFA
 
 async def receive_prod_duration(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['new_prod_duration'] = update.message.text
-    
+
     keyboard = [
         [InlineKeyboardButton("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> CÓ - Yêu cầu Gmail", callback_data='prod_gmail_yes')],
         [_btn("Không", icon_id="5273914604752216432", callback_data='prod_gmail_no')]
     ]
-    
+
     await update.message.reply_text(
         "<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Bước 5/6: Sản phẩm này có <b>yêu cầu Gmail</b> không?\n\n"
         "<i>Nếu CÓ: Bot sẽ hỏi email khách khi mua\n"
@@ -267,10 +267,10 @@ async def receive_prod_duration(update: Update, context: ContextTypes.DEFAULT_TY
 async def receive_prod_gmail(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await safe_answer(query)
-    
+
     requires_gmail = query.data == 'prod_gmail_yes'
     context.user_data['new_prod_gmail'] = requires_gmail
-    
+
     await query.edit_message_text(
         "<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> Bước 6/6: Nhập <b>Thời gian bảo hành</b>\n\n"
         "<i>VD: 7 ngày, 30 ngày, Trọn đời, v.v</i>",
@@ -280,7 +280,7 @@ async def receive_prod_gmail(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def receive_prod_warranty(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['new_prod_warranty'] = update.message.text
-    
+
     # Show preview
     name = context.user_data['new_prod_name']
     price = context.user_data['new_prod_price']
@@ -288,7 +288,7 @@ async def receive_prod_warranty(update: Update, context: ContextTypes.DEFAULT_TY
     duration = context.user_data['new_prod_duration']
     requires_gmail = context.user_data['new_prod_gmail']
     warranty = context.user_data['new_prod_warranty']
-    
+
     preview = (
         f"{E_TAG} <b>XÁC NHẬN THÔNG TIN SẢN PHẨM</b>\n\n"
         f"{E_TAG} <b>Tên:</b> {name}\n"
@@ -299,24 +299,24 @@ async def receive_prod_warranty(update: Update, context: ContextTypes.DEFAULT_TY
         f"<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>Bảo hành:</b> {warranty}\n\n"
         f"{E_ERROR} Bạn có chắc chắn muốn tạo sản phẩm này?"
     )
-    
+
     keyboard = [
         [_btn("Xác nhận tạo", icon_id="6269163801178804220", callback_data='prod_confirm_yes')],
         [_btn("Hủy bỏ", icon_id="5273914604752216432", callback_data='prod_confirm_no')]
     ]
-    
+
     await update.message.reply_text(preview, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
     return ADD_PROD_CONFIRM
 
 async def receive_prod_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await safe_answer(query)
-    
+
     if query.data == 'prod_confirm_no':
         await query.edit_message_text("❌ Đã hủy tạo sản phẩm.")
         context.user_data.clear()
         return ConversationHandler.END
-    
+
     # Lấy tất cả thông tin
     name = context.user_data['new_prod_name']
     price = context.user_data['new_prod_price']
@@ -324,10 +324,10 @@ async def receive_prod_confirm(update: Update, context: ContextTypes.DEFAULT_TYP
     duration = context.user_data['new_prod_duration']
     requires_gmail = context.user_data['new_prod_gmail']
     warranty = context.user_data['new_prod_warranty']
-    
+
     # Generate ID
     prod_id = f"p_{int(time.time())}"
-    
+
     # Lưu sản phẩm với đầy đủ thông tin
     products[prod_id] = {
         "name": name,
@@ -340,7 +340,7 @@ async def receive_prod_confirm(update: Update, context: ContextTypes.DEFAULT_TYP
         "created_at": time.time()
     }
     await save_data(force=True)
-    
+
     await query.edit_message_text(
         f"{E_SUCCESS} <b>ĐÃ THÊM SẢN PHẨM THÀNH CÔNG!</b>\n\n"
         f"{E_ID} <b>ID:</b> <code>{prod_id}</code>\n"
@@ -353,7 +353,7 @@ async def receive_prod_confirm(update: Update, context: ContextTypes.DEFAULT_TYP
         f"{E_TAG} <b>Tồn kho:</b> 0 (Dùng /addstock để thêm hàng)",
         parse_mode='HTML'
     )
-    
+
     context.user_data.clear()
     return ConversationHandler.END
 
@@ -413,14 +413,14 @@ def _build_add_stock_product_menu(page: int = 0):
 
 async def add_stock_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_USER_ID: return
-    
+
     if not products:
         await update.message.reply_text("❌ Chưa có sản phẩm nào. Dùng /newproduct để tạo trước.")
         return ConversationHandler.END
-    
+
     # NEW: Lọc chỉ hiển thị products KHÔNG yêu cầu Gmail
     auto_products = dict(_get_add_stock_auto_product_entries())
-    
+
     if not auto_products:
         await update.message.reply_text(
             "ℹ️ <b>KHÔNG CÓ SẢN PHẨM NÀO CẦN STOCK</b>\n\n"
@@ -430,7 +430,7 @@ async def add_stock_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode='HTML'
         )
         return ConversationHandler.END
-        
+
     msg, reply_markup = _build_add_stock_product_menu(page=0)
     await update.message.reply_text(msg, reply_markup=reply_markup, parse_mode='HTML')
     return STOCK_SELECT
@@ -454,9 +454,9 @@ async def stock_select_product(update: Update, context: ContextTypes.DEFAULT_TYP
     if prod_id not in products:
         await query.edit_message_text("❌ Sản phẩm không tồn tại.")
         return ConversationHandler.END
-    
+
     p = products[prod_id]
-    
+
     # NEW: Check nếu là manual product
     if p.get('requires_gmail', False):
         await query.edit_message_text(
@@ -472,7 +472,7 @@ async def stock_select_product(update: Update, context: ContextTypes.DEFAULT_TYP
             parse_mode='HTML'
         )
         return ConversationHandler.END
-        
+
     context.user_data['stock_prod_id'] = prod_id
     await query.edit_message_text(
         f"<tg-emoji emoji-id=\"5854908544712707500\">📥</tg-emoji> <b>THÊM KHO CHO: {p['name']}</b>\n\n"
@@ -493,7 +493,7 @@ async def receive_stock_input(update: Update, context: ContextTypes.DEFAULT_TYPE
     try:
         prod_id = context.user_data.get('stock_prod_id')
         new_items = []
-        
+
         # Handle File
         if update.message.document:
             doc = update.message.document
@@ -501,10 +501,10 @@ async def receive_stock_input(update: Update, context: ContextTypes.DEFAULT_TYPE
             if not doc.file_name.lower().endswith('.txt'):
                 await update.message.reply_text("❌ Chỉ chấp nhận file .txt")
                 return STOCK_INPUT
-                
+
             file = await doc.get_file()
             content = await file.download_as_bytearray()
-            
+
             try:
                 text_content = content.decode('utf-8')
             except UnicodeDecodeError:
@@ -519,30 +519,30 @@ async def receive_stock_input(update: Update, context: ContextTypes.DEFAULT_TYPE
                     parse_mode='HTML'
                 )
                 return STOCK_INPUT
-                
+
             new_items = [line.strip() for line in text_content.splitlines() if line.strip()]
-            
+
         # Handle Text
         elif update.message.text:
             new_items = [line.strip() for line in update.message.text.splitlines() if line.strip()]
-            
+
         if new_items:
             current_stock = products[prod_id].get('stock', [])
             was_out_of_stock = len(current_stock) == 0  # Track trạng thái trước khi thêm
-            
+
             products[prod_id]['stock'] = current_stock + new_items
             await save_data(force=True)
-            
+
             new_total = len(products[prod_id]['stock'])
             product_name = products[prod_id]['name']
-            
+
             await update.message.reply_text(
                 f"{E_SUCCESS} <b>ĐÃ THÊM {len(new_items)} ITEMS!</b>\n\n"
                 f"{E_TAG} Sản phẩm: {product_name}\n"
                 f"{E_STAT} Tổng tồn kho: {new_total}",
                 parse_mode='HTML'
             )
-            
+
             create_background_task(notify_stock_added(
                 context,
                 product_name,
@@ -554,12 +554,12 @@ async def receive_stock_input(update: Update, context: ContextTypes.DEFAULT_TYPE
             # NEW: Auto-broadcast nếu từ hết hàng → có hàng
             if was_out_of_stock and new_total > 0:
                 create_background_task(broadcast_back_in_stock(context, product_name, prod_id, new_total))
-            
+
             return ConversationHandler.END
         else:
             await update.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Không đọc được dữ liệu nào từ file hoặc tin nhắn. Vui lòng thử lại.")
             return STOCK_INPUT
-            
+
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
         logger.error(f"Error in receive_stock_input: {e}", exc_info=True)
         logger.error(f"Error in product catalog message update: {e}"); await update.message.reply_text("❌ Có lỗi xảy ra khi cập nhật catalog, vui lòng kiểm tra logs.")
@@ -571,13 +571,13 @@ async def edit_product_start(update: Update, context: ContextTypes.DEFAULT_TYPE)
         if update.message:
             await update.message.reply_text("❌ Bạn không có quyền truy cập lệnh này.")
         return ConversationHandler.END
-    
+
     if not products:
         await update.message.reply_text("❌ Chưa có sản phẩm nào.")
         return ConversationHandler.END
-        
+
     text, reply_markup = _build_edit_product_select_payload(0)
-        
+
     await update.message.reply_text(
         text,
         reply_markup=reply_markup,
@@ -597,12 +597,12 @@ async def edit_prod_select(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text, reply_markup = _build_edit_product_select_payload(page)
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
         return EDIT_PROD_SELECT
-    
+
     prod_id = query.data.replace("edit_sel_", "")
     if prod_id not in products:
         await query.edit_message_text("❌ Sản phẩm không tồn tại or đã bị xóa.")
         return ConversationHandler.END
-        
+
     context.user_data['edit_prod_id'] = prod_id
     p = products[prod_id]
     product_name = html.escape(str(p.get('name', prod_id)))
@@ -610,7 +610,7 @@ async def edit_prod_select(update: Update, context: ContextTypes.DEFAULT_TYPE):
     product_description = html.escape(str(p.get('description', 'N/A')))
     product_duration = html.escape(str(p.get('duration', 'N/A')))
     product_warranty = html.escape(str(p.get('warranty', 'N/A')))
-    
+
     msg = (
         f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>ĐANG SỬA: {product_name}</b>\n\n"
         f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Giá hiện tại:</b> {product_price:,} VNĐ\n"
@@ -619,7 +619,7 @@ async def edit_prod_select(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Bảo hành:</b> {product_warranty}\n\n"
         f"<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> <i>Chọn thông tin cần sửa:</i>"
     )
-    
+
     keyboard = [
         [InlineKeyboardButton("Tên sản phẩm", callback_data="edit_field_name")],
         [InlineKeyboardButton("Giá bán", callback_data="edit_field_price")],
@@ -628,20 +628,20 @@ async def edit_prod_select(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("Bảo hành", callback_data="edit_field_warranty")],
         [_btn("Hủy bỏ", icon_id="5273914604752216432", callback_data="cancel_edit")]
     ]
-    
+
     await query.edit_message_text(msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
     return EDIT_PROD_FIELD
 
 async def edit_prod_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await safe_answer(query)
-    
+
     data = query.data
     if data == "cancel_edit":
         await query.edit_message_text("❌ Đã hủy sửa sản phẩm.")
         context.user_data.pop('edit_prod_id', None)
         return ConversationHandler.END
-        
+
     field_map = {
         "edit_field_name": ("name", "Nhập TÊN MỚI cho sản phẩm:"),
         "edit_field_price": ("price", "Nhập GIÁ MỚI (VNĐ):"),
@@ -649,7 +649,7 @@ async def edit_prod_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "edit_field_duration": ("duration", "Nhập THỜI HẠN MỚI:"),
         "edit_field_warranty": ("warranty", "Nhập BẢO HÀNH MỚI:")
     }
-    
+
     if data == "edit_field_desc":
         keyboard = [
             [_btn("AI tạo mô tả", icon_id="5287684458881756303", callback_data="ai_edit_desc_gen")],
@@ -657,10 +657,10 @@ async def edit_prod_field(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         await query.edit_message_text("<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Sửa MÔ TẢ</b>\n\nBạn muốn:", reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
         return EDIT_PROD_FIELD
-    
+
     field_key, prompt = field_map.get(data)
     context.user_data['edit_field'] = field_key
-    
+
     await query.edit_message_text(f"<tg-emoji emoji-id=\"5350752364246606166\">✏️</tg-emoji> <b>{prompt}</b>", parse_mode='HTML')
     return EDIT_PROD_VALUE
 
@@ -710,11 +710,11 @@ async def edit_prod_receive_value(update: Update, context: ContextTypes.DEFAULT_
     text = update.message.text
     prod_id = context.user_data.get('edit_prod_id')
     field = context.user_data.get('edit_field')
-    
+
     if not prod_id or prod_id not in products:
         await update.message.reply_text("❌ Lỗi dữ liệu. Vui lòng thử lại.")
         return ConversationHandler.END
-    
+
     # Validate Price
     if field == 'price':
         try:
@@ -726,18 +726,18 @@ async def edit_prod_receive_value(update: Update, context: ContextTypes.DEFAULT_
             return EDIT_PROD_VALUE
     else:
         products[prod_id][field] = text
-        
+
     await save_data(force=True, tables=[PRODUCTS_FILE])
     safe_product_name = html.escape(str(products[prod_id].get('name', prod_id)))
     safe_text = html.escape(str(text))
-    
+
     await update.message.reply_text(
         f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>CẬP NHẬT THÀNH CÔNG!</b>\n\n"
         f"Sản phẩm: {safe_product_name}\n"
         f"{field.capitalize()}: {safe_text}",
         parse_mode='HTML'
     )
-    
+
     # Clear state
     context.user_data.pop('edit_prod_id', None)
     context.user_data.pop('edit_field', None)

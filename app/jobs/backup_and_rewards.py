@@ -7,7 +7,7 @@ def parse_ga_time(time_str):
     try:
         time_str = str(time_str).lower().strip()
         if time_str == '0': return 0
-        
+
         if 'h' in time_str:
             hours = float(time_str.replace('h', ''))
             return int(hours * 3600)
@@ -25,12 +25,12 @@ async def auto_end_giveaway_job(context: ContextTypes.DEFAULT_TYPE):
     """Check for expired giveaways"""
     now = time.time()
     expired = []
-    
+
     # Create copy to avoid runtime validation errors during iteration
     for ga_id, ga in list(active_giveaways.items()):
         if ga.get('end_time', 0) > 0 and ga['end_time'] <= now and ga.get('status') == 'active':
             expired.append(ga_id)
-            
+
     for ga_id in expired:
         await draw_ga_winners(context, ga_id)
 
@@ -44,7 +44,7 @@ def _legacy_create_backup_zip_json_export():
     try:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         zip_filename = f"backup_lamshop_{timestamp}.zip"
-        
+
         # Connect to SQLite and dump to JSON files first
         exported_files = []
         try:
@@ -63,7 +63,7 @@ def _legacy_create_backup_zip_json_export():
                         logger.error(f"Error dumping {key}: {e}")
         except (sqlite3.Error, aiosqlite.Error, ValueError) as e:
             logger.error(f"Error reading SQLite for backup: {e}")
-            
+
         # If no files, fallback to old list just in case
         if not exported_files:
             exported_files = [
@@ -77,13 +77,13 @@ def _legacy_create_backup_zip_json_export():
                 DICE_GAME_FILE, WITHDRAWALS_FILE, TRANSACTION_HISTORY_FILE,
                 ADMIN_ACTION_LOG_FILE
             ]
-        
+
         # Create ZIP
         with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for file_path in exported_files:
                 if os.path.exists(file_path):
                     zipf.write(file_path, os.path.basename(file_path))
-                    
+
         return zip_filename
     except (sqlite3.Error, aiosqlite.Error, ValueError) as e:
         logger.error(f"❌ Failed to create backup ZIP: {e}")
@@ -198,7 +198,7 @@ def create_backup_zip(prefix="backup_lamshop"):
                     fallback_path = os.path.join(_backup_root_dir(), file_name)
                     if os.path.exists(fallback_path):
                         try:
-                            with open(fallback_path, 'r', encoding='utf-8') as f:
+                            with open(fallback_path, encoding='utf-8') as f:
                                 payload = json.load(f)
                         except (OSError, ValueError, json.JSONDecodeError) as e:
                             logger.error(f"Không thể đọc fallback backup {file_name}: {e}")
@@ -297,7 +297,7 @@ def restore_backup_zip_to_db(zip_path):
     with closing(sqlite3.connect(DB_PATH)) as conn:
         cursor = conn.cursor()
         cursor.execute("BEGIN TRANSACTION")
-        for file_name in merged_rows.keys():
+        for file_name in merged_rows:
             cursor.execute("DELETE FROM kv_store WHERE key = ?", (file_name,))
         cursor.executemany(
             "INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)",
@@ -402,7 +402,7 @@ def send_email_backup(zip_path, recipient_email):
 async def auto_backup_job(context: ContextTypes.DEFAULT_TYPE):
     """Job: Run backup to Telegram (every 6h) and Email (every 3d)"""
     global last_email_backup_time
-    
+
     # 1. Flush data then create ZIP dưới file lock để tránh race với save_data trên Windows
     await save_data(force=True)
     async with file_lock:
@@ -410,7 +410,7 @@ async def auto_backup_job(context: ContextTypes.DEFAULT_TYPE):
     if not zip_path: return
 
     now = time.time()
-    
+
     # 2. Send to Telegram (ALWAYS)
     try:
         caption = (
@@ -428,7 +428,7 @@ async def auto_backup_job(context: ContextTypes.DEFAULT_TYPE):
             )
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
         logger.error(f"Failed to send backup to Telegram: {e}")
-        
+
     # 3. Check for Email Backup (Every 3 days)
     if now - last_email_backup_time >= BACKUP_INTERVAL_EMAIL:
         sent, email_error = await asyncio.to_thread(send_email_backup, zip_path, ADMIN_EMAIL_BACKUP)
@@ -451,7 +451,7 @@ async def auto_backup_job(context: ContextTypes.DEFAULT_TYPE):
                     f"<b>Reason:</b> <code>{html.escape(str(email_error or 'Unknown error'))}</code>"
                 ),
             )
-            
+
     # 4. Cleanup
     try:
         if os.path.exists(zip_path):

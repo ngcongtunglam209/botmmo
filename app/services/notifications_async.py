@@ -60,13 +60,13 @@ async def send_live_order_notification(context: ContextTypes.DEFAULT_TYPE, full_
     try:
         masked_name = mask_name(full_name)
         time_str = datetime.now().strftime('%H:%M %d/%m/%Y')
-        
+
         # Format số lượng (chỉ hiện nếu > 1)
         qty_text = f" x{quantity}" if quantity > 1 else ""
-        
+
         # Format mã đơn (nếu có)
         order_text = f"\n{E_TAG} <b>Mã đơn:</b> <code>{order_code}</code>" if order_code else ""
-        
+
         msg = (
             f"{E_SUCCESS} <b>VỪA CÓ KHÁCH HÀNG MUA THÀNH CÔNG!</b>\n\n"
             f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Khách hàng:</b> {masked_name}\n"
@@ -271,16 +271,16 @@ async def broadcast_out_of_stock(context: ContextTypes.DEFAULT_TYPE, product_nam
     NEW: Broadcast thông báo hết hàng cho toàn bộ users
     """
 
-    
+
     # Tránh spam: Chỉ thông báo 1 lần cho mỗi product
     if product_id and product_id in notified_out_of_stock:
         logger.info(f"{E_LOADING} Bỏ qua broadcast hết hàng cho {product_name} (đã thông báo)")
         return
-    
+
     # Đánh dấu đã thông báo
     if product_id:
         notified_out_of_stock.add(product_id)
-    
+
     # Tạo message
     message = (
         f"{E_ERROR} <b>THÔNG BÁO HẾT HÀNG</b>\n\n"
@@ -289,18 +289,18 @@ async def broadcast_out_of_stock(context: ContextTypes.DEFAULT_TYPE, product_nam
         f"{E_SOS} Chúng tôi sẽ thông báo khi có lại hàng.\n"
         f"{E_GLOBE} Liên hệ Admin để đặt trước: @{ADMIN_USERNAME}"
     )
-    
+
     success_count = 0
     fail_count = 0
     blocked_ids = []
-    
+
     for user_id_str in list(user_data_db.keys()):
         try:
             user_id = int(user_id_str)
             profile = user_data_db.get(user_id_str, {})
             if user_id in banned_users or (isinstance(profile, dict) and profile.get("broadcast_disabled")):
                 continue
-            
+
             result = await broadcast_send_message(
                 context.bot, user_id, message, parse_mode=ParseMode.HTML
             )
@@ -318,10 +318,10 @@ async def broadcast_out_of_stock(context: ContextTypes.DEFAULT_TYPE, product_nam
             fail_count += 1
             if fail_count <= 3:
                 logger.warning(f"Lỗi broadcast đến user {user_id_str}: {e}")
-    
+
     if blocked_ids:
         await _cleanup_blocked_users(blocked_ids)
-    
+
     # Thông báo cho Admin
     admin_msg = (
         f"{E_SOS} <b>ĐÃ BROADCAST HẾT HÀNG</b>\n\n"
@@ -330,7 +330,7 @@ async def broadcast_out_of_stock(context: ContextTypes.DEFAULT_TYPE, product_nam
         f"{E_LIMIT} <b>Thất bại:</b> {fail_count}\n"
         f"{E_STAT} <b>Tổng users:</b> {len(user_data_db)}"
     )
-    
+
     try:
         await context.bot.send_message(
             chat_id=ADMIN_USER_ID,
@@ -339,7 +339,7 @@ async def broadcast_out_of_stock(context: ContextTypes.DEFAULT_TYPE, product_nam
         )
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
         logger.error(f"Không gửi được báo cáo broadcast cho admin: {e}")
-    
+
     logger.info(f"{E_SOS} Broadcast hết hàng '{product_name}': {success_count} thành công, {fail_count} thất bại")
 
 def create_background_task(coro, *, fatal=False):
@@ -771,12 +771,12 @@ async def notify_admin_manual_order(context: ContextTypes.DEFAULT_TYPE, order_co
         f"2. Bấm nút bên dưới khi hoàn thành\n"
         f"3. Bot sẽ tự động thông báo khách check mail"
     )
-    
+
     keyboard = [
         [InlineKeyboardButton("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã hoàn thành - Thông báo khách", callback_data=f"manual_done:{order_code}")],
         [InlineKeyboardButton("❌ Gặp vấn đề - Hoàn tiền", callback_data=f"manual_refund:{order_code}")]
     ]
-    
+
     try:
         await context.bot.send_message(
             chat_id=ADMIN_USER_ID,
@@ -793,14 +793,14 @@ async def broadcast_back_in_stock(context: ContextTypes.DEFAULT_TYPE, product_na
     Broadcast thông báo có hàng trở lại
     """
 
-    
+
     # Chỉ broadcast nếu trước đó đã thông báo hết hàng
     if product_id not in notified_out_of_stock:
         return
-    
+
     # Xóa khỏi danh sách đã thông báo (để có thể thông báo lại lần sau)
     notified_out_of_stock.discard(product_id)
-    
+
     # Tạo message
     message = (
         f"{E_SUCCESS} <b>ĐÃ CÓ HÀNG TRỞ LẠI!</b>\n\n"
@@ -809,18 +809,18 @@ async def broadcast_back_in_stock(context: ContextTypes.DEFAULT_TYPE, product_na
         f"<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> <b>Đặt hàng ngay:</b> /start\n"
         f"{E_LOADING} <b>Nhanh tay kẻo hết!</b>"
     )
-    
+
     success_count = 0
     fail_count = 0
     blocked_ids = []
-    
+
     for user_id_str in list(user_data_db.keys()):
         try:
             user_id = int(user_id_str)
             profile = user_data_db.get(user_id_str, {})
             if user_id in banned_users or (isinstance(profile, dict) and profile.get("broadcast_disabled")):
                 continue
-            
+
             result = await broadcast_send_message(
                 context.bot, user_id, message, parse_mode=ParseMode.HTML
             )
@@ -834,9 +834,9 @@ async def broadcast_back_in_stock(context: ContextTypes.DEFAULT_TYPE, product_na
 
         except (ValueError, TypeError, KeyError, IndexError):
             fail_count += 1
-    
+
     if blocked_ids:
         await _cleanup_blocked_users(blocked_ids)
-    
+
     logger.info(f"<tg-emoji emoji-id=\"6129860303619363484\">📢</tg-emoji> Broadcast có hàng '{product_name}': {success_count} thành công, {fail_count} thất bại")
 

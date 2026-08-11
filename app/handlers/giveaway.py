@@ -2,7 +2,7 @@
 async def create_ga_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_USER_ID: return
     """Bắt đầu tạo Giveaway"""
-    
+
     await update.message.reply_text(
         f"{E_SUCCESS} <b>TẠO SỰ KIỆN GIVEAWAY MỚI</b>\n\n"
         "<b>Bước 1/5:</b> Nhập <b>Mô tả sự kiện (Tiêu đề)</b>\n"
@@ -52,12 +52,12 @@ async def receive_ga_prize(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def receive_ga_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await safe_answer(query)
-    
+
     mode = query.data.replace("ga_mode_", "")
     context.user_data['ga_mode'] = mode
-    
+
     mode_text = "<tg-emoji emoji-id=\"5226711870492126219\">🎲</tg-emoji> Random (Nút bấm)" if mode == "button" else "<tg-emoji emoji-id=\"5240228673738527951\">🔮</tg-emoji> Dự đoán (Comment)"
-    
+
     await query.edit_message_text(
         f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã chọn chế độ: <b>{mode_text}</b>\n\n"
         f"<b>Bước 4/6: Thời gian kết thúc?</b>\n"
@@ -69,14 +69,14 @@ async def receive_ga_mode(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def receive_ga_time(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     seconds = parse_ga_time(text)
-    
+
     if seconds is None:
         await update.message.reply_text("❌ Định dạng thời gian không hợp lệ. Thử lại (VD: 30, 60, 1h).")
         return GA_TIME
-        
+
     context.user_data['ga_seconds'] = seconds
     context.user_data['ga_duration_text'] = text
-    
+
     await update.message.reply_text(
         "<tg-emoji emoji-id=\"6231107453178611892\">🖼️</tg-emoji> <b>Bước 5/6:</b> Gửi <b>Ảnh/Video banner</b> (hoặc gõ 'skip' để bỏ qua)\n\n"
         "<i>Sẽ hiển thị cùng bài post Giveaway</i>",
@@ -94,7 +94,7 @@ async def receive_ga_banner(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         context.user_data['ga_banner_id'] = None
         context.user_data['ga_banner_type'] = None
-        
+
     await update.message.reply_text(
         "<tg-emoji emoji-id=\"6129860303619363484\">📢</tg-emoji> <b>Bước 6/6:</b> Nhập <b>ID Kênh/Nhóm</b> để đăng (hoặc gõ 'me' để đăng tại đây)\n\n"
         "<i>VD: -100123456789 hoặc @channelname</i>\n"
@@ -105,7 +105,7 @@ async def receive_ga_banner(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def receive_ga_channel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
-    
+
     if text.lower() == 'me':
         chat_id = update.effective_chat.id
     else:
@@ -125,7 +125,7 @@ async def receive_ga_channel(update: Update, context: ContextTypes.DEFAULT_TYPE)
         mode = ud.get('ga_mode', 'button')
         end_time_ts = time.time() + ud['ga_seconds'] if ud['ga_seconds'] > 0 else 0
         end_str = datetime.fromtimestamp(end_time_ts).strftime('%H:%M %d/%m') if end_time_ts > 0 else "Khi Admin kết thúc"
-        
+
         # Build Message
         msg_text = (
             f"{E_SUCCESS} <b>SỰ KIỆN GIVEAWAY: {ud['ga_title'].upper()}</b> {E_SUCCESS}\n\n"
@@ -133,7 +133,7 @@ async def receive_ga_channel(update: Update, context: ContextTypes.DEFAULT_TYPE)
             f"{E_LOADING} <b>Kết thúc:</b> {end_str}\n"
             f"{E_USER} <b>Người tham gia:</b> 0\n\n"
         )
-        
+
         markup = None
         if mode == 'button':
             msg_text += "<tg-emoji emoji-id=\"6186252635805323641\">👇</tg-emoji> <i>Bấm nút bên dưới để thử vận may!</i>"
@@ -146,7 +146,7 @@ async def receive_ga_channel(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 "• Ai chính xác và nhanh nhất sẽ thắng!"
             )
             markup = None # No button for comment mode
-        
+
         sent_msg = None
         if ud.get('ga_banner_id'):
             if ud['ga_banner_type'] == 'photo':
@@ -155,11 +155,11 @@ async def receive_ga_channel(update: Update, context: ContextTypes.DEFAULT_TYPE)
                 sent_msg = await context.bot.send_video(chat_id, ud['ga_banner_id'], caption=msg_text, parse_mode='HTML', reply_markup=markup)
         else:
             sent_msg = await context.bot.send_message(chat_id, msg_text, parse_mode='HTML', reply_markup=markup)
-            
+
         # Save to DB
-        _ga_id = str(sent_msg.message_id) 
+        _ga_id = str(sent_msg.message_id)
         ga_key = f"{chat_id}_{sent_msg.message_id}"
-        
+
         active_giveaways[ga_key] = {
             'title': ud['ga_title'],
             'prize_name': ud['ga_prize_name'],
@@ -174,9 +174,9 @@ async def receive_ga_channel(update: Update, context: ContextTypes.DEFAULT_TYPE)
             'comments': [] # NEW: Store comments for prediction
         }
         await save_data()
-        
+
         await update.message.reply_text(f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã đăng Giveaway ({mode}) thành công!\n<tg-emoji emoji-id=\"5231489647946768652\">🔗</tg-emoji> ID: {ga_key}")
-        
+
     except Exception as e:
         logger.error(f"Lỗi khi đăng bài GA: {e}")
         await update.message.reply_text("❌ Lỗi khi đăng bài, vui lòng kiểm tra bot logs.")
@@ -189,7 +189,7 @@ async def list_ga_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not active_giveaways:
         await update.message.reply_text("<tg-emoji emoji-id=\"5854908544712707500\">📭</tg-emoji> Không có Giveaway nào đang chạy.")
         return
-        
+
     msg = "<b><tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> DANH SÁCH GIVEAWAY</b>\n\n"
     for ga_id, ga in active_giveaways.items():
         end_status = "Đang chạy" if ga.get('status') == 'active' else "Đã kết thúc"
@@ -206,24 +206,24 @@ async def list_ga_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def endga_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_USER_ID: return
     """Kết thúc GA thủ công"""
-    
+
     args = context.args
     ga_key = None
-    
+
     # CASE 1: Reply to message (in Channel/Group or forwarded)
     if update.message.reply_to_message:
         # Construct key from current chat + replied message
         # Note: If admin replies in the channel, effective_chat is the channel.
         ga_key = f"{update.effective_chat.id}_{update.message.reply_to_message.message_id}"
-    
+
     # CASE 2: Argument provided
     elif args:
         ga_key = args[0].strip()
-        
+
     if not ga_key:
         await update.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Cách dùng:\n1. Reply vào tin nhắn Giveaway và gõ /endga\n2. Hoặc gõ /endga <GA_ID_CODE>")
         return
-    
+
     # Check exact match first
     # If not found, try to assume user passed just message_id and try to find matching key
     if ga_key not in active_giveaways:
@@ -234,37 +234,37 @@ async def endga_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                  ga_key = key
                  found = True
                  break
-         
+
          if not found:
             await update.message.reply_text("❌ Không tìm thấy Giveaway này (hoặc đã kết thúc).")
             return
-            
+
     ga = active_giveaways[ga_key]
     if ga['status'] != 'active':
         await update.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Giveaway này đã kết thúc rồi.")
         return
-        
+
     # NEW: Prediction Logic Check
     winning_result = None
     if ga.get('mode') == 'comment':
         # Result is required (e.g. /endga <ID> <RESULT>) or just reply with result
         # If replied, maybe the text of command contains result?
         # Let's simplify: /endga <ID> <RESULT> OR reply + /endga <RESULT>
-        
+
         # Parse result from args
         # If accessed via reply: args[0] might be result
         # If accessed via arg: args[0] is ID, args[1] is result
-        
+
         user_input_result = None
         if update.message.reply_to_message:
              if args: user_input_result = " ".join(args)
         else:
              if len(args) >= 2: user_input_result = " ".join(args[1:])
-             
+
         if not user_input_result:
             await update.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> GA này là Dự Đoán. Cần nhập kết quả!\nVD: <code>/endga 2-1</code> (Reply) hoặc <code>/endga {ga_key} 2-1</code>", parse_mode='HTML')
             return
-            
+
         winning_result = user_input_result.strip()
 
     await update.message.reply_text(f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Đang chốt thưởng cho GA: {ga['title']}...")
@@ -274,7 +274,7 @@ async def draw_ga_winners(context, ga_id, winning_result=None):
     """Chọn người thắng GA (Random hoặc Prediction)"""
     if ga_id not in active_giveaways: return
     ga = active_giveaways[ga_id]
-    
+
     chat_id = ga.get('channel_id', ga.get('chat_id'))
     message_id = ga.get('message_id')
     qty = int(ga.get('prize_qty', ga.get('qty', 1)) or 1)
@@ -283,36 +283,36 @@ async def draw_ga_winners(context, ga_id, winning_result=None):
     if chat_id is None or message_id is None:
         logger.error(f"Giveaway data invalid for {ga_id}: missing chat_id/message_id")
         return
-    
+
     winners_text = ""
     _winners = []
-    
+
     if mode == 'comment' and winning_result:
         # --- PREDICTION LOGIC ---
         comments = ga.get('comments', [])
         valid_entries = []
         seen_users = set()
-        
+
         target = winning_result.lower()
-        
+
         # Filter entries
         for c in comments:
             if c['user_id'] in seen_users: continue # One entry per user? Or allow multiple? Let's take first valid per user?
             # Actually, normally allow spam but only earliest valid counts.
-            # Let's simple: Filter correct first, then distinct users? 
+            # Let's simple: Filter correct first, then distinct users?
             # Better: if user spams 100 times, and 101st is correct, does it accept?
             # Standard prediction: One guess per user? Or free spam?
             # With "earliest wins", usually implies first correct guess.
-            
+
             if c['edited']: continue # Disqualify edited
-            
+
             if c['text'].lower() == target:
                 valid_entries.append(c)
                 seen_users.add(c['user_id'])
-                
+
         # Sort by time (Earliest first)
         valid_entries.sort(key=lambda x: x['timestamp'])
-        
+
         # Select Winners (Distinct users)
         final_winners = []
         final_users = set()
@@ -321,7 +321,7 @@ async def draw_ga_winners(context, ga_id, winning_result=None):
                 final_winners.append(entry)
                 final_users.add(entry['user_id'])
                 if len(final_winners) >= qty: break
-        
+
         if not final_winners:
             winners_text = f"<tg-emoji emoji-id=\"5386856460632201117\">😢</tg-emoji> Không có ai đoán đúng kết quả: <b>{winning_result}</b>"
         else:
@@ -332,7 +332,7 @@ async def draw_ga_winners(context, ga_id, winning_result=None):
                 f"{winners_list_str}\n\n"
                 f"{E_TAG} Phần thưởng: {prize}"
             )
-            
+
     else:
         # --- RANDOM LOGIC ---
         participants = ga.get('participants', [])
@@ -345,18 +345,18 @@ async def draw_ga_winners(context, ga_id, winning_result=None):
                 continue
         participants = list(dict.fromkeys(normalized_participants))
         ga['participants'] = participants
-        
+
         if not participants:
             winners_text = "<tg-emoji emoji-id=\"5386856460632201117\">😢</tg-emoji> Không có người tham gia, GA bị hủy."
         else:
             # Pick unique winners
             unique_participants = participants
-            
+
             if len(unique_participants) <= qty:
                 chosen = unique_participants
             else:
                 chosen = random.sample(unique_participants, qty)
-            
+
             winners_list_str = []
             for uid in chosen:
                 # Try fetch name
@@ -368,7 +368,7 @@ async def draw_ga_winners(context, ga_id, winning_result=None):
                 except (ValueError, TypeError, KeyError, IndexError) as e:
                     logger.debug(f"Cannot resolve giveaway winner name for user {uid}: {e}")
                     winners_list_str.append(f"<tg-emoji emoji-id=\"5303290914041505430\">🔥</tg-emoji> User ID: {uid}")
-                    
+
             winners_text = (
                 f"{E_SUCCESS} <b>KẾT QUẢ GIVEAWAY</b>\n\n"
                 f"Chúc mừng {len(chosen)} người may mắn:\n"
@@ -419,7 +419,7 @@ async def draw_ga_winners(context, ga_id, winning_result=None):
         )
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
         logger.error(f"Error announcing GA: {e}")
-        
+
     # 3. Cleanup
     ga['status'] = 'ended'
     active_giveaways.pop(ga_id, None)

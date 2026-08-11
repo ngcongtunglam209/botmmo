@@ -41,24 +41,24 @@ async def warranty_reminder_job(context: ContextTypes.DEFAULT_TYPE):
     """Send reminders for warranties expiring soon"""
     now = time.time()
     reminder_threshold = WARRANTY_REMINDER_DAYS * 24 * 60 * 60
-    
+
     for order in order_history:
         warranty_expires = order.get('warranty_expires')
         warranty_status = order.get('warranty_status')
-        
+
         if (warranty_expires and warranty_status == 'active' and
             not order.get('warranty_reminder_sent')):
-            
+
             time_until_expiry = warranty_expires - now
-            
+
             if 0 < time_until_expiry <= reminder_threshold:
                 order['warranty_reminder_sent'] = True
-                
+
                 expiry_date = datetime.fromtimestamp(warranty_expires).strftime('%d/%m/%Y')
                 user_id = order['user_id']
                 order_code = order['order_code']
                 prod_name = order.get('product_name', 'Sản phẩm')
-                
+
                 try:
                     await context.bot.send_message(
                         user_id,
@@ -72,7 +72,7 @@ async def warranty_reminder_job(context: ContextTypes.DEFAULT_TYPE):
                     )
                 except (TelegramError, ValueError, KeyError, AttributeError) as e:
                     logger.error(f"Cannot send warranty reminder to {user_id}: {e}")
-    
+
     await save_data()
 
 

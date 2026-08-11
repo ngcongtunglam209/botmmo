@@ -33,7 +33,47 @@ ignore = [
     "B008",   # do not perform function calls in argument defaults
     "B905",   # zip strict
     "SIM108", # ternary instead of if-else
+    "UP042",  # enum.StrEnum is 3.11+; this repo is still developed on 3.10
 ]
+
+# The files listed in app/core/section_manifest.py are exec'd into one shared,
+# accumulating namespace by app/core/runtime_loader.py instead of being imported.
+# Three of the rules below therefore report the mechanism rather than a mistake:
+#
+#   F821  names like logger, Update and products arrive from earlier sections
+#   F401  boot_dependencies.py imports on behalf of the other 57 sections, so
+#         every import there looks unused; deleting them breaks the whole bot
+#   E402  sections run top-level code before their few local imports
+#
+# The rest is style debt in files the codebase is migrating away from (roughly
+# 280 findings, mostly `if x: return` on one line and try/except/pass). New
+# normal modules belong in app/web, app/models or app/services, which stay fully
+# linted; anything dropped into the globbed directories below will not be.
+[tool.ruff.lint.per-file-ignores]
+"app/api/*.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/database/*.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/handlers/*.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/integrations/*.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/jobs/*.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/utils/*.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/legacy_entry.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/core/boot_dependencies.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/core/emoji_runtime.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/core/config_env.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/core/runtime_state.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/core/lifecycle.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/models/api_models.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/admin_orders.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/admin_refund.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/admin_support.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/admin_withdrawals.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/games_withdrawals_db.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/local_stock_guard.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/notifications_async.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/orders_delivery.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/referrals_stats.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/store_menu.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
+"app/services/support_automation.py" = ["F821", "F401", "E402", "E401", "E701", "E702", "I001", "SIM102", "SIM103", "SIM105", "SIM114", "SIM115", "B007", "B025", "B904", "F841", "UP009", "W291", "W293"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

@@ -43,7 +43,7 @@ async def handle_admin_callbacks(update, context, command):
         'api_approve_', 'api_refund_', 'approve_api:', 'reject_api:',
         'complete_manual_', 'refund_manual_',
     )
-    
+
     if command.startswith(admin_only_prefixes) and user_id != ADMIN_USER_ID:
         await safe_answer(query, "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> Bạn không có quyền thực hiện!", show_alert=True)
         return True
