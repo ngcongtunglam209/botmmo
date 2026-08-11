@@ -1,13 +1,14 @@
-# --- BINANCE PAY (qua feed lich su sieuthicode.com) ---
+# --- BINANCE PAY (qua GET /sapi/v1/pay/transactions cua chinh Binance) ---
 # Khach chuyen USDT thang vao Binance ID cua shop. Shop khong tao duoc hoa don
-# rieng cho tung don (Binance Pay ID khong co API invoice), nen doi soat bang
-# cach doc lich su giao dich va khop lai.
+# rieng cho tung don (can tai khoan merchant, ma merchant lai can giay phep kinh
+# doanh), nen doi soat bang cach doc lich su giao dich va khop lai.
 #
 # KHAC BIET QUAN TRONG SO VOI SEPAY / RPAY:
-# Feed nay khong tra ve noi dung chuyen khoan - `description` gan nhu luon
-# rong. Vi vay KHONG the khop don theo ma ICLD nhu duong ngan hang. Thu duy
-# nhat phan biet duoc hai don la SO TIEN. Toan bo thiet ke ben duoi xoay quanh
-# viec bao dam so tien la duy nhat:
+# Endpoint nay khong he co truong memo/description, va o chieu NHAN tien Binance
+# chi tra ve nickname nguoi gui chu khong tra ve UID. Vi vay KHONG the khop don
+# theo ma ICLD nhu duong ngan hang, cung khong khop duoc theo danh tinh nguoi
+# tra. Thu duy nhat phan biet duoc hai don la SO TIEN. Toan bo thiet ke ben duoi
+# xoay quanh viec bao dam so tien la duy nhat:
 #
 #   1. Moi don duoc cap mot so le rieng o chu so thu BINANCE_PAY_AMOUNT_DECIMALS
 #      (mac dinh 4), chon sao cho khong dung so tien cua bat ky don Binance Pay
@@ -17,35 +18,40 @@
 #      _scan_binance_pay_payments() trong app/jobs/payment_monitor.py.
 #   3. Giao dich phai roi trong cua so thoi gian cua don.
 #
-# Token cua feed nam trong URL nen no lot vao log truy cap cua moi proxy tren
-# duong di - coi nhu bi mat yeu. Do do feed chi duoc phep tra loi cau hoi "co
-# giao dich dung so tien nay khong", con SO TIEN CONG CHO KHACH luon lay tu don
-# pending cua ta.
+# API key chi can quyen doc va nen whitelist IP cua VPS. Du vay no van chi duoc
+# phep tra loi cau hoi "co giao dich dung so tien nay khong", con SO TIEN CONG
+# CHO KHACH luon lay tu don pending cua ta.
 
-BINANCE_PAY_TRANSACTION_IN = "IN"
+BINANCE_PAY_HISTORY_PATH = "/sapi/v1/pay/transactions"
+# Tran cua endpoint. Vong quet chay moi BANK_CHECK_INTERVAL_SECONDS nen 100 giao
+# dich gan nhat thua suc phu het cac don con han.
+BINANCE_PAY_HISTORY_LIMIT = 100
+# Chieu tien VAO. PAY_REFUND / PAYOUT cung co the mang so duong (tien hoan ve
+# vi shop) nhung do la tien cua chinh shop chay vong lai, khong phai khach tra -
+# cong no cho mot don dang cho la giao hang khong cong.
+BINANCE_PAY_INCOMING_ORDER_TYPES = frozenset({"PAY", "C2C"})
 
 
-_binance_pay_url_warned = False
+_binance_pay_credentials_warned = False
 
 
 def is_binance_pay_enabled() -> bool:
-    """Binance Pay chi bat khi co ID, va feed la mot URL day du.
+    """Binance Pay chi bat khi co ca Pay ID lan API key/secret de doi soat.
 
-    Feed thieu scheme (vi du dat `/historyapibinancev3/<TOKEN>` thay vi ca
-    domain) lam httpx nem "unknown url type" o MOI vong quet, con khach van bam
-    duoc nut Binance Pay va tra tien vao mot don khong bao gio doi soat duoc.
-    Tha tat cong con hon nhan tien ma khong cong duoc.
+    Thieu key ma van bat cong: khach bam duoc nut Binance Pay va tra tien vao
+    mot don khong bao gio doi soat duoc. Tha tat cong con hon nhan tien ma khong
+    cong duoc, nhung phai keu to len mot lan vi day la loi cau hinh im lang.
     """
-    global _binance_pay_url_warned
-    if not (ENABLE_PAYMENT_BINANCE_PAY and BINANCE_PAY_ID and BINANCE_PAY_HISTORY_URL):
+    global _binance_pay_credentials_warned
+    if not (ENABLE_PAYMENT_BINANCE_PAY and BINANCE_PAY_ID):
         return False
-    if not str(BINANCE_PAY_HISTORY_URL).strip().lower().startswith(("http://", "https://")):
-        if not _binance_pay_url_warned:
-            _binance_pay_url_warned = True
+    if not (BINANCE_API_KEY and BINANCE_API_SECRET):
+        if not _binance_pay_credentials_warned:
+            _binance_pay_credentials_warned = True
             logger.error(
-                "BINANCE_PAY_HISTORY_URL phai la URL day du bat dau bang https:// "
-                "(vi du https://sieuthicode.com/historyapibinancev3/<TOKEN>). "
-                "Gia tri hien tai thieu scheme -> tat Binance Pay."
+                "ENABLE_PAYMENT_BINANCE_PAY dang bat nhung thieu BINANCE_API_KEY / "
+                "BINANCE_API_SECRET -> tat Binance Pay. Tao key chi-doc trong tai "
+                "khoan Binance nhan tien va whitelist IP cua VPS."
             )
         return False
     return True
@@ -148,50 +154,64 @@ def allocate_binance_pay_amount(base_amount):
 
 
 def normalize_binance_pay_transaction(raw) -> dict | None:
-    """Chuan hoa 1 ban ghi cua feed. Tra None neu khong phai tien VAO hop le."""
+    """Chuan hoa 1 ban ghi cua API. Tra None neu khong phai tien VAO hop le.
+
+    Binance khong co truong type IN/OUT: huong tien nam o DAU cua `amount`
+    ("Positive means income; negative means expenditure"). Nhung chi xet dau la
+    chua du - tien hoan (PAY_REFUND) chay ve vi shop cung mang dau duong, nen
+    phai loc them theo `orderType`.
+    """
     if not isinstance(raw, dict):
         return None
-    if str(raw.get("type") or "").strip().upper() != BINANCE_PAY_TRANSACTION_IN:
+    if str(raw.get("orderType") or "").strip().upper() not in BINANCE_PAY_INCOMING_ORDER_TYPES:
         return None
-    currency = str(raw.get("currency") or "").strip().upper()
-    if currency and currency != "USDT":
+    if str(raw.get("currency") or "").strip().upper() != "USDT":
         return None
-    transaction_id = str(raw.get("transactionID") or raw.get("transaction_id") or "").strip()
+    transaction_id = str(raw.get("transactionId") or "").strip()
     if not transaction_id:
         return None
     amount = _binance_pay_decimal(raw.get("amount"))
     if amount is None or amount <= 0:
         return None
 
-    timestamp_ms = 0
     try:
-        timestamp_ms = int(raw.get("timestamp") or 0)
+        timestamp_ms = int(raw.get("transactionTime") or 0)
     except (TypeError, ValueError):
-        timestamp_ms = 0
+        return None
+    # Khong co moc thoi gian thi khong kiem tra duoc cua so cua don; bo qua chu
+    # khong khop bang moi so tien.
     if timestamp_ms <= 0:
-        # Feed luon kem `timestamp`; `transactionDate` chi la du phong va chi co
-        # do chinh xac toi ngay.
-        raw_date = str(raw.get("transactionDate") or "").strip()
-        if raw_date:
-            import datetime
-
-            try:
-                parsed = datetime.datetime.strptime(raw_date, "%Y-%m-%d")
-                timestamp_ms = int(parsed.timestamp() * 1000)
-            except ValueError:
-                timestamp_ms = 0
+        return None
 
     return {
         "transaction_id": transaction_id,
         "amount": amount,
         "amount_text": binance_pay_amount_text(amount),
         "timestamp_ms": timestamp_ms,
-        "description": str(raw.get("description") or "").strip(),
     }
 
 
+def _binance_signed_history_url() -> str:
+    """URL da ky HMAC-SHA256 cho GET /sapi/v1/pay/transactions."""
+    from urllib.parse import urlencode
+
+    # Chu ky tinh tren DUNG chuoi query duoc gui di, nen phai dung lai `query`
+    # chu khong dung params lan nua - httpx co the sap xep/encode khac di.
+    query = urlencode({
+        "limit": BINANCE_PAY_HISTORY_LIMIT,
+        "recvWindow": BINANCE_PAY_RECV_WINDOW_MS,
+        "timestamp": int(time.time() * 1000),
+    })
+    signature = hmac.new(
+        BINANCE_API_SECRET.encode("utf-8"),
+        query.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"{BINANCE_API_BASE_URL}{BINANCE_PAY_HISTORY_PATH}?{query}&signature={signature}"
+
+
 async def fetch_binance_pay_transactions() -> list:
-    """Doc feed lich su. Loi mang / payload la -> [] (caller tu log)."""
+    """Doc lich su Binance Pay. Loi mang / payload la -> raise (caller tu log)."""
     if not is_binance_pay_enabled():
         return []
 
@@ -200,22 +220,41 @@ async def fetch_binance_pay_transactions() -> list:
     client = http_client if http_client and not http_client.is_closed else httpx.AsyncClient(timeout=BINANCE_PAY_TIMEOUT_SECONDS)
     owns_client = client is not http_client
     try:
-        response = await client.get(BINANCE_PAY_HISTORY_URL, timeout=BINANCE_PAY_TIMEOUT_SECONDS)
-        if response.status_code != 200:
-            # Khong log response.text: feed vong lai token trong mot so thong
-            # bao loi.
-            raise RuntimeError(f"HTTP {response.status_code}")
-        payload = response.json()
+        try:
+            response = await client.get(
+                _binance_signed_history_url(),
+                headers={"X-MBX-APIKEY": BINANCE_API_KEY},
+                timeout=BINANCE_PAY_TIMEOUT_SECONDS,
+            )
+        except httpx.HTTPError as exc:
+            # Loi cua httpx kem ca URL, ma URL chua chu ky - khong de no roi vao
+            # log. Ten exception la du de biet mang hong hay Binance chan.
+            raise RuntimeError(f"{type(exc).__name__} khi goi {BINANCE_PAY_HISTORY_PATH}") from None
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
     finally:
         if owns_client:
             await client.aclose()
 
+    if response.status_code != 200:
+        # Binance tra {"code":-1021,"msg":...} (lech dong ho) hoac -2015 (key/IP
+        # sai). Giu lai vi day la thu duy nhat chan doan duoc, va no khong chua
+        # secret.
+        detail = ""
+        if isinstance(payload, dict):
+            detail = f" {payload.get('code')}: {payload.get('msg') or payload.get('message')}"
+        raise RuntimeError(f"HTTP {response.status_code}{detail}"[:200])
+
     if not isinstance(payload, dict):
         raise RuntimeError("payload khong phai JSON object")
-    if str(payload.get("status") or "").strip().lower() != "success":
-        raise RuntimeError(str(payload.get("msg") or "feed tra ve status khac success")[:200])
+    if payload.get("success") is not True or str(payload.get("code") or "").strip() != "000000":
+        raise RuntimeError(
+            f"{payload.get('code')}: {payload.get('message') or payload.get('msg') or 'khong ro'}"[:200]
+        )
 
-    raw_list = payload.get("transactions")
+    raw_list = payload.get("data")
     if not isinstance(raw_list, list):
         return []
 
@@ -256,12 +295,14 @@ async def create_binance_pay_order(order_code: str, amount_vnd: int) -> dict:
     """Quy doi VND -> USDT roi cap so tien duy nhat cho `order_code`.
 
     Khong goi API nao ca: Binance Pay ID khong co endpoint tao hoa don. Don chi
-    ton tai ben phia bot, doi soat sau bang feed lich su.
+    ton tai ben phia bot, doi soat sau bang lich su giao dich.
     """
     from app.integrations.payments_core import convert_vnd_to_usdt, get_live_usdt_vnd_rate
 
     if not is_binance_pay_enabled():
-        raise RuntimeError("Binance Pay chua duoc cau hinh (BINANCE_PAY_ID / BINANCE_PAY_HISTORY_URL)")
+        raise RuntimeError(
+            "Binance Pay chua duoc cau hinh (BINANCE_PAY_ID / BINANCE_API_KEY / BINANCE_API_SECRET)"
+        )
 
     live_rate = await get_live_usdt_vnd_rate()
     base_amount = convert_vnd_to_usdt(amount_vnd, rate=live_rate)

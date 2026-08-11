@@ -11,9 +11,10 @@ def _load():
 def _configure(monkeypatch, binance, *, decimals=4, display_decimals=2):
     monkeypatch.setattr(binance, "ENABLE_PAYMENT_BINANCE_PAY", True, raising=False)
     monkeypatch.setattr(binance, "BINANCE_PAY_ID", "964569042", raising=False)
-    monkeypatch.setattr(
-        binance, "BINANCE_PAY_HISTORY_URL", "https://sieuthicode.example/historyapibinancev3/TOKEN", raising=False
-    )
+    monkeypatch.setattr(binance, "BINANCE_API_KEY", "KEY123", raising=False)
+    monkeypatch.setattr(binance, "BINANCE_API_SECRET", "SECRET456", raising=False)
+    monkeypatch.setattr(binance, "BINANCE_API_BASE_URL", "https://api.binance.com", raising=False)
+    monkeypatch.setattr(binance, "BINANCE_PAY_RECV_WINDOW_MS", 5000, raising=False)
     monkeypatch.setattr(binance, "BINANCE_PAY_AMOUNT_DECIMALS", decimals, raising=False)
     monkeypatch.setattr(binance, "USDT_DISPLAY_DECIMALS", display_decimals, raising=False)
 
@@ -29,25 +30,38 @@ def _pending(amount_text: str, *, amount_vnd: int = 39900, created_ts: float = 1
     }
 
 
-def _feed_row(transaction_id: str, amount: str, timestamp_ms: int, *, tx_type: str = "IN"):
+def _pay_row(transaction_id: str, amount: str, timestamp_ms: int, *, order_type: str = "C2C"):
+    """A row shaped like GET /sapi/v1/pay/transactions returns them."""
     return {
-        "transactionID": transaction_id,
+        "orderType": order_type,
+        "transactionId": transaction_id,
+        "transactionTime": timestamp_ms,
         "amount": amount,
-        "description": "",
-        "transactionDate": "2026-08-08",
-        "timestamp": timestamp_ms,
-        "type": tx_type,
         "currency": "USDT",
+        "walletType": 1,
+        "payerInfo": {"name": "Jack", "type": "USER"},
+        "receiverInfo": {"name": "Shop", "type": "USER", "binanceId": "964569042"},
     }
 
 
-def test_disabled_until_both_pay_id_and_feed_url_are_set(monkeypatch):
+def test_disabled_until_pay_id_and_api_credentials_are_all_set(monkeypatch):
     binance, _ = _load()
     _configure(monkeypatch, binance)
+    monkeypatch.setattr(binance, "_binance_pay_credentials_warned", False, raising=False)
 
     assert binance.is_binance_pay_enabled() is True
 
-    monkeypatch.setattr(binance, "BINANCE_PAY_HISTORY_URL", "", raising=False)
+    # Enabled with no way to reconcile is the dangerous state: the Binance Pay
+    # button stays live and customers pay into orders nothing can ever match.
+    monkeypatch.setattr(binance, "BINANCE_API_SECRET", "", raising=False)
+    assert binance.is_binance_pay_enabled() is False
+
+    monkeypatch.setattr(binance, "BINANCE_API_SECRET", "SECRET456", raising=False)
+    monkeypatch.setattr(binance, "BINANCE_API_KEY", "", raising=False)
+    assert binance.is_binance_pay_enabled() is False
+
+    monkeypatch.setattr(binance, "BINANCE_API_KEY", "KEY123", raising=False)
+    monkeypatch.setattr(binance, "BINANCE_PAY_ID", "", raising=False)
     assert binance.is_binance_pay_enabled() is False
 
 
@@ -114,15 +128,32 @@ def test_feed_amounts_are_truncated_not_rounded(monkeypatch):
     assert binance.binance_pay_amount_text(Decimal("1.54")) == "1.5400"
 
 
-def test_feed_rows_that_are_not_incoming_usdt_are_dropped(monkeypatch):
+def test_rows_that_are_not_incoming_usdt_are_dropped(monkeypatch):
     binance, _ = _load()
     _configure(monkeypatch, binance)
 
-    assert binance.normalize_binance_pay_transaction(_feed_row("P_1", "1.5400", 1_800_000_000_000))["amount_text"] == "1.5400"
-    assert binance.normalize_binance_pay_transaction(_feed_row("P_1", "1.54", 1, tx_type="OUT")) is None
-    assert binance.normalize_binance_pay_transaction({**_feed_row("P_1", "1.54", 1), "currency": "BNB"}) is None
-    assert binance.normalize_binance_pay_transaction(_feed_row("", "1.54", 1)) is None
-    assert binance.normalize_binance_pay_transaction(_feed_row("P_1", "0", 1)) is None
+    assert binance.normalize_binance_pay_transaction(_pay_row("P_1", "1.5400", 1_800_000_000_000))["amount_text"] == "1.5400"
+    assert binance.normalize_binance_pay_transaction(_pay_row("P_1", "1.5400", 1, order_type="PAY"))["amount_text"] == "1.5400"
+    # Binance has no IN/OUT flag: money leaving the account is a negative amount.
+    assert binance.normalize_binance_pay_transaction(_pay_row("P_1", "-1.54", 1)) is None
+    assert binance.normalize_binance_pay_transaction({**_pay_row("P_1", "1.54", 1), "currency": "BNB"}) is None
+    assert binance.normalize_binance_pay_transaction(_pay_row("", "1.54", 1)) is None
+    assert binance.normalize_binance_pay_transaction(_pay_row("P_1", "0", 1)) is None
+    # No timestamp means the order's time window cannot be checked at all.
+    assert binance.normalize_binance_pay_transaction(_pay_row("P_1", "1.54", 0)) is None
+
+
+def test_a_refund_landing_back_in_the_shop_wallet_is_not_a_customer_payment(monkeypatch):
+    binance, _ = _load()
+    _configure(monkeypatch, binance)
+
+    # PAY_REFUND / PAYOUT money returning to the shop also carries a positive
+    # amount. Sign alone is not enough — crediting one of these ships goods
+    # nobody paid for.
+    for order_type in ("PAY_REFUND", "PAYOUT", "CRYPTO_BOX_RF", "C2C_HOLDING_RF", "REMITTANCE"):
+        assert binance.normalize_binance_pay_transaction(
+            _pay_row("P_1", "1.5401", 1_800_000_000_000, order_type=order_type)
+        ) is None
 
 
 async def test_scan_matches_a_pending_order_on_the_exact_amount(monkeypatch):
@@ -136,11 +167,11 @@ async def test_scan_matches_a_pending_order_on_the_exact_amount(monkeypatch):
     async def fake_fetch():
         return [
             binance.normalize_binance_pay_transaction(
-                _feed_row("P_A23MQU1EGW971114", "1.5401", int(created_ts * 1000) + 30_000)
+                _pay_row("P_A23MQU1EGW971114", "1.5401", int(created_ts * 1000) + 30_000)
             ),
             # Someone else's transfer at a different amount, same window.
             binance.normalize_binance_pay_transaction(
-                _feed_row("P_OTHER", "220.0000", int(created_ts * 1000) + 31_000)
+                _pay_row("P_OTHER", "220.0000", int(created_ts * 1000) + 31_000)
             ),
         ]
 
@@ -170,7 +201,7 @@ async def test_scan_ignores_a_transfer_that_is_off_by_one_ten_thousandth(monkeyp
 
     async def fake_fetch():
         return [binance.normalize_binance_pay_transaction(
-            _feed_row("P_1", "1.5402", int(created_ts * 1000) + 30_000)
+            _pay_row("P_1", "1.5402", int(created_ts * 1000) + 30_000)
         )]
 
     monkeypatch.setattr(monitor, "pending_items_snapshot", fake_snapshot)
@@ -198,7 +229,7 @@ async def test_scan_skips_both_orders_when_two_share_an_amount(monkeypatch):
 
     async def fake_fetch():
         return [binance.normalize_binance_pay_transaction(
-            _feed_row("P_1", "1.5401", int(created_ts * 1000) + 30_000)
+            _pay_row("P_1", "1.5401", int(created_ts * 1000) + 30_000)
         )]
 
     monkeypatch.setattr(monitor, "pending_items_snapshot", fake_snapshot)
@@ -226,9 +257,9 @@ async def test_scan_ignores_transfers_outside_the_order_window(monkeypatch):
     async def fake_fetch():
         return [
             # An hour before the order existed - a coincidental old transfer.
-            binance.normalize_binance_pay_transaction(_feed_row("P_OLD", "1.5401", created_ms - 3_600_000)),
+            binance.normalize_binance_pay_transaction(_pay_row("P_OLD", "1.5401", created_ms - 3_600_000)),
             # Long after expiry.
-            binance.normalize_binance_pay_transaction(_feed_row("P_LATE", "1.5401", created_ms + 3_600_000)),
+            binance.normalize_binance_pay_transaction(_pay_row("P_LATE", "1.5401", created_ms + 3_600_000)),
         ]
 
     monkeypatch.setattr(monitor, "pending_items_snapshot", fake_snapshot)
@@ -251,7 +282,7 @@ async def test_scan_does_not_replay_an_already_credited_transfer(monkeypatch):
 
     async def fake_fetch():
         return [binance.normalize_binance_pay_transaction(
-            _feed_row("P_1", "1.5401", int(created_ts * 1000) + 30_000)
+            _pay_row("P_1", "1.5401", int(created_ts * 1000) + 30_000)
         )]
 
     monkeypatch.setattr(monitor, "pending_items_snapshot", fake_snapshot)
@@ -261,11 +292,12 @@ async def test_scan_does_not_replay_an_already_credited_transfer(monkeypatch):
     synthetic_transactions = []
     await monitor._scan_binance_pay_payments(synthetic_transactions)
 
-    # The feed keeps returning the last 40 transactions on every poll.
+    # Every poll re-reads the last 100 transactions, so the same transfer keeps
+    # coming back long after it was credited.
     assert synthetic_transactions == []
 
 
-async def test_feed_failure_reports_unhealthy_without_leaking_the_token(monkeypatch):
+async def test_api_failure_reports_unhealthy(monkeypatch):
     binance, monitor = _load()
     _configure(monkeypatch, binance)
 
@@ -283,7 +315,6 @@ async def test_feed_failure_reports_unhealthy_without_leaking_the_token(monkeypa
 
     assert status["ok"] is False
     assert synthetic_transactions == []
-    assert "TOKEN" not in status["error"]
 
 
 def _pending_topup(amount_text: str, *, amount_vnd: int = 100000, created_ts: float = 1_800_000_000.0):
@@ -323,7 +354,7 @@ async def test_scan_matches_a_pending_wallet_topup(monkeypatch):
 
     async def fake_fetch():
         return [binance.normalize_binance_pay_transaction(
-            _feed_row("P_TOPUP1", "1.5401", int(created_ts * 1000) + 30_000)
+            _pay_row("P_TOPUP1", "1.5401", int(created_ts * 1000) + 30_000)
         )]
 
     monkeypatch.setattr(monitor, "pending_items_snapshot", fake_snapshot)
@@ -353,7 +384,7 @@ async def test_scan_skips_an_order_and_a_topup_that_share_an_amount(monkeypatch)
 
     async def fake_fetch():
         return [binance.normalize_binance_pay_transaction(
-            _feed_row("P_1", "1.5401", int(created_ts * 1000) + 30_000)
+            _pay_row("P_1", "1.5401", int(created_ts * 1000) + 30_000)
         )]
 
     monkeypatch.setattr(monitor, "pending_items_snapshot", fake_snapshot)
@@ -379,7 +410,7 @@ async def test_a_topup_outside_its_own_expiry_window_is_not_matched(monkeypatch)
 
     async def fake_fetch():
         return [binance.normalize_binance_pay_transaction(
-            _feed_row("P_LATE", "1.5401", int(created_ts * 1000) + 86_400_000)
+            _pay_row("P_LATE", "1.5401", int(created_ts * 1000) + 86_400_000)
         )]
 
     monkeypatch.setattr(monitor, "pending_items_snapshot", fake_snapshot)
@@ -393,19 +424,103 @@ async def test_a_topup_outside_its_own_expiry_window_is_not_matched(monkeypatch)
     assert synthetic_transactions == []
 
 
-def test_a_feed_url_without_a_scheme_turns_the_gateway_off(monkeypatch):
+class _FakeResponse:
+    def __init__(self, status_code, payload):
+        self.status_code = status_code
+        self._payload = payload
+
+    def json(self):
+        return self._payload
+
+
+class _FakeClient:
+    """Stands in for the shared httpx client and records what was requested."""
+
+    is_closed = False
+
+    def __init__(self, response):
+        self._response = response
+        self.calls = []
+
+    async def get(self, url, headers=None, timeout=None):
+        self.calls.append({"url": url, "headers": headers or {}})
+        return self._response
+
+
+def _install_fake_client(monkeypatch, binance, response):
+    client = _FakeClient(response)
+    monkeypatch.setattr(binance, "http_client", client, raising=False)
+    return client
+
+
+async def test_the_request_is_signed_and_the_key_travels_in_the_header(monkeypatch):
+    import hashlib
+    import hmac
+    from urllib.parse import parse_qs, urlparse
+
     binance, _ = _load()
     _configure(monkeypatch, binance)
-    monkeypatch.setattr(binance, "_binance_pay_url_warned", False, raising=False)
+    client = _install_fake_client(monkeypatch, binance, _FakeResponse(200, {
+        "code": "000000",
+        "message": "success",
+        "success": True,
+        "data": [_pay_row("M_P_71505104267788288", "1.5401", 1_800_000_030_000)],
+    }))
 
-    # httpx raises "unknown url type" on a bare path, once per scan, while the
-    # Binance Pay button stays live — customers pay into orders that can never
-    # be reconciled.
-    monkeypatch.setattr(binance, "BINANCE_PAY_HISTORY_URL", "/historyapibinancev3/TOKEN", raising=False)
-    assert binance.is_binance_pay_enabled() is False
+    transfers = await binance.fetch_binance_pay_transactions()
 
-    monkeypatch.setattr(binance, "BINANCE_PAY_HISTORY_URL", "sieuthicode.com/historyapibinancev3/TOKEN", raising=False)
-    assert binance.is_binance_pay_enabled() is False
+    assert [t["transaction_id"] for t in transfers] == ["M_P_71505104267788288"]
+    assert [t["amount_text"] for t in transfers] == ["1.5401"]
 
-    monkeypatch.setattr(binance, "BINANCE_PAY_HISTORY_URL", "https://sieuthicode.com/historyapibinancev3/TOKEN", raising=False)
-    assert binance.is_binance_pay_enabled() is True
+    call = client.calls[0]
+    assert call["headers"]["X-MBX-APIKEY"] == "KEY123"
+    # The secret itself must never go over the wire, only an HMAC of the query.
+    assert "SECRET456" not in call["url"]
+
+    parsed = urlparse(call["url"])
+    assert parsed.path == "/sapi/v1/pay/transactions"
+    query, _, signature = parsed.query.rpartition("&signature=")
+    expected = hmac.new(b"SECRET456", query.encode(), hashlib.sha256).hexdigest()
+    # Binance rejects the request outright if the signature does not cover the
+    # exact query string that was sent.
+    assert signature == expected
+    assert parse_qs(query)["recvWindow"] == ["5000"]
+
+
+async def test_a_binance_error_surfaces_its_code_without_the_signature(monkeypatch):
+    binance, _ = _load()
+    _configure(monkeypatch, binance)
+    _install_fake_client(monkeypatch, binance, _FakeResponse(401, {
+        "code": -2015,
+        "msg": "Invalid API-key, IP, or permissions for action.",
+    }))
+
+    try:
+        await binance.fetch_binance_pay_transactions()
+    except RuntimeError as exc:
+        # -2015 means the key or the IP whitelist is wrong; without the code in
+        # the log that is indistinguishable from a clock drift (-1021).
+        assert "-2015" in str(exc)
+        assert "signature=" not in str(exc)
+    else:
+        raise AssertionError("expected a RuntimeError for an HTTP 401")
+
+
+async def test_a_success_false_payload_is_not_read_as_an_empty_history(monkeypatch):
+    binance, _ = _load()
+    _configure(monkeypatch, binance)
+    _install_fake_client(monkeypatch, binance, _FakeResponse(200, {
+        "code": "100002001",
+        "message": "system error",
+        "success": False,
+        "data": [],
+    }))
+
+    # Returning [] here would report the gateway healthy while every payment
+    # silently stopped being reconciled.
+    try:
+        await binance.fetch_binance_pay_transactions()
+    except RuntimeError as exc:
+        assert "100002001" in str(exc)
+    else:
+        raise AssertionError("expected a RuntimeError for success=false")

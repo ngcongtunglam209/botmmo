@@ -284,9 +284,9 @@ async def _scan_rpay_payments(synthetic_transactions: list) -> dict:
 
 
 async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
-    """Binance Pay: doi soat bang feed lich su (khong co callback).
+    """Binance Pay: doi soat bang lich su giao dich (khong co callback).
 
-    Feed khong tra ve noi dung chuyen khoan nen khong khop duoc theo ma ICLD.
+    Binance khong tra ve noi dung chuyen khoan nen khong khop duoc theo ma ICLD.
     Chi con SO TIEN + CUA SO THOI GIAN. Ba rang buoc giu cho no an toan:
 
       1. So tien phai trung tuyet doi. Moi don da duoc cap so le rieng luc tao
@@ -297,7 +297,7 @@ async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
          tay.
       3. Giao dich phai roi trong [tao don - leeway, het han + leeway].
 
-    So tien cong cho khach luon lay tu don pending, khong bao gio tu feed.
+    So tien cong cho khach luon lay tu don pending, khong bao gio tu Binance.
     """
     from app.integrations.binancepay_api import (
         fetch_binance_pay_transactions,
@@ -384,6 +384,78 @@ async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
     return {"enabled": True, "ok": True, "error": "", "count": found}
 
 
+async def _scan_nowpayments_payments(synthetic_transactions: list) -> dict:
+    """NOWPayments: IPN la duong chinh, poll tung payment la luoi do.
+
+    Khac Binance Pay: `order_id` quay ve nguyen ven trong payload nen khop don
+    la tra cuu truc tiep, khong phai doan theo so tien. Nhung SO TIEN VND cong
+    cho khach van lay tu don pending cua ta - payload chi noi "da tra du USDT",
+    khong duoc phep quyet dinh cong bao nhieu dong.
+
+    Cac chot chan tra thieu / re-deposit / trang thai chua xong nam trong
+    nowpayments_normalize_payment(), tuc la ap dung cho ca hai duong.
+    """
+    from app.integrations.nowpayments_api import (
+        is_nowpayments_enabled,
+        nowpayments_ipn_inbox,
+        nowpayments_poll_pending_payments,
+    )
+
+    if not is_nowpayments_enabled():
+        return {"enabled": False, "ok": True, "error": "", "count": 0}
+
+    expected_vnd_by_code: dict = {}
+    for order_code, order_details in await pending_items_snapshot():
+        if order_details.get("provider") == "nowpayments" and order_details.get("status") == "pending_payment":
+            expected_vnd_by_code[str(order_code)] = int(order_details.get("amount", 0) or 0)
+    for topup_code, topup_details in list(pending_user_topups.items()):
+        if isinstance(topup_details, dict) and topup_details.get("provider") == "nowpayments":
+            expected_vnd_by_code[str(topup_code)] = int(topup_details.get("amount", 0) or 0)
+
+    found = 0
+    error = ""
+
+    def _accept(record) -> bool:
+        order_code = record["order_code"]
+        expected_vnd = expected_vnd_by_code.get(order_code, 0)
+        if expected_vnd <= 0:
+            # Don da het han, da huy, hoac da duoc cong o vong truoc. Khong doan
+            # so tien tu payload - de admin doi soat tay.
+            logger.warning(
+                "NOWPayments: payment %s tro toi don %s khong con cho -> bo qua",
+                record["payment_id"],
+                order_code,
+            )
+            return False
+        if db_check_tx_exists(record["transaction_ref"]):
+            return False
+        synthetic_transactions.append({
+            "transactionID": record["transaction_ref"],
+            "description": order_code,
+            "amount": expected_vnd,
+        })
+        return True
+
+    # 1) IPN inbox - rut het (khong co await xen giua doc/xoa nen an toan).
+    if nowpayments_ipn_inbox:
+        drained, nowpayments_ipn_inbox[:] = list(nowpayments_ipn_inbox), []
+        for record in drained:
+            if _accept(record):
+                found += 1
+
+    # 2) Poll du phong - NOWPayments ngung gui IPN sau khi payment het han
+    # nhung tien van vao duoc, nen khong co vong nay la mat don tra muon.
+    try:
+        for record in await nowpayments_poll_pending_payments():
+            if _accept(record):
+                found += 1
+    except Exception as e:
+        logger.warning(f"NOWPayments poll scan failed: {e}")
+        error = str(e)
+
+    return {"enabled": True, "ok": not error, "error": error, "count": found}
+
+
 async def _scan_sepay_payments(synthetic_transactions: list) -> dict:
     """SePay: rut het giao dich webhook da nhan (duong chinh, gan tuc thi),
     roi doi soat lai bang poll API (du phong khi webhook bi mat/chua bat).
@@ -451,6 +523,9 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     binance_pay_status = await _scan_binance_pay_payments(synthetic_transactions)
     if not binance_pay_status["ok"]:
         logger.warning(f"❌ LỖI FEED BINANCE PAY: {binance_pay_status['error'] or 'Unknown Error'}")
+    nowpayments_status = await _scan_nowpayments_payments(synthetic_transactions)
+    if not nowpayments_status["ok"]:
+        logger.warning(f"❌ LỖI API NOWPAYMENTS: {nowpayments_status['error'] or 'Unknown Error'}")
     sepay_status = await _scan_sepay_payments(synthetic_transactions)
 
     try:
