@@ -807,6 +807,9 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             from app.integrations.binancepay_api import is_binance_pay_enabled
             if is_binance_pay_enabled():
                 btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_1", style="success")])
+            from app.integrations.nowpayments_api import is_nowpayments_enabled
+            if is_nowpayments_enabled():
+                btns.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_1", style="success")])
             from app.integrations.payments_core import is_bank_transfer_enabled
             if is_bank_transfer_enabled():
                 btns.append([_btn(labels["bank"], icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_1", style="success")])
@@ -915,6 +918,9 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         from app.integrations.binancepay_api import is_binance_pay_enabled
         if is_binance_pay_enabled():
             btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_{qty}", style="success")])
+        from app.integrations.nowpayments_api import is_nowpayments_enabled
+        if is_nowpayments_enabled():
+            btns.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_{qty}", style="success")])
         from app.integrations.payments_core import is_bank_transfer_enabled
         if is_bank_transfer_enabled():
             btns.append([_btn(labels["bank"], icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}", style="success")])
@@ -1466,6 +1472,118 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         except Exception:
             pass
         await generate_product_payment_rpay(update, context, prod_id, qty, network=network)
+        return True
+
+    elif data.startswith("pay_prod_nowpay_"):
+        clean_data = data.replace("pay_prod_nowpay_", "")
+        if "_" in clean_data:
+            prod_id, qty_str = clean_data.rsplit("_", 1)
+            try:
+                qty = int(qty_str)
+            except ValueError:
+                prod_id = clean_data; qty = 1
+        else:
+            prod_id = clean_data; qty = 1
+
+        p = products.get(prod_id)
+        if not p:
+            await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
+            return True
+
+        # San toi thieu moi mang chenh nhau rat lon (TRC20 quanh 11 USDT trong
+        # khi BEP20 duoi 0.1), nen phai loc theo gia tri don TRUOC khi hien nut:
+        # bam vao mot mang duoi san la chac chan ra hoa don hong.
+        from app.handlers.payment_generation import _get_product_checkout_total_amount
+        from app.integrations.nowpayments_api import (
+            nowpayments_currencies_for_amount,
+            nowpayments_pay_currency_label,
+        )
+        from app.integrations.payments_core import convert_vnd_to_usdt, get_live_usdt_vnd_rate
+
+        try:
+            live_rate = await get_live_usdt_vnd_rate()
+            total_amount = _get_product_checkout_total_amount(query.from_user.id, context, prod_id, p, qty)
+            currencies = await nowpayments_currencies_for_amount(
+                convert_vnd_to_usdt(total_amount, rate=live_rate)
+            )
+        except Exception as exc:
+            logger.error(f"NOWPayments: khong loc duoc mang cho {prod_id}: {exc}")
+            await safe_answer(query, "❌ Không lấy được tỉ giá, thử lại sau!", show_alert=True)
+            return True
+
+        if not currencies:
+            await safe_answer(
+                query,
+                lt(
+                    query.from_user.id,
+                    "Đơn này nhỏ hơn mức tối thiểu của mọi mạng USDT. Vui lòng chọn phương thức khác.",
+                    "This order is below the minimum for every USDT network. Please pick another method.",
+                    "此订单低于所有 USDT 网络的最低限额，请选择其他方式。",
+                ),
+                show_alert=True,
+            )
+            return True
+
+        from app.handlers.payment_generation import generate_product_payment_nowpayments
+        if len(currencies) > 1:
+            rows = [[
+                _btn(nowpayments_pay_currency_label(currency), icon_id="5281029063459234079",
+                     callback_data=f"nowpaynet_{currency}_{prod_id}_{qty}", style="success")
+            ] for currency in currencies]
+            rows.append([_btn(
+                lt(query.from_user.id, "⬅️ Quay lại", "⬅️ Back", "⬅️ 返回"),
+                callback_data=f"sel_qty_{prod_id}",
+            )])
+            await safe_answer(query)
+            await query.edit_message_text(
+                lt(
+                    query.from_user.id,
+                    "<b>Chọn mạng lưới USDT</b>\n\nChuyển sai mạng có thể <b>mất tiền</b>. "
+                    "Hãy chọn đúng mạng mà ví của bạn hỗ trợ.",
+                    "<b>Choose the USDT network</b>\n\nSending on the wrong network can <b>lose the funds</b>. "
+                    "Pick the network your wallet actually supports.",
+                    "<b>请选择 USDT 网络</b>\n\n转错网络可能<b>造成资金丢失</b>。请选择您钱包支持的网络。",
+                ),
+                parse_mode='HTML',
+                reply_markup=InlineKeyboardMarkup(rows),
+            )
+            return True
+
+        try:
+            await query.delete_message()
+        except Exception:
+            pass
+        await generate_product_payment_nowpayments(update, context, prod_id, qty, pay_currency=currencies[0])
+        return True
+
+    elif data.startswith("nowpaynet_"):
+        # nowpaynet_<currency>_<prod_id>_<qty>. Ma dong tien khong co dau gach
+        # duoi (usdtbsc/usdtmatic/usdttrc20) nen tach tu trai an toan.
+        clean_data = data.replace("nowpaynet_", "")
+        currency, _, rest = clean_data.partition("_")
+        if "_" in rest:
+            prod_id, qty_str = rest.rsplit("_", 1)
+            try:
+                qty = int(qty_str)
+            except ValueError:
+                prod_id = rest; qty = 1
+        else:
+            prod_id = rest; qty = 1
+
+        from app.integrations.nowpayments_api import NOWPAYMENTS_CURRENCIES
+        if currency not in NOWPAYMENTS_CURRENCIES:
+            await safe_answer(query, "❌ Mạng lưới không khả dụng!", show_alert=True)
+            return True
+        if not products.get(prod_id):
+            await safe_answer(query, "❌ Sản phẩm không tồn tại!", show_alert=True)
+            return True
+
+        from app.handlers.payment_generation import generate_product_payment_nowpayments
+        try:
+            await query.delete_message()
+        except Exception:
+            pass
+        await generate_product_payment_nowpayments(update, context, prod_id, qty, pay_currency=currency)
         return True
 
     elif data.startswith("pay_prod_binance_"):

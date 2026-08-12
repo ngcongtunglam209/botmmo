@@ -435,6 +435,187 @@ async def generate_product_payment_rpay(
             await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn USDT. Vui lòng thử lại sau.", "Could not send the USDT invoice. Please try again later.", "无法发送 USDT 账单，请稍后重试。"))
 
 
+async def generate_product_payment_nowpayments(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    prod_id: str,
+    quantity: int = 1,
+    balance_used: int = 0,
+    extra_pending_data: dict | None = None,
+    pay_currency: str = "",
+):
+    """Hoa don USDT qua NOWPayments cho san pham trong cua hang.
+
+    Khac Binance Pay: moi don co `order_id` rieng nen khong can cap so le de
+    phan biet - khach tra dung so tien hien ra la duoc, khong phai canh tung
+    chu so cuoi.
+    """
+    from app.integrations.nowpayments_api import (
+        build_nowpayments_checkout_keyboard,
+        create_nowpayments_payment,
+        is_nowpayments_enabled,
+        nowpayments_pay_currency_label,
+        nowpayments_qr_photo,
+    )
+
+    user = update.effective_user
+    if not is_nowpayments_enabled():
+        await _reply_payment_generation_error(
+            update,
+            context,
+            lt(user.id, "Phương thức thanh toán này chưa được cấu hình.", "This payment method is not configured yet.", "此付款方式尚未配置。"),
+        )
+        return
+
+    pending_code, _pending_detail = await get_user_pending_order(user.id)
+    if pending_code:
+        await context.bot.send_message(
+            user.id,
+            lt(user.id, '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> Bạn đang có đơn <b>{code}</b> chưa hoàn thành!\nVui lòng hoàn tất hoặc hủy đơn cũ trước khi tạo đơn mới.', '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> You have an unfinished order <b>{code}</b>!\nComplete or cancel it before creating a new order.', '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> 您有一个未完成订单 <b>{code}</b>！\n请先完成或取消该订单。', code=pending_code),
+            parse_mode='HTML',
+        )
+        if balance_used > 0:
+            current_info = db_get_user(user.id)
+            current_bal = current_info.get('balance', 0) if current_info else 0
+            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: Already has pending order {pending_code}")
+        return
+
+    p = products.get(prod_id)
+    if not p:
+        _refund_balance_used_if_needed(user.id, balance_used, f"Refund: Product missing {prod_id}")
+        await _reply_payment_generation_error(
+            update,
+            context,
+            lt(user.id, "Sản phẩm không tồn tại hoặc đã bị xóa.", "Product does not exist or was removed.", "商品不存在或已被删除。"),
+        )
+        return
+
+    store_coupon_code, _store_coupon_discount = get_active_store_coupon_context(context, prod_id, quantity)
+    total_amount = _get_product_checkout_total_amount(user.id, context, prod_id, p, quantity)
+    amount_due = total_amount - balance_used if balance_used > 0 else total_amount
+
+    try:
+        order_code = await generate_unique_order_code(prefix="ICLD", length=6)
+    except (TelegramError, ValueError, KeyError, AttributeError) as exc:
+        logger.error(f"Cannot generate unique NOWPayments order code: {exc}")
+        _refund_balance_used_if_needed(user.id, balance_used, f"Refund: NOWPayments order code failed {prod_id}")
+        await _reply_payment_generation_error(
+            update,
+            context,
+            lt(user.id, "Lỗi hệ thống. Vui lòng thử lại sau 30 giây.", "System error. Try again in 30 seconds.", "系统错误，请在 30 秒后重试。"),
+        )
+        return
+
+    try:
+        payment = await create_nowpayments_payment(
+            order_code=order_code,
+            amount_vnd=amount_due,
+            pay_currency=pay_currency,
+        )
+    except Exception as exc:
+        await release_reserved_order_code(order_code)
+        logger.error(f"Error creating NOWPayments payment for {order_code}: {exc}")
+        if balance_used > 0:
+            current_info = db_get_user(user.id)
+            current_bal = current_info.get('balance', 0) if current_info else 0
+            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: NOWPayments payment failed {prod_id}")
+            await context.bot.send_message(user.id, lt(user.id, "Không thể tạo hóa đơn USDT. Đã hoàn lại {amount:,}đ vào ví.\nVui lòng thử lại sau.", "Could not create the USDT invoice. {amount:,} VND was refunded to your wallet.\nPlease try again later.", "无法创建 USDT 账单。{amount:,} VND 已退回钱包。\n请稍后重试。", amount=balance_used))
+        else:
+            await context.bot.send_message(user.id, lt(user.id, "Không thể tạo hóa đơn USDT. Vui lòng thử lại sau.", "Could not create the USDT invoice. Please try again later.", "无法创建 USDT 账单，请稍后重试。"))
+        return
+
+    network_name = nowpayments_pay_currency_label(payment["pay_currency"])
+    amount_text = format(payment["pay_amount"], "f")
+    pay_address = payment["pay_address"]
+    extra_id = payment.get("payin_extra_id") or ""
+    # Vai mang bat buoc memo/tag; thieu no la tien vao vi tong cua san va khong
+    # ai lan ra chu don nao. Neu co thi phai hien that noi bat.
+    extra_line = ""
+    if extra_id:
+        extra_line = lt(
+            user.id,
+            "\n• <b>MEMO/TAG (bắt buộc):</b> <code>{extra}</code>",
+            "\n• <b>MEMO/TAG (required):</b> <code>{extra}</code>",
+            "\n• <b>MEMO/TAG（必填）：</b> <code>{extra}</code>",
+            extra=html.escape(str(extra_id)),
+        )
+
+    balance_line = lt(user.id, '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Tổng giá:</b> {total:,} VNĐ\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Đã trừ ví:</b> -{used:,} VNĐ\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Total:</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>Wallet used:</b> -{used:,} VND\n', '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>总价：</b> {total:,} VND\n<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> <b>钱包抵扣：</b> -{used:,} VND\n', total=total_amount, used=balance_used) if balance_used > 0 else ""
+    caption = lt(
+        user.id,
+        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>THANH TOÁN USDT</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Sản phẩm:</b> <i>{product}</i> x{quantity}\n{balance}• <b>Cần thanh toán:</b> {due:,} VNĐ\n\n• <b>Số tiền USDT:</b> <code>{crypto}</code>\n• <b>Địa chỉ ví:</b> <code>{wallet}</code>{extra}\n• <b>Mạng lưới:</b> {network}\n• <b>Tỉ giá:</b> 1 USDT = {rate:,} VNĐ\n• <b>Mã đơn:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>LƯU Ý QUAN TRỌNG:</b>\n- Chuyển <b>đúng số tiền ở trên</b> để hệ thống tự nhận diện.\n- Chỉ dùng mạng <b>{network}</b>. Chuyển sai mạng có thể mất tiền.\n- Hết hạn sau {minutes} phút.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Hết hạn lúc:</b> {expires}',
+        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>USDT PAYMENT</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Product:</b> <i>{product}</i> x{quantity}\n{balance}• <b>Amount due:</b> {due:,} VND\n\n• <b>USDT amount:</b> <code>{crypto}</code>\n• <b>Wallet address:</b> <code>{wallet}</code>{extra}\n• <b>Network:</b> {network}\n• <b>Rate:</b> 1 USDT = {rate:,} VND\n• <b>Order code:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>IMPORTANT:</b>\n- Send the <b>exact amount above</b> for automatic detection.\n- Use only the <b>{network}</b> network. Funds sent through another network may be lost.\n- Expires in {minutes} minutes.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Expires at:</b> {expires}',
+        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>USDT 支付</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>商品：</b> <i>{product}</i> x{quantity}\n{balance}• <b>应付：</b> {due:,} VND\n\n• <b>USDT 金额：</b> <code>{crypto}</code>\n• <b>钱包地址：</b> <code>{wallet}</code>{extra}\n• <b>网络：</b> {network}\n• <b>汇率：</b> 1 USDT = {rate:,} VND\n• <b>订单号：</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>重要提示：</b>\n- 请转入<b>上方准确金额</b>以便系统自动识别。\n- 仅使用 <b>{network}</b> 网络，转错网络可能造成资金丢失。\n- {minutes} 分钟后过期。{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>到期时间：</b> {expires}',
+        product=html.escape(str(p['name'])), quantity=quantity, balance=balance_line, due=amount_due,
+        crypto=html.escape(amount_text), wallet=html.escape(pay_address), extra=extra_line,
+        network=html.escape(network_name), rate=payment.get("rate", USDT_RATE_VND_PER_USDT), code=order_code,
+        minutes=ORDER_EXPIRATION_SECONDS // 60,
+        refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "",
+        expires=(datetime.now() + timedelta(seconds=ORDER_EXPIRATION_SECONDS)).strftime('%H:%M:%S'),
+    )
+    caption += _build_payment_legal_notice(user.id)
+
+    try:
+        created_ts = time.time()
+        sent_message = await _send_product_qr_photo_or_prompt(
+            update,
+            context,
+            order_code,
+            prod_id,
+            balance_used,
+            chat_id=user.id,
+            photo=nowpayments_qr_photo(pay_address),
+            caption=caption,
+            parse_mode='HTML',
+            reply_markup=build_nowpayments_checkout_keyboard(order_code, pay_address, amount_text, user_id=user.id),
+        )
+        if sent_message is None:
+            return
+        pending_payload = {
+            "user_id": user.id,
+            "type": "store_product",
+            "product_id": prod_id,
+            "product_name": p['name'],
+            "amount": amount_due,
+            "original_price": total_amount,
+            "total_amount": total_amount,
+            "balance_used": balance_used,
+            "quantity": quantity,
+            "time": created_ts,
+            "timestamp": created_ts,
+            "status": "pending_payment",
+            "full_name": user.full_name,
+            "username": user.username,
+            "message_id": sent_message.message_id,
+            "coupon_code": store_coupon_code,
+            "payment_method": "usdt_nowpayments",
+            "provider": "nowpayments",
+            # payment_id la thu duy nhat de duong poll du phong hoi lai trang
+            # thai khi IPN khong toi.
+            "nowpayments_payment_id": str(payment.get("payment_id") or ""),
+            "nowpayments_amount": amount_text,
+            "nowpayments_currency": payment["pay_currency"],
+            "nowpayments_address": pay_address,
+            "nowpayments_extra_id": str(extra_id),
+            "nowpayments_rate": str(payment.get("rate", USDT_RATE_VND_PER_USDT)),
+        }
+        if isinstance(extra_pending_data, dict):
+            pending_payload.update(extra_pending_data)
+        await pending_set(order_code, pending_payload)
+        await save_data(force=True, tables=[PENDING_ORDERS_FILE])
+        clear_store_coupon_context(context)
+    except (TelegramError, ValueError, KeyError, AttributeError) as exc:
+        await release_reserved_order_code(order_code)
+        logger.error(f"Error sending NOWPayments product invoice: {exc}")
+        if balance_used > 0:
+            current_info = db_get_user(user.id)
+            current_bal = current_info.get('balance', 0) if current_info else 0
+            db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: NOWPayments invoice send failed {prod_id}")
+            await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn USDT. Đã hoàn lại {amount:,}đ vào ví.\nVui lòng thử lại sau.", "Could not send the USDT invoice. {amount:,} VND was refunded to your wallet.\nPlease try again later.", "无法发送 USDT 账单。{amount:,} VND 已退回钱包。\n请稍后重试。", amount=balance_used))
+        else:
+            await context.bot.send_message(user.id, lt(user.id, "Không thể gửi hóa đơn USDT. Vui lòng thử lại sau.", "Could not send the USDT invoice. Please try again later.", "无法发送 USDT 账单，请稍后重试。"))
+
+
 async def generate_product_payment_binance_pay(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE,

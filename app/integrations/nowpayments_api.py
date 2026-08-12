@@ -409,6 +409,15 @@ def iter_pending_nowpayments_records():
         yield str(topup_code), details
 
 
+def nowpayments_qr_photo(pay_address: str):
+    """QR chua dia chi nhan tien de khach quet bang vi."""
+    if not pay_address:
+        return None
+    from urllib.parse import quote as _quote
+
+    return f"https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={_quote(str(pay_address), safe='')}"
+
+
 def build_nowpayments_checkout_keyboard(order_code: str, pay_address: str, amount_text: str, user_id=None):
     rows = []
     if pay_address:
