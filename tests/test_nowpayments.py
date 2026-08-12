@@ -318,3 +318,62 @@ def test_the_real_ipn_example_from_the_docs_round_trips(monkeypatch):
 
     assert np.nowpayments_verify_signature(body, _sign(np, body)) is True
     assert np.nowpayments_normalize_payment(body)["transaction_ref"] == "NOWPAY123456789"
+
+
+def _install_min_amounts(monkeypatch, np, table, calls=None):
+    """Fake the /min-amount endpoint; `table` maps currency -> min USDT string."""
+    monkeypatch.setattr(np, "NOWPAYMENTS_CURRENCIES", ["usdtbsc", "usdtmatic", "usdttrc20"], raising=False)
+    monkeypatch.setattr(np, "NOWPAYMENTS_PAYOUT_CURRENCY", "", raising=False)
+
+    async def fake_request(method, path, payload=None):
+        currency = path.split("currency_from=")[1].split("&")[0]
+        if calls is not None:
+            calls.append(currency)
+        if currency not in table:
+            raise RuntimeError("HTTP 400")
+        return {"min_amount": table[currency]}
+
+    monkeypatch.setattr(np, "_nowpayments_request", fake_request, raising=False)
+    np._nowpayments_min_amount_cache.clear()
+
+
+async def test_a_network_whose_floor_is_above_the_order_is_hidden(monkeypatch):
+    np, _ = _load()
+    _configure(monkeypatch, np)
+    _install_min_amounts(monkeypatch, np, {
+        "usdtbsc": "0.0569726",
+        "usdtmatic": "0.140639",
+        "usdttrc20": "11.40939",
+    })
+
+    # A 1.54 USDT order cannot be paid over TRON: NOWPayments rejects anything
+    # under its floor, so offering the button guarantees a dead invoice.
+    assert await np.nowpayments_currencies_for_amount(Decimal("1.54")) == ["usdtbsc", "usdtmatic"]
+    # A big order can use all three.
+    assert await np.nowpayments_currencies_for_amount(Decimal("50")) == ["usdtbsc", "usdtmatic", "usdttrc20"]
+    # Exactly on the floor is allowed.
+    assert "usdttrc20" in await np.nowpayments_currencies_for_amount(Decimal("11.40939"))
+
+
+async def test_a_min_amount_lookup_failure_keeps_the_network_visible(monkeypatch):
+    np, _ = _load()
+    _configure(monkeypatch, np)
+    _install_min_amounts(monkeypatch, np, {"usdtbsc": "0.05"})
+
+    # usdtmatic/usdttrc20 raise here. Silently dropping payment methods over a
+    # transient network blip is worse than letting NOWPayments reject later.
+    assert await np.nowpayments_currencies_for_amount(Decimal("1.54")) == ["usdtbsc", "usdtmatic", "usdttrc20"]
+
+
+async def test_min_amounts_are_cached_per_currency(monkeypatch):
+    np, _ = _load()
+    _configure(monkeypatch, np)
+    calls = []
+    _install_min_amounts(monkeypatch, np, {"usdtbsc": "0.05", "usdtmatic": "0.14", "usdttrc20": "11.4"}, calls)
+
+    await np.nowpayments_currencies_for_amount(Decimal("50"))
+    await np.nowpayments_currencies_for_amount(Decimal("50"))
+
+    # The floor moves with network fees, not per order — one lookup per currency
+    # per cache window, not one per checkout.
+    assert sorted(calls) == ["usdtbsc", "usdtmatic", "usdttrc20"]

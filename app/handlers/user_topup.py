@@ -174,6 +174,85 @@ def _build_topup_keyboard(user_id, code: str, quote_data: dict | None = None):
     return InlineKeyboardMarkup(rows)
 
 
+def _build_nowpayments_topup_keyboard(user_id, code: str, payment: dict):
+    rows = []
+    address = str(payment.get("pay_address") or "").strip()
+    amount_text = format(payment["pay_amount"], "f") if payment.get("pay_amount") is not None else ""
+    extra_id = str(payment.get("payin_extra_id") or "").strip()
+    if address:
+        rows.append([InlineKeyboardButton(
+            lt(user_id, "\U0001F4CB Sao chép địa chỉ ví", "\U0001F4CB Copy wallet address", "\U0001F4CB 复制钱包地址"),
+            copy_text=CopyTextButton(address),
+        )])
+    if amount_text:
+        rows.append([InlineKeyboardButton(
+            lt(user_id, "\U0001F4CB Sao chép số tiền", "\U0001F4CB Copy amount", "\U0001F4CB 复制金额"),
+            copy_text=CopyTextButton(amount_text),
+        )])
+    if extra_id:
+        rows.append([InlineKeyboardButton(
+            lt(user_id, "\U0001F4CB Sao chép MEMO/TAG", "\U0001F4CB Copy MEMO/TAG", "\U0001F4CB 复制 MEMO/TAG"),
+            copy_text=CopyTextButton(extra_id),
+        )])
+    rows.append([_btn(lt(user_id, "Hủy lệnh nạp", "Cancel top-up", "取消充值"),
+                      icon_id="5273914604752216432", callback_data=f"topup_cancel:{code}")])
+    rows.append([_btn(lt(user_id, "Quay lại", "Back", "返回"),
+                      icon_id="6206032691075223572", callback_data="my_stats")])
+    return InlineKeyboardMarkup(rows)
+
+
+def _build_nowpayments_topup_caption(user_id, code: str, amount: int, payment: dict) -> str:
+    from app.integrations.nowpayments_api import nowpayments_pay_currency_label
+
+    minutes = max(1, USER_TOPUP_EXPIRATION_SECONDS // 60)
+    extra_id = str(payment.get("payin_extra_id") or "").strip()
+    # Mang nao bat buoc memo ma khach bo trong thi tien vao vi tong cua san,
+    # khong ai lan ra la cua lenh nap nao.
+    extra_line = ""
+    if extra_id:
+        extra_line = lt(
+            user_id,
+            "\n\u2022 <b>MEMO/TAG (bắt buộc):</b> <code>{extra}</code>",
+            "\n\u2022 <b>MEMO/TAG (required):</b> <code>{extra}</code>",
+            "\n\u2022 <b>MEMO/TAG（必填）：</b> <code>{extra}</code>",
+            extra=html.escape(extra_id),
+        )
+    return lt(
+        user_id,
+        "<b>NẠP VÍ BẰNG USDT</b>\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n"
+        "<blockquote>\u2022 <b>Số tiền nạp:</b> {amount}\n"
+        "\u2022 <b>Số tiền USDT:</b> <code>{crypto}</code>\n"
+        "\u2022 <b>Địa chỉ ví:</b> <code>{wallet}</code>{extra}\n"
+        "\u2022 <b>Mạng lưới:</b> {network}\n"
+        "\u2022 <b>Mã nạp:</b> <code>{code}</code></blockquote>\n\n"
+        "\u26A0\uFE0F Chuyển <b>đúng số tiền ở trên</b> và chỉ dùng mạng <b>{network}</b>. "
+        "Chuyển sai mạng có thể mất tiền.\nHết hạn sau {minutes} phút.",
+        "<b>TOP UP WITH USDT</b>\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n"
+        "<blockquote>\u2022 <b>Top-up amount:</b> {amount}\n"
+        "\u2022 <b>USDT amount:</b> <code>{crypto}</code>\n"
+        "\u2022 <b>Wallet address:</b> <code>{wallet}</code>{extra}\n"
+        "\u2022 <b>Network:</b> {network}\n"
+        "\u2022 <b>Top-up code:</b> <code>{code}</code></blockquote>\n\n"
+        "\u26A0\uFE0F Send the <b>exact amount above</b> and use only the <b>{network}</b> network. "
+        "Funds sent through another network may be lost.\nExpires in {minutes} minutes.",
+        "<b>USDT 充值</b>\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n"
+        "<blockquote>\u2022 <b>充值金额：</b> {amount}\n"
+        "\u2022 <b>USDT 金额：</b> <code>{crypto}</code>\n"
+        "\u2022 <b>钱包地址：</b> <code>{wallet}</code>{extra}\n"
+        "\u2022 <b>网络：</b> {network}\n"
+        "\u2022 <b>充值码：</b> <code>{code}</code></blockquote>\n\n"
+        "\u26A0\uFE0F 请转入<b>上方准确金额</b>，且仅使用 <b>{network}</b> 网络，转错网络可能造成资金丢失。\n"
+        "{minutes} 分钟后过期。",
+        amount=format_money(amount, user_id),
+        crypto=html.escape(format(payment["pay_amount"], "f")),
+        wallet=html.escape(str(payment.get("pay_address") or "")),
+        extra=extra_line,
+        network=html.escape(nowpayments_pay_currency_label(str(payment.get("pay_currency") or ""))),
+        code=code,
+        minutes=minutes,
+    )
+
+
 def _build_rpay_topup_keyboard(user_id, code: str, invoice: dict):
     rows = []
     url_payment = str(invoice.get("url_payment") or "").strip()
@@ -260,6 +339,9 @@ def available_topup_methods() -> list:
         methods.append("usdt")
     if is_binance_pay_enabled():
         methods.append("binance")
+    from app.integrations.nowpayments_api import is_nowpayments_enabled
+    if is_nowpayments_enabled():
+        methods.append("nowpay")
     # Khong cong nao bat -> van cho QR ngan hang de khong khoa han duong nap.
     return methods or ["bank"]
 
@@ -281,6 +363,9 @@ async def show_topup_method_choice(update: Update, context: ContextTypes.DEFAULT
     if "binance" in methods:
         rows.append([_btn("Binance Pay (USDT)", icon_id=CRYPTO_BUTTON_ICON_ID,
                           callback_data=f"topup_pay:binance:{int(amount)}", style="success")])
+    if "nowpay" in methods:
+        rows.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079",
+                          callback_data=f"topup_pay:nowpay:{int(amount)}", style="success")])
     rows.append([_btn(lt(user_id, "Quay lại", "Back", "返回"),
                       icon_id="6206032691075223572", callback_data="my_stats")])
 
@@ -348,6 +433,7 @@ async def create_user_topup_request(update: Update, context: ContextTypes.DEFAUL
     }
     quote_data = None
     rpay_invoice = None
+    np_payment = None
 
     if method == "usdt":
         if not is_usdt_payment_enabled():
@@ -420,10 +506,77 @@ async def create_user_topup_request(update: Update, context: ContextTypes.DEFAUL
             "binance_pay_rate": str(quote_data.get("rate", USDT_RATE_VND_PER_USDT)),
         })
 
+    if method == "nowpay":
+        from app.integrations.nowpayments_api import (
+            create_nowpayments_payment,
+            is_nowpayments_enabled,
+            nowpayments_currencies_for_amount,
+        )
+        from app.integrations.payments_core import convert_vnd_to_usdt, get_live_usdt_vnd_rate
+
+        if not is_nowpayments_enabled():
+            await safe_bot_send_html(
+                context.bot,
+                chat_id,
+                f"{E_LIMIT} " + lt(user.id, "Phương thức thanh toán này chưa được cấu hình.", "This payment method is not configured yet.", "此付款方式尚未配置。"),
+            )
+            return False
+        currency = str(network or "").strip().lower()
+        if not currency:
+            # Khong chon mang thi lay mang dau tien con tra duoc so tien nay -
+            # san cua TRC20 cao hon BEP20 toi 200 lan nen khong the mac dinh bua.
+            try:
+                live_rate = await get_live_usdt_vnd_rate()
+                candidates = await nowpayments_currencies_for_amount(
+                    convert_vnd_to_usdt(int(amount), rate=live_rate)
+                )
+            except Exception as e:
+                logger.error(f"[topup] Khong loc duoc mang NOWPayments cho {user.id}: {e}")
+                candidates = []
+            if not candidates:
+                await safe_bot_send_html(
+                    context.bot,
+                    chat_id,
+                    f"{E_LIMIT} " + lt(user.id, "Số tiền này nhỏ hơn mức tối thiểu của mọi mạng USDT.", "This amount is below the minimum for every USDT network.", "此金额低于所有 USDT 网络的最低限额。"),
+                )
+                return False
+            currency = candidates[0]
+        try:
+            np_payment = await create_nowpayments_payment(
+                order_code=code,
+                amount_vnd=int(amount),
+                pay_currency=currency,
+            )
+        except Exception as e:
+            logger.error(f"[topup] Khong tao duoc lenh nap NOWPayments cho {user.id}: {e}")
+            await safe_bot_send_html(
+                context.bot,
+                chat_id,
+                f"{E_LIMIT} " + lt(user.id, "Không thể tạo hóa đơn USDT. Vui lòng thử lại sau.", "Could not create the USDT invoice. Please try again later.", "无法创建 USDT 账单，请稍后重试。"),
+            )
+            return False
+        # `nowpayments_payment_id` la thu duy nhat duong poll du phong dung de
+        # hoi lai trang thai khi IPN khong toi.
+        record.update({
+            "provider": "nowpayments",
+            "payment_method": "usdt_nowpayments",
+            "nowpayments_payment_id": str(np_payment.get("payment_id") or ""),
+            "nowpayments_amount": format(np_payment["pay_amount"], "f"),
+            "nowpayments_currency": str(np_payment.get("pay_currency") or currency),
+            "nowpayments_address": str(np_payment.get("pay_address") or ""),
+            "nowpayments_extra_id": str(np_payment.get("payin_extra_id") or ""),
+            "nowpayments_rate": str(np_payment.get("rate", USDT_RATE_VND_PER_USDT)),
+        })
+
     pending_user_topups[code] = record
     await save_data(force=True, tables=[USER_TOPUP_FILE])
 
-    if rpay_invoice is not None:
+    if np_payment is not None:
+        from app.integrations.nowpayments_api import nowpayments_qr_photo
+        caption = _build_nowpayments_topup_caption(user.id, code, amount, np_payment)
+        photo = nowpayments_qr_photo(str(np_payment.get("pay_address") or ""))
+        keyboard = _build_nowpayments_topup_keyboard(user.id, code, np_payment)
+    elif rpay_invoice is not None:
         caption = _build_rpay_topup_caption(user.id, code, amount, rpay_invoice)
         photo = rpay_qr_photo(rpay_invoice)
         keyboard = _build_rpay_topup_keyboard(user.id, code, rpay_invoice)
@@ -538,6 +691,59 @@ async def _show_topup_network_choice(update: Update, context: ContextTypes.DEFAU
     )
 
 
+async def _show_topup_nowpayments_choice(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, currencies: list) -> None:
+    user_id = update.effective_user.id
+    from app.integrations.nowpayments_api import nowpayments_pay_currency_label
+
+    rows = [[
+        _btn(nowpayments_pay_currency_label(currency), icon_id="5281029063459234079",
+             callback_data=f"topup_npnet:{currency}:{int(amount)}", style="success")
+    ] for currency in currencies]
+    rows.append([_btn(lt(user_id, "Quay lại", "Back", "返回"),
+                      icon_id="6206032691075223572", callback_data="my_stats")])
+    await safe_bot_send_html(
+        context.bot,
+        update.effective_chat.id,
+        lt(
+            user_id,
+            "<b>Chọn mạng lưới USDT</b>\n\nChuyển sai mạng có thể <b>mất tiền</b>. "
+            "Hãy chọn đúng mạng mà ví của bạn hỗ trợ.",
+            "<b>Choose the USDT network</b>\n\nSending on the wrong network can <b>lose the funds</b>. "
+            "Pick the network your wallet actually supports.",
+            "<b>请选择 USDT 网络</b>\n\n转错网络可能<b>造成资金丢失</b>。请选择您钱包支持的网络。",
+        ),
+        reply_markup=InlineKeyboardMarkup(rows),
+    )
+
+
+async def handle_topup_nowpayments_choice(update: Update, context: ContextTypes.DEFAULT_TYPE, payload: str) -> bool:
+    """`topup_npnet:<currency>:<so tien VND>` tu man hinh chon mang."""
+    query = update.callback_query
+    user_id = update.effective_user.id
+    from app.integrations.nowpayments_api import NOWPAYMENTS_CURRENCIES
+
+    currency, _, amount_text = str(payload or "").partition(":")
+    try:
+        amount = int(amount_text)
+    except (TypeError, ValueError):
+        await safe_answer(query, lt(user_id, "Số tiền không hợp lệ.", "Invalid amount.", "金额无效。"), show_alert=True)
+        return True
+    if currency not in NOWPAYMENTS_CURRENCIES:
+        await safe_answer(
+            query,
+            lt(user_id, "Mạng lưới không khả dụng.", "This network is not available.", "该网络不可用。"),
+            show_alert=True,
+        )
+        return True
+
+    await safe_answer(query)
+    try:
+        await query.delete_message()
+    except Exception:
+        pass
+    return await create_user_topup_request(update, context, amount, method="nowpay", network=currency)
+
+
 async def handle_topup_method_choice(update: Update, context: ContextTypes.DEFAULT_TYPE, payload: str) -> bool:
     """`topup_pay:<method>:<so tien VND>` tu man hinh chon phuong thuc."""
     query = update.callback_query
@@ -562,6 +768,35 @@ async def handle_topup_method_choice(update: Update, context: ContextTypes.DEFAU
         if len(networks) > 1:
             await safe_answer(query)
             await _show_topup_network_choice(update, context, amount, networks)
+            return True
+
+    if method == "nowpay":
+        from app.integrations.nowpayments_api import nowpayments_currencies_for_amount
+        from app.integrations.payments_core import convert_vnd_to_usdt, get_live_usdt_vnd_rate
+
+        try:
+            live_rate = await get_live_usdt_vnd_rate()
+            currencies = await nowpayments_currencies_for_amount(
+                convert_vnd_to_usdt(int(amount), rate=live_rate)
+            )
+        except Exception as exc:
+            logger.error(f"[topup] Khong loc duoc mang NOWPayments: {exc}")
+            await safe_answer(
+                query,
+                lt(user_id, "Không lấy được tỉ giá, thử lại sau.", "Could not fetch the rate, try again later.", "无法获取汇率，请稍后重试。"),
+                show_alert=True,
+            )
+            return True
+        if not currencies:
+            await safe_answer(
+                query,
+                lt(user_id, "Số tiền này nhỏ hơn mức tối thiểu của mọi mạng USDT.", "This amount is below the minimum for every USDT network.", "此金额低于所有 USDT 网络的最低限额。"),
+                show_alert=True,
+            )
+            return True
+        if len(currencies) > 1:
+            await safe_answer(query)
+            await _show_topup_nowpayments_choice(update, context, amount, currencies)
             return True
 
     await safe_answer(query)

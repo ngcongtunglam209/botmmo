@@ -228,6 +228,61 @@ async def _nowpayments_request(method: str, path: str, payload: dict | None = No
     return body
 
 
+# So tien toi thieu moi mang, cache lai vi no bam theo phi mang va doi trong
+# ngay. Dict duoc SUA TAI CHO chu khong gan lai: section loader copy symbol sang
+# moi module khac nen gan lai bien se khong lan sang cac ban sao.
+_nowpayments_min_amount_cache: dict = {}
+NOWPAYMENTS_MIN_AMOUNT_CACHE_SECONDS = 900
+
+
+async def nowpayments_min_amount(currency: str):
+    """So USDT toi thieu mang `currency` nhan duoc. None = khong hoi duoc.
+
+    Chenh lech giua cac mang rat lon (TRC20 quanh 11 USDT trong khi BEP20 duoi
+    0.1), nen khong the dung mot nguong chung cho ca cong.
+    """
+    key = str(currency or "").strip().lower()
+    if not key:
+        return None
+
+    cached = _nowpayments_min_amount_cache.get(key)
+    if cached and cached[1] > time.time():
+        return cached[0]
+
+    target = NOWPAYMENTS_PAYOUT_CURRENCY or key
+    body = await _nowpayments_request("GET", f"/min-amount?currency_from={key}&currency_to={target}")
+    minimum = _nowpayments_decimal(body.get("min_amount"))
+    if minimum is None or minimum < 0:
+        return None
+    _nowpayments_min_amount_cache[key] = (minimum, time.time() + NOWPAYMENTS_MIN_AMOUNT_CACHE_SECONDS)
+    return minimum
+
+
+async def nowpayments_currencies_for_amount(usdt_amount) -> list:
+    """Loc NOWPAYMENTS_CURRENCIES con nhung mang tra duoc so tien nay.
+
+    Hien nut cua mot mang co san cao hon gia tri don la day khach vao mot hoa
+    don chac chan hong. Hoi khong duoc san thi GIU mang do: tha de NOWPayments
+    tu choi luc tao payment con hon am tham giau mat phuong thuc thanh toan vi
+    mot loi mang thoang qua.
+    """
+    amount = _nowpayments_decimal(usdt_amount)
+    if amount is None:
+        return list(NOWPAYMENTS_CURRENCIES)
+
+    available = []
+    for currency in NOWPAYMENTS_CURRENCIES:
+        try:
+            minimum = await nowpayments_min_amount(currency)
+        except Exception as exc:
+            logger.warning("NOWPayments: khong lay duoc min-amount cua %s: %s", currency, exc)
+            available.append(currency)
+            continue
+        if minimum is None or amount >= minimum:
+            available.append(currency)
+    return available
+
+
 async def create_nowpayments_payment(order_code: str, amount_vnd: int, pay_currency: str) -> dict:
     """Tao payment va tra ve dia chi + so tien khach phai gui.
 
@@ -247,6 +302,20 @@ async def create_nowpayments_payment(order_code: str, amount_vnd: int, pay_curre
 
     live_rate = await get_live_usdt_vnd_rate()
     price_amount = convert_vnd_to_usdt(amount_vnd, rate=live_rate)
+
+    # Duoi san cua mang thi NOWPayments tu choi. Chan o day de loi noi ro ly do
+    # thay vi tra ve "HTTP 400" tran trui, va de con duong nao goi thang ham nay
+    # ma quen loc bang nowpayments_currencies_for_amount() cung khong tao ra hoa
+    # don chet.
+    try:
+        minimum = await nowpayments_min_amount(currency)
+    except Exception as exc:
+        logger.warning("NOWPayments: bo qua kiem min-amount cua %s: %s", currency, exc)
+        minimum = None
+    if minimum is not None and _nowpayments_decimal(price_amount, Decimal("0")) < minimum:
+        raise RuntimeError(
+            f"So tien {price_amount} thap hon muc toi thieu {minimum} cua mang {currency}"
+        )
 
     payload = {
         "price_amount": float(price_amount),
@@ -338,6 +407,15 @@ def iter_pending_nowpayments_records():
         if details.get("provider") != "nowpayments":
             continue
         yield str(topup_code), details
+
+
+def nowpayments_qr_photo(pay_address: str):
+    """QR chua dia chi nhan tien de khach quet bang vi."""
+    if not pay_address:
+        return None
+    from urllib.parse import quote as _quote
+
+    return f"https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={_quote(str(pay_address), safe='')}"
 
 
 def build_nowpayments_checkout_keyboard(order_code: str, pay_address: str, amount_text: str, user_id=None):
