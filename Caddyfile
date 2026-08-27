@@ -13,7 +13,20 @@ lamtung.dev {
         max_size 20MB
     }
 
-    reverse_proxy bot:8080 {
+    # Trang quan tri khong duoc nhung vao iframe cua site khac. Cookie phien da
+    # SameSite=strict nen CSRF da bi chan, con lai la clickjacking.
+    # nosniff + same-origin referrer la phan cung theo, khong doi hanh vi gi.
+    header /admin* {
+        X-Frame-Options "DENY"
+        Content-Security-Policy "frame-ancestors 'none'"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "same-origin"
+    }
+
+    # Port phai khop API_SERVER_PORT ma bot bind. Truoc day cho nay hardcode 8080
+    # trong khi docker-compose.yml tham so hoa bien do, nen doi bien la site sap
+    # ma khong co dau hieu gi. Caddy container duoc truyen cung bien trong compose.
+    reverse_proxy bot:{$API_SERVER_PORT:8080} {
         header_up X-Forwarded-Proto {scheme}
     }
 }
