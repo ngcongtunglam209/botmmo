@@ -417,6 +417,25 @@ async def handle_cancel_order_payment(query, context, command):
     """Process cancel order and cancel payment."""
     if command.startswith('cancel_order:'):
         order_code = command.split(':', 1)[1].strip().upper()
+        caller_id = getattr(getattr(query, 'from_user', None), 'id', None)
+        # Kiem tra chu don TRUOC khi pop. Prefix 'cancel_order:' khong nam trong
+        # admin_only_prefixes nen moi user deu goi toi day duoc; ma don chi la
+        # ICLD + 6 chu so, do duoc. Khong co cho nay thi bat ky ai cung xoa duoc
+        # don dang cho cua nguoi khac, lam payment_monitor het khop duoc chuyen
+        # khoan cua ho.
+        _kind, _key, existing = find_pending_order_by_code(order_code)
+        owns_order = (
+            isinstance(existing, dict)
+            and str(existing.get('user_id') or "") == str(caller_id)
+        )
+        if not owns_order and caller_id != ADMIN_USER_ID:
+            if isinstance(existing, dict):
+                logger.warning(
+                    f"User {caller_id} thu huy don {order_code} cua user {existing.get('user_id')}"
+                )
+            await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn này không còn ở trạng thái chờ.", show_alert=True)
+            return
+
         details = await pending_pop(order_code)
         if not details:
             await safe_answer(query, "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn này không còn ở trạng thái chờ.", show_alert=True)

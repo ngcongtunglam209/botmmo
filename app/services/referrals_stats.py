@@ -28,7 +28,12 @@ async def process_referral_commission(context, user_id: int, amount: int, order_
     referrer_id = ref_info['referrer_id']
     referrer_id_str = str(referrer_id)
 
-    if order_code and referrer_id_str in referral_data:
+    # Khong co order_code thi khong co gi de doi chieu -> tu choi thay vi tra
+    # hoa hong khong kiem soat duoc so lan.
+    if not order_code:
+        logger.warning(f'[COMMISSION] Bo qua hoa hong cho user {user_id}: thieu order_code')
+        return 0
+    if referrer_id_str in referral_data:
         history = referral_data[referrer_id_str].get('commission_history', [])
         if any(h.get('order_code') == order_code for h in history):
             logger.info(f'[COMMISSION] Skipping duplicate commission for order {order_code}')

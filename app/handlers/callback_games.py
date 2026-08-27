@@ -1,3 +1,40 @@
+def _dice_prize_is_offered(user_id, prize_id) -> bool:
+    """Phan thuong nay co nam trong danh sach da chao cho user khong.
+
+    callback_data la du lieu client gui len, khong phai du lieu minh phat ra:
+    nguoi thang co the sua `dice_prize_product_<id>` thanh bat ky ma san pham nao
+    va nhan mien phi, ke ca hang 500k hay hang requires_gmail. games_waitlist ghi
+    lai dung nhung id da chao vao `prizes_<uid>`; day la cho doi chieu.
+
+    Neu khong co ban ghi (nguoi thang tu truoc khi co ban va, hoac du lieu bi mat)
+    thi ap lai dung bo loc luc chao thuong thay vi cho qua.
+    """
+    offered = dice_game_data.get(f"prizes_{user_id}")
+    prize_id = str(prize_id or "")
+    if isinstance(offered, list):
+        return prize_id in {str(item) for item in offered}
+
+    product_data = products.get(prize_id)
+    if not isinstance(product_data, dict):
+        return False
+    if product_data.get('requires_gmail'):
+        return False
+    try:
+        if int(product_data.get('price', 0) or 0) > DICE_PRIZE_MAX_PRICE:
+            return False
+    except (TypeError, ValueError):
+        return False
+    return bool(product_data.get('stock'))
+
+
+def _clear_dice_winner(user_id, context=None) -> None:
+    """Xoa co thang VA danh sach phan thuong da chao - phai di cung nhau."""
+    if context is not None:
+        context.user_data.pop('dice_winner', None)
+    dice_game_data.pop(f"winner_{user_id}", None)
+    dice_game_data.pop(f"prizes_{user_id}", None)
+
+
 async def handle_games_callbacks(update, context, command):
     query = update.callback_query
     user_id = update.effective_user.id
@@ -33,6 +70,12 @@ async def handle_games_callbacks(update, context, command):
             return
         prize_type, prize_id = parts[0], parts[1]
         user = update.effective_user
+        if not _dice_prize_is_offered(user_id, prize_id):
+            logger.warning(
+                f"DICE: user {user_id} doi nhan phan thuong khong duoc chao: {prize_id!r}"
+            )
+            await safe_answer(query, lt(user_id, "Phần thưởng không hợp lệ!", "Invalid prize!", "奖励无效！"), show_alert=True)
+            return
         try:
             if prize_type == 'product':
                 p = products.get(prize_id)
@@ -54,8 +97,7 @@ async def handle_games_callbacks(update, context, command):
                     await save_data(force=True)
 
                 # Clear winner flag (both ephemeral and persistent)
-                context.user_data.pop('dice_winner', None)
-                dice_game_data.pop(f"winner_{user.id}", None)
+                _clear_dice_winner(user.id, context)
                 record_promo_cost(p.get('price', 0), 'dice_product')
                 await save_data()
 
@@ -185,8 +227,7 @@ async def handle_games_callbacks(update, context, command):
                 pass
         return True
     elif command == 'dice_skip':
-        context.user_data.pop('dice_winner', None)
-        dice_game_data.pop(f"winner_{user_id}", None)
+        _clear_dice_winner(user_id, context)
         try:
             await query.edit_message_text(
                 lt(
