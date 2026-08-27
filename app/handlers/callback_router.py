@@ -354,28 +354,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if await handle_admin_callbacks(update, context, command): return
     if await handle_games_callbacks(update, context, command): return
 
-    # Centralized permission gate for sensitive admin callbacks
-    admin_only_prefixes = (
-        'approve_withdraw:',
-        'reject_withdraw:',
-        'approve_warranty:',
-        'reject_warranty:',
-        'approve_api:',
-        'reject_api:',
-        'manual_done:',
-        'manual_refund:',
-        'manual_done_',
-        'manual_refund_',
-        'admin_open_chat:',
-        'admin_close_chat:',
-        'reply_to_ticket:',
-        'replace_auto:',
-        'replace_manual:',
-        'reject_expired:',
-        'reject_policy:',
-        'dismiss_report:',
-        'warranty_done:',
-    )
+    # Cong kiem quyen admin THAT nam o app/handlers/callback_admin.py:47 va chay
+    # truoc ham nay. Ban sao o day chua bao gio duoc doc - da xoa de khong ai
+    # tuong nham la con mot lop bao ve thu hai.
 
 
     if command == 'back_to_main':
@@ -1457,7 +1438,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
                 pass
 
-            ai_answer = await ask_ai(question)
+            # Phai truyen user_id: ask_ai() mac dinh 0 va GroqAssistant khoa
+            # lich su chat theo id do, nen moi khach dung nut Hoi AI se dung
+            # chung MOT bo nho hoi thoai - doc duoc noi dung ho tro cua nguoi
+            # khac, va cai duoc chi thi vao cau tra loi cua nguoi khac.
+            ai_answer = await ask_ai(question, user_id=user_id)
 
             await query.edit_message_text(
                 lt(
@@ -1483,9 +1468,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
                               f'<b>Từ:</b> {format_user_mention_html(user)} (ID: <code>{user.id}</code>)\n'
 
-                              f'<b>Username:</b> @{user.username or "Không có"}\n\n'
+                              f'<b>Username:</b> @{html.escape(str(user.username or "Không có"))}\n\n'
 
-                              f'<b>Nội dung:</b>\n<i>{query_text}</i>')
+                              # Noi dung khach tu go: phai escape. Khong escape thi
+                              # khach chen duoc <a href> thanh link song trong chat admin,
+                              # hoac chi mot dau '<' la Telegram tu choi ca tin nhan va
+                              # admin khong bao gio thay phieu.
+                              f'<b>Nội dung:</b>\n<i>{html.escape(str(query_text or ""))}</i>')
 
         reply_button = InlineKeyboardButton('<tg-emoji emoji-id="5350752364246606166">✍️</tg-emoji> Phản hồi User', callback_data=f"reply_to_ticket:{user.id}")
 

@@ -53,9 +53,18 @@ def require_csrf(request: Request, form: Any) -> None:
 
 
 def client_ip(request: Request) -> str:
-    forwarded = str(request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
-    if forwarded:
-        return forwarded
+    """IP dùng cho giới hạn số lần đăng nhập.
+
+    Lấy phần tử CUỐI của `X-Forwarded-For`, không phải phần tử đầu. Caddy *nối
+    thêm* vào header chứ không ghi đè, nên giá trị client tự gửi vẫn nằm ở đầu:
+    đọc phần tử đầu là để client tự chọn khóa đếm, đổi một cái là reset bộ đếm
+    và `login_max_attempts` thành vô nghĩa. Phần tử cuối là cái proxy tin cậy
+    ngay trước mình vừa ghi.
+    """
+    forwarded = str(request.headers.get("x-forwarded-for") or "")
+    hops = [hop.strip() for hop in forwarded.split(",") if hop.strip()]
+    if hops:
+        return hops[-1]
     return request.client.host if request.client else ""
 
 

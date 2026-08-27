@@ -192,7 +192,7 @@ async def pending_manual_command(update: Update, context: ContextTypes.DEFAULT_T
             msg += (
                 f"   {email_status} <code>{order_code}</code>\n"
                 f"      • Email: <code>{info.get('email', 'Chưa nhập')}</code>\n"
-                f"      • Khách: {info.get('full_name', 'N/A')}\n"
+                f"      • Khách: {html.escape(str(info.get('full_name') or 'N/A'))}\n"
                 f"      • Chờ: {time_ago}'\n"
             )
         msg += "\n"

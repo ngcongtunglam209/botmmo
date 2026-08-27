@@ -37,6 +37,10 @@ async def handle_admin_callbacks(update, context, command):
         'approve_withdraw:', 'reject_withdraw:',
         'approve_warranty:', 'reject_warranty:',
         'admin_open_chat:', 'admin_close_chat:',
+        # Nut nay chi hien trong tin bao cho admin, nhung callback_data la du lieu
+        # client gui len nen khach van bam duoc: khong chan thi ai cung spam duoc
+        # tin nhan toi admin qua safe_send_admin.
+        'reply_to_ticket:',
         'reject_expired:', 'reject_policy:',
         'warranty_done:', 'dismiss_report:', 'replace_auto:', 'replace_manual:',
         'admrf_f_', 'admrf_p_',

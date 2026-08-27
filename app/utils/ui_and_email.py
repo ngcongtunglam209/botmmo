@@ -496,13 +496,13 @@ def generate_secret_transfer_code(length: int = 6):
     if length <= 0:
         length = 6
     for _ in range(200):
-        secret_code = ''.join(random.choices(digits, k=length))
+        secret_code = ''.join(secrets.choice(digits) for _ in range(length))
         if not any(
             isinstance(order_data, dict) and str(order_data.get("secret_transfer_code") or "").strip().lower() == secret_code
             for order_data in pending_orders.values()
         ):
             return secret_code
-    return ''.join(random.choices(digits, k=length))
+    return ''.join(secrets.choice(digits) for _ in range(length))
 
 def build_transfer_content(secret_code):
     return random.choice((

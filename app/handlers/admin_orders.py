@@ -31,7 +31,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 f"   • Email: <b>{details.get('email', 'N/A')}</b>\n"
                 f"   • Số tiền: <b>{details['amount']:,} VNĐ</b>\n"
                 f"   • Chờ: <b>{time_ago} phút</b>\n"
-                f"   • User: {details.get('full_name', 'N/A')}\n\n"
+                f"   • User: {html.escape(str(details.get('full_name') or 'N/A'))}\n\n"
             )
 
         message += (
@@ -278,7 +278,7 @@ async def find_order_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         msg = (
             f"<tg-emoji emoji-id=\"5429571366384842791\">🔎</tg-emoji> <b>KẾT QUẢ TÌM KIẾM (PENDING)</b>\n\n"
             f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n"
-            f"<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>User:</b> {details.get('full_name')} (ID: <code>{details.get('user_id')}</code>)\n"
+            f"<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>User:</b> {html.escape(str(details.get('full_name') or 'N/A'))} (ID: <code>{details.get('user_id')}</code>)\n"
             f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Email:</b> <code>{details.get('email')}</code>\n"
             f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số tiền:</b> {details.get('amount'):,} VNĐ\n"
             f"<tg-emoji emoji-id=\"5377624166436445368\">🎟</tg-emoji> <b>Coupon:</b> {details.get('coupon_code') or 'Không'}\n"
@@ -305,7 +305,7 @@ async def find_order_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         msg = (
             f"<tg-emoji emoji-id=\"5429571366384842791\">🔎</tg-emoji> <b>KẾT QUẢ TÌM KIẾM (HISTORY)</b>\n\n"
             f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n"
-            f"<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>User:</b> {found_order.get('full_name', 'Unknown')} (ID: <code>{found_order.get('user_id')}</code>)\n"
+            f"<tg-emoji emoji-id=\"5350778980158956492\">👥</tg-emoji> <b>User:</b> {html.escape(str(found_order.get('full_name') or 'Unknown'))} (ID: <code>{found_order.get('user_id')}</code>)\n"
             f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Sản phẩm:</b> {found_order.get('product_name', 'N/A')}\n"
             f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Email:</b> <code>{email}</code>\n"
             f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Giá trị:</b> {int(found_order.get('amount', 0)):,} VNĐ\n"
