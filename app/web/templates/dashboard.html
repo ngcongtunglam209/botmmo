@@ -1,55 +1,71 @@
 {% extends "base.html" %}
-{% from "_macros.html" import empty %}
+{% from "_macros.html" import empty, panel, icon %}
 
 {% block title %}Tổng quan — Lâm Shop Admin{% endblock %}
 {% block heading %}Tổng quan{% endblock %}
 {% block subheading %}Chỉ số vận hành đọc trực tiếp từ database.{% endblock %}
 
 {% block tools %}
-  <span class="badge {{ 'badge-danger' if maintenance else 'badge-ok' }}">bảo trì {{ maintenance | onoff }}</span>
-  <span class="badge {{ 'badge-ok' if ai_auto_reply else 'badge-warn' }}">AI {{ ai_auto_reply | onoff }}</span>
+  <span class="tag {{ 'tag--danger' if maintenance else 'tag--ok' }}">bảo trì {{ maintenance | onoff }}</span>
+  <span class="tag {{ 'tag--ok' if ai_auto_reply else 'tag--warn' }}">ai {{ ai_auto_reply | onoff }}</span>
 {% endblock %}
 
 {% block content %}
-<div class="metric-grid">
-  {% for label, value, kind, href in metrics %}
-    <a class="metric metric-{{ kind }}" href="{{ href }}">
-      <span>{{ label }}</span>
-      <b>{{ value }}</b>
-    </a>
+<div class="figures">
+  {% for item in figures %}
+    <div class="figure">
+      <span class="figure__label">{{ item.label }}</span>
+      <b class="figure__value">{{ item.value }}{% if item.unit %}<span class="unit">{{ item.unit }}</span>{% endif %}</b>
+      <p class="figure__note">{{ item.note }}</p>
+    </div>
   {% endfor %}
 </div>
 
-<section class="card">
-  <header>
-    <h2>Doanh thu 30 ngày</h2>
-    <p class="muted">Đỉnh {{ chart.max | money }}</p>
-  </header>
-  {% if chart.series %}
-    <svg class="sparkline" viewBox="0 0 100 100" preserveAspectRatio="none" role="img"
-         aria-label="Biểu đồ doanh thu 30 ngày">
-      <polyline points="{{ chart.points }}" fill="none" stroke="currentColor" stroke-width="1.5"
-                vector-effect="non-scaling-stroke"/>
-    </svg>
-    <div class="chart-legend">
-      <span>{{ chart.series[0][0] }}</span>
-      <span>{{ chart.series[-1][0] }}</span>
+{% call panel('Doanh thu 30 ngày', 'Cột cao nhất ' ~ chart.max | money) %}
+  {% if chart.bars %}
+    <div class="chart">
+      <div class="chart__plot" role="img"
+           aria-label="Biểu đồ cột doanh thu 30 ngày, cao nhất {{ chart.max | money }}">
+        <div class="chart__grid" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        {% for bar in chart.bars %}
+          <div class="chart__bar{% if bar.zero %} chart__bar--zero{% endif %}"
+               style="height: {{ bar.pct }}%" title="{{ bar.day }} · {{ bar.value | money }}"></div>
+        {% endfor %}
+      </div>
+      <div class="chart__axis"><span>{{ chart.first }}</span><span>{{ chart.last }}</span></div>
     </div>
   {% else %}
     {{ empty('Chưa có đơn hoàn thành nào để vẽ biểu đồ.') }}
   {% endif %}
-</section>
+{% endcall %}
 
-<div class="split">
-  <section class="card">
-    <header><h2>Đơn gần đây</h2></header>
+{% for group in stat_groups %}
+<div class="statgroup">
+  <span class="eyebrow">{{ group.label }}</span>
+  <div class="stats">
+    {% for label, value, unit, href in group['items'] %}
+      <a class="stat" href="{{ href }}">
+        <span class="stat__label">{{ label }}</span>
+        <b class="stat__value">{{ value }}{% if unit %}<span class="unit">{{ unit }}</span>{% endif %}</b>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+<div class="split" style="margin-top: 16px">
+  <section class="panel panel--flush">
+    <div class="panel__head">
+      <h2 class="panel__title">Đơn gần đây</h2>
+      <a class="note" href="/admin/orders">Xem tất cả</a>
+    </div>
     {% if recent_orders %}
       <ul class="feed">
         {% for order in recent_orders %}
           <li>
             <a href="/admin/orders/{{ order.order_code or order.code or '' }}">
               <b>{{ order.order_code or order.code or '—' }}</b>
-              <span>{{ (order.product_name or '—') | shorten(42) }}</span>
+              <span>{{ (order.product_name or '—') | shorten(40) }}</span>
             </a>
             <span class="feed-meta">{{ order.amount | money }}</span>
           </li>
@@ -58,15 +74,18 @@
     {% else %}{{ empty('Chưa có đơn nào.') }}{% endif %}
   </section>
 
-  <section class="card">
-    <header><h2>Ticket đang mở</h2></header>
+  <section class="panel panel--flush">
+    <div class="panel__head">
+      <h2 class="panel__title">Ticket đang mở</h2>
+      <a class="note" href="/admin/support">Xem tất cả</a>
+    </div>
     {% if open_tickets %}
       <ul class="feed">
         {% for ticket in open_tickets %}
           <li>
             <a href="/admin/support">
               <b>{{ ticket.label }}</b>
-              <span>{{ ticket.summary | shorten(42) or ticket.id }}</span>
+              <span>{{ ticket.summary | shorten(40) or ticket.id }}</span>
             </a>
             <span class="feed-meta">{{ ticket.status }}</span>
           </li>
@@ -75,17 +94,20 @@
     {% else %}{{ empty('Không có ticket nào đang chờ.') }}{% endif %}
   </section>
 
-  <section class="card">
-    <header><h2>Thao tác gần đây</h2></header>
+  <section class="panel panel--flush">
+    <div class="panel__head">
+      <h2 class="panel__title">Thao tác gần đây</h2>
+      <a class="note" href="/admin/audit">Xem tất cả</a>
+    </div>
     {% if recent_audit %}
       <ul class="feed">
         {% for event in recent_audit %}
           <li>
             <a href="/admin/audit">
               <b>{{ event.label }}</b>
-              <span>{{ event.message | shorten(42) }}</span>
+              <span>{{ event.message | shorten(40) }}</span>
             </a>
-            <span class="feed-meta {{ 'ok' if event.ok else 'bad' }}">{{ '✓' if event.ok else '✕' }}</span>
+            <span class="feed-meta {{ 'ok' if event.ok else 'bad' }}">{{ 'OK' if event.ok else 'LỖI' }}</span>
           </li>
         {% endfor %}
       </ul>

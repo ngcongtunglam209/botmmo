@@ -1,12 +1,14 @@
 {% extends "base.html" %}
-{% from "_macros.html" import empty %}
+{% from "_macros.html" import empty, table_panel, icon %}
 
 {% block title %}Đơn hàng — Lâm Shop Admin{% endblock %}
+{% block crumb %}Đơn hàng{% endblock %}
 {% block heading %}Đơn hàng{% endblock %}
-{% block subheading %}Hiển thị {{ rows | length }} dòng · {{ total }} đơn trong lịch sử · {{ pending_count }} chờ thanh toán · {{ pending_manual_count }} chờ xử lý tay.{% endblock %}
+{% block subheading %}{{ rows | length }} dòng hiển thị · {{ total }} đơn trong lịch sử ·
+  {{ pending_count }} chờ thanh toán · {{ pending_manual_count }} chờ xử lý tay.{% endblock %}
 
 {% block content %}
-<form class="filter-bar" method="get" action="/admin/orders">
+<form class="filters" method="get" action="/admin/orders">
   <input type="search" name="q" value="{{ search }}" placeholder="Tìm theo mã đơn, sản phẩm hoặc user ID">
   <select name="status">
     <option value="">Tất cả đơn</option>
@@ -15,13 +17,13 @@
     <option value="manual"{% if status_filter == 'manual' %} selected{% endif %}>Chờ xử lý tay</option>
     <option value="completed"{% if status_filter == 'completed' %} selected{% endif %}>Đã hoàn thành</option>
   </select>
-  <button type="submit">Lọc</button>
-  {% if search or status_filter %}<a class="ghost" href="/admin/orders">Xóa lọc</a>{% endif %}
+  <button type="submit">{{ icon('filter') }}Lọc</button>
+  {% if search or status_filter %}<a class="btn btn--ghost" href="/admin/orders">Xóa lọc</a>{% endif %}
 </form>
 
 {% if rows %}
-<div class="table-wrap">
-  <table class="data-table">
+  {% call table_panel('Danh sách', rows | length ~ ' dòng') %}
+  <table class="table">
     <thead><tr><th>Mã</th><th>Sản phẩm</th><th>User</th><th>Trạng thái</th>
                <th class="num">Tiền</th><th class="num">SL</th><th>Lúc</th><th></th></tr></thead>
     <tbody>
@@ -29,18 +31,21 @@
       <tr>
         <td><a class="strong-link mono" href="/admin/orders/{{ row.code }}">{{ row.code }}</a></td>
         <td>{{ row.product | shorten(38) }}</td>
-        <td>{% if row.user_id %}<a href="/admin/users/{{ row.user_id }}">{{ row.user_id }}</a>{% else %}—{% endif %}</td>
+        <td>{% if row.user_id %}<a class="mono" href="/admin/users/{{ row.user_id }}">{{ row.user_id }}</a>{% else %}—{% endif %}</td>
         <td>
-          <span class="badge badge-{{ 'ok' if row.completed else ('info' if row.kind == 'manual' else 'warn') }}">{{ row.status | plain | shorten(24) }}</span>
+          {# Trạng thái đã tự mang emoji nên bỏ chấm tròn của tag cho đỡ trùng. #}
+          <span class="tag tag--plain tag--{{ 'ok' if row.completed else ('info' if row.kind == 'manual' else 'warn') }}">{{ row.status | plain | shorten(24) }}</span>
         </td>
         <td class="num">{{ row.amount | money }}</td>
         <td class="num">{{ row.quantity }}</td>
-        <td>{{ row.timestamp | timestamp }}</td>
-        <td class="row-actions"><a href="/admin/orders/{{ row.code }}">Mở</a></td>
+        <td class="mono">{{ row.timestamp | timestamp }}</td>
+        <td class="row-actions"><a class="btn btn--ghost btn--sm" href="/admin/orders/{{ row.code }}">Mở</a></td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-</div>
-{% else %}{{ empty('Không có đơn nào khớp bộ lọc.') }}{% endif %}
+  {% endcall %}
+{% else %}
+  <section class="panel">{{ empty('Không có đơn nào khớp bộ lọc.') }}</section>
+{% endif %}
 {% endblock %}

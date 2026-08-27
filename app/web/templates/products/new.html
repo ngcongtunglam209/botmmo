@@ -1,29 +1,29 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, field, textarea, select %}
+{% from "_macros.html" import csrf, field, textarea, select, form_panel, back_link %}
 
 {% block title %}Tạo sản phẩm — Lâm Shop Admin{% endblock %}
+{% block crumb %}Sản phẩm mới{% endblock %}
 {% block heading %}Tạo sản phẩm{% endblock %}
 {% block subheading %}Chỉ tên, giá bán và giá vốn là bắt buộc.{% endblock %}
+{% block tools %}{{ back_link('/admin/products') }}{% endblock %}
 
 {% block content %}
-<section class="card">
-  <form method="post" action="/admin/products/create" class="form-grid">
-    {{ csrf(csrf_token) }}
-    {{ field('Tên sản phẩm', 'name', placeholder='Netflix Premium 1 tháng', required=True) }}
-    {{ field('Product ID', 'product_id', placeholder='bỏ trống để tự sinh', hint='Dùng trong API và lệnh bot.') }}
-    {{ field('Giá bán (VND)', 'price', placeholder='35000', required=True) }}
-    {{ field('Giá vốn (VND)', 'cost_price', placeholder='20000', required=True, hint='Bắt buộc để tính lãi.') }}
-    {{ select('Loại giao hàng', 'requires_gmail', [('0', 'Local stock — giao tự động'), ('1', 'Manual / Gmail — admin xử lý')]) }}
-    {{ field('Danh mục', 'store_category', placeholder='vd: Netflix', hint='Bỏ trống thì bot tự đoán theo tên.') }}
-    {{ field('Thời hạn', 'duration', placeholder='30 ngày') }}
-    {{ field('Bảo hành', 'warranty', placeholder='7 ngày') }}
-    {{ textarea('Mô tả', 'description', placeholder='Mô tả ngắn hiển thị cho khách') }}
-    {{ textarea('Stock ban đầu', 'stock_items', placeholder='Mỗi dòng một item', rows=6,
-                hint='Chỉ áp dụng cho sản phẩm local stock.') }}
-    <div class="form-actions">
-      <button type="submit">Tạo sản phẩm</button>
-      <a class="ghost" href="/admin/products">Hủy</a>
-    </div>
-  </form>
-</section>
+{% call form_panel('Thông tin sản phẩm', '', '/admin/products/create') %}
+  {{ csrf(csrf_token) }}
+  {{ field('Tên sản phẩm', 'name', placeholder='Netflix Premium 1 tháng', required=True) }}
+  {{ field('Product ID', 'product_id', placeholder='bỏ trống để tự sinh', hint='Dùng trong API và lệnh bot.') }}
+  {{ field('Giá bán (VND)', 'price', placeholder='35000', required=True) }}
+  {{ field('Giá vốn (VND)', 'cost_price', placeholder='20000', required=True, hint='Bắt buộc để tính lãi.') }}
+  {{ select('Loại giao hàng', 'requires_gmail', [('0', 'Local stock — giao tự động'), ('1', 'Manual / Gmail — admin xử lý')]) }}
+  {{ field('Danh mục', 'store_category', placeholder='vd: Netflix', hint='Bỏ trống thì bot tự đoán theo tên.') }}
+  {{ field('Thời hạn', 'duration', placeholder='30 ngày') }}
+  {{ field('Bảo hành', 'warranty', placeholder='7 ngày') }}
+  {{ textarea('Mô tả', 'description', placeholder='Mô tả ngắn hiển thị cho khách') }}
+  {{ textarea('Stock ban đầu', 'stock_items', placeholder='Mỗi dòng một item', rows=6,
+              hint='Chỉ áp dụng cho sản phẩm local stock.') }}
+  <div class="form-actions">
+    <button type="submit">Tạo sản phẩm</button>
+    <a class="btn btn--ghost" href="/admin/products">Hủy</a>
+  </div>
+{% endcall %}
 {% endblock %}

@@ -1,25 +1,44 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, field, select, empty %}
+{% from "_macros.html" import csrf, field, empty, form_panel, table_panel, icon %}
 
 {% block title %}API partner — Lâm Shop Admin{% endblock %}
+{% block crumb %}API partner{% endblock %}
 {% block heading %}API partner{% endblock %}
-{% block subheading %}{{ active_count }}/{{ total }} key đang bật · {{ analytics.total }} request 14 ngày ({{ analytics.error_rate }}% lỗi).{% endblock %}
+{% block subheading %}{{ active_count }}/{{ total }} key đang bật · {{ analytics.total }} request 14 ngày
+  ({{ analytics.error_rate }}% lỗi).{% endblock %}
 
-{% block tools %}<a class="ghost" href="/admin/partners.csv">Xuất CSV</a>{% endblock %}
+{% block tools %}
+  <a class="btn btn--ghost" href="/admin/partners.csv">{{ icon('download') }}Xuất CSV</a>
+{% endblock %}
 
 {% block content %}
-<section class="card">
-  <header><h2>Tạo partner mới</h2><p class="muted">Key chỉ hiển thị một lần sau khi tạo — lưu lại ngay.</p></header>
-  <form method="post" action="/admin/partners/manage" class="form-grid">
-    {{ csrf(csrf_token) }}
-    <input type="hidden" name="mode" value="create">
-    {{ field('Tên partner', 'target', placeholder='Tên hiển thị', required=True) }}
-    {{ field('Số dư khởi tạo (VND)', 'amount', placeholder='0') }}
-    <div class="form-actions"><button type="submit">Tạo key</button></div>
-  </form>
-</section>
+<div class="figures">
+  <div class="figure">
+    <span class="figure__label">Key đang bật</span>
+    <b class="figure__value">{{ active_count }}<span class="unit">/ {{ total }}</span></b>
+    <p class="figure__note">Key thu hồi không gọi API được</p>
+  </div>
+  <div class="figure">
+    <span class="figure__label">Request 14 ngày</span>
+    <b class="figure__value">{{ analytics.total }}</b>
+    <p class="figure__note">{{ analytics.error_rate }}% trả lỗi</p>
+  </div>
+  <div class="figure">
+    <span class="figure__label">Hiển thị</span>
+    <b class="figure__value">{{ rows | length }}<span class="unit">partner</span></b>
+    <p class="figure__note">Theo bộ lọc hiện tại</p>
+  </div>
+</div>
 
-<form class="filter-bar" method="get" action="/admin/partners">
+{% call form_panel('Tạo partner mới', 'Key chỉ hiển thị một lần sau khi tạo — lưu lại ngay.', '/admin/partners/manage') %}
+  {{ csrf(csrf_token) }}
+  <input type="hidden" name="mode" value="create">
+  {{ field('Tên partner', 'target', placeholder='Tên hiển thị', required=True) }}
+  {{ field('Số dư khởi tạo (VND)', 'amount', placeholder='0') }}
+  <div class="form-actions"><button type="submit">Tạo key</button></div>
+{% endcall %}
+
+<form class="filters" method="get" action="/admin/partners">
   <input type="search" name="q" value="{{ search }}" placeholder="Tìm theo tên hoặc public ID">
   <select name="status">
     <option value="">Mọi trạng thái</option>
@@ -27,31 +46,35 @@
     <option value="disabled"{% if status == 'disabled' %} selected{% endif %}>Đã thu hồi</option>
     <option value="low"{% if status == 'low' %} selected{% endif %}>Số dư thấp</option>
   </select>
-  <button type="submit">Lọc</button>
-  {% if search or status %}<a class="ghost" href="/admin/partners">Xóa lọc</a>{% endif %}
+  <button type="submit">{{ icon('filter') }}Lọc</button>
+  {% if search or status %}<a class="btn btn--ghost" href="/admin/partners">Xóa lọc</a>{% endif %}
 </form>
 
 {% if rows %}
-<div class="table-wrap">
-  <table class="data-table">
+  {% call table_panel('Danh sách', rows | length ~ ' partner') %}
+  <table class="table">
     <thead><tr><th>Partner</th><th class="num">Số dư</th><th>Trạng thái</th>
                <th class="num">Rate limit</th><th>IP cho phép</th><th></th></tr></thead>
     <tbody>
       {% for row in rows %}
       <tr>
         <td>
-          <a class="strong-link" href="/admin/partners/{{ row.public_id }}">{{ row.name }}</a>
-          <small class="mono">{{ row.public_id }}</small>
+          <span class="cell-id">
+            <a class="strong-link" href="/admin/partners/{{ row.public_id }}">{{ row.name }}</a>
+            <small>{{ row.public_id }}</small>
+          </span>
         </td>
         <td class="num {{ 'low' if row.low_balance else '' }}">{{ row.balance | money }}</td>
-        <td><span class="badge badge-{{ 'ok' if row.active else 'danger' }}">{{ 'bật' if row.active else 'thu hồi' }}</span></td>
+        <td><span class="tag tag--{{ 'ok' if row.active else 'danger' }}">{{ 'bật' if row.active else 'thu hồi' }}</span></td>
         <td class="num">{{ row.rate_limit }}/phút</td>
-        <td>{{ row.allowed_ips | join(', ') or 'mọi IP' }}</td>
-        <td class="row-actions"><a href="/admin/partners/{{ row.public_id }}">Mở</a></td>
+        <td class="mono">{{ row.allowed_ips | join(', ') or 'mọi IP' }}</td>
+        <td class="row-actions"><a class="btn btn--ghost btn--sm" href="/admin/partners/{{ row.public_id }}">Mở</a></td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-</div>
-{% else %}{{ empty('Không có partner nào khớp bộ lọc.') }}{% endif %}
+  {% endcall %}
+{% else %}
+  <section class="panel">{{ empty('Không có partner nào khớp bộ lọc.') }}</section>
+{% endif %}
 {% endblock %}

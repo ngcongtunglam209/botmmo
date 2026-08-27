@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Lỗi {{ status_code }} — Lâm Shop Admin{% endblock %}
+{% block crumb %}Lỗi{% endblock %}
 {% block heading %}Lỗi {{ status_code }}{% endblock %}
 {% block subheading %}{{ detail }}{% endblock %}
 
 {% block content %}
-<section class="card">
-  <p>Thao tác không thực hiện được. Kiểm tra lại rồi thử lần nữa.</p>
-  <p><a class="button" href="/admin">Về trang tổng quan</a></p>
+<section class="panel">
+  <div class="stateblock">
+    <div class="stateblock__code">{{ status_code }}</div>
+    <p>Thao tác không thực hiện được. Kiểm tra lại rồi thử lần nữa.</p>
+    <a class="btn" href="/admin">Về trang tổng quan</a>
+  </div>
 </section>
 {% endblock %}

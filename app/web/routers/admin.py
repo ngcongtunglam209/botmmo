@@ -24,38 +24,100 @@ async def dashboard(request: Request):
     active_keys = sum(1 for record in keys.values() if partners.is_active(record))
     category_names = catalog.category_names()
 
-    metrics = [
-        ("Doanh thu hôm nay", f"{finance['today_revenue']:,} VND", "revenue", "/admin/orders"),
-        ("Lãi gộp hôm nay", f"{finance['today_profit']:,} VND", "revenue", "/admin/orders"),
-        ("Tổng doanh thu", f"{finance['revenue']:,} VND", "revenue", "/admin/orders"),
-        ("Đơn thành công", f"{finance['completed']:,}", "orders", "/admin/orders"),
-        ("Độ phủ giá vốn", f"{finance['costed']}/{finance['completed']}", "revenue", "/admin/orders"),
-        ("Chờ thanh toán", f"{len(orders.pending()):,}", "orders", "/admin/orders?status=payment"),
-        ("Manual pending", f"{len(orders.pending_manual()):,}", "orders", "/admin/orders?status=manual"),
-        ("Sản phẩm", f"{catalog.count_products():,}", "products", "/admin/products"),
-        ("Sắp hết hàng", f"{len(catalog.low_stock_products()):,}", "products", "/admin/products?kind=local"),
-        ("Users", f"{users.count_users():,}", "users", "/admin/users"),
-        ("Đang bị ban", f"{len(users.banned_ids()):,}", "users", "/admin/users?status=banned"),
-        ("API partner bật", f"{active_keys}/{len(keys)}", "api", "/admin/partners"),
-        ("Số dư API", f"{sum(as_int(r.get('balance'), 0) for r in keys.values()):,} VND", "api", "/admin/partners"),
-        ("Coupon", f"{len(promo.all_coupons()):,}", "promo", "/admin/coupons"),
-        ("Promo hôm nay", f"{promo.promo_spent_today():,} VND", "promo", "/admin/coupons"),
-        ("Ticket đang mở", f"{support.open_count():,}", "support", "/admin/support"),
-        ("Ảnh danh mục", f"{catalog.categories_with_image(category_names)}/{len(category_names)}", "products", "/admin/categories"),
-        ("Bot uptime", _uptime_text(), "support", "/admin/ops"),
+    chart = _chart_bars(orders.revenue_by_day(30))
+    pending_payment = len(orders.pending())
+    pending_manual = len(orders.pending_manual())
+    low_stock = len(catalog.low_stock_products())
+    banned = len(users.banned_ids())
+    open_tickets = support.open_count()
+    api_balance = sum(as_int(record.get("balance"), 0) for record in keys.values())
+
+    # Bốn con số dẫn dắt trang; phần còn lại xuống lưới chỉ số phụ.
+    figures = [
+        {
+            "label": "Doanh thu hôm nay",
+            "value": f"{finance['today_revenue']:,}",
+            "unit": "VND",
+            "note": f"Lãi gộp {finance['today_profit']:,} VND",
+        },
+        {
+            "label": "Doanh thu 30 ngày",
+            "value": f"{chart['total']:,}",
+            "unit": "VND",
+            "note": f"Ngày cao nhất {chart['max']:,} VND",
+        },
+        {
+            "label": "Tổng doanh thu",
+            "value": f"{finance['revenue']:,}",
+            "unit": "VND",
+            "note": f"{finance['completed']:,} đơn thành công",
+        },
+        {
+            "label": "Cần xử lý",
+            "value": f"{pending_payment + pending_manual:,}",
+            "unit": "đơn",
+            "note": f"{pending_payment:,} chờ thanh toán · {pending_manual:,} chờ làm tay",
+        },
+    ]
+
+    stat_groups = [
+        {
+            "label": "Đơn hàng",
+            "items": [
+                ("Đơn thành công", f"{finance['completed']:,}", "", "/admin/orders?status=completed"),
+                ("Chờ thanh toán", f"{pending_payment:,}", "", "/admin/orders?status=payment"),
+                ("Chờ làm tay", f"{pending_manual:,}", "", "/admin/orders?status=manual"),
+                ("Độ phủ giá vốn", f"{finance['costed']}/{finance['completed']}", "đơn", "/admin/orders"),
+            ],
+        },
+        {
+            "label": "Kho & danh mục",
+            "items": [
+                ("Sản phẩm", f"{catalog.count_products():,}", "", "/admin/products"),
+                ("Sắp hết hàng", f"{low_stock:,}", "", "/admin/products?kind=local"),
+                ("Danh mục", f"{len(category_names):,}", "", "/admin/categories"),
+                (
+                    "Danh mục có ảnh",
+                    f"{catalog.categories_with_image(category_names)}/{len(category_names)}",
+                    "",
+                    "/admin/categories",
+                ),
+            ],
+        },
+        {
+            "label": "Khách & đối tác",
+            "items": [
+                ("Users", f"{users.count_users():,}", "", "/admin/users"),
+                ("Đang bị ban", f"{banned:,}", "", "/admin/users?status=banned"),
+                ("API partner bật", f"{active_keys}/{len(keys)}", "", "/admin/partners"),
+                ("Số dư API", f"{api_balance:,}", "VND", "/admin/partners"),
+            ],
+        },
+        {
+            "label": "Khuyến mãi & vận hành",
+            "items": [
+                ("Coupon", f"{len(promo.all_coupons()):,}", "", "/admin/coupons"),
+                ("Promo hôm nay", f"{promo.promo_spent_today():,}", "VND", "/admin/coupons"),
+                ("Ticket đang mở", f"{open_tickets:,}", "", "/admin/support"),
+                ("Bot uptime", _uptime_text(), "", "/admin/ops"),
+            ],
+        },
     ]
 
     return render(
         request,
         "dashboard.html",
         {
-            "metrics": metrics,
-            "chart": _chart_points(orders.revenue_by_day(30)),
+            "figures": figures,
+            "stat_groups": stat_groups,
+            "chart": chart,
             "recent_orders": orders.recent(8),
             "open_tickets": [row for row in support.rows(6) if row["open"]],
             "recent_audit": audit.recent(6),
-            "maintenance": bridge.read_flag("maintenance_mode", False),
-            "ai_auto_reply": bridge.read_flag("ai_auto_reply", True),
+            "nav_counts": {
+                "/admin/orders": pending_payment + pending_manual or "",
+                "/admin/support": open_tickets or "",
+            },
             "settings": settings,
             "flash": flash_from(request),
         },
@@ -74,17 +136,28 @@ def _uptime_text() -> str:
     return f"{hours}h {rest // 60}m"
 
 
-def _chart_points(series: list[tuple[str, int]]) -> dict:
-    """Chuẩn bị dữ liệu để template vẽ SVG mà không cần thư viện ngoài."""
+def _chart_bars(series: list[tuple[str, int]]) -> dict:
+    """Dữ liệu biểu đồ cột — template vẽ bằng div, không cần thư viện ngoài."""
     if not series:
-        return {"points": "", "labels": [], "max": 0, "series": []}
+        return {"bars": [], "max": 0, "total": 0, "first": "", "last": ""}
     peak = max(value for _, value in series) or 1
-    step = 100 / max(1, len(series) - 1)
-    points = " ".join(
-        f"{index * step:.2f},{100 - (value * 100 / peak):.2f}"
-        for index, (_, value) in enumerate(series)
-    )
-    return {"points": points, "max": peak, "series": series}
+    bars = [
+        {
+            "day": day,
+            "value": value,
+            # Cột 0 đồng vẫn giữ 2% chiều cao để nhìn ra là có ngày đó.
+            "pct": round(max(value * 100 / peak, 2), 2),
+            "zero": value <= 0,
+        }
+        for day, value in series
+    ]
+    return {
+        "bars": bars,
+        "max": peak,
+        "total": sum(value for _, value in series),
+        "first": series[0][0],
+        "last": series[-1][0],
+    }
 
 
 # --- Users ------------------------------------------------------------------

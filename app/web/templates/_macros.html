@@ -1,4 +1,4 @@
-{# Macro dùng lại cho form và bảng. #}
+{# Macro dùng lại cho panel, form và bảng. #}
 
 {% macro csrf(token) -%}
 <input type="hidden" name="csrf_token" value="{{ token }}">
@@ -41,9 +41,53 @@
 <span class="badge badge-{{ tone }}">{{ text }}</span>
 {%- endmacro %}
 
-{% macro card(title, subtitle='') -%}
-<section class="card">
-  <header><h2>{{ title }}</h2>{% if subtitle %}<p class="muted">{{ subtitle }}</p>{% endif %}</header>
-  {{ caller() }}
+{% macro icon(name) -%}
+<svg aria-hidden="true"><use href="#i-{{ name }}"></use></svg>
+{%- endmacro %}
+
+{# Panel chuẩn: đầu panel là nhãn in hoa nhỏ, thân có padding. #}
+{% macro panel(title, note='', tone='', flush=False) -%}
+<section class="panel{% if tone %} panel--{{ tone }}{% endif %}">
+  {% if title %}
+  <div class="panel__head">
+    <h2 class="panel__title">{{ title }}</h2>
+    {% if note %}<p class="note">{{ note }}</p>{% endif %}
+  </div>
+  {% endif %}
+  {% if flush %}{{ caller() }}{% else %}<div class="panel__body">{{ caller() }}</div>{% endif %}
 </section>
+{%- endmacro %}
+
+{# Panel bọc bảng: bảng tràn sát mép, không có padding thân. #}
+{% macro table_panel(title, note='') -%}
+<section class="panel panel--flush">
+  {% if title %}
+  <div class="panel__head">
+    <h2 class="panel__title">{{ title }}</h2>
+    {% if note %}<p class="note">{{ note }}</p>{% endif %}
+  </div>
+  {% endif %}
+  <div class="table-wrap">{{ caller() }}</div>
+</section>
+{%- endmacro %}
+
+{# Panel chứa form: form đã có padding riêng. #}
+{% macro form_panel(title, note='', action='', tone='', confirm='', enctype='') -%}
+<section class="panel{% if tone %} panel--{{ tone }}{% endif %}">
+  {% if title %}
+  <div class="panel__head">
+    <h2 class="panel__title">{{ title }}</h2>
+    {% if note %}<p class="note">{{ note }}</p>{% endif %}
+  </div>
+  {% endif %}
+  <form method="post" action="{{ action }}" class="form-grid"
+        {%- if enctype %} enctype="{{ enctype }}"{% endif %}
+        {%- if confirm %} data-confirm="{{ confirm }}"{% endif %}>
+    {{ caller() }}
+  </form>
+</section>
+{%- endmacro %}
+
+{% macro back_link(href, label='Danh sách') -%}
+<a class="btn btn--ghost" href="{{ href }}">{{ icon('back') }}{{ label }}</a>
 {%- endmacro %}

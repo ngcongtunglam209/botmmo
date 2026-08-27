@@ -1,88 +1,90 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, field, empty %}
+{% from "_macros.html" import csrf, field, empty, form_panel %}
 
 {% block title %}Danh mục — Lâm Shop Admin{% endblock %}
+{% block crumb %}Danh mục{% endblock %}
 {% block heading %}Danh mục cửa hàng{% endblock %}
 {% block subheading %}{{ rows | length }} danh mục. Thứ tự nhỏ hơn hiện lên trước trong bot.{% endblock %}
 
 {% block content %}
-<section class="card">
-  <header><h2>Thêm danh mục</h2></header>
-  <form method="post" action="/admin/categories/create" class="form-grid">
-    {{ csrf(csrf_token) }}
-    {{ field('Tên danh mục', 'category_name', placeholder='vd: Netflix', required=True) }}
-    {{ field('Thứ tự', 'sort_order', placeholder='1') }}
-    {{ field('Emoji ID', 'emoji_id', placeholder='ID custom emoji của Telegram') }}
-    <div class="form-actions"><button type="submit">Thêm danh mục</button></div>
-  </form>
-</section>
+{% call form_panel('Thêm danh mục', 'Danh mục mới hiện ngay trong bot.', '/admin/categories/create') %}
+  {{ csrf(csrf_token) }}
+  {{ field('Tên danh mục', 'category_name', placeholder='vd: Netflix', required=True) }}
+  {{ field('Thứ tự', 'sort_order', placeholder='1') }}
+  {{ field('Emoji ID', 'emoji_id', placeholder='ID custom emoji của Telegram') }}
+  <div class="form-actions"><button type="submit">Thêm danh mục</button></div>
+{% endcall %}
 
 {% if rows %}
 {% for row in rows %}
-<section class="card category-card">
-  <header>
-    <h2>{{ row.name }}</h2>
-    <p class="muted">
+<section class="panel">
+  <div class="panel__head">
+    <h2 class="panel__title">{{ row.name }}</h2>
+    <p class="note">
       {{ row.product_count }} sản phẩm · thứ tự {{ row.sort_order }}
-      {% if row.hidden %}<span class="badge badge-warn">đang ẩn</span>{% endif %}
+      {% if row.hidden %}<span class="tag tag--warn">đang ẩn</span>{% endif %}
     </p>
-  </header>
-
-  <div class="category-body">
-    {% if row.has_image %}
-      <img class="preview small" src="/admin/category-image/{{ row.slug }}?t={{ now() | int }}"
-           alt="Ảnh danh mục {{ row.name }}">
-    {% endif %}
-
-    <form method="post" action="/admin/categories/update" class="form-grid">
-      {{ csrf(csrf_token) }}
-      <input type="hidden" name="category_name" value="{{ row.name }}">
-      {{ field('Đổi tên', 'new_name', placeholder=row.name,
-               hint='Đổi tên sẽ chuyển toàn bộ sản phẩm sang tên mới.') }}
-      {{ field('Thứ tự', 'sort_order', value=row.sort_order) }}
-      {{ field('Emoji ID', 'emoji_id', value=row.config.emoji_id or '') }}
-      {{ field('Icon URL', 'icon_url', value=row.config.icon_url or '') }}
-      <label class="field checkbox">
-        <input type="checkbox" name="hidden" value="1"{% if row.hidden %} checked{% endif %}>
-        <span>Ẩn khỏi cửa hàng</span>
-      </label>
-      <div class="form-actions"><button type="submit">Lưu</button></div>
-    </form>
   </div>
 
-  <div class="button-row">
-    <form method="post" action="/admin/categories/image" enctype="multipart/form-data" class="inline-upload">
-      {{ csrf(csrf_token) }}
-      <input type="hidden" name="category_name" value="{{ row.name }}">
-      <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
-      <button type="submit">Tải ảnh</button>
-    </form>
+  <div class="panel__body">
+    <div class="category-body">
+      {% if row.has_image %}
+        <img class="preview small" src="/admin/category-image/{{ row.slug }}?t={{ now() | int }}"
+             alt="Ảnh danh mục {{ row.name }}">
+      {% endif %}
 
-    {% if row.has_image %}
-    <form method="post" action="/admin/categories/image/delete" data-confirm="Xóa ảnh danh mục {{ row.name }}?">
-      {{ csrf(csrf_token) }}
-      <input type="hidden" name="category_name" value="{{ row.name }}">
-      <button class="ghost" type="submit">Xóa ảnh</button>
-    </form>
-    {% endif %}
+      <form method="post" action="/admin/categories/update" class="form-grid">
+        {{ csrf(csrf_token) }}
+        <input type="hidden" name="category_name" value="{{ row.name }}">
+        {{ field('Đổi tên', 'new_name', placeholder=row.name,
+                 hint='Đổi tên sẽ chuyển toàn bộ sản phẩm sang tên mới.') }}
+        {{ field('Thứ tự', 'sort_order', value=row.sort_order) }}
+        {{ field('Emoji ID', 'emoji_id', value=row.config.emoji_id or '') }}
+        {{ field('Icon URL', 'icon_url', value=row.config.icon_url or '') }}
+        <label class="field checkbox">
+          <input type="checkbox" name="hidden" value="1"{% if row.hidden %} checked{% endif %}>
+          <span>Ẩn khỏi cửa hàng</span>
+        </label>
+        <div class="form-actions"><button type="submit">Lưu</button></div>
+      </form>
+    </div>
 
-    <form method="post" action="/admin/categories/visibility">
-      {{ csrf(csrf_token) }}
-      <input type="hidden" name="category_name" value="{{ row.name }}">
-      <input type="hidden" name="mode" value="{{ 'show' if row.hidden else 'hide' }}">
-      <button class="ghost" type="submit">{{ 'Hiện lại' if row.hidden else 'Ẩn danh mục' }}</button>
-    </form>
+    <div class="button-row" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line)">
+      <form method="post" action="/admin/categories/image" enctype="multipart/form-data" class="inline-upload">
+        {{ csrf(csrf_token) }}
+        <input type="hidden" name="category_name" value="{{ row.name }}">
+        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
+        <button type="submit">Tải ảnh</button>
+      </form>
 
-    {% if row.name != fallback %}
-    <form method="post" action="/admin/categories/delete"
-          data-confirm="Xóa danh mục {{ row.name }}? {{ row.product_count }} sản phẩm sẽ chuyển sang {{ fallback }}.">
-      {{ csrf(csrf_token) }}
-      <input type="hidden" name="category_name" value="{{ row.name }}">
-      <button class="danger" type="submit">Xóa</button>
-    </form>
-    {% endif %}
+      {% if row.has_image %}
+      <form method="post" action="/admin/categories/image/delete" data-confirm="Xóa ảnh danh mục {{ row.name }}?">
+        {{ csrf(csrf_token) }}
+        <input type="hidden" name="category_name" value="{{ row.name }}">
+        <button class="btn--ghost" type="submit">Xóa ảnh</button>
+      </form>
+      {% endif %}
+
+      <form method="post" action="/admin/categories/visibility">
+        {{ csrf(csrf_token) }}
+        <input type="hidden" name="category_name" value="{{ row.name }}">
+        <input type="hidden" name="mode" value="{{ 'show' if row.hidden else 'hide' }}">
+        <button class="btn--ghost" type="submit">{{ 'Hiện lại' if row.hidden else 'Ẩn danh mục' }}</button>
+      </form>
+
+      {% if row.name != fallback %}
+      <form method="post" action="/admin/categories/delete"
+            data-confirm="Xóa danh mục {{ row.name }}? {{ row.product_count }} sản phẩm sẽ chuyển sang {{ fallback }}.">
+        {{ csrf(csrf_token) }}
+        <input type="hidden" name="category_name" value="{{ row.name }}">
+        <button class="btn--danger" type="submit">Xóa danh mục</button>
+      </form>
+      {% endif %}
+    </div>
   </div>
 </section>
 {% endfor %}
-{% else %}{{ empty('Chưa có danh mục nào.') }}{% endif %}
+{% else %}
+  <section class="panel">{{ empty('Chưa có danh mục nào.') }}</section>
+{% endif %}
 {% endblock %}

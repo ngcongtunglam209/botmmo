@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Không tìm thấy — Lâm Shop Admin{% endblock %}
+{% block crumb %}404{% endblock %}
 {% block heading %}Không tìm thấy{% endblock %}
 {% block subheading %}{{ entity }} <code>{{ item_id }}</code> không tồn tại.{% endblock %}
 
 {% block content %}
-<section class="card">
-  <p>Có thể mục này đã bị xóa, hoặc mã nhập vào chưa đúng.</p>
-  <p><a class="button" href="/admin">Về trang tổng quan</a></p>
+<section class="panel">
+  <div class="stateblock">
+    <div class="stateblock__code">404</div>
+    <p>Có thể mục này đã bị xóa, hoặc mã nhập vào chưa đúng.</p>
+    <a class="btn" href="/admin">Về trang tổng quan</a>
+  </div>
 </section>
 {% endblock %}
