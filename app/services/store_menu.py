@@ -372,35 +372,60 @@ def create_store_menu(selected_category=None, user_id=None):
 
 
 
-# --- COUPON REDEMPTION -------------------------------------------------------
+# --- COUPON: GIU CHO VA TIEU MA ----------------------------------------------
+#
+# Han dung va so luot von chi duoc soat luc khach BAM AP MA. Moi duong tieu ma
+# sau do chi `used += 1`, va duong QR con tri hoan viec do den tan luc doi soat
+# xong. Nen mot ma quantity=1 dung duoc nhieu lan: ap ma -> tao don QR (used van
+# 0) -> ap lai chinh ma do cho don thu hai.
+#
+# Cach chua: don cho GIU CHO mot suat ngay luc duoc tao. `used` van la so lan da
+# tieu that (web admin doc no), `reserved_by` la danh sach ma don dang giu cho.
+# Han muc tinh tren tong hai cai. pending_set()/pending_pop() tu goi reserve va
+# release nen moi duong huy/het han deu duoc phu ma khong phai va tung cho.
 
-def coupon_is_redeemable(code) -> bool:
-    """Ma con dung duoc khong: con luot VA chua het han.
 
-    Bo loc nay von chi chay luc khach BAM AP MA (priority_and_text). Moi duong
-    tieu ma sau do chi `used += 1` ma khong kiem tra lai, nen mot ma quantity=1
-    dung duoc nhieu lan: ap ma -> tao don QR (used van 0 vi chi tang khi doi soat
-    xong) -> ap lai chinh ma do cho don thu hai. Han su dung cung khong duoc soat
-    lai, nen don tao ngay cuoi cung van duoc giam gia khi tien ve sau vai ngay.
-    """
-    details = coupons.get(str(code or "").strip().upper()) if code else None
-    if not isinstance(details, dict):
-        return False
+def _coupon_record(code):
+    normalized = str(code or "").strip().upper()
+    if not normalized:
+        return None, ""
+    details = coupons.get(normalized)
+    return (details if isinstance(details, dict) else None), normalized
 
-    qty_limit = details.get('quantity', 0)
-    used = details.get('used', 0)
+
+def _coupon_reservations(details) -> list:
+    reserved = details.get("reserved_by")
+    if not isinstance(reserved, list):
+        reserved = []
+        details["reserved_by"] = reserved
+    return reserved
+
+
+def coupon_effective_used(details) -> int:
+    """So luot da tieu + so luot dang bi don cho giu."""
     try:
-        used = int(used or 0)
+        used = int(details.get("used", 0) or 0)
     except (TypeError, ValueError):
         used = 0
-    # '∞' (vo han) la gia tri hop le cho quantity, khong phai so.
-    if qty_limit != '∞' and isinstance(qty_limit, int) and used >= qty_limit:
+    return used + len(_coupon_reservations(details))
+
+
+def coupon_is_redeemable(code) -> bool:
+    """Ma con suat VA chua het han."""
+    details, _normalized = _coupon_record(code)
+    if details is None:
         return False
 
-    expires_str = details.get('expires', '')
+    qty_limit = details.get("quantity", 0)
+    # '∞' (vo han) la gia tri hop le cho quantity, khong phai so.
+    if qty_limit != "∞" and isinstance(qty_limit, int):
+        if coupon_effective_used(details) >= qty_limit:
+            return False
+
+    expires_str = details.get("expires", "")
     if expires_str:
         try:
-            exp_date = datetime.strptime(expires_str, '%d-%m-%Y').replace(hour=23, minute=59, second=59)
+            exp_date = datetime.strptime(expires_str, "%d-%m-%Y").replace(hour=23, minute=59, second=59)
             if datetime.now() > exp_date:
                 return False
         except (ValueError, TypeError):
@@ -409,17 +434,58 @@ def coupon_is_redeemable(code) -> bool:
     return True
 
 
-def redeem_coupon(code) -> bool:
-    """Tang `used` sau khi soat lai. False = ma khong con dung duoc.
+def reserve_coupon(code, order_code) -> bool:
+    """Giu mot suat cho don cho. False = het suat/het han.
 
-    Caller phai xu ly False bang cach tinh gia goc, khong duoc am tham cho qua.
+    Goi lai voi cung order_code la no-op tra True, de pending_set() chay may lan
+    cho cung mot don khong an them suat.
     """
-    normalized = str(code or "").strip().upper()
-    if not normalized or not coupon_is_redeemable(normalized):
+    details, normalized = _coupon_record(code)
+    order_code = str(order_code or "").strip().upper()
+    if details is None or not order_code:
         return False
-    details = coupons[normalized]
+    reserved = _coupon_reservations(details)
+    if order_code in reserved:
+        return True
+    if not coupon_is_redeemable(normalized):
+        return False
+    reserved.append(order_code)
+    return True
+
+
+def release_coupon(code, order_code) -> bool:
+    """Tra suat khi don cho bien mat ma chua tra tien. Goi lai la no-op."""
+    details, _normalized = _coupon_record(code)
+    order_code = str(order_code or "").strip().upper()
+    if details is None or not order_code:
+        return False
+    reserved = _coupon_reservations(details)
+    if order_code not in reserved:
+        return False
+    details["reserved_by"] = [item for item in reserved if item != order_code]
+    return True
+
+
+def redeem_coupon(code, order_code=None) -> bool:
+    """Tieu that mot suat. False = ma khong con dung duoc.
+
+    Don da giu cho thi chuyen suat da giu thanh `used` va khong soat lai - suat
+    do da duoc giu tu luc tao don. Don tra bang so du (khong qua don cho) thi
+    soat ngay tai day.
+    """
+    details, normalized = _coupon_record(code)
+    if details is None:
+        return False
+
+    reserved = _coupon_reservations(details)
+    order_code = str(order_code or "").strip().upper()
+    if order_code and order_code in reserved:
+        details["reserved_by"] = [item for item in reserved if item != order_code]
+    elif not coupon_is_redeemable(normalized):
+        return False
+
     try:
-        details['used'] = int(details.get('used', 0) or 0) + 1
+        details["used"] = int(details.get("used", 0) or 0) + 1
     except (TypeError, ValueError):
-        details['used'] = 1
+        details["used"] = 1
     return True

@@ -118,6 +118,10 @@ def get_backup_file_specs():
         (TRANSACTION_HISTORY_FILE, {}),
         (ADMIN_ACTION_LOG_FILE, []),
         (CUSTOM_STORE_ICONS_FILE, {}),
+        # save_data() ghi hai key nay nhung backup truoc day bo qua, nen khoi phuc
+        # len DB trang la mat het lenh nap dang cho va cau hinh danh muc.
+        (USER_TOPUP_FILE, {}),
+        (STORE_CATEGORIES_FILE, {}),
     ]
 
 
@@ -387,7 +391,10 @@ def send_email_backup(zip_path, recipient_email):
                         server.send_message(msg)
                 logger.info(f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Backup email sent via {mode.upper()}:{port} (attempt {attempt}/{max_attempts})")
                 return True, None
-            except (ValueError, TypeError, KeyError, IndexError) as e:
+            # smtplib.SMTPException va socket.timeout deu la OSError, khong nam
+            # trong bo cu - loi SMTP that su thoat han ra ngoai ham, nen vong
+            # retry chua bao gio chay va auto_backup_job vo tinh chet theo.
+            except (OSError, ValueError, TypeError, KeyError, IndexError) as e:
                 err = f"{mode.upper()}:{port} attempt {attempt}/{max_attempts} -> {e}"
                 errors.append(err)
                 logger.warning(f"Backup email send failed: {err}")
