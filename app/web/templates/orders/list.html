@@ -3,13 +3,20 @@
 
 {% block title %}Đơn hàng — Lâm Shop Admin{% endblock %}
 {% block heading %}Đơn hàng{% endblock %}
-{% block subheading %}Hiển thị {{ rows | length }}/{{ total }} đơn mới nhất · {{ pending_count }} đang chờ thanh toán.{% endblock %}
+{% block subheading %}Hiển thị {{ rows | length }} dòng · {{ total }} đơn trong lịch sử · {{ pending_count }} chờ thanh toán · {{ pending_manual_count }} chờ xử lý tay.{% endblock %}
 
 {% block content %}
 <form class="filter-bar" method="get" action="/admin/orders">
   <input type="search" name="q" value="{{ search }}" placeholder="Tìm theo mã đơn, sản phẩm hoặc user ID">
-  <button type="submit">Tìm</button>
-  {% if search %}<a class="ghost" href="/admin/orders">Xóa lọc</a>{% endif %}
+  <select name="status">
+    <option value="">Tất cả đơn</option>
+    <option value="pending"{% if status_filter == 'pending' %} selected{% endif %}>Chưa hoàn thành</option>
+    <option value="payment"{% if status_filter == 'payment' %} selected{% endif %}>Chờ thanh toán</option>
+    <option value="manual"{% if status_filter == 'manual' %} selected{% endif %}>Chờ xử lý tay</option>
+    <option value="completed"{% if status_filter == 'completed' %} selected{% endif %}>Đã hoàn thành</option>
+  </select>
+  <button type="submit">Lọc</button>
+  {% if search or status_filter %}<a class="ghost" href="/admin/orders">Xóa lọc</a>{% endif %}
 </form>
 
 {% if rows %}
@@ -24,7 +31,7 @@
         <td>{{ row.product | shorten(38) }}</td>
         <td>{% if row.user_id %}<a href="/admin/users/{{ row.user_id }}">{{ row.user_id }}</a>{% else %}—{% endif %}</td>
         <td>
-          <span class="badge badge-{{ 'ok' if row.completed else 'warn' }}">{{ row.status | plain | shorten(24) }}</span>
+          <span class="badge badge-{{ 'ok' if row.completed else ('info' if row.kind == 'manual' else 'warn') }}">{{ row.status | plain | shorten(24) }}</span>
         </td>
         <td class="num">{{ row.amount | money }}</td>
         <td class="num">{{ row.quantity }}</td>

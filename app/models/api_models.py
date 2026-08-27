@@ -96,7 +96,7 @@ if FASTAPI_ENABLED:
             x_api_token=request.headers.get("x-api-token"),
             authorization=request.headers.get("authorization"),
         )
-        key_data = _api_normalize_partner_key(token) if token and not hmac.compare_digest(token, API_SECRET_KEY or "") else None
+        key_data = _api_normalize_partner_key(token) if token and not _api_secret_equals(token, API_SECRET_KEY) else None
         fingerprint = _api_key_fingerprint(token) if isinstance(key_data, dict) else ""
         partner_name = str((key_data or {}).get("name") or "")
 

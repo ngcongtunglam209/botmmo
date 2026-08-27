@@ -11,8 +11,12 @@ async def admin_command_wrapper(update: Update, context: ContextTypes.DEFAULT_TY
     try:
         await func(update, context)
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
-        logger.error(f"Lỗi khi thực thi lệnh Admin: {e}", exc_info=True)
-        logger.error(f"Error in backup db: {e}"); await update.message.reply_text("❌ Có lỗi xảy ra khi backup, vui lòng kiểm tra logs.")
+        command_name = getattr(func, "__name__", "?")
+        logger.error(f"Lỗi khi thực thi lệnh Admin {command_name}: {e}", exc_info=True)
+        # Truoc day cau nay luon noi "khi backup" du lenh nao hong cung vay.
+        message = getattr(update, "message", None)
+        if message is not None:
+            await message.reply_text("❌ Lệnh gặp lỗi, vui lòng kiểm tra logs.")
 
 
 

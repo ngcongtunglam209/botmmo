@@ -66,6 +66,8 @@ def _callback_requires_manual_answer(command: str) -> bool:
         'resend_order_items:',
         'report_specific_order:',
         'warranty_done:',
+        'user_cancel_order:',
+        'user_cancel_confirm:',
         'view_order_history_',
     )
     return command in manual_answer_commands or command.startswith(manual_answer_prefixes)
@@ -352,28 +354,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if await handle_admin_callbacks(update, context, command): return
     if await handle_games_callbacks(update, context, command): return
 
-    # Centralized permission gate for sensitive admin callbacks
-    admin_only_prefixes = (
-        'approve_withdraw:',
-        'reject_withdraw:',
-        'approve_warranty:',
-        'reject_warranty:',
-        'approve_api:',
-        'reject_api:',
-        'manual_done:',
-        'manual_refund:',
-        'manual_done_',
-        'manual_refund_',
-        'admin_open_chat:',
-        'admin_close_chat:',
-        'reply_to_ticket:',
-        'replace_auto:',
-        'replace_manual:',
-        'reject_expired:',
-        'reject_policy:',
-        'dismiss_report:',
-        'warranty_done:',
-    )
+    # Cong kiem quyen admin THAT nam o app/handlers/callback_admin.py:47 va chay
+    # truoc ham nay. Ban sao o day chua bao gio duoc doc - da xoa de khong ai
+    # tuong nham la con mot lop bao ve thu hai.
 
 
     if command == 'back_to_main':
@@ -1141,6 +1124,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # FIX: Dùng index O(1)
         order = find_order_by_code_or_supplier_id(order_code)
 
+        # order_index chỉ có order_history, nên đơn còn treo phải tra riêng.
+        pending_kind, pending_code, pending_record = find_pending_order_by_code(order_code)
+        if not order and pending_record:
+            order = dict(pending_record)
+            order.setdefault('order_code', pending_code)
+
         if not order:
             await safe_answer(query, lt(user_id, "Đơn hàng không tồn tại", "Order not found", "订单不存在"), show_alert=True)
             await lichsu_command(update, context, is_callback=True, page=history_page)
@@ -1228,11 +1217,36 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         elif warranty_info.get("reason") == "lifetime_warranty":
             detail_msg += lt(user_id, "\n🛡️ <b>Bảo hành:</b> Không giới hạn", "\n🛡️ <b>Warranty:</b> Lifetime", "\n🛡️ <b>保修：</b> 终身")
 
+        if pending_kind == 'payment':
+            detail_msg += lt(
+                user_id,
+                "\n<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>Đơn chưa thanh toán.</b> Bạn có thể hủy để lấy lại số dư đã trừ.\n",
+                "\n<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>This order is unpaid.</b> You can cancel it to get any deducted balance back.\n",
+                "\n<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>此订单尚未付款。</b>您可以取消并取回已扣除的余额。\n",
+            )
+        elif pending_kind == 'manual':
+            detail_msg += lt(
+                user_id,
+                "\n<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>Đơn đã thanh toán, đang chờ admin xử lý.</b> Cần hỗ trợ thì liên hệ admin.\n",
+                "\n<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>Paid, waiting for the admin to process it.</b> Contact the admin if you need help.\n",
+                "\n<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>已付款，等待管理员处理。</b>需要帮助请联系管理员。\n",
+            )
+
         btns = []
+        if pending_kind == 'payment':
+            btns.append([
+                _btn(
+                    lt(user_id, "Hủy đơn này", "Cancel This Order", "取消此订单"),
+                    icon_id="6186252635805323641",
+                    callback_data=f"user_cancel_order:{order_code}:{history_page}",
+                    style="danger",
+                )
+            ])
         if order.get('items') and 'Hoàn thành' in str(status):
             btns.append([_btn(lt(user_id, "Lấy lại thông tin đơn hàng", "Retrieve Order Details", "重新获取订单信息"), icon_id="5373059489568205167", callback_data=f"resend_order_items:{order_code}:{history_page}")])
         repurchase_product_id, repurchase_product = _resolve_repurchase_product(order)
-        if repurchase_product_id and isinstance(repurchase_product, dict):
+        # Đơn chưa trả tiền thì mua lại vô nghĩa: bot chặn hai đơn chờ cùng lúc.
+        if repurchase_product_id and isinstance(repurchase_product, dict) and pending_kind != 'payment':
             btns.append([
                 _btn(
                     lt(user_id, "Mua lại sản phẩm này", "Buy This Product Again", "再次购买此商品"),
@@ -1241,7 +1255,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     style="success",
                 )
             ])
-        if not is_expired and not is_api_order and not is_refunded:
+        if not is_expired and not is_api_order and not is_refunded and pending_kind != 'payment':
             btns.append([_btn(lt(user_id, "Báo lỗi đơn này", "Report This Order", "报告此订单"), icon_id="5273914604752216432", callback_data=f"report_specific_order:{order_code}")])
         btns.append([_btn(lt(user_id, "Quay lại danh sách", "Back to List", "返回列表"), icon_id="6206032691075223572", callback_data=f"lichsu_page:{history_page}")])
 
@@ -1424,7 +1438,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
                 pass
 
-            ai_answer = await ask_ai(question)
+            # Phai truyen user_id: ask_ai() mac dinh 0 va GroqAssistant khoa
+            # lich su chat theo id do, nen moi khach dung nut Hoi AI se dung
+            # chung MOT bo nho hoi thoai - doc duoc noi dung ho tro cua nguoi
+            # khac, va cai duoc chi thi vao cau tra loi cua nguoi khac.
+            ai_answer = await ask_ai(question, user_id=user_id)
 
             await query.edit_message_text(
                 lt(
@@ -1450,9 +1468,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
                               f'<b>Từ:</b> {format_user_mention_html(user)} (ID: <code>{user.id}</code>)\n'
 
-                              f'<b>Username:</b> @{user.username or "Không có"}\n\n'
+                              f'<b>Username:</b> @{html.escape(str(user.username or "Không có"))}\n\n'
 
-                              f'<b>Nội dung:</b>\n<i>{query_text}</i>')
+                              # Noi dung khach tu go: phai escape. Khong escape thi
+                              # khach chen duoc <a href> thanh link song trong chat admin,
+                              # hoac chi mot dau '<' la Telegram tu choi ca tin nhan va
+                              # admin khong bao gio thay phieu.
+                              f'<b>Nội dung:</b>\n<i>{html.escape(str(query_text or ""))}</i>')
 
         reply_button = InlineKeyboardButton('<tg-emoji emoji-id="5350752364246606166">✍️</tg-emoji> Phản hồi User', callback_data=f"reply_to_ticket:{user.id}")
 

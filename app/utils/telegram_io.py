@@ -679,6 +679,13 @@ def _patch_bot_send_message():
         if not isinstance(text, str):
             return args, kwargs
         plain = _plain_text_preserve_emoji(text)
+        # _plain_text_preserve_emoji() co html.unescape() ben trong, nen mot chuoi
+        # caller da html.escape() dung cach se bi bien NGUOC lai thanh markup
+        # song. Lan gui lai nay van giu parse_mode=HTML, tuc la ten hien thi dang
+        # `&lt;a href=...&gt;` cua khach se thanh mot the <a> that trong tin nhan
+        # admin. Escape lai giong nhanh retry o safe_send_message.
+        if not _is_unset_parse_mode(kwargs.get("parse_mode")):
+            plain = html.escape(plain, quote=False)
         return _inject_field(args, kwargs, field_name, arg_index, plain)
 
     def _is_unset_parse_mode(parse_mode) -> bool:

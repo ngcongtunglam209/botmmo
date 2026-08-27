@@ -119,7 +119,14 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
         # Build prize selection keyboard
         keyboard = []
-        for prize in available_prizes[:5]:  # Max 5 options
+        offered_prizes = available_prizes[:5]  # Max 5 options
+        # Ghi lai dung nhung phan thuong da chao. callback_data do client gui len
+        # nen handler nhan thuong khong duoc tin prize_id trong do: khong co danh
+        # sach nay thi nguoi thang co the doi callback thanh mot san pham bat ky
+        # trong kho va nhan mien phi.
+        dice_game_data[f"prizes_{user_id}"] = [str(prize['id']) for prize in offered_prizes]
+        await save_data()
+        for prize in offered_prizes:
             btn_text = f"<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> {prize['name']}"
             callback = f"dice_prize_{prize['type']}_{prize['id']}"
             keyboard.append([InlineKeyboardButton(btn_text, callback_data=callback)])

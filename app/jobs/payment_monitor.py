@@ -501,6 +501,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     global _bank_api_last_check_time, _bank_api_last_status, _bank_api_last_error, _bank_api_last_tx_count, _bank_api_total_checks, _bank_api_total_success
     data_changed = False
     current_time = time.time()
+    _claimed_tx_id = ""
 
     data_changed |= await _cleanup_expired_pending_orders(context, current_time)
     data_changed |= _cleanup_expired_api_deposits(current_time)
@@ -586,6 +587,10 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                 continue
             if not db_claim_transaction(tx_id):
                 continue
+            # Giu lai ma vua claim: neu than vong lap nem exception (vi du Telegram
+            # tra Forbidden vi khach block bot) thi handler o cuoi ham phai tra claim
+            # ve, khong thi giao dich nam cho het 600s moi duoc quet lai.
+            _claimed_tx_id = tx_id
 
             if user_topup_reference:
                 # === NẠP TIỀN VÀO VÍ NGƯỜI DÙNG ===
@@ -673,7 +678,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                         f"<b>Chi tiết:</b>\n"
                                         f"• Đơn hàng: <code>{order_code}</code>\n"
                                         f"• Product ID: <code>{prod_id}</code>\n"
-                                        f"• Khách: {order_details.get('full_name')} (ID: <code>{order_details['user_id']}</code>)\n"
+                                        f"• Khách: {html.escape(str(order_details.get('full_name') or 'N/A'))} (ID: <code>{order_details['user_id']}</code>)\n"
                                         f"• Số tiền đã nhận: {actual_amount:,} VNĐ\n"
                                         f"• Tổng đã hoàn ví: {_deleted_total:,} VNĐ\n\n"
                                         f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Hệ thống đã tự động hoàn tiền. Vui lòng kiểm tra nguyên nhân product bị xóa.",
@@ -727,10 +732,11 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 }
 
                                 coupon_code_used = order_details.get('coupon_code')
-                                if coupon_code_used:
-                                    coupon_code_used = coupon_code_used.upper()
-                                    if coupon_code_used in coupons:
-                                        coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
+                                if coupon_code_used and not redeem_coupon(coupon_code_used):
+                                    logger.warning(
+                                        f"COUPON: ma {coupon_code_used} het luot/het han khi doi soat "
+                                        f"don {order_code} - giam gia da ap, can doi soat tay"
+                                    )
 
                                 # Xóa khỏi pending_orders (safe delete)
                                 await _mark_pending_payment_message_completed(context, order_details)
@@ -774,30 +780,38 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                     new_balance,
                                     reason=f"Auto refund (Out of stock): {order_code}"
                                 )
-                                await context.bot.send_message(
-                                    order_details['user_id'],
-                                    f"❌ <b>RẤT TIẾC!</b>\n\n"
-                                    f"Sản phẩm <b>{p['name']}</b> vừa được mua hết bởi khách khác.\n\n"
-                                    f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Đơn hàng đã được hoàn tiền tự động: <b>+{total_refund:,} VNĐ</b>\n"
-                                    f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư mới: <b>{new_balance:,} VNĐ</b>",
-                                    parse_mode=ParseMode.HTML
-                                )
-
-                                # Log cho admin
-                                await context.bot.send_message(
-                                    ADMIN_USER_ID,
-                                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>RACE CONDITION - HẾT HÀNG!</b>\n"
-                                    f"Đơn: <code>{order_code}</code>\n"
-                                    f"SP: {p['name']}\n"
-                                    f"Yêu cầu: {qty} | Còn: {current_stock}\n\n"
-                                    f"Đã auto refund: {total_refund:,} VNĐ -> User {order_details['user_id']}",
-                                    parse_mode=ParseMode.HTML
-                                )
-
-                                # Cleanup (safe delete)
+                                # Chot so sach NGAY sau khi cong tien, TRUOC moi lenh
+                                # gui Telegram. Neu de sau, mot Forbidden (khach block
+                                # bot) se lam pending_pop khong chay, don nam lai trong
+                                # pending_orders va _cleanup_expired_pending_orders se
+                                # hoan `balance_used` lan thu hai luc don het han.
                                 await pending_pop(order_code)
                                 db_add_tx(tx_id)
                                 data_changed = True
+
+                                try:
+                                    await context.bot.send_message(
+                                        order_details['user_id'],
+                                        f"❌ <b>RẤT TIẾC!</b>\n\n"
+                                        f"Sản phẩm <b>{p['name']}</b> vừa được mua hết bởi khách khác.\n\n"
+                                        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Đơn hàng đã được hoàn tiền tự động: <b>+{total_refund:,} VNĐ</b>\n"
+                                        f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư mới: <b>{new_balance:,} VNĐ</b>",
+                                        parse_mode=ParseMode.HTML
+                                    )
+                                except (TelegramError, ValueError, KeyError, AttributeError) as notify_error:
+                                    logger.error(
+                                        f"Khong bao duoc hoan tien het hang cho user {order_details['user_id']}: {notify_error}"
+                                    )
+
+                                # Log cho admin
+                                await safe_send_admin(
+                                    context.bot,
+                                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>RACE CONDITION - HẾT HÀNG!</b>\n"
+                                    f"Đơn: <code>{order_code}</code>\n"
+                                    f"SP: {html.escape(str(p['name']))}\n"
+                                    f"Yêu cầu: {qty} | Còn: {current_stock}\n\n"
+                                    f"Đã auto refund: {total_refund:,} VNĐ -> User {order_details['user_id']}",
+                                )
                                 continue
 
 
@@ -902,10 +916,11 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             }
 
                             coupon_code_used = order_details.get("coupon_code")
-                            if coupon_code_used:
-                                coupon_code_used = coupon_code_used.upper()
-                                if coupon_code_used in coupons:
-                                    coupons[coupon_code_used]['used'] = coupons[coupon_code_used].get('used', 0) + 1
+                            if coupon_code_used and not redeem_coupon(coupon_code_used):
+                                logger.warning(
+                                    f"COUPON: ma {coupon_code_used} het luot/het han khi doi soat "
+                                    f"don {order_code} - giam gia da ap, can doi soat tay"
+                                )
 
                             # Live Notification
                             await send_live_order_notification(context, order_details.get("full_name", "Khách hàng"), total_paid, product_name=p['name'], quantity=qty, order_code=order_code)
@@ -955,21 +970,25 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                         await safe_send_admin(context.bot, alert_message); db_add_tx(tx_id); data_changed = True
 
                 else:
-                    if not db_check_tx_exists(tx_id):
-                        db_add_tx(tx_id); data_changed = True
-                        logger.warning(f'CRON: Phát hiện thanh toán trễ/orphan: {order_code} - {int(amount):,} VNĐ (đơn đã hết hạn hoặc đã xử lý)')
-                        existing_order = order_index.get(order_code)
-                        if not existing_order:
-                            await safe_send_admin(
-                                context.bot,
-                                f'<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>THANH TOÁN TRỄ - CẦN XỬ LÝ</b>\n\n'
-                                f'Mã đơn: <code>{order_code}</code>\n'
-                                f'Số tiền: <b>{int(amount):,} VNĐ</b>\n'
-                                f'Mô tả GD: <code>{html.escape(description[:100])}</code>\n'
-                                f'TX ID: <code>{tx_id}</code>\n\n'
-                                f'Đơn hàng này đã hết hạn hoặc không tồn tại trong hàng chờ.\n'
-                                f'Vui lòng kiểm tra và hoàn tiền nếu cần: <code>/refund {order_code}</code>'
-                            )
+                    # Khong con `if not db_check_tx_exists(tx_id)` o day: tx da duoc
+                    # loc trung o dau vong lap va db_claim_transaction() ben tren vua
+                    # ghi dong 'processing', nen dieu kien do LUON sai va ca nhanh nay
+                    # tro thanh code chet - khach chuyen tien tre thi mat tien ma admin
+                    # khong he duoc bao.
+                    db_add_tx(tx_id); data_changed = True
+                    logger.warning(f'CRON: Phát hiện thanh toán trễ/orphan: {order_code} - {int(amount):,} VNĐ (đơn đã hết hạn hoặc đã xử lý)')
+                    existing_order = order_index.get(order_code)
+                    if not existing_order:
+                        await safe_send_admin(
+                            context.bot,
+                            f'<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>THANH TOÁN TRỄ - CẦN XỬ LÝ</b>\n\n'
+                            f'Mã đơn: <code>{order_code}</code>\n'
+                            f'Số tiền: <b>{int(amount):,} VNĐ</b>\n'
+                            f'Mô tả GD: <code>{html.escape(description[:100])}</code>\n'
+                            f'TX ID: <code>{tx_id}</code>\n\n'
+                            f'Đơn hàng này đã hết hạn hoặc không tồn tại trong hàng chờ.\n'
+                            f'Vui lòng kiểm tra và hoàn tiền nếu cần: <code>/refund {order_code}</code>'
+                        )
 
             elif api_deposit_reference:
                 # === XỬ LÝ NẠP TIỀN API ===
@@ -1087,8 +1106,33 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             context.bot,
                             f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>LỖI NẠP API (THIẾU TIỀN)</b>\nCode: {deposit_code}\nNhận: {amount_received:,}\nCần: {amount_expected:,}"
                          )
+                else:
+                    # Ma NAPI khong con trong hang cho (het han va bi
+                    # _cleanup_expired_api_deposits pop, hoac noi dung CK chi tinh co
+                    # chua chuoi NAPI<so>). _find_pending_api_deposit_reference() khop
+                    # bang regex chu khong kiem tra membership nen van vao duoc day.
+                    # Khong co nhanh nay thi tx da claim se roi ra ngoai ma khong
+                    # db_add_tx: tien vao tai khoan shop, khong ai duoc cong, khong ai
+                    # duoc bao. Xu ly giong nhanh NAPU o tren.
+                    db_add_tx(tx_id); data_changed = True
+                    logger.warning(
+                        f"CRON: Ma nap API {deposit_code} khong con trong hang cho (tx {tx_id})"
+                    )
+                    await safe_send_admin(
+                        context.bot,
+                        f"{E_LIMIT} <b>NẠP API KHÔNG KHỚP LỆNH</b>\n"
+                        f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> Code: <code>{html.escape(deposit_code)}</code>\n"
+                        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Số tiền: {int(amount):,} VNĐ\n"
+                        f"<tg-emoji emoji-id=\"5350481781306958339\">🧾</tg-emoji> TX: <code>{tx_id}</code>\n"
+                        f"<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Lệnh nạp đã hết hạn hoặc không tồn tại. Vui lòng đối soát và cộng tay."
+                    )
 
-    except (TelegramError, httpx.HTTPError, sqlite3.Error, ValueError, KeyError) as e: logger.error(f"❌ LỖI KHÔNG XÁC ĐỊNH TRONG check_payment_job: {e}", exc_info=True)
+    except (TelegramError, httpx.HTTPError, sqlite3.Error, ValueError, KeyError) as e:
+        logger.error(f"❌ LỖI KHÔNG XÁC ĐỊNH TRONG check_payment_job: {e}", exc_info=True)
+        # Tra lai claim dang do dang. db_release_transaction() chi xoa dong con
+        # 'processing' nen giao dich da xu ly xong khong bi dung toi.
+        if _claimed_tx_id and db_release_transaction(_claimed_tx_id):
+            logger.warning(f"CRON: Da tra lai claim cho tx {_claimed_tx_id} de vong quet sau thu lai")
     if data_changed: await save_critical_tables(HISTORY_FILE, PROCESSED_TX_FILE, PENDING_ORDERS_FILE, USERS_FILE, API_KEYS_FILE, "data_pending_api_deposits.json")
 
 async def cleanup_expired_coupons_job(context: ContextTypes.DEFAULT_TYPE) -> None:

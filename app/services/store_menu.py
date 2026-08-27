@@ -370,3 +370,56 @@ def create_store_menu(selected_category=None, user_id=None):
     keyboard.append([_btn(labels["back_categories"], icon_id="6206032691075223572", callback_data="store_main")])
     return InlineKeyboardMarkup(keyboard)
 
+
+
+# --- COUPON REDEMPTION -------------------------------------------------------
+
+def coupon_is_redeemable(code) -> bool:
+    """Ma con dung duoc khong: con luot VA chua het han.
+
+    Bo loc nay von chi chay luc khach BAM AP MA (priority_and_text). Moi duong
+    tieu ma sau do chi `used += 1` ma khong kiem tra lai, nen mot ma quantity=1
+    dung duoc nhieu lan: ap ma -> tao don QR (used van 0 vi chi tang khi doi soat
+    xong) -> ap lai chinh ma do cho don thu hai. Han su dung cung khong duoc soat
+    lai, nen don tao ngay cuoi cung van duoc giam gia khi tien ve sau vai ngay.
+    """
+    details = coupons.get(str(code or "").strip().upper()) if code else None
+    if not isinstance(details, dict):
+        return False
+
+    qty_limit = details.get('quantity', 0)
+    used = details.get('used', 0)
+    try:
+        used = int(used or 0)
+    except (TypeError, ValueError):
+        used = 0
+    # '∞' (vo han) la gia tri hop le cho quantity, khong phai so.
+    if qty_limit != '∞' and isinstance(qty_limit, int) and used >= qty_limit:
+        return False
+
+    expires_str = details.get('expires', '')
+    if expires_str:
+        try:
+            exp_date = datetime.strptime(expires_str, '%d-%m-%Y').replace(hour=23, minute=59, second=59)
+            if datetime.now() > exp_date:
+                return False
+        except (ValueError, TypeError):
+            # Ngay khong doc duoc: coi nhu khong het han, giong bo loc luc ap ma.
+            pass
+    return True
+
+
+def redeem_coupon(code) -> bool:
+    """Tang `used` sau khi soat lai. False = ma khong con dung duoc.
+
+    Caller phai xu ly False bang cach tinh gia goc, khong duoc am tham cho qua.
+    """
+    normalized = str(code or "").strip().upper()
+    if not normalized or not coupon_is_redeemable(normalized):
+        return False
+    details = coupons[normalized]
+    try:
+        details['used'] = int(details.get('used', 0) or 0) + 1
+    except (TypeError, ValueError):
+        details['used'] = 1
+    return True

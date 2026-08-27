@@ -69,7 +69,7 @@ async def send_live_order_notification(context: ContextTypes.DEFAULT_TYPE, full_
 
         msg = (
             f"{E_SUCCESS} <b>VỪA CÓ KHÁCH HÀNG MUA THÀNH CÔNG!</b>\n\n"
-            f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Khách hàng:</b> {masked_name}\n"
+            f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Khách hàng:</b> {html.escape(str(masked_name))}\n"
             f"{E_TAG} <b>Sản phẩm:</b> {product_name}{qty_text}\n"
             f"{E_TAG} <b>Thanh toán:</b> {amount:,} VNĐ\n"
             f"{E_LOADING} <b>Thời gian:</b> {time_str}"

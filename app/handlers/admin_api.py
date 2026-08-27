@@ -7,7 +7,12 @@ async def addapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     partner_name = context.args[0]
     # Tạo key ngẫu nhiên
-    new_key = "LAMSHOP-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
+    # secrets chu khong phai random: random la Mersenne Twister, doan duoc trang
+    # thai neu quan sat du output cua cung mot process - ma partner nhin thay
+    # nhieu output do (hau to cua generate_partner_ref, ma coupon, ma don).
+    # app/api/helpers.py:487 da dung secrets; cho nay la cho con sot lai.
+    alphabet = string.ascii_uppercase + string.digits
+    new_key = "LAMSHOP-" + ''.join(secrets.choice(alphabet) for _ in range(16))
 
     # Lưu dưới dạng Dict để chứa cả số dư
     api_keys[new_key] = {

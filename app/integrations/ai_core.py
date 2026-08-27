@@ -24,10 +24,22 @@ class GroqAssistant:
         return True
 
     def get_chat_history(self, user_id: int):
-        """Get or create chat history"""
-        if user_id not in self.chat_sessions:
-            self.chat_sessions[user_id] = []
-        return self.chat_sessions[user_id]
+        """Get or create chat history.
+
+        user_id khong hop le (0/None/am) -> tra list roi dung mot lan, KHONG luu
+        vao chat_sessions. Neu khong, moi caller quen truyen user_id se cung do
+        vao chung mot o nho, bien no thanh kenh ro ri giua cac khach.
+        """
+        try:
+            key = int(user_id or 0)
+        except (TypeError, ValueError):
+            key = 0
+        if key <= 0:
+            logger.warning("ask_ai duoc goi khong co user_id hop le; khong dung lich su chung")
+            return []
+        if key not in self.chat_sessions:
+            self.chat_sessions[key] = []
+        return self.chat_sessions[key]
 
     def clear_chat(self, user_id: int):
         """Clear chat history for user"""

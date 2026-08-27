@@ -515,6 +515,22 @@ async def _api_rotate_partner_key(api_key: str):
 
 # NOTE: run_api_server() đã được định nghĩa bên dưới (gần cuối file) — duy nhất 1 bản.
 
+def _api_secret_equals(supplied, expected) -> bool:
+    """So sanh chong timing attack, chiu duoc header ngoai ASCII.
+
+    hmac.compare_digest() voi hai str se nem TypeError neu co ky tu > 127
+    ("comparing strings with non-ASCII characters is not supported"). Header do
+    client gui va Starlette giai ma latin-1, nen mot header co dau tieng Viet
+    lam endpoint tra 500 thay vi 401. So bang bytes thi khong con van de do.
+    """
+    import hmac as _hmac
+
+    return _hmac.compare_digest(
+        str(supplied or "").encode("utf-8", "surrogateescape"),
+        str(expected or "").encode("utf-8", "surrogateescape"),
+    )
+
+
 def _api_require_actor(
     x_api_key: str | None = None,
     x_api_token: str | None = None,
@@ -531,7 +547,7 @@ def _api_require_actor(
     if not resolved_api_key:
         raise HTTPException(status_code=401, detail="Missing API Key")
 
-    if hmac.compare_digest(resolved_api_key, API_SECRET_KEY):
+    if _api_secret_equals(resolved_api_key, API_SECRET_KEY):
         if not allow_admin:
             raise HTTPException(status_code=403, detail="Admin API key is not allowed for this route")
         return {

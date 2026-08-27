@@ -79,6 +79,26 @@ def pending_manual() -> dict:
     return collections.pending_manual_orders.read()
 
 
+def pending_all() -> list[dict]:
+    """Đơn chưa hoàn thành, mới nhất trước.
+
+    Gộp hai nguồn pending vì cả hai đều là đơn đang treo: `payment` là đơn chờ
+    chuyển khoản, `manual` là đơn đã trả tiền nhưng còn chờ email / admin giao tay.
+    `code` lấy từ key của dict — bản ghi manual do payment_monitor tạo không có
+    trường `order_code`.
+    """
+    rows: list[dict] = []
+    for kind, source in (("payment", pending()), ("manual", pending_manual())):
+        if not isinstance(source, dict):
+            continue
+        for code, record in source.items():
+            if not isinstance(record, dict):
+                continue
+            rows.append({"kind": kind, "code": str(code).strip().upper(), "record": record})
+    rows.sort(key=lambda row: domain.order_timestamp(row["record"]), reverse=True)
+    return rows
+
+
 def completed(source: list[dict] | None = None) -> Iterator[dict]:
     for order in history() if source is None else source:
         if domain.is_completed_order(order) and not order.get("refunded_at"):

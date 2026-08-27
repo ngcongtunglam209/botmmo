@@ -1044,8 +1044,11 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 'coupon_code': store_coupon_code,
                 'last_reminded': 0 # Track reminder
             }
-            if store_coupon_code and store_coupon_code in coupons:
-                coupons[store_coupon_code]['used'] = coupons[store_coupon_code].get('used', 0) + 1
+            if store_coupon_code and not redeem_coupon(store_coupon_code):
+                logger.warning(
+                    f"COUPON: ma {store_coupon_code} het luot/het han luc chot don manual "
+                    f"{order_code} (user {user_id}) - giam gia da ap, can doi soat tay"
+                )
             await save_data(force=True)
             clear_store_coupon_context(context)
 
@@ -1125,9 +1128,13 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         items_bought = list(stock_result.get("items") or [])
         actual_qty = int(stock_result.get("actual_delivered") or len(items_bought))
         refunded_qty = int(stock_result.get("refunded_qty") or 0)
-        unit_price = int(p.get("price", 0) or 0)
+        # Hoan theo DUNG don gia da tinh tien (`unit_price` sau giam gia o tren),
+        # khong phai gia niem yet. Truoc day dong nay gan de `p['price']` len
+        # unit_price, nen don co flash sale/coupon se hoan nhieu hon so da thu:
+        # charged_amount am -> `balance - so am` lam VI KHACH TANG LEN.
+        # Bang doi chieu lam dung: app/api/order_pipeline.py:100.
         refund_amount = refunded_qty * unit_price
-        charged_amount = total_price - refund_amount
+        charged_amount = max(0, total_price - refund_amount)
         new_balance = balance - charged_amount
         db_update_balance(user_id, new_balance, reason=f"Purchase: {p['name']} x{actual_qty} (refunded {refunded_qty} duplicates)")
 
@@ -1161,8 +1168,11 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         }
         order_data["delivery_method"] = "pending"
         db_add_order(order_data)
-        if store_coupon_code and store_coupon_code in coupons:
-            coupons[store_coupon_code]['used'] = coupons[store_coupon_code].get('used', 0) + 1
+        if store_coupon_code and not redeem_coupon(store_coupon_code):
+            logger.warning(
+                f"COUPON: ma {store_coupon_code} het luot/het han luc chot don {order_code} "
+                f"(user {user_id}) - giam gia da ap, can doi soat tay"
+            )
         clear_store_coupon_context(context)
         total_discount = (p['price'] * qty) - total_price
         if total_discount > 0:
