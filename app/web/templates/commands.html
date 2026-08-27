@@ -1,28 +1,27 @@
 {% extends "base.html" %}
+{% from "_macros.html" import table_panel %}
 
 {% block title %}Lệnh admin — Lâm Shop Admin{% endblock %}
+{% block crumb %}Lệnh bot{% endblock %}
 {% block heading %}Lệnh admin trên Telegram{% endblock %}
 {% block subheading %}{{ total }} lệnh trong {{ groups | length }} nhóm.{% endblock %}
 
 {% block content %}
 {% for group in groups %}
-<section class="card">
-  <header><h2>{{ group.group }}</h2></header>
-  <div class="table-wrap">
-    <table class="data-table">
-      <thead><tr><th>Lệnh</th><th>Cú pháp</th><th>Mô tả</th><th>Mức độ</th></tr></thead>
-      <tbody>
-        {% for command in group.commands %}
-        <tr>
-          <td class="mono strong-link">/{{ command.name }}</td>
-          <td class="mono">{{ command.syntax }}</td>
-          <td style="white-space: normal">{{ command.description }}</td>
-          <td><span class="badge badge-{{ command.tone }}">{{ command.risk }}</span></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
+  {% call table_panel(group.group, group.commands | length ~ ' lệnh') %}
+  <table class="table">
+    <thead><tr><th>Lệnh</th><th>Cú pháp</th><th>Mô tả</th><th>Mức độ</th></tr></thead>
+    <tbody>
+      {% for command in group.commands %}
+      <tr>
+        <td class="mono strong-link">/{{ command.name }}</td>
+        <td class="mono">{{ command.syntax }}</td>
+        <td class="wrap">{{ command.description }}</td>
+        <td><span class="tag tag--{{ command.tone }}">{{ command.risk }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endcall %}
 {% endfor %}
 {% endblock %}

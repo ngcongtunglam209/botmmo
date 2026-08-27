@@ -1,40 +1,40 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, field, textarea, select, empty %}
+{% from "_macros.html" import csrf, field, textarea, select, empty, form_panel, table_panel %}
 
 {% block title %}Hỗ trợ — Lâm Shop Admin{% endblock %}
+{% block crumb %}Hỗ trợ{% endblock %}
 {% block heading %}Hỗ trợ{% endblock %}
 {% block subheading %}{{ open_count }} ticket đang mở trên tổng {{ rows | length }} hiển thị.{% endblock %}
 
 {% block content %}
-<section class="card">
-  <header><h2>Cập nhật ticket</h2></header>
-  <form method="post" action="/admin/support/update" class="form-grid">
-    {{ csrf(csrf_token) }}
-    {{ select('Loại', 'entity', [('live_chat', 'Live chat'), ('warranty', 'Bảo hành'), ('withdrawal', 'Rút tiền')]) }}
-    {{ field('ID ticket', 'item_id', placeholder='ID hiển thị trong bảng bên dưới', required=True) }}
-    {{ field('Trạng thái', 'status', placeholder='pending / resolved / rejected') }}
-    {{ textarea('Ghi chú xử lý', 'admin_note', rows=3) }}
-    <div class="form-actions"><button type="submit">Cập nhật ticket</button></div>
-  </form>
-</section>
+{% call form_panel('Cập nhật ticket', 'Điền ID lấy từ bảng bên dưới.', '/admin/support/update') %}
+  {{ csrf(csrf_token) }}
+  {{ select('Loại', 'entity', [('live_chat', 'Live chat'), ('warranty', 'Bảo hành'), ('withdrawal', 'Rút tiền')]) }}
+  {{ field('ID ticket', 'item_id', placeholder='ID hiển thị trong bảng bên dưới', required=True) }}
+  {{ field('Trạng thái', 'status', placeholder='pending / resolved / rejected') }}
+  {{ textarea('Ghi chú xử lý', 'admin_note', rows=3) }}
+  <div class="form-actions"><button type="submit">Cập nhật ticket</button></div>
+{% endcall %}
 
 {% if rows %}
-<div class="table-wrap">
-  <table class="data-table">
+  {% call table_panel('Ticket', rows | length ~ ' dòng') %}
+  <table class="table">
     <thead><tr><th>Loại</th><th>ID</th><th>User</th><th>Trạng thái</th><th>Nội dung</th><th>Cập nhật</th></tr></thead>
     <tbody>
       {% for row in rows %}
       <tr>
         <td>{{ row.label }}</td>
         <td class="mono">{{ row.id }}</td>
-        <td>{% if row.user_id %}<a href="/admin/users/{{ row.user_id }}">{{ row.user_id }}</a>{% else %}—{% endif %}</td>
-        <td><span class="badge badge-{{ 'warn' if row.open else 'ok' }}">{{ row.status }}</span></td>
-        <td>{{ row.summary | plain | shorten(60) or '—' }}</td>
-        <td>{{ row.updated_at | timestamp }}</td>
+        <td>{% if row.user_id %}<a class="mono" href="/admin/users/{{ row.user_id }}">{{ row.user_id }}</a>{% else %}—{% endif %}</td>
+        <td><span class="tag tag--{{ 'warn' if row.open else 'ok' }}">{{ row.status }}</span></td>
+        <td class="wrap">{{ row.summary | plain | shorten(70) or '—' }}</td>
+        <td class="mono">{{ row.updated_at | timestamp }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-</div>
-{% else %}{{ empty('Không có ticket nào.') }}{% endif %}
+  {% endcall %}
+{% else %}
+  <section class="panel">{{ empty('Không có ticket nào.') }}</section>
+{% endif %}
 {% endblock %}

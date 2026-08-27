@@ -73,13 +73,17 @@ templates.env.globals["now"] = time.time
 
 
 def render(request: Request, template: str, context: dict[str, Any] | None = None, **kwargs):
-    """Render template với context chuẩn (csrf, đường dẫn hiện tại)."""
+    """Render template với context chuẩn (csrf, đường dẫn, cờ trạng thái sidebar)."""
+    from . import bridge
     from .deps import csrf_token
 
     payload: dict[str, Any] = {
         "request": request,
         "csrf_token": csrf_token(request),
         "current_path": request.url.path,
+        # Thanh bên hiện cờ vận hành ở mọi trang, không riêng dashboard/ops.
+        "maintenance": bridge.read_flag("maintenance_mode", False),
+        "ai_auto_reply": bridge.read_flag("ai_auto_reply", True),
     }
     payload.update(context or {})
     return templates.TemplateResponse(request, template, payload, **kwargs)

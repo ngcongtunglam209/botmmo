@@ -1,29 +1,30 @@
 {% extends "base.html" %}
-{% from "_macros.html" import empty %}
+{% from "_macros.html" import empty, table_panel, icon %}
 
 {% block title %}Sản phẩm — Lâm Shop Admin{% endblock %}
+{% block crumb %}Sản phẩm{% endblock %}
 {% block heading %}Sản phẩm &amp; tồn kho{% endblock %}
 {% block subheading %}Hiển thị {{ rows | length }}/{{ total }} sản phẩm.{% endblock %}
 
 {% block tools %}
-  <a class="button" href="/admin/products/new">Tạo sản phẩm</a>
+  <a class="btn" href="/admin/products/new">{{ icon('plus') }}Tạo sản phẩm</a>
 {% endblock %}
 
 {% block content %}
-<form class="filter-bar" method="get" action="/admin/products">
+<form class="filters" method="get" action="/admin/products">
   <input type="search" name="q" value="{{ search }}" placeholder="Tìm theo ID, tên hoặc danh mục">
   <select name="kind">
     <option value="">Tất cả loại</option>
     <option value="local"{% if kind == 'local' %} selected{% endif %}>Local stock</option>
     <option value="manual"{% if kind == 'manual' %} selected{% endif %}>Manual / Gmail</option>
   </select>
-  <button type="submit">Lọc</button>
-  {% if search or kind %}<a class="ghost" href="/admin/products">Xóa lọc</a>{% endif %}
+  <button type="submit">{{ icon('filter') }}Lọc</button>
+  {% if search or kind %}<a class="btn btn--ghost" href="/admin/products">Xóa lọc</a>{% endif %}
 </form>
 
 {% if rows %}
-<div class="table-wrap">
-  <table class="data-table">
+  {% call table_panel('Danh sách', rows | length ~ ' dòng') %}
+  <table class="table">
     <thead>
       <tr><th>Sản phẩm</th><th>Danh mục</th><th>Loại</th><th class="num">Giá bán</th>
           <th class="num">Giá vốn</th><th class="num">Tồn</th><th class="num">Pending</th><th></th></tr>
@@ -32,11 +33,13 @@
       {% for row in rows %}
       <tr>
         <td>
-          <a class="strong-link" href="/admin/products/{{ row.id }}">{{ row.name }}</a>
-          <small class="mono">{{ row.id }}</small>
+          <span class="cell-id">
+            <a class="strong-link" href="/admin/products/{{ row.id }}">{{ row.name }}</a>
+            <small>{{ row.id }}</small>
+          </span>
         </td>
         <td>{{ row.category or '—' }}</td>
-        <td><span class="badge badge-{{ 'info' if row.kind == 'local' else 'warn' }}">{{ row.kind }}</span></td>
+        <td><span class="tag tag--{{ 'info' if row.kind == 'local' else 'warn' }}">{{ row.kind }}</span></td>
         <td class="num">{{ row.price | money }}</td>
         <td class="num">{{ row.cost_price | money }}</td>
         <td class="num">
@@ -44,13 +47,13 @@
           {% else %}<span class="{{ 'low' if row.stock <= 3 else '' }}">{{ row.stock }}</span>{% endif %}
         </td>
         <td class="num">{{ row.pending }}</td>
-        <td class="row-actions"><a href="/admin/products/{{ row.id }}">Mở</a></td>
+        <td class="row-actions"><a class="btn btn--ghost btn--sm" href="/admin/products/{{ row.id }}">Mở</a></td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-</div>
+  {% endcall %}
 {% else %}
-  {{ empty('Không có sản phẩm nào khớp bộ lọc.') }}
+  <section class="panel">{{ empty('Không có sản phẩm nào khớp bộ lọc.') }}</section>
 {% endif %}
 {% endblock %}

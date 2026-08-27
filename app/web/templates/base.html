@@ -4,60 +4,125 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#0b0c0f">
+  <meta name="theme-color" content="#0a0b0c">
   <title>{% block title %}Lâm Shop Admin{% endblock %}</title>
+  <link rel="preload" as="style" href="/admin/static/app.css">
   <link rel="stylesheet" href="/admin/static/app.css">
-  <script>if (localStorage.getItem('admin_theme') === 'light') document.documentElement.classList.add('light');</script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23f2b03c'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='600' text-anchor='middle' fill='%2317130a'%3EL%3C/text%3E%3C/svg%3E">
+  <script>
+    // Đặt trước khi vẽ để không nháy nền sáng/tối.
+    (function () {
+      var t = localStorage.getItem('admin_theme');
+      if (t === 'light') document.documentElement.classList.add('light');
+      if (localStorage.getItem('admin_rail') === 'collapsed') document.documentElement.classList.add('rail-collapsed');
+    })();
+  </script>
 </head>
 <body>
+{% include "_icons.html" %}
 <a class="skip-link" href="#main">Tới nội dung chính</a>
 
-<header class="topbar">
-  <button class="menu-toggle" type="button" aria-label="Mở menu" aria-expanded="false" data-menu-toggle>
-    <span></span><span></span><span></span>
-  </button>
-  <a class="brand" href="/admin"><span class="brand-mark">L</span> Lâm Shop <b>Admin</b></a>
-  <nav class="nav" data-nav>
-    {% set links = [
-      ('/admin', 'Tổng quan'),
-      ('/admin/products', 'Sản phẩm'),
-      ('/admin/categories', 'Danh mục'),
-      ('/admin/orders', 'Đơn hàng'),
-      ('/admin/users', 'Users'),
-      ('/admin/partners', 'API partner'),
-      ('/admin/coupons', 'Coupon'),
-      ('/admin/support', 'Hỗ trợ'),
-      ('/admin/ops', 'Vận hành'),
-      ('/admin/audit', 'Audit'),
-    ] %}
-    {% for href, label in links %}
-      <a href="{{ href }}"{% if current_path == href %} aria-current="page"{% endif %}>{{ label }}</a>
-    {% endfor %}
-  </nav>
-  <div class="topbar-actions">
-    <button type="button" class="icon-button" data-theme-toggle title="Đổi nền sáng/tối" aria-label="Đổi nền sáng tối">◐</button>
-    <form method="post" action="/admin/logout">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button type="submit" class="ghost">Đăng xuất</button>
-    </form>
-  </div>
-</header>
+{% set nav_groups = [
+  ('Bán hàng', [
+    ('/admin', 'Tổng quan', 'gauge'),
+    ('/admin/orders', 'Đơn hàng', 'receipt'),
+    ('/admin/products', 'Sản phẩm', 'box'),
+    ('/admin/categories', 'Danh mục', 'layers'),
+    ('/admin/coupons', 'Khuyến mãi', 'ticket'),
+  ]),
+  ('Khách hàng', [
+    ('/admin/users', 'Users', 'users'),
+    ('/admin/support', 'Hỗ trợ', 'buoy'),
+  ]),
+  ('Hệ thống', [
+    ('/admin/partners', 'API partner', 'key'),
+    ('/admin/ops', 'Vận hành', 'sliders'),
+    ('/admin/audit', 'Audit', 'history'),
+    ('/admin/commands', 'Lệnh bot', 'terminal'),
+  ]),
+] %}
 
-<main id="main">
-  <div class="page-head">
-    <div>
-      <h1>{% block heading %}{% endblock %}</h1>
-      <p class="muted">{% block subheading %}{% endblock %}</p>
+<div class="shell" data-shell>
+  <aside class="rail" data-rail>
+    <a class="rail__brand" href="/admin">
+      <span class="rail__mark">LS</span>
+      <span class="rail__name"><b>Lâm Shop</b><span>Admin console</span></span>
+    </a>
+
+    <nav class="rail__scroll" aria-label="Điều hướng chính">
+      {% for group_label, items in nav_groups %}
+        <div class="rail__group">
+          <span class="rail__group-label">{{ group_label }}</span>
+          {% for href, label, icon in items %}
+            {% set active = current_path == href or (href != '/admin' and current_path.startswith(href ~ '/')) %}
+            <a class="rail__link" href="{{ href }}"{% if active %} aria-current="page"{% endif %} title="{{ label }}">
+              <svg aria-hidden="true"><use href="#i-{{ icon }}"></use></svg>
+              <span>{{ label }}</span>
+              {% if nav_counts and nav_counts.get(href) %}<em class="rail__count">{{ nav_counts[href] }}</em>{% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </nav>
+
+    <div class="rail__foot">
+      <div class="rail__flags">
+        <span class="rail__flag {{ 'is-alert' if maintenance else '' }}"><i></i>Bảo trì {{ maintenance | onoff }}</span>
+        <span class="rail__flag {{ 'is-on' if ai_auto_reply else '' }}"><i></i>AI reply {{ ai_auto_reply | onoff }}</span>
+      </div>
+      <div class="rail__actions">
+        <button type="button" class="btn btn--ghost" data-theme-toggle title="Đổi nền sáng/tối" aria-label="Đổi nền sáng tối">
+          <svg aria-hidden="true"><use href="#i-moon" data-theme-icon></use></svg>
+          <span class="btn__text">Giao diện</span>
+        </button>
+        <form method="post" action="/admin/logout">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="btn btn--ghost" title="Đăng xuất">
+            <svg aria-hidden="true"><use href="#i-logout"></use></svg>
+            <span class="btn__text">Thoát</span>
+          </button>
+        </form>
+      </div>
     </div>
-    <div class="page-tools">{% block tools %}{% endblock %}</div>
+  </aside>
+
+  <div class="content">
+    <header class="topbar">
+      <button type="button" class="iconbtn railtoggle" data-rail-toggle aria-label="Mở menu" aria-expanded="false">
+        <svg aria-hidden="true"><use href="#i-menu"></use></svg>
+      </button>
+      <div class="topbar__crumb">
+        <span>Lâm Shop</span><span>/</span><b>{% block crumb %}{{ self.heading() }}{% endblock %}</b>
+      </div>
+      <div class="topbar__spacer"></div>
+      <button type="button" class="searchbtn" data-palette-open>
+        <svg aria-hidden="true"><use href="#i-search"></use></svg>
+        <span>Nhảy tới trang…</span>
+        <kbd>Ctrl K</kbd>
+      </button>
+      <button type="button" class="iconbtn" data-rail-collapse title="Thu gọn thanh bên" aria-label="Thu gọn thanh bên">
+        <svg aria-hidden="true"><use href="#i-panel"></use></svg>
+      </button>
+    </header>
+
+    <main id="main">
+      <div class="pagehead">
+        <div>
+          <h1>{% block heading %}{% endblock %}</h1>
+          <p class="sub">{% block subheading %}{% endblock %}</p>
+        </div>
+        <div class="pagetools">{% block tools %}{% endblock %}</div>
+      </div>
+      {% block content %}{% endblock %}
+    </main>
   </div>
-  {% block content %}{% endblock %}
-</main>
+</div>
 
 <div id="toasts" aria-live="polite"></div>
 {% if flash %}
 <script id="flash-data" type="application/json">{{ flash | tojson }}</script>
 {% endif %}
+<script id="nav-data" type="application/json">{{ nav_groups | tojson }}</script>
 
 <script src="/admin/static/htmx.min.js" defer></script>
 <script src="/admin/static/app.js" defer></script>

@@ -1,29 +1,49 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, field, empty %}
+{% from "_macros.html" import csrf, field, empty, form_panel, table_panel %}
 
 {% block title %}Coupon — Lâm Shop Admin{% endblock %}
+{% block crumb %}Khuyến mãi{% endblock %}
 {% block heading %}Khuyến mãi{% endblock %}
 {% block subheading %}{{ snapshot.coupons }} coupon · {{ snapshot.flash_sales }} flash sale ·
   {{ snapshot.combo_deals }} combo · đã chi {{ snapshot.spent_today | money }} hôm nay.{% endblock %}
 
 {% block content %}
-<section class="card">
-  <header><h2>Thêm / cập nhật coupon</h2>
-    <p class="muted">Trùng mã sẽ ghi đè, số lượt đã dùng được giữ nguyên.</p></header>
-  <form method="post" action="/admin/coupons/save" class="form-grid">
-    {{ csrf(csrf_token) }}
-    <input type="hidden" name="mode" value="add">
-    {{ field('Mã coupon', 'code', placeholder='SALE2026', required=True) }}
-    {{ field('Giảm (VND)', 'discount', placeholder='35000') }}
-    {{ field('Số lượng', 'quantity', placeholder='100') }}
-    {{ field('Hết hạn sau (ngày)', 'days', placeholder='30') }}
-    <div class="form-actions"><button type="submit">Lưu coupon</button></div>
-  </form>
-</section>
+<div class="figures">
+  <div class="figure">
+    <span class="figure__label">Coupon đang có</span>
+    <b class="figure__value">{{ snapshot.coupons }}</b>
+    <p class="figure__note">{{ rows | length }} mã hiển thị bên dưới</p>
+  </div>
+  <div class="figure">
+    <span class="figure__label">Flash sale</span>
+    <b class="figure__value">{{ snapshot.flash_sales }}</b>
+    <p class="figure__note">Cấu hình trong bot</p>
+  </div>
+  <div class="figure">
+    <span class="figure__label">Combo deal</span>
+    <b class="figure__value">{{ snapshot.combo_deals }}</b>
+    <p class="figure__note">Cấu hình trong bot</p>
+  </div>
+  <div class="figure">
+    <span class="figure__label">Đã chi hôm nay</span>
+    <b class="figure__value">{{ snapshot.spent_today | number }}<span class="unit">VND</span></b>
+    <p class="figure__note">Tổng giảm giá đã áp dụng</p>
+  </div>
+</div>
+
+{% call form_panel('Thêm / cập nhật coupon', 'Trùng mã sẽ ghi đè, số lượt đã dùng được giữ nguyên.', '/admin/coupons/save') %}
+  {{ csrf(csrf_token) }}
+  <input type="hidden" name="mode" value="add">
+  {{ field('Mã coupon', 'code', placeholder='SALE2026', required=True) }}
+  {{ field('Giảm (VND)', 'discount', placeholder='35000') }}
+  {{ field('Số lượng', 'quantity', placeholder='100') }}
+  {{ field('Hết hạn sau (ngày)', 'days', placeholder='30') }}
+  <div class="form-actions"><button type="submit">Lưu coupon</button></div>
+{% endcall %}
 
 {% if rows %}
-<div class="table-wrap">
-  <table class="data-table">
+  {% call table_panel('Coupon', rows | length ~ ' mã') %}
+  <table class="table">
     <thead><tr><th>Mã</th><th class="num">Giảm</th><th class="num">Đã dùng</th>
                <th class="num">Số lượng</th><th>Hết hạn</th><th></th></tr></thead>
     <tbody>
@@ -33,19 +53,21 @@
         <td class="num">{{ row.discount | money }}</td>
         <td class="num">{{ row.used }}</td>
         <td class="num">{{ row.quantity }}</td>
-        <td>{{ row.expires }}</td>
+        <td class="mono">{{ row.expires }}</td>
         <td class="row-actions">
           <form method="post" action="/admin/coupons/save" data-confirm="Xóa coupon {{ row.code }}?">
             {{ csrf(csrf_token) }}
             <input type="hidden" name="mode" value="delete">
             <input type="hidden" name="code" value="{{ row.code }}">
-            <button class="ghost danger-text" type="submit">Xóa</button>
+            <button class="btn--danger" type="submit">Xóa</button>
           </form>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-</div>
-{% else %}{{ empty('Chưa có coupon nào.') }}{% endif %}
+  {% endcall %}
+{% else %}
+  <section class="panel">{{ empty('Chưa có coupon nào.') }}</section>
+{% endif %}
 {% endblock %}
