@@ -294,3 +294,89 @@ def test_paid_order_does_not_double_release_on_pop(modules):
         store_menu.coupons.update(saved_coupons)
         notif.pending_orders.clear()
         notif.pending_orders.update(saved_pending)
+
+
+# --- Nhac thanh toan phai nam trong vong doi cua don ------------------------
+
+def test_payment_reminder_fires_inside_the_order_lifetime(modules, monkeypatch):
+    """Nguong nhac phai < ORDER_EXPIRATION_SECONDS.
+
+    Truoc day nhac o 900s va tu huy o 3600s, trong khi don bi pop o 600s - ca hai
+    nhanh khong bao gio chay toi nen job chay moi 3 phut ma khong lam gi.
+    """
+    bg = modules["app.jobs.admin_background"]
+    import inspect
+    source = inspect.getsource(bg.payment_reminder_job)
+    assert "MAX_PENDING_SECONDS" not in source, "nhanh tu huy 1h trung chuc nang phai bo"
+    assert "REMIND_AFTER_SECONDS = 5 * 60" in source
+    assert bg.ORDER_EXPIRATION_SECONDS > 5 * 60
+
+
+def test_payment_reminder_sends_once_then_forgets_dead_orders(modules, monkeypatch):
+    bg = modules["app.jobs.admin_background"]
+    saved_pending = dict(bg.pending_orders)
+    saved_marks = set(bg._payment_reminded)
+    sent = []
+
+    class _Bot:
+        async def send_message(self, user_id, text, **kwargs):
+            sent.append((user_id, text))
+
+    class _Ctx:
+        bot = _Bot()
+
+    bg.pending_orders.clear()
+    bg._payment_reminded.clear()
+    try:
+        # Don tao cach day 6 phut -> qua nguong 5 phut, con trong han 10 phut.
+        old = bg.time.time() - 6 * 60
+        bg.pending_orders["ICLD000001"] = {
+            "user_id": 42, "timestamp": old, "time": old,
+            "amount": 50_000, "product_name": "P", "status": "pending_payment",
+        }
+        asyncio.run(bg.payment_reminder_job(_Ctx()))
+        assert len(sent) == 1 and sent[0][0] == 42
+        assert "NHẮC NHỞ THANH TOÁN" in sent[0][1]
+
+        # Chay lai: khong spam lan hai.
+        asyncio.run(bg.payment_reminder_job(_Ctx()))
+        assert len(sent) == 1
+
+        # Don roi hang cho -> quen danh dau, khong phinh mai.
+        bg.pending_orders.clear()
+        asyncio.run(bg.payment_reminder_job(_Ctx()))
+        assert bg._payment_reminded == set()
+    finally:
+        bg.pending_orders.clear()
+        bg.pending_orders.update(saved_pending)
+        bg._payment_reminded.clear()
+        bg._payment_reminded.update(saved_marks)
+
+
+def test_payment_reminder_stays_quiet_before_the_threshold(modules):
+    bg = modules["app.jobs.admin_background"]
+    saved_pending = dict(bg.pending_orders)
+    saved_marks = set(bg._payment_reminded)
+    sent = []
+
+    class _Bot:
+        async def send_message(self, user_id, text, **kwargs):
+            sent.append(user_id)
+
+    class _Ctx:
+        bot = _Bot()
+
+    bg.pending_orders.clear()
+    bg._payment_reminded.clear()
+    try:
+        young = bg.time.time() - 60  # moi 1 phut
+        bg.pending_orders["ICLD000002"] = {
+            "user_id": 7, "timestamp": young, "time": young, "amount": 1000,
+        }
+        asyncio.run(bg.payment_reminder_job(_Ctx()))
+        assert sent == []
+    finally:
+        bg.pending_orders.clear()
+        bg.pending_orders.update(saved_pending)
+        bg._payment_reminded.clear()
+        bg._payment_reminded.update(saved_marks)
