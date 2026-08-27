@@ -454,8 +454,9 @@ async def testing_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             admin_uid = str(ADMIN_USER_ID)
             if admin_uid in user_order_index:
                 user_order_index[admin_uid] = [o for o in user_order_index[admin_uid] if o.get("order_code") != test_code]
-            global order_history
-            order_history = [o for o in order_history if o.get("order_code") != test_code]
+            # Sua tai cho: gan lai bien global chi doi ban ghi cua module nay, don
+            # mock van con nguyen trong order_history that ma moi cho khac doc.
+            order_history[:] = [o for o in order_history if o.get("order_code") != test_code]
         else:
             results.append("❌ <b>Order System:</b> Không tìm thấy đơn sau khi tạo")
     except (ValueError, TypeError, KeyError, AttributeError) as e:

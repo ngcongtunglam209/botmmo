@@ -172,3 +172,125 @@ def test_cancel_order_rejects_a_stranger(modules, monkeypatch):
     finally:
         svc.pending_orders.clear()
         svc.pending_orders.update(saved)
+
+
+# --- Coupon: don cho giu suat, tra lai khi huy ------------------------------
+
+def _one_use(store_menu, code="ONE"):
+    store_menu.coupons.clear()
+    store_menu.coupons[code] = {"discount": 10, "quantity": 1, "used": 0}
+    return store_menu.coupons[code]
+
+
+def test_two_pending_orders_cannot_share_a_one_use_coupon(modules):
+    """Lo hong goc: `used` chi tang luc doi soat xong, nen N don QR cung dung
+    chung mot ma quantity=1 va deu duoc giam gia."""
+    store_menu = modules["app.services.store_menu"]
+    saved = dict(store_menu.coupons)
+    details = _one_use(store_menu)
+    try:
+        assert store_menu.reserve_coupon("ONE", "ICLD000001") is True
+        assert store_menu.reserve_coupon("ONE", "ICLD000002") is False
+        # `used` chua tang - moi chi giu cho.
+        assert details["used"] == 0
+        assert store_menu.coupon_effective_used(details) == 1
+    finally:
+        store_menu.coupons.clear()
+        store_menu.coupons.update(saved)
+
+
+def test_cancelling_a_pending_order_returns_the_coupon_slot(modules):
+    store_menu = modules["app.services.store_menu"]
+    saved = dict(store_menu.coupons)
+    details = _one_use(store_menu)
+    try:
+        store_menu.reserve_coupon("ONE", "ICLD000001")
+        assert store_menu.release_coupon("ONE", "ICLD000001") is True
+        assert store_menu.coupon_effective_used(details) == 0
+        # Tra lai hai lan la no-op, khong am.
+        assert store_menu.release_coupon("ONE", "ICLD000001") is False
+        assert store_menu.coupon_effective_used(details) == 0
+        # Don khac gio dung duoc.
+        assert store_menu.reserve_coupon("ONE", "ICLD000002") is True
+    finally:
+        store_menu.coupons.clear()
+        store_menu.coupons.update(saved)
+
+
+def test_paying_converts_the_reservation_into_a_real_use(modules):
+    store_menu = modules["app.services.store_menu"]
+    saved = dict(store_menu.coupons)
+    details = _one_use(store_menu)
+    try:
+        store_menu.reserve_coupon("ONE", "ICLD000001")
+        assert store_menu.redeem_coupon("ONE", "ICLD000001") is True
+        assert details["used"] == 1
+        assert details["reserved_by"] == []
+        assert store_menu.coupon_effective_used(details) == 1
+        # Da tieu het suat: don khac khong giu duoc nua.
+        assert store_menu.reserve_coupon("ONE", "ICLD000002") is False
+    finally:
+        store_menu.coupons.clear()
+        store_menu.coupons.update(saved)
+
+
+def test_reserving_the_same_order_twice_takes_one_slot(modules):
+    store_menu = modules["app.services.store_menu"]
+    saved = dict(store_menu.coupons)
+    store_menu.coupons.clear()
+    store_menu.coupons["TWO"] = {"discount": 10, "quantity": 2, "used": 0}
+    try:
+        assert store_menu.reserve_coupon("TWO", "ICLD000001") is True
+        assert store_menu.reserve_coupon("TWO", "ICLD000001") is True
+        assert store_menu.coupon_effective_used(store_menu.coupons["TWO"]) == 1
+    finally:
+        store_menu.coupons.clear()
+        store_menu.coupons.update(saved)
+
+
+def test_pending_lifecycle_reserves_and_releases_without_per_site_patching(modules):
+    """pending_set/pending_pop la choke point - moi duong huy deu di qua day."""
+    notif = modules["app.services.notifications_async"]
+    store_menu = modules["app.services.store_menu"]
+    saved_coupons = dict(store_menu.coupons)
+    saved_pending = dict(notif.pending_orders)
+    details = _one_use(store_menu)
+    notif.pending_orders.clear()
+    try:
+        order = {"user_id": 1, "coupon_code": "ONE", "status": "pending_payment"}
+        asyncio.run(notif.pending_set("ICLD000001", order))
+        assert store_menu.coupon_effective_used(details) == 1
+        assert store_menu.reserve_coupon("ONE", "ICLD000002") is False
+
+        # Huy / het han -> tra suat.
+        asyncio.run(notif.pending_pop("ICLD000001"))
+        assert store_menu.coupon_effective_used(details) == 0
+        assert store_menu.reserve_coupon("ONE", "ICLD000002") is True
+    finally:
+        store_menu.coupons.clear()
+        store_menu.coupons.update(saved_coupons)
+        notif.pending_orders.clear()
+        notif.pending_orders.update(saved_pending)
+
+
+def test_paid_order_does_not_double_release_on_pop(modules):
+    """Duong tra tien: redeem truoc, pop sau - pop khong duoc tra lai suat."""
+    notif = modules["app.services.notifications_async"]
+    store_menu = modules["app.services.store_menu"]
+    saved_coupons = dict(store_menu.coupons)
+    saved_pending = dict(notif.pending_orders)
+    details = _one_use(store_menu)
+    notif.pending_orders.clear()
+    try:
+        order = {"user_id": 1, "coupon_code": "ONE", "status": "pending_payment"}
+        asyncio.run(notif.pending_set("ICLD000001", order))
+        assert store_menu.redeem_coupon("ONE", "ICLD000001") is True
+        asyncio.run(notif.pending_pop("ICLD000001"))
+        # Van la 1 lan tieu that, khong bi pop tra ve 0.
+        assert details["used"] == 1
+        assert store_menu.coupon_effective_used(details) == 1
+    finally:
+        store_menu.coupons.clear()
+        store_menu.coupons.update(saved_coupons)
+        notif.pending_orders.clear()
+        notif.pending_orders.update(saved_pending)

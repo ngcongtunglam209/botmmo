@@ -707,15 +707,32 @@ async def safe_api_adjust_balance_by_hash(partner_key_hash: str, delta: int, sav
 # ==============================================================================
 
 async def pending_set(order_code: str, data: dict):
-    """Thread-safe: Set pending_orders[order_code] = data."""
+    """Thread-safe: Set pending_orders[order_code] = data.
+
+    Don mang ma giam gia se GIU CHO mot suat ngay tai day. Neu khong, ma chi bi
+    tinh luc doi soat xong, nen N don QR cung luc dung chung duoc mot ma
+    quantity=1.
+    """
     async with pending_orders_lock:
         reserved_order_codes.discard(order_code)
         pending_orders[order_code] = data
+    coupon_code = data.get("coupon_code") if isinstance(data, dict) else None
+    if coupon_code:
+        reserve_coupon(coupon_code, order_code)
 
 async def pending_pop(order_code: str, default=None):
-    """Thread-safe: Pop from pending_orders."""
+    """Thread-safe: Pop from pending_orders.
+
+    Tra lai suat ma giam gia neu don bien mat ma chua tieu ma (huy, het han).
+    Duong tra tien thanh cong goi redeem_coupon() TRUOC khi pop, luc do suat da
+    chuyen thanh `used` nen release o day thanh no-op.
+    """
     async with pending_orders_lock:
-        return pending_orders.pop(order_code, default)
+        details = pending_orders.pop(order_code, default)
+    coupon_code = details.get("coupon_code") if isinstance(details, dict) else None
+    if coupon_code:
+        release_coupon(coupon_code, order_code)
+    return details
 
 async def pending_get(order_code: str, default=None):
     """Thread-safe: Get from pending_orders."""

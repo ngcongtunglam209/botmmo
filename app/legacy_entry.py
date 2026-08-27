@@ -297,8 +297,15 @@ def main() -> None:
         )
         job_queue.run_daily(cleanup_expired_coupons_job, time=dt_time(hour=0, minute=5, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh")), name="daily_coupon_cleanup")
         job_queue.run_repeating(cleanup_flash_sales_job, interval=60, first=30, name="flash_sale_cleanup")
-        # NEW: Auto-Backup Job (Telegram 6h, Email 3d)
-        # job_queue.run_repeating(auto_backup_job, interval=BACKUP_INTERVAL_TELEGRAM, first=60, name="auto_backup")
+        # Auto-Backup Job (Telegram 6h, Email 3d). Day la duong backup tu dong DUY
+        # NHAT; de comment thi shop chay khong he co backup nao.
+        job_queue.run_repeating(
+            auto_backup_job,
+            interval=BACKUP_INTERVAL_TELEGRAM,
+            first=60,
+            name="auto_backup",
+            job_kwargs={"max_instances": 1, "coalesce": True},
+        )
 
         # NEW: Payment Reminder Job (check mỗi 3 phút)
         job_queue.run_repeating(payment_reminder_job, interval=180, first=60, name="payment_reminder")

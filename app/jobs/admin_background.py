@@ -30,14 +30,16 @@ async def send_batched_error_reports(context: ContextTypes.DEFAULT_TYPE):
     """
     Cron Job: Nhắc nhở Admin về các đơn báo lỗi CHƯA XỬ LÝ (Unresolved)
     """
-    global pending_error_reports
+    # Khong khai bao `global`: ca hai cho ben duoi deu sua TAI CHO. Gan lai bien
+    # global trong section module chi doi ban ghi cua module nay, cac module khac
+    # van giu alias toi list cu.
 
     # Filter unresolved reports
     unresolved = [r for r in pending_error_reports if not r.get('resolved', False)]
 
     if not unresolved:
         # Cleanup resolved ones to save memory
-        pending_error_reports = []
+        pending_error_reports.clear()
         return
 
     # Gửi thông báo nhắc nhở
@@ -61,8 +63,10 @@ async def send_batched_error_reports(context: ContextTypes.DEFAULT_TYPE):
     except (ValueError, TypeError, KeyError, IndexError) as e:
         logger.error(f"Cannot send reminder summary: {e}")
 
-    # Cleanup: Keep only unresolved
-    pending_error_reports = unresolved
+    # Sua TAI CHO chu khong gan lai: cac section module dung chung namespace va
+    # giu alias toi chinh list nay. Gan lai se tach vinh vien ban ghi cua module
+    # nay khoi list ma moi cho khac dang append vao.
+    pending_error_reports[:] = unresolved
 
 async def auto_remind_email_job(context: ContextTypes.DEFAULT_TYPE):
     """
@@ -360,9 +364,14 @@ async def payment_reminder_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             except Exception as e:
                 logger.exception(f"Payment reminder send_message remind order failed for user {user_id}: {e}", exc_info=e)
 
-    # Xóa các đơn hết hạn
+    # Xóa các đơn hết hạn.
+    # Qua pending_pop() chu khong pop truc tiep: pending_pop tra lai suat ma giam
+    # gia ma don dang giu. Pop thang dict lam suat do ket vinh vien.
+    # LUU Y: duong nay het han o MAX_PENDING_SECONDS (1h) va KHONG hoan
+    # balance_used, khac voi _cleanup_expired_pending_orders (600s, co hoan).
+    # Thuc te don chet o 600s truoc nen nhanh nay hau nhu khong chay toi.
     for code in orders_to_remove:
-        pending_orders.pop(code, None)
+        await pending_pop(code)
 
     if orders_to_remove:
         create_background_task(save_data())

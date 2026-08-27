@@ -732,7 +732,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 }
 
                                 coupon_code_used = order_details.get('coupon_code')
-                                if coupon_code_used and not redeem_coupon(coupon_code_used):
+                                if coupon_code_used and not redeem_coupon(coupon_code_used, order_code):
                                     logger.warning(
                                         f"COUPON: ma {coupon_code_used} het luot/het han khi doi soat "
                                         f"don {order_code} - giam gia da ap, can doi soat tay"
@@ -916,7 +916,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             }
 
                             coupon_code_used = order_details.get("coupon_code")
-                            if coupon_code_used and not redeem_coupon(coupon_code_used):
+                            if coupon_code_used and not redeem_coupon(coupon_code_used, order_code):
                                 logger.warning(
                                     f"COUPON: ma {coupon_code_used} het luot/het han khi doi soat "
                                     f"don {order_code} - giam gia da ap, can doi soat tay"
