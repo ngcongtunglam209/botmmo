@@ -298,15 +298,23 @@ async def uptime_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 _payment_reminded = set()  # Track đã nhắc để không spam
 
 async def payment_reminder_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Cron job: Nhắc user thanh toán nếu đơn pending > 15 phút."""
+    """Cron job: nhac user thanh toan khi don cho da qua nua thoi han.
+
+    Nguong phai nam TRONG vong doi cua don. Truoc day nhac o 15 phut va tu huy
+    o 60 phut, trong khi _cleanup_expired_pending_orders da pop don o
+    ORDER_EXPIRATION_SECONDS = 600s - nen ca hai nhanh khong bao gio chay toi
+    va job nay chay moi 3 phut ma khong lam gi.
+
+    Nhanh tu huy 60 phut da bo han: trung chuc nang voi duong 600s, lai khong
+    hoan balance_used nhu duong do lam."""
     if not pending_orders:
+        _payment_reminded.clear()
         return
 
     current_time = time.time()
-    REMIND_AFTER_SECONDS = 15 * 60  # 15 phút
-    MAX_PENDING_SECONDS = 60 * 60   # 1 giờ — auto hủy
+    REMIND_AFTER_SECONDS = 5 * 60  # nhac o phut thu 5 cua vong doi 10 phut
 
-    orders_to_remove = []
+    live_keys = set()
 
     for order_code, order_details in list(pending_orders.items()):
         start_time = order_details.get('timestamp', 0)
@@ -319,35 +327,15 @@ async def payment_reminder_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             continue
 
         reminder_key = f"{order_code}_{user_id}"
+        live_keys.add(reminder_key)
 
-        # Quá 1 giờ → tự hủy
-        if elapsed > MAX_PENDING_SECONDS:
-            orders_to_remove.append(order_code)
-            _payment_reminded.discard(reminder_key)
-            try:
-                product_name = order_details.get('product_name') or order_details.get('product', 'Sản phẩm')
-                await context.bot.send_message(
-                    user_id,
-                    f"<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>ĐƠN HÀNG ĐÃ HẾT HẠN</b>\n\n"
-                    f"<tg-emoji emoji-id=\"5334890573281114250\">🆔</tg-emoji> Mã: <code>{html.escape(str(order_code))}</code>\n"
-                    f"<tg-emoji emoji-id=\"6260059243605398502\">📌</tg-emoji> SP: {html.escape(str(product_name))}\n\n"
-                    "Đơn hàng đã bị hủy do quá thời gian thanh toán (60 phút).\n"
-                    "Vui lòng đặt lại nếu cần.",
-                    parse_mode=ParseMode.HTML
-                )
-            except TelegramError:
-                pass  # User có thể đã block bot
-            except Exception as e:
-                logger.exception(f"Payment reminder send_message cancelled order failed for user {user_id}: {e}", exc_info=e)
-            continue
-
-        # Quá 15 phút + chưa nhắc → gửi nhắc nhở
+        # Qua 5 phut + chua nhac -> gui nhac nho
         if elapsed > REMIND_AFTER_SECONDS and reminder_key not in _payment_reminded:
             _payment_reminded.add(reminder_key)
             try:
                 product_name = order_details.get('product_name') or order_details.get('product', 'Sản phẩm')
                 amount = order_details.get('amount', 0)
-                minutes_left = max(1, int((MAX_PENDING_SECONDS - elapsed) / 60))
+                minutes_left = max(1, int((ORDER_EXPIRATION_SECONDS - elapsed) / 60))
                 await context.bot.send_message(
                     user_id,
                     f"<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>NHẮC NHỞ THANH TOÁN</b>\n\n"
@@ -364,18 +352,9 @@ async def payment_reminder_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             except Exception as e:
                 logger.exception(f"Payment reminder send_message remind order failed for user {user_id}: {e}", exc_info=e)
 
-    # Xóa các đơn hết hạn.
-    # Qua pending_pop() chu khong pop truc tiep: pending_pop tra lai suat ma giam
-    # gia ma don dang giu. Pop thang dict lam suat do ket vinh vien.
-    # LUU Y: duong nay het han o MAX_PENDING_SECONDS (1h) va KHONG hoan
-    # balance_used, khac voi _cleanup_expired_pending_orders (600s, co hoan).
-    # Thuc te don chet o 600s truoc nen nhanh nay hau nhu khong chay toi.
-    for code in orders_to_remove:
-        await pending_pop(code)
+    # Don da roi hang cho thi bo danh dau, khong thi _payment_reminded phinh mai.
+    _payment_reminded.intersection_update(live_keys)
 
-    if orders_to_remove:
-        create_background_task(save_data())
-        logger.info(f"<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> Payment reminder: Đã hủy {len(orders_to_remove)} đơn hết hạn.")
 
 # ==============================================================================
 #  /RANK — Xem VIP rank cá nhân
