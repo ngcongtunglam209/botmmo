@@ -520,6 +520,48 @@ def find_order_by_code_or_supplier_id(order_code):
         return None
     return order_index.get(normalized_code)
 
+def _pending_order_sources():
+    """Hai kho đơn còn treo: `payment` chưa chuyển khoản, `manual` đã trả tiền nhưng chờ giao tay."""
+    return (("payment", pending_orders), ("manual", pending_manual_orders))
+
+def find_pending_order_by_code(order_code):
+    """Tìm đơn còn treo. Trả (kind, key, record) hoặc (None, None, None).
+
+    order_index chỉ chứa order_history nên đơn chưa hoàn thành không tra được
+    bằng find_order_by_code_or_supplier_id. `key` là key thật trong dict pending
+    để caller pop được, kể cả khi dữ liệu cũ lưu mã đơn không đúng hoa/thường.
+    """
+    normalized_code = _normalize_order_code(order_code)
+    if not normalized_code:
+        return None, None, None
+    for kind, source in _pending_order_sources():
+        if not isinstance(source, dict):
+            continue
+        for code, record in source.items():
+            if isinstance(record, dict) and _normalize_order_code(code) == normalized_code:
+                return kind, code, record
+    return None, None, None
+
+def get_user_pending_orders(user_id):
+    """Đơn treo của một user, chuẩn hoá để trộn chung với order_history.
+
+    Bản ghi manual do payment_monitor tạo không có `order_code`, nên mã đơn phải
+    lấy từ key của dict.
+    """
+    target = str(user_id)
+    rows = []
+    for kind, source in _pending_order_sources():
+        if not isinstance(source, dict):
+            continue
+        for code, record in source.items():
+            if not isinstance(record, dict) or str(record.get('user_id') or "") != target:
+                continue
+            normalized = dict(record)
+            normalized['order_code'] = _normalize_order_code(code)
+            normalized['pending_kind'] = kind
+            rows.append(normalized)
+    return rows
+
 def db_get_user_orders(user_id, limit=5):
     """Shim: Filters order_history using user_order_index for O(1) lookup."""
     orders = user_order_index.get(str(user_id), [])

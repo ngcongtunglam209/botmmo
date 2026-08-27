@@ -72,6 +72,10 @@ async def handle_admin_callbacks(update, context, command):
     if command.startswith(('cancel_order:', 'cancel_payment_')):
         await handle_cancel_order_payment(query, context, command)
         return True
+    # Khách tự hủy đơn chờ thanh toán từ /lichsu — handler tự kiểm tra chủ đơn.
+    if command.startswith(('user_cancel_order:', 'user_cancel_confirm:')):
+        await handle_user_cancel_pending_order(query, context, command)
+        return True
 
     # 3. Admin Withdrawals & API Registration Service
     if command.startswith(('approve_withdraw:', 'reject_withdraw:')):

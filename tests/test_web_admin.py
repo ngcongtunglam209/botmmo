@@ -524,6 +524,112 @@ def test_audit_log_never_stores_csrf_token(web):
     assert "csrf_token" not in read_kv(db_path, "data_admin_action_log.json")[-1]["details"]
 
 
+# --- Đơn chưa hoàn thành ----------------------------------------------------
+
+def _seed_pending_orders(db_path) -> None:
+    seed(db_path, "data_pending_orders.json", {
+        "ICLD111111": {
+            "user_id": 4242,
+            "product_name": "Netflix 1 tháng",
+            "amount": 50000,
+            "quantity": 1,
+            "status": "pending_payment",
+            "timestamp": 1_700_000_200,
+        },
+    })
+    seed(db_path, "data_pending_manual_orders.json", {
+        "MANUALAB1234": {
+            "user_id": 777,
+            "product_name": "CapCut Pro",
+            "amount": 30000,
+            "status": "awaiting_email",
+            "timestamp": 1_700_000_100,
+        },
+    })
+    seed(db_path, "data_order_history.json", [
+        {
+            "order_code": "ICLD999999",
+            "user_id": 4242,
+            "product_name": "Spotify",
+            "amount": 20000,
+            "status": "Hoàn thành",
+            "timestamp": 1_700_000_000,
+        },
+    ])
+
+
+def test_orders_page_lists_orders_that_are_not_finished_yet(web):
+    client, _token, db_path = web
+    _seed_pending_orders(db_path)
+
+    body = client.get("/admin/orders").text
+
+    assert "ICLD111111" in body
+    assert "MANUALAB1234" in body
+    assert "ICLD999999" in body
+    assert "Chờ thanh toán" in body
+    assert "Chờ xử lý tay" in body
+
+
+def test_orders_search_reaches_a_pending_order(web):
+    client, _token, db_path = web
+    _seed_pending_orders(db_path)
+
+    body = client.get("/admin/orders?q=ICLD111111").text
+
+    assert "ICLD111111" in body
+    assert "MANUALAB1234" not in body
+    assert "ICLD999999" not in body
+
+
+@pytest.mark.parametrize(
+    ("status", "expected", "hidden"),
+    [
+        ("pending", ("ICLD111111", "MANUALAB1234"), ("ICLD999999",)),
+        ("payment", ("ICLD111111",), ("MANUALAB1234", "ICLD999999")),
+        ("manual", ("MANUALAB1234",), ("ICLD111111", "ICLD999999")),
+        ("completed", ("ICLD999999",), ("ICLD111111", "MANUALAB1234")),
+    ],
+)
+def test_orders_status_filter_splits_pending_from_finished(web, status, expected, hidden):
+    client, _token, db_path = web
+    _seed_pending_orders(db_path)
+
+    body = client.get(f"/admin/orders?status={status}").text
+
+    for code in expected:
+        assert code in body
+    for code in hidden:
+        assert code not in body
+
+
+def test_a_pending_order_detail_page_says_it_is_not_in_history(web):
+    client, _token, db_path = web
+    _seed_pending_orders(db_path)
+
+    response = client.get("/admin/orders/ICLD111111")
+
+    assert response.status_code == 200
+    assert "Chờ thanh toán" in response.text
+    assert "chưa vào lịch sử" in response.text
+
+
+def test_a_manual_order_is_listed_once_when_it_sits_in_both_stores(web):
+    """Đơn manual đã trả tiền có bản ghi ở cả lịch sử lẫn pending."""
+    client, _token, db_path = web
+    seed(db_path, "data_pending_manual_orders.json", {
+        "MANUALAB1234": {"user_id": 777, "product_name": "CapCut Pro", "status": "awaiting_email"},
+    })
+    seed(db_path, "data_order_history.json", [
+        {"order_code": "MANUALAB1234", "user_id": 777, "product_name": "CapCut Pro", "status": "Chờ email"},
+    ])
+
+    body = client.get("/admin/orders").text
+
+    assert body.count(">MANUALAB1234<") == 1
+    assert "Chờ xử lý tay" in body
+
+
 # --- Trang hiển thị ---------------------------------------------------------
 
 @pytest.mark.parametrize(

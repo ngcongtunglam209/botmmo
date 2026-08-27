@@ -19,12 +19,24 @@ def _truncate_history_button_text(text: str, limit: int = 56):
     return normalized[: max(0, limit - 3)].rstrip() + "..."
 
 
+def _pending_order_marker(user_id: int, order) -> str:
+    kind = str(order.get('pending_kind') or "") if isinstance(order, dict) else ""
+    if kind == 'payment':
+        return lt(user_id, "CHỜ TT", "UNPAID", "待付款")
+    if kind == 'manual':
+        return lt(user_id, "ĐANG XỬ LÝ", "PROCESSING", "处理中")
+    return ""
+
+
 def _get_user_history_orders(user_id: int):
     normal_orders = list(user_order_index.get(str(user_id), []))
     api_orders = _api_get_orders_for_user(user_id)
+    # Đơn treo xếp sau để thắng bản ghi cùng mã trong lịch sử: đơn manual đã trả
+    # tiền có thể tồn tại ở cả hai chỗ, bản đang chờ xử lý mới là bản đúng.
+    pending_records = get_user_pending_orders(user_id)
 
     merged_orders = {}
-    for order in normal_orders + api_orders:
+    for order in normal_orders + api_orders + pending_records:
         order_code = str(order.get('order_code') or "")
         if order_code:
             merged_orders[order_code] = order
@@ -67,7 +79,9 @@ def _build_user_history_view(user_id: int, page: int = 0):
         status_info = status_text(order.get('status'))
         icon_id = "6269163801178804220" if is_completed_order(order) else "5447364299200678034"
         api_label = " | API" if _api_is_order_record(order) else ""
-        btn_text = _truncate_history_button_text(f"{date} | [{code}]{api_label} | {item_name}")
+        marker = _pending_order_marker(user_id, order)
+        pending_label = f" | {marker}" if marker else ""
+        btn_text = _truncate_history_button_text(f"{date} | [{code}]{api_label}{pending_label} | {item_name}")
         keyboard.append([_btn(btn_text, icon_id=icon_id, callback_data=f"view_order_history_{code}:{safe_page}")])
 
     if total_pages > 1:

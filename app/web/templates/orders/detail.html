@@ -13,7 +13,14 @@
     <header><h2>Tóm tắt</h2></header>
     <dl class="detail-list">
       <dt>Trạng thái</dt>
-      <dd><span class="badge badge-{{ 'ok' if completed else 'warn' }}">{{ status | plain or '—' }}</span></dd>
+      <dd>
+        <span class="badge badge-{{ 'ok' if completed else ('info' if pending_kind == 'manual' else 'warn') }}">{{ status | plain or '—' }}</span>
+        {% if pending_kind %}<span class="badge badge-warn">{{ pending_label }}</span>{% endif %}
+      </dd>
+      {% if pending_kind %}
+      <dt>Nguồn</dt>
+      <dd class="muted">Đơn chưa hoàn thành — bản ghi đang nằm ở {{ 'pending_orders' if pending_kind == 'payment' else 'pending_manual_orders' }}, chưa vào lịch sử.</dd>
+      {% endif %}
       <dt>Số tiền</dt><dd>{{ amount | money }}</dd>
       <dt>Số lượng</dt><dd>{{ order.quantity or 1 }}</dd>
       <dt>User</dt>

@@ -494,3 +494,141 @@ async def handle_cancel_order_payment(query, context, command):
             parse_mode=ParseMode.HTML,
             reply_markup=create_back_button_menu(user_id=getattr(getattr(query, 'from_user', None), 'id', None))
         )
+
+
+def _parse_user_cancel_payload(command: str):
+    """Tách `<prefix>:<mã đơn>:<trang lịch sử>`."""
+    prefix, _, payload = str(command or "").partition(':')
+    order_code, _, page_raw = payload.partition(':')
+    try:
+        history_page = max(0, int(page_raw)) if page_raw else 0
+    except ValueError:
+        history_page = 0
+    return prefix, order_code.strip().upper(), history_page
+
+
+async def handle_user_cancel_pending_order(query, context, command):
+    """Khách tự hủy đơn còn chờ chuyển khoản, mở từ /lichsu.
+
+    Chỉ áp dụng cho `pending_orders` (chưa trả tiền). Đơn manual đã thanh toán
+    không hủy được ở đây — phải qua admin để còn hoàn tiền.
+    """
+    prefix, order_code, history_page = _parse_user_cancel_payload(command)
+    user_id = getattr(getattr(query, 'from_user', None), 'id', None)
+    back_to_detail = f"view_order_history_{order_code}:{history_page}"
+    gone_alert = lt(
+        user_id,
+        "Đơn này không còn ở trạng thái chờ thanh toán.",
+        "This order is no longer awaiting payment.",
+        "此订单已不在待付款状态。",
+    )
+
+    pending_kind, pending_key, details = find_pending_order_by_code(order_code)
+    if (
+        pending_kind != 'payment'
+        or not isinstance(details, dict)
+        or str(details.get('user_id') or "") != str(user_id)
+    ):
+        await safe_answer(query, gone_alert, show_alert=True)
+        return
+
+    if prefix != 'user_cancel_confirm':
+        await safe_answer(query)
+        balance_used = int(details.get('balance_used', 0) or 0)
+        refund_note = ""
+        if balance_used > 0:
+            refund_note = lt(
+                user_id,
+                "\n<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> <b>{amount:,} VNĐ</b> đã trừ từ ví sẽ được hoàn lại.",
+                "\n<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> <b>{amount:,} VND</b> taken from your wallet will be refunded.",
+                "\n<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> 从钱包扣除的 <b>{amount:,} VND</b> 将退回。",
+                amount=balance_used,
+            )
+        await safe_edit_message(
+            query,
+            text=lt(
+                user_id,
+                "<b>HỦY ĐƠN {code}?</b>\n\nĐơn chưa thanh toán sẽ bị xóa và mã QR không còn dùng được.{refund}",
+                "<b>CANCEL ORDER {code}?</b>\n\nThe unpaid order will be removed and its QR code stops working.{refund}",
+                "<b>取消订单 {code}？</b>\n\n未付款订单将被删除，二维码将失效。{refund}",
+                code=order_code, refund=refund_note,
+            ),
+            reply_markup=InlineKeyboardMarkup([
+                [_btn(
+                    lt(user_id, "Xác nhận hủy", "Confirm Cancel", "确认取消"),
+                    icon_id="6186252635805323641",
+                    callback_data=f"user_cancel_confirm:{order_code}:{history_page}",
+                    style="danger",
+                )],
+                [_btn(
+                    lt(user_id, "Không, giữ đơn", "No, Keep It", "不，保留订单"),
+                    icon_id="6206032691075223572",
+                    callback_data=back_to_detail,
+                )],
+            ]),
+            parse_mode=ParseMode.HTML,
+        )
+        return
+
+    details = await pending_pop(pending_key)
+    if not isinstance(details, dict):
+        await safe_answer(query, gone_alert, show_alert=True)
+        return
+    if str(details.get('user_id') or "") != str(user_id):
+        # Không phải đơn của người bấm: trả lại nguyên trạng.
+        await pending_set(pending_key, details)
+        await safe_answer(query, gone_alert, show_alert=True)
+        return
+
+    await safe_answer(query)
+
+    refunded_amount = 0
+    balance_used = int(details.get('balance_used', 0) or 0)
+    if balance_used > 0:
+        user_info = db_get_user(user_id)
+        if user_info:
+            db_update_balance(
+                user_id,
+                user_info.get('balance', 0) + balance_used,
+                reason=f"Refund: user canceled pending order {order_code}",
+            )
+            refunded_amount = balance_used
+
+    # Xóa luôn tin nhắn QR cũ để khách không quét vào đơn đã hủy.
+    qr_message_id = details.get('message_id')
+    if qr_message_id:
+        try:
+            await context.bot.delete_message(chat_id=user_id, message_id=qr_message_id)
+        except (Forbidden, BadRequest) as exc:
+            logger.debug(f"Cannot delete QR message for canceled order {order_code}: {exc}")
+
+    await save_data(force=True, tables=[PENDING_ORDERS_FILE, USERS_FILE, TRANSACTION_HISTORY_FILE])
+
+    prod_name = details.get('product_name') or products.get(details.get('product_id', ''), {}).get('name') or "—"
+    refund_msg = ""
+    if refunded_amount > 0:
+        refund_msg = lt(
+            user_id,
+            "\n<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> Đã hoàn <b>{amount:,} VNĐ</b> vào ví.",
+            "\n<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> Refunded <b>{amount:,} VND</b> to your wallet.",
+            "\n<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> 已退回 <b>{amount:,} VND</b> 到钱包。",
+            amount=refunded_amount,
+        )
+
+    await safe_edit_message(
+        query,
+        text=lt(
+            user_id,
+            "❌ <b>ĐÃ HỦY ĐƠN</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{code}</code>\n<tg-emoji emoji-id=\"5240228673738527951\">🏷</tg-emoji> <b>Sản phẩm:</b> {product}{refund}",
+            "❌ <b>ORDER CANCELED</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Order code:</b> <code>{code}</code>\n<tg-emoji emoji-id=\"5240228673738527951\">🏷</tg-emoji> <b>Product:</b> {product}{refund}",
+            "❌ <b>订单已取消</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>订单号：</b> <code>{code}</code>\n<tg-emoji emoji-id=\"5240228673738527951\">🏷</tg-emoji> <b>商品：</b> {product}{refund}",
+            code=order_code, product=html.escape(str(prod_name)), refund=refund_msg,
+        ),
+        reply_markup=InlineKeyboardMarkup([[_btn(
+            lt(user_id, "Quay lại danh sách", "Back to List", "返回列表"),
+            icon_id="6206032691075223572",
+            callback_data=f"lichsu_page:{history_page}",
+        )]]),
+        parse_mode=ParseMode.HTML,
+    )
+    logger.info(f"User {user_id} canceled pending order {order_code} (refund {refunded_amount:,}đ)")

@@ -30,8 +30,8 @@ async def dashboard(request: Request):
         ("Tổng doanh thu", f"{finance['revenue']:,} VND", "revenue", "/admin/orders"),
         ("Đơn thành công", f"{finance['completed']:,}", "orders", "/admin/orders"),
         ("Độ phủ giá vốn", f"{finance['costed']}/{finance['completed']}", "revenue", "/admin/orders"),
-        ("Chờ thanh toán", f"{len(orders.pending()):,}", "orders", "/admin/orders"),
-        ("Manual pending", f"{len(orders.pending_manual()):,}", "orders", "/admin/ops"),
+        ("Chờ thanh toán", f"{len(orders.pending()):,}", "orders", "/admin/orders?status=payment"),
+        ("Manual pending", f"{len(orders.pending_manual()):,}", "orders", "/admin/orders?status=manual"),
         ("Sản phẩm", f"{catalog.count_products():,}", "products", "/admin/products"),
         ("Sắp hết hàng", f"{len(catalog.low_stock_products()):,}", "products", "/admin/products?kind=local"),
         ("Users", f"{users.count_users():,}", "users", "/admin/users"),
@@ -176,28 +176,70 @@ async def user_profile(request: Request, user_id: str):
 
 # --- Đơn hàng ---------------------------------------------------------------
 
+ORDER_STATUS_FILTERS = ("pending", "payment", "manual", "completed")
+
+PENDING_KIND_LABEL = {"payment": "Chờ thanh toán", "manual": "Chờ xử lý tay"}
+
+
+def _order_row(order: dict, *, kind: str, code: str = "", status: str = "") -> dict:
+    return {
+        "code": code or domain.order_code(order),
+        "kind": kind,
+        "product": str(order.get("product_name") or order.get("product_id") or "—"),
+        "user_id": order.get("user_id") or order.get("buyer_id") or "",
+        "status": status or domain.status_text(order.get("status")) or "—",
+        "amount": as_int(order.get("amount"), 0),
+        "quantity": as_int(order.get("quantity"), 1),
+        "timestamp": domain.order_timestamp(order),
+        "completed": domain.is_completed_order(order),
+    }
+
+
+def _order_matches(row: dict, needle: str) -> bool:
+    if not needle:
+        return True
+    haystack = f"{row['code']} {row['product']} {row['user_id']} {row['status']}"
+    return needle in haystack.casefold()
+
+
 @router.get("/admin/orders")
 async def orders_page(request: Request):
     search = str(request.query_params.get("q") or "").strip()
+    status_filter = str(request.query_params.get("status") or "").strip().lower()
+    if status_filter not in ORDER_STATUS_FILTERS:
+        status_filter = ""
     needle = search.casefold()
-    rows = []
-    for order in orders.recent(get_settings().order_table_limit):
-        code = domain.order_code(order)
-        haystack = f"{code} {order.get('product_name') or ''} {order.get('user_id') or ''}"
-        if needle and needle not in haystack.casefold():
-            continue
-        rows.append(
-            {
-                "code": code,
-                "product": str(order.get("product_name") or "—"),
-                "user_id": order.get("user_id") or order.get("buyer_id") or "",
-                "status": domain.status_text(order.get("status")) or "—",
-                "amount": as_int(order.get("amount"), 0),
-                "quantity": as_int(order.get("quantity"), 1),
-                "timestamp": domain.order_timestamp(order),
-                "completed": domain.is_completed_order(order),
-            }
-        )
+
+    pending_rows = []
+    if status_filter != "completed":
+        for entry in orders.pending_all():
+            if status_filter in ("payment", "manual") and entry["kind"] != status_filter:
+                continue
+            pending_rows.append(
+                _order_row(
+                    entry["record"],
+                    kind=entry["kind"],
+                    code=entry["code"],
+                    status=PENDING_KIND_LABEL[entry["kind"]],
+                )
+            )
+
+    # Đơn manual còn treo có thể đã có bản ghi trong order_history — bản pending
+    # mới là bản đang chờ xử lý nên nó thắng.
+    pending_codes = {row["code"].upper() for row in pending_rows}
+    history_rows = []
+    if status_filter in ("", "completed"):
+        for order in orders.recent(get_settings().order_table_limit):
+            row = _order_row(order, kind="history")
+            if row["code"].upper() in pending_codes:
+                continue
+            if status_filter == "completed" and not row["completed"]:
+                continue
+            history_rows.append(row)
+
+    rows = [row for row in pending_rows + history_rows if _order_matches(row, needle)]
+    rows.sort(key=lambda row: row["timestamp"], reverse=True)
+
     return render(
         request,
         "orders/list.html",
@@ -205,7 +247,9 @@ async def orders_page(request: Request):
             "rows": rows,
             "total": orders.count_history(),
             "search": search,
+            "status_filter": status_filter,
             "pending_count": len(orders.pending()),
+            "pending_manual_count": len(orders.pending_manual()),
             "flash": flash_from(request),
         },
     )
@@ -219,12 +263,19 @@ async def order_detail(request: Request, order_code: str):
             request, "not_found.html", {"entity": "Đơn hàng", "item_id": order_code},
             status_code=404,
         )
+    normalized_code = order_code.strip().upper()
+    pending_kind = next(
+        (row["kind"] for row in orders.pending_all() if row["code"] == normalized_code), ""
+    )
+
     return render(
         request,
         "orders/detail.html",
         {
-            "order_code": domain.order_code(order) or order_code.upper(),
+            "order_code": domain.order_code(order) or normalized_code,
             "order": order,
+            "pending_kind": pending_kind,
+            "pending_label": PENDING_KIND_LABEL.get(pending_kind, ""),
             "amount": as_int(order.get("amount"), 0),
             "status": domain.status_text(order.get("status")),
             "completed": domain.is_completed_order(order),
