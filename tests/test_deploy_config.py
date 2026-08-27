@@ -66,3 +66,34 @@ def test_bot_port_is_never_published_to_the_host():
     bot = _compose()["services"]["bot"]
     assert not bot.get("ports"), f"bot khong duoc publish port: {bot.get('ports')}"
     assert bot.get("expose"), "bot phai dung expose (chi noi bo docker network)"
+
+
+# --- Cookie phien phai song sot duong quay ve tu Telegram OAuth -------------
+
+def test_session_cookie_survives_the_oauth_return_trip():
+    """Cookie phien phai la SameSite=Lax, khong duoc la Strict.
+
+    Dang nhap di qua oauth.telegram.org roi redirect nguoc ve callback. Callback
+    tao phien va 303 sang /admin, nhung chuoi dieu huong bat dau tu site khac nen
+    trinh duyet khong gui cookie "strict" o request /admin ngay sau do: vua dang
+    nhap xong da bi da ve trang login.
+
+    "lax" khong noi long chong CSRF - no chi kem cookie cho dieu huong GET cap
+    cao nhat, khong kem cho POST xuyen site, va moi route ghi van qua
+    require_csrf() + require_same_origin().
+    """
+    source = (ROOT / "app" / "web" / "deps.py").read_text(encoding="utf-8")
+    block = re.search(r"def set_session_cookie\(.*?\n\n", source, re.S)
+    assert block, "khong thay set_session_cookie"
+    body = block.group(0)
+    assert 'samesite="lax"' in body, "cookie phien phai la lax, khong thi OAuth gay vong lap login"
+    assert 'samesite="strict"' not in body
+    # Nhung thu khac cua cookie khong duoc noi long theo.
+    assert "httponly=True" in body
+    assert "secure=" in body
+
+
+def test_oidc_state_cookie_is_also_lax():
+    """Cookie state cua OIDC cung phai vuot duoc duong quay ve."""
+    source = (ROOT / "app" / "web" / "routers" / "auth.py").read_text(encoding="utf-8")
+    assert 'samesite="lax"' in source

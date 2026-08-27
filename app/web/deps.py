@@ -80,7 +80,19 @@ def set_session_cookie(response: Any, request: Request, token: str) -> None:
         max_age=settings.session_hours * 3600,
         httponly=True,
         secure=settings.cookie_secure or request.url.scheme == "https",
-        samesite="strict",
+        # "lax" chu KHONG phai "strict".
+        #
+        # Dang nhap di qua oauth.telegram.org roi redirect nguoc ve callback cua
+        # minh. Callback tao phien va 303 sang /admin, nhung ca chuoi dieu huong
+        # do bat dau tu site khac, nen trinh duyet KHONG gui cookie "strict" o
+        # request /admin ngay sau do. Ket qua: vua dang nhap xong lai bi da ve
+        # trang login, phai go tay URL moi vao duoc. Cookie OIDC o
+        # routers/auth.py:100 da phai dung "lax" vi dung ly do nay.
+        #
+        # Doi sang "lax" khong noi long chong CSRF: "lax" chi kem cookie cho
+        # dieu huong GET cap cao nhat, khong kem cho POST xuyen site, va moi
+        # route ghi van qua require_csrf() + require_same_origin().
+        samesite="lax",
         path="/",
     )
 
