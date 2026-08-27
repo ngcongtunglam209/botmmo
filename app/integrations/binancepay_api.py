@@ -112,15 +112,56 @@ def iter_pending_binance_pay_records():
         yield str(topup_code), details
 
 
+# So tien da phat ra gan day -> thoi diem het thoi gian giu cho.
+# Chi giu trong RAM: sau restart chi mat phan giu cho cua don DA het han, con
+# don dang cho van duoc tinh qua iter_pending_binance_pay_records().
+_binance_pay_amount_cooldown: dict[str, float] = {}
+
+
+def binance_pay_cooldown_seconds() -> int:
+    """Bao lau mot so tien van bi giu sau khi don chiem no bien mat.
+
+    Phai phu het cua so ma payment_monitor con chap nhan giao dich cho don cu:
+    han don + hai lan leeway hai dau cua so.
+    """
+    return int(ORDER_EXPIRATION_SECONDS) + 2 * int(BINANCE_PAY_MATCH_LEEWAY_SECONDS)
+
+
+def _prune_binance_pay_cooldown(now: float | None = None) -> None:
+    current = time.time() if now is None else now
+    for text in [key for key, until in _binance_pay_amount_cooldown.items() if until <= current]:
+        _binance_pay_amount_cooldown.pop(text, None)
+
+
 def collect_pending_binance_pay_amounts(exclude_order_code: str = "") -> set:
-    """So tien (chuoi da chuan hoa) ma cac don Binance Pay dang cho chiem giu."""
-    taken = set()
+    """So tien (chuoi da chuan hoa) dang bi chiem giu.
+
+    Gom hai nguon:
+      1. Don Binance Pay dang cho tra.
+      2. So tien vua phat ra nhung don da bien mat (het han / bi huy) va con
+         trong thoi gian giu cho.
+
+    Chi dua vao (1) la khong du: don het han bi _cleanup_expired_pending_orders
+    pop ra khoi pending_orders, so tien duoc "tra lai" ngay lap tuc, nen don ke
+    tiep cung muc gia nhan dung so do. Khach cu tra tien muon -> giao dich khop
+    vao don MOI -> nguoi khac duoc giao hang bang tien cua ho.
+    """
+    _prune_binance_pay_cooldown()
+    taken = set(_binance_pay_amount_cooldown)
     for order_code, details in iter_pending_binance_pay_records():
         if exclude_order_code and order_code == exclude_order_code:
             continue
         amount = _binance_pay_decimal(details.get("binance_pay_amount"))
         if amount is not None:
             taken.add(binance_pay_amount_text(amount))
+    if exclude_order_code:
+        # Cap lai so cu cho chinh don do thi khong sao.
+        for _code, details in iter_pending_binance_pay_records():
+            if _code != exclude_order_code:
+                continue
+            amount = _binance_pay_decimal(details.get("binance_pay_amount"))
+            if amount is not None:
+                taken.discard(binance_pay_amount_text(amount))
     return taken
 
 
@@ -146,6 +187,9 @@ def allocate_binance_pay_amount(base_amount):
     for _ in range(max_slots):
         text = binance_pay_amount_text(amount)
         if text not in taken:
+            # Giu cho so nay ke ca khi don bi huy/het han som, de mot lan tra
+            # muon cua don cu khong khop nham vao don sau.
+            _binance_pay_amount_cooldown[text] = time.time() + binance_pay_cooldown_seconds()
             return amount, text
         amount += step
     raise RuntimeError(

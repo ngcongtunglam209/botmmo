@@ -105,6 +105,14 @@ def db_claim_transaction(tx_id: str) -> bool:
 
 
 def db_transaction_exists(tx_id: str) -> bool:
+    """Da xu ly XONG hay chua. Mot claim con dang 'processing' KHONG tinh la roi.
+
+    Loc theo status la bat buoc: neu dem ca dong 'processing' thi mot lan claim
+    bi bo do (bot chet, Telegram nem loi giua chung) se lam giao dich do bi bo
+    qua vinh vien - vong quet sau thay "da co dong" nen continue truoc khi kip
+    goi db_claim_transaction(), tuc la co che gia han 600s o ham do khong bao
+    gio chay toi. Loc 'completed' de dong bo cho stale duoc claim lai.
+    """
     from contextlib import closing
     normalized = str(tx_id or "").strip()
     if not normalized:
@@ -112,7 +120,10 @@ def db_transaction_exists(tx_id: str) -> bool:
     if normalized in processed_transaction_ids:
         return True
     with closing(_db_connect()) as conn:
-        row = conn.execute("SELECT 1 FROM processed_transactions WHERE tx_id=?", (normalized,)).fetchone()
+        row = conn.execute(
+            "SELECT 1 FROM processed_transactions WHERE tx_id=? AND status='completed'",
+            (normalized,),
+        ).fetchone()
     if row:
         processed_transaction_ids.add(normalized)
     return bool(row)
@@ -532,8 +543,15 @@ async def save_data(force=False, tables=None):
                     await db.execute("INSERT OR REPLACE INTO kv_store (key, value) VALUES (?, ?)", (key, content))
                 await db.commit()
 
-            _cache["last_save_time"] = current_time
-            _cache["pending_save"] = False
+            if not tables:
+                # Chi lan luu TOAN BO moi duoc go co. Mot lan luu tung bang
+                # (tables=[...]) khong ghi cac bang khac, nen neu no xoa
+                # pending_save thi lan luu day dang cho debounce 2s se bi huy
+                # im lang - vi du /ban vua goi save_data() roi mot don hang
+                # chen vao save_data(tables=[HISTORY_FILE]) 0.5s sau:
+                # data_banned_users.json khong bao gio duoc ghi.
+                _cache["last_save_time"] = current_time
+                _cache["pending_save"] = False
 
             logger.debug(
                 "Saved %s table(s) to SQLite. orders=%s",

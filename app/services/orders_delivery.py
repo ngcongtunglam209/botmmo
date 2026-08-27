@@ -97,8 +97,32 @@ def _fold_delivery_text(value) -> str:
     return "".join(ch for ch in normalized if not unicodedata.combining(ch)).lower().strip()
 
 
+def _delivery_text_to_lines(value) -> str:
+    """Tach mot khoi text cua nha cung cap thanh nhieu dong, GIU NGUYEN payload.
+
+    Chi doi cac the xuong dong (`<br>`, `<p>`, `<li>`...) thanh ky tu xuong dong
+    vi day la dinh dang. Co y KHONG chay `re.sub(r"</?[^>]+>", "")` va
+    `html.unescape()` nhu _plain_text_preserve_emoji: hai buoc do lam hong mat
+    khau chua `<...>` hoac `&`.
+    """
+    plain = strip_tg_emoji(_repair_mojibake_text(str(value or "")))
+    plain = re.sub(r"(?i)<br\s*/?>", "\n", plain)
+    plain = re.sub(r"(?i)</?(?:p|div|li|ul|ol|blockquote|pre)\b[^>]*>", "\n", plain)
+    return plain.replace("\r", "").strip()
+
+
 def _clean_delivery_line(value) -> str:
-    plain = _plain_text_preserve_emoji(str(value or "")).replace("\r", "").strip()
+    """Chuan hoa mot dong hang giao cho khach.
+
+    KHONG duoc dung _plain_text_preserve_emoji o day: no cat moi thu khop
+    `</?[^>]+>` roi html.unescape() phan con lai. Voi mot dong tai khoan thi day
+    la du lieu doi mat khau: `Ab<x>cd` mat han `<x>`, `P&sect;ssw0rd` thanh
+    `P§ssw0rd`, `a&amp;b` thanh `a&b`. Khach nhan thong tin dang nhap sai ma don
+    van bao "da giao" va dong kho da bi tieu. Kho luu nguyen van (product_catalog
+    lay thang line.strip()) nen o day chi duoc lam sach dinh dang, khong duoc
+    dien giai HTML.
+    """
+    plain = strip_tg_emoji(str(value or "")).replace("\r", "").strip()
     return re.sub(r"^\[\s*\d+\s*\]\s*", "", plain).strip()
 
 
@@ -166,7 +190,7 @@ def normalize_delivered_items(raw_content) -> list[str]:
         normalized_items.append(cleaned)
 
     def _extend_from_text(value) -> None:
-        plain = _plain_text_preserve_emoji(str(value or "")).replace("\r", "").strip()
+        plain = _delivery_text_to_lines(value)
         if not plain:
             return
 

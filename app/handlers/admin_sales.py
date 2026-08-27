@@ -176,7 +176,11 @@ async def refund_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     # Kiểm tra trạng thái
-    if "Hoàn tiền" in status_text(found_order.get("status")):
+    # So chu thuong: moi trang thai hoan tien ma code ghi ra deu la "Đã hoàn
+    # tiền" (chu h thuong), nen so voi "Hoàn tiền" thi khong bao gio khop va
+    # cung mot don co the hoan di hoan lai nhieu lan. Doc them refunded_at
+    # giong nhanh nut bam o admin_refund.py.
+    if found_order.get("refunded_at") or "hoàn tiền" in status_text(found_order.get("status")).lower():
         await update.message.reply_text(f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng {order_code} đã được hoàn tiền trước đó.")
         return
 
@@ -274,7 +278,7 @@ async def refund_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         f"{E_SUCCESS} <b>ĐÃ HOÀN TIỀN THÀNH CÔNG!</b>\n\n"
         f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n"
         f"{E_TAG} <b>Số tiền hoàn:</b> {amount:,} VNĐ\n"
-        f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>User:</b> {found_order.get('full_name')}\n"
+        f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>User:</b> {html.escape(str(found_order.get('full_name') or 'N/A'))}\n"
         f"{E_TAG} <b>Số dư mới:</b> {new_balance:,} VNĐ"
     )
 

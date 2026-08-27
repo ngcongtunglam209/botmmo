@@ -316,13 +316,23 @@ async def consume_local_stock_items(
             )
             actual_delivered = len(reserved_batch)
             refunded_qty = requested_qty - actual_delivered
-            product_data["stock"] = list(remaining_stock)
-            stock_changed = True
-            if isinstance(order_state, dict):
-                order_state["reserved_items"] = list(reserved_batch)
-                order_state["reserved_product_id"] = str(prod_id or "")
-                order_state["reserved_qty"] = actual_delivered
-                order_state["refunded_qty"] = refunded_qty
+            if not reserved_batch:
+                # Du `available_count` dat nhung khong chon duoc dong nao (tat ca
+                # deu la hang da giao cho chinh khach nay, hoac dong rong/trung).
+                # Phai bao "khong con hang" chu KHONG duoc tra list rong: moi
+                # caller chi kiem tra `items is None`, nen mot list rong se lot
+                # qua nhanh hoan tien va khach bi tru du tien de nhan 0 san pham.
+                # Khong dong nao bi lay ra nen kho giu nguyen.
+                reserved_batch = None
+                actual_delivered = 0
+            else:
+                product_data["stock"] = list(remaining_stock)
+                stock_changed = True
+                if isinstance(order_state, dict):
+                    order_state["reserved_items"] = list(reserved_batch)
+                    order_state["reserved_product_id"] = str(prod_id or "")
+                    order_state["reserved_qty"] = actual_delivered
+                    order_state["refunded_qty"] = refunded_qty
 
         remaining_count = len(product_data.get("stock", [])) if stock_changed else available_count
 
@@ -335,7 +345,9 @@ async def consume_local_stock_items(
         "quarantined": duplicate_records,
         "reused": False,
         "requested_qty": requested_qty,
-        "actual_delivered": actual_delivered if reserved_batch else 0,
+        # Khong con `if reserved_batch else 0`: khi giao thieu hang, so luong
+        # thieu phai bao dung de caller hoan tien, khong duoc lam tron ve 0.
+        "actual_delivered": actual_delivered,
         "refunded_qty": refunded_qty if reserved_batch else 0,
     }
 

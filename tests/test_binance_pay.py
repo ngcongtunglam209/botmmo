@@ -17,6 +17,9 @@ def _configure(monkeypatch, binance, *, decimals=4, display_decimals=2):
     monkeypatch.setattr(binance, "BINANCE_PAY_RECV_WINDOW_MS", 5000, raising=False)
     monkeypatch.setattr(binance, "BINANCE_PAY_AMOUNT_DECIMALS", decimals, raising=False)
     monkeypatch.setattr(binance, "USDT_DISPLAY_DECIMALS", display_decimals, raising=False)
+    # So tien da phat ra bi giu cho mot khoang sau khi don bien mat, va so giu cho
+    # nam trong bien module - phai reset, khong thi test truoc lam lech test sau.
+    monkeypatch.setattr(binance, "_binance_pay_amount_cooldown", {}, raising=False)
 
 
 def _pending(amount_text: str, *, amount_vnd: int = 39900, created_ts: float = 1_800_000_000.0):
