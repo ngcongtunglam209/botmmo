@@ -34,7 +34,7 @@ def test_a_real_value_still_wins(monkeypatch):
 def test_a_blank_flag_does_not_silently_mean_off(monkeypatch):
     config = _config()
 
-    # `ENABLE_PAYMENT_RPAY=` used to evaluate to False and quietly disable the
+    # `ENABLE_PAYMENT_SEPAY=` used to evaluate to False and quietly disable the
     # gateway, with nothing in the logs to say why.
     monkeypatch.setenv("SOME_FLAG", "")
     assert config.get_env_bool("SOME_FLAG", True) is True

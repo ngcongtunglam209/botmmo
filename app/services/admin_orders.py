@@ -447,7 +447,7 @@ async def handle_cancel_order_payment(query, context, command):
         except (Forbidden, BadRequest) as e:
             logger.debug(f"Cannot delete pending message on cancel order {order_code}: {e}")
 
-        # RPay tu het han hoa don theo expireMinutes; khong co endpoint huy.
+        # Cong crypto tu het han hoa don theo thoi han da gui; khong co endpoint huy.
         refunded_amount = 0
         balance_used = int(details.get('balance_used', 0) or 0)
         if balance_used > 0:

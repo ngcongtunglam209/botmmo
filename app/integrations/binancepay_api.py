@@ -3,7 +3,7 @@
 # rieng cho tung don (can tai khoan merchant, ma merchant lai can giay phep kinh
 # doanh), nen doi soat bang cach doc lich su giao dich va khop lai.
 #
-# KHAC BIET QUAN TRONG SO VOI SEPAY / RPAY:
+# KHAC BIET QUAN TRONG SO VOI SEPAY / NOWPAYMENTS:
 # Endpoint nay khong he co truong memo/description, va o chieu NHAN tien Binance
 # chi tra ve nickname nguoi gui chu khong tra ve UID. Vi vay KHONG the khop don
 # theo ma ICLD nhu duong ngan hang, cung khong khop duoc theo danh tinh nguoi

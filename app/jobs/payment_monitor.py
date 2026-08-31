@@ -180,8 +180,8 @@ async def _cleanup_expired_pending_orders(context: ContextTypes.DEFAULT_TYPE, cu
         if not details:
             continue
         try:
-            # RPay tu het han hoa don theo expireMinutes da gui luc tao, khong
-            # co endpoint huy nen khong can goi gi them o day.
+            # Cac cong crypto tu het han hoa don theo thoi han da gui luc tao,
+            # khong co endpoint huy nen khong can goi gi them o day.
             user_id = details.get('user_id')
             refund_text = ""
             balance_used = details.get('balance_used', 0)
@@ -236,51 +236,6 @@ def _cleanup_expired_api_deposits(current_time: float) -> bool:
        if code in pending_api_deposits:
            pending_api_deposits.pop(code, None)
     return bool(expired_deposits)
-
-
-async def _scan_rpay_payments(synthetic_transactions: list) -> dict:
-    """RPay: rut het hoa don callback da xac nhan (duong chinh, gan tuc thi),
-    roi doi soat lai bang GetInvoiceStatus (du phong khi callback bi mat).
-
-    Ca hai deu nap dung dang {"transactionID","description","amount"} vao
-    `synthetic_transactions`, dung chung pipeline khop-don/cong-tien ben duoi
-    (check_payment_job) - trung trans_id giua callback va poll van chi cong 1
-    lan nho db_claim_transaction() khoa theo transactionID.
-
-    Tra ve trang thai suc khoe: {"enabled": bool, "ok": bool, "error": str,
-    "count": int}.
-    """
-    from app.integrations.rpay_api import (
-        is_rpay_enabled,
-        rpay_callback_inbox,
-        rpay_poll_pending_invoices,
-    )
-
-    if not is_rpay_enabled():
-        return {"enabled": False, "ok": True, "error": "", "count": 0}
-
-    found = 0
-
-    # 1) Callback inbox - rut het (khong co await xen giua doc/xoa nen an toan).
-    if rpay_callback_inbox:
-        drained, rpay_callback_inbox[:] = list(rpay_callback_inbox), []
-        synthetic_transactions.extend(drained)
-        found += len(drained)
-
-    # 2) Poll du phong - hoi trang thai tung hoa don RPay dang cho.
-    try:
-        polled = await rpay_poll_pending_invoices()
-        for tx in polled:
-            if db_check_tx_exists(tx["transactionID"]):
-                continue
-            synthetic_transactions.append(tx)
-            found += 1
-    except Exception as e:
-        logger.warning(f"RPay poll scan failed: {e}")
-        return {"enabled": True, "ok": False, "error": str(e), "count": found}
-
-    return {"enabled": True, "ok": True, "error": "", "count": found}
-
 
 
 async def _scan_binance_pay_payments(synthetic_transactions: list) -> dict:
@@ -518,9 +473,6 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         f"API Nạp chờ: {len(pending_api_deposits)} | Ví nạp chờ: {len(pending_user_topups)}"
     )
     synthetic_transactions: list = []
-    rpay_status = await _scan_rpay_payments(synthetic_transactions)
-    if not rpay_status["ok"]:
-        logger.warning(f"❌ LỖI API RPAY: {rpay_status['error'] or 'Unknown Error'}")
     binance_pay_status = await _scan_binance_pay_payments(synthetic_transactions)
     if not binance_pay_status["ok"]:
         logger.warning(f"❌ LỖI FEED BINANCE PAY: {binance_pay_status['error'] or 'Unknown Error'}")

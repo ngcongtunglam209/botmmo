@@ -123,50 +123,6 @@ async def sepay_webhook(request: Request):
     return {"success": True}
 
 
-@router.post("/webhook/rpay", include_in_schema=False)
-@router.get("/webhook/rpay", include_in_schema=False)
-async def rpay_callback(request: Request):
-    """Nhận kết quả hóa đơn USDT do RPay push.
-
-    RPay không ký HMAC — nó chỉ gửi lại `merchant_id`/`api_key` trong body, nên
-    đó là toàn bộ thứ xác thực có được. Sai key trả 401 và không ghi log giá trị
-    nhận được. Payload rác / chưa completed / không khớp đơn đều trả 200 vì
-    retry cũng không đổi kết quả. Hóa đơn hợp lệ chỉ được đưa vào hàng đợi;
-    payment_monitor khớp đơn ở vòng quét kế tiếp.
-    """
-    from app.integrations.rpay_api import (
-        rpay_callback_inbox,
-        rpay_normalize_completed_invoice,
-        rpay_verify_credentials,
-    )
-
-    try:
-        body = await request.json()
-    except Exception:
-        body = None
-    if not isinstance(body, dict):
-        form = await request.form()
-        body = dict(form) if form else dict(request.query_params)
-
-    if not rpay_verify_credentials(body):
-        return JSONResponse(status_code=401, content={"success": False})
-
-    if not engine.value(engine.CONFIG_MODULE, "ENABLE_PAYMENT_RPAY", False):
-        logger.warning("RPay callback: ENABLE_PAYMENT_RPAY=false -> bỏ qua payload")
-        return {"success": True}
-
-    normalized = rpay_normalize_completed_invoice(body)
-    if normalized:
-        rpay_callback_inbox.append(normalized)
-        logger.info(
-            "RPay callback: hóa đơn %s cho đơn %s, số tiền %s",
-            normalized["transactionID"],
-            normalized["description"],
-            f"{normalized['amount']:,}đ",
-        )
-    return {"success": True}
-
-
 @router.post("/webhook/nowpayments", include_in_schema=False)
 async def nowpayments_ipn(request: Request):
     """Nhận IPN của NOWPayments.

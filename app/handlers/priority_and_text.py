@@ -749,9 +749,6 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             )])
         else:
             btns.append([_btn(lt(user.id, "Không", "No", "否"), icon_id="5273914604752216432", callback_data="ignore")])
-        from app.integrations.payments_core import is_usdt_payment_enabled
-        if is_usdt_payment_enabled():
-            btns.append([_btn("USDT (RPay)", icon_id="5281029063459234079", callback_data=f"pay_prod_rpay_{prod_id}_{qty}")])
         from app.integrations.binancepay_api import is_binance_pay_enabled
         if is_binance_pay_enabled():
             btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_{qty}")])
@@ -1176,9 +1173,6 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         else:
             btns.append([_btn(lt(user.id, "Không", "No", "否"), icon_id="5273914604752216432", callback_data="ignore")])
 
-        from app.integrations.payments_core import is_usdt_payment_enabled
-        if is_usdt_payment_enabled():
-            btns.append([_btn("USDT (RPay)", icon_id="5281029063459234079", callback_data=f"pay_prod_rpay_{prod_id}_{qty}")])
         from app.integrations.binancepay_api import is_binance_pay_enabled
         if is_binance_pay_enabled():
             btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_{qty}")])

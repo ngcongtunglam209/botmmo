@@ -12,7 +12,6 @@ SECTION_FILES = [
     APP_ROOT / "core" / "runtime_state.py",
     APP_ROOT / "integrations" / "payments_core.py",
     APP_ROOT / "integrations" / "sepay_api.py",
-    APP_ROOT / "integrations" / "rpay_api.py",
     APP_ROOT / "integrations" / "binancepay_api.py",
     APP_ROOT / "integrations" / "nowpayments_api.py",
     APP_ROOT / "database" / "storage.py",

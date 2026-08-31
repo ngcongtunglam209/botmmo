@@ -214,11 +214,6 @@ def is_bank_transfer_enabled() -> bool:
     from app.core.config_env import ENABLE_PAYMENT_SEPAY
     return bool(ENABLE_PAYMENT_SEPAY)
 
-def is_usdt_payment_enabled() -> bool:
-    """USDT chay hoan toan qua RPay (app/integrations/rpay_api.py)."""
-    from app.integrations.rpay_api import is_rpay_enabled
-    return is_rpay_enabled()
-
 def _sanitize_invoice_text(value: str, fallback: str) -> str:
     raw_value = str(value or "").strip()
     if not raw_value: raw_value = fallback
@@ -265,7 +260,7 @@ async def _fetch_p2p_usdt_price(fiat: str):
 async def get_live_usdt_vnd_rate():
     """Ty gia USDT/VND lay tu bang quang cao P2P cong khai, cache 5 phut.
 
-    Day chi la nguon gia tham khao (san pham niem yet VND, RPay thu USDT) nen
+    Day chi la nguon gia tham khao (san pham niem yet VND, cong crypto thu USDT) nen
     khong dinh gi den cong thanh toan. Loi mang -> rot ve
     USDT_RATE_VND_PER_USDT cau hinh tay.
     """
@@ -444,87 +439,6 @@ def convert_vnd_to_usdt(amount_vnd: int, rate: Decimal = None, quantizer=None):
     if rate <= 0: raise ValueError("Khong co ty gia USDT/VND (USDT_RATE_VND_PER_USDT chua dat va khong lay duoc gia live)")
     quantizer = quantizer or _get_usdt_quantizer()
     return (amount_decimal / rate).quantize(quantizer, rounding=ROUND_UP)
-
-
-async def create_rpay_order(order_code: str, amount_vnd: int, goods_name: str, goods_detail: str, network: str = "", expire_minutes: int | None = None) -> dict:
-    """Quy doi VND -> USDT roi tao hoa don RPay cho `order_code`.
-
-    Tra ve khoi `data` cua RPay, bo sung cac khoa ta tu tinh:
-    `request_id`, `amount_usdt`, `amount_text`, `rate`, `rate_text`.
-    """
-    from app.integrations.rpay_api import rpay_build_request_id, rpay_create_invoice
-
-    live_rate = await get_live_usdt_vnd_rate()
-    quantizer = _get_usdt_quantizer()
-    amount_usdt = convert_vnd_to_usdt(amount_vnd, rate=live_rate, quantizer=quantizer)
-    request_id = rpay_build_request_id(order_code)
-
-    invoice = await rpay_create_invoice(
-        order_code=order_code,
-        request_id=request_id,
-        amount_usdt=amount_usdt,
-        name=_sanitize_invoice_text(goods_name, "Digital Goods"),
-        description=_sanitize_invoice_text(goods_detail, order_code),
-        expire_minutes=expire_minutes or (ORDER_EXPIRATION_SECONDS // 60),
-        network=network,
-    )
-    invoice["request_id"] = request_id
-    invoice["amount_usdt"] = amount_usdt
-    invoice["amount_text"] = _decimal_to_fixed_text(amount_usdt, USDT_DISPLAY_DECIMALS)
-    invoice["rate"] = live_rate
-    invoice["rate_text"] = _decimal_to_plain_text(live_rate)
-    invoice["display_decimals"] = USDT_DISPLAY_DECIMALS
-    return invoice
-
-
-def rpay_qr_photo(invoice: dict):
-    """Anh QR gui kem hoa don.
-
-    RPay tra `qrcode` la data URL base64 - Telegram khong nhan data URL nen
-    phai giai ra bytes. Thieu qrcode thi dung `qr_content` (dia chi vi) qua
-    dich vu QR cong khai.
-    """
-    import base64, io
-
-    raw = str(invoice.get("qrcode") or "").strip()
-    if raw.startswith("data:") and "," in raw:
-        try:
-            payload = base64.b64decode(raw.split(",", 1)[1], validate=False)
-            if payload:
-                return io.BytesIO(payload)
-        except (ValueError, TypeError, base64.binascii.Error):
-            pass
-    if raw.startswith("http"):
-        return raw
-    qr_content = str(invoice.get("qr_content") or invoice.get("address") or "").strip()
-    if not qr_content:
-        return None
-    from urllib.parse import quote
-    return f"https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={quote(qr_content, safe='')}"
-
-
-def build_rpay_checkout_keyboard(invoice: dict, order_code: str, user_id=None):
-    rows = []
-    url_payment = str(invoice.get("url_payment") or "").strip()
-    address = str(invoice.get("address") or "").strip()
-    amount_text = str(invoice.get("amount_text") or "").strip()
-    if url_payment.startswith("http"):
-        rows.append([InlineKeyboardButton(
-            lt(user_id, "🌐 Mở trang thanh toán", "🌐 Open payment page", "🌐 打开支付页面"),
-            url=url_payment,
-        )])
-    if address:
-        rows.append([InlineKeyboardButton(
-            lt(user_id, "📋 Sao chép địa chỉ ví", "📋 Copy wallet address", "📋 复制钱包地址"),
-            copy_text=CopyTextButton(address),
-        )])
-    if amount_text:
-        rows.append([InlineKeyboardButton(
-            lt(user_id, "📋 Sao chép số tiền", "📋 Copy amount", "📋 复制金额"),
-            copy_text=CopyTextButton(amount_text),
-        )])
-    rows.append([InlineKeyboardButton(_cancel_payment_label(user_id), callback_data=f"cancel_order:{order_code}")])
-    return InlineKeyboardMarkup(rows)
 
 
 # SQLite chay WAL nen con ghi them <db>-wal va <db>-shm ben canh file. Ca ba

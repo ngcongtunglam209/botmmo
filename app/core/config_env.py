@@ -140,44 +140,7 @@ PUBLIC_API_SCHEME = get_env_str("PUBLIC_API_SCHEME", "https").lower()
 # otherwise drop those headers and report every HTTPS request as plain http.
 TRUSTED_PROXY_IPS = get_env_str("TRUSTED_PROXY_IPS", "*")
 AUTO_PUBLIC_IP_DETECT = get_env_bool("AUTO_PUBLIC_IP_DETECT", True)
-# --- RPay: cong thanh toan USDT duy nhat (callback la chinh, poll
-# GetInvoiceStatus chi la du phong doi soat lai) ---
-ENABLE_PAYMENT_RPAY = get_env_bool("ENABLE_PAYMENT_RPAY", True)
-RPAY_MERCHANT_ID = os.getenv("RPAY_MERCHANT_ID", "").strip()
-RPAY_API_KEY = os.getenv("RPAY_API_KEY", "").strip()
-RPAY_API_BASE_URL = get_env_str("RPAY_API_BASE_URL", "https://api.rpay.vn/api").rstrip("/")
-# Token/network/address deu tuy chon: de trong thi RPay dung vi mac dinh cua
-# cua hang. Chi bat buoc `address` khi 1 network/token co nhieu vi active.
-RPAY_TOKEN = get_env_str("RPAY_TOKEN", "USDT").upper()
-def _split_rpay_networks(raw: str) -> list:
-    return [network for network in re.split(r"[,\s;]+", str(raw or "").lower()) if network]
-RPAY_WALLET_ADDRESS = os.getenv("RPAY_WALLET_ADDRESS", "").strip()
-# Nhieu vi cung luc: liet ke cac network cho khach tu chon luc thanh toan,
-# vi du "bsc,tron,polygon". De trong thi rot ve RPAY_NETWORK.
-#
-# RPAY_NETWORK cung nhan duoc danh sach. Hai ten chi khac nhau mot chu S, va
-# viet danh sach vao ten so it la nham rat de xay ra - truoc day ca chuoi
-# "bsc,tron,polygon" bi gui len lam ten mang va RPay tra "Mang crypto khong
-# duoc ho tro" ngay khi khach bam mua. Doc ca hai theo cung mot cach thi khong
-# con cho de go sai.
-RPAY_NETWORKS = _split_rpay_networks(get_env_str("RPAY_NETWORKS", "")) or _split_rpay_networks(
-    get_env_str("RPAY_NETWORK", "")
-)
-# Mang mac dinh khi khach khong duoc hoi (chi cau hinh mot mang).
-RPAY_NETWORK = RPAY_NETWORKS[0] if RPAY_NETWORKS else ""
-# Vi rieng cho tung mang khi mot network/token co nhieu vi active:
-# RPAY_WALLET_ADDRESS_BSC=0x..., RPAY_WALLET_ADDRESS_TRON=T...
-RPAY_WALLET_ADDRESS_BY_NETWORK = {
-    network: address
-    for network in RPAY_NETWORKS
-    if (address := os.getenv(f"RPAY_WALLET_ADDRESS_{network.upper()}", "").strip())
-}
-# De trong -> bam theo PUBLIC_API_URL + /webhook/rpay (xem rpay_callback_url()).
-RPAY_CALLBACK_URL = os.getenv("RPAY_CALLBACK_URL", "").strip()
-RPAY_TIMEOUT_SECONDS = get_env_float("RPAY_TIMEOUT_SECONDS", 15.0, minimum=3.0)
-# Tra thieu bao nhieu USDT thi van chap nhan (phi mang lam hut vai cent).
-RPAY_UNDERPAY_TOLERANCE_RAW = get_env_str("RPAY_UNDERPAY_TOLERANCE", "0.01")
-# So le USDT hien cho khach va gui len RPay. 2 la du cho moi network.
+# So le USDT hien cho khach va gui len cong thanh toan. 2 la du cho moi network.
 USDT_DISPLAY_DECIMALS = get_env_int("USDT_DISPLAY_DECIMALS", 2, minimum=1)
 
 # --- NOWPayments: cong USDT da mang, co IPN callback + poll du phong ---
@@ -227,7 +190,7 @@ BINANCE_PAY_AMOUNT_DECIMALS = get_env_int("BINANCE_PAY_AMOUNT_DECIMALS", 4, mini
 BINANCE_PAY_MATCH_LEEWAY_SECONDS = get_env_int("BINANCE_PAY_MATCH_LEEWAY_SECONDS", 120, minimum=30)
 # Ty gia du phong khi khong lay duoc gia P2P live (0 = bat buoc phai co live).
 USDT_RATE_VND_PER_USDT_RAW = os.getenv("USDT_RATE_VND_PER_USDT", "0").strip()
-# Nguon gia USDT/VND tham khao. San pham niem yet VND con RPay thu USDT nen
+# Nguon gia USDT/VND tham khao. San pham niem yet VND con cong crypto thu USDT nen
 # van phai quy doi; day chi la bang gia cong khai, khong phai cong thanh toan.
 USDT_RATE_SOURCE_URL = get_env_str(
     "USDT_RATE_SOURCE_URL",
@@ -283,13 +246,6 @@ except InvalidOperation:
     USDT_RATE_CNY_PER_USDT = Decimal("7.2")
 if USDT_RATE_CNY_PER_USDT < 0:
     USDT_RATE_CNY_PER_USDT = Decimal("0")
-
-try:
-    RPAY_UNDERPAY_TOLERANCE = Decimal(RPAY_UNDERPAY_TOLERANCE_RAW or "0")
-except InvalidOperation:
-    RPAY_UNDERPAY_TOLERANCE = Decimal("0.01")
-if RPAY_UNDERPAY_TOLERANCE < 0:
-    RPAY_UNDERPAY_TOLERANCE = Decimal("0")
 
 try:
     NOWPAYMENTS_UNDERPAY_TOLERANCE = Decimal(NOWPAYMENTS_UNDERPAY_TOLERANCE_RAW or "0")
@@ -384,7 +340,6 @@ def _iter_log_secrets():
         API_SECRET_KEY,
         SEPAY_WEBHOOK_API_KEY,
         SEPAY_API_TOKEN,
-        RPAY_API_KEY,
         NOWPAYMENTS_API_KEY,
         NOWPAYMENTS_IPN_SECRET,
         BINANCE_API_KEY,
