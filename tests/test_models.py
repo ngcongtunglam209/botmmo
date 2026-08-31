@@ -209,7 +209,7 @@ class TestFlashSale:
 class TestPaymentMethod:
     def test_enum_values(self):
         assert PaymentMethod.BANK_TRANSFER == "bank_transfer"
-        assert PaymentMethod.USDT_RPAY == "usdt_rpay"
+        assert PaymentMethod.USDT_NOWPAYMENTS == "usdt_nowpayments"
         assert PaymentMethod.BALANCE == "balance"
 
 

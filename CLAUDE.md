@@ -83,7 +83,7 @@ Mounted into the same FastAPI app the bot serves (`app/api/server.py` runs uvico
 Three independently toggled rails, all polled/reconciled by `app/jobs/payment_monitor.py`:
 
 - **SePay** (`ENABLE_PAYMENT_SEPAY`) — VND bank transfer. Webhook at `/webhook/sepay` authenticated by `SEPAY_WEBHOOK_API_KEY`; API-token polling is fallback only. VietQR images via SePay.
-- **RPay** (`ENABLE_PAYMENT_RPAY`) — USDT, multi-network (`RPAY_NETWORKS`). See `rpay-usdt-api-docs.md`.
+- **NOWPayments** (`ENABLE_PAYMENT_NOWPAYMENTS`) — USDT, multi-currency (`NOWPAYMENTS_CURRENCIES`). IPN at `/webhook/nowpayments` signed HMAC-SHA512 with `NOWPAYMENTS_IPN_SECRET`; per-payment polling is fallback only.
 - **Binance Pay** (`ENABLE_PAYMENT_BINANCE_PAY`) — matched by amount + time leeway against a merchant history feed.
 
 Orders and wallet top-ups share the same payment-generation path (`app/handlers/payment_generation.py`, `app/handlers/user_topup.py`).

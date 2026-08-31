@@ -30,7 +30,6 @@ def _callback_requires_manual_answer(command: str) -> bool:
     manual_answer_prefixes = (
         'topup_cancel:',
         'topup_pay:',
-        'topup_rpaynet:',
         'topup_npnet:',
         'adm_quick:',
         'adm_uo:',
@@ -485,9 +484,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     elif command.startswith('topup_pay:'):
         await handle_topup_method_choice(update, context, command.split(':', 1)[1])
-
-    elif command.startswith('topup_rpaynet:'):
-        await handle_topup_network_choice(update, context, command.split(':', 1)[1])
 
     elif command.startswith('topup_npnet:'):
         await handle_topup_nowpayments_choice(update, context, command.split(':', 1)[1])

@@ -73,7 +73,7 @@ class Order(BaseModel):
     delivery_method: str = Field("", description="instant_items | stock_items | manual_pending | manual_completed | pending | document | text | failed")
 
     # Payment
-    payment_method: str = Field("bank_transfer", description="bank_transfer | usdt_rpay | binance_pay | balance")
+    payment_method: str = Field("bank_transfer", description="bank_transfer | usdt_nowpayments | binance_pay | balance")
     balance_used: int = Field(0, ge=0, description="Wallet balance portion used")
     qr_amount: int = Field(0, ge=0, description="Amount paid via QR/transfer")
     coupon_used: str = Field("", description="Applied coupon code")
@@ -127,7 +127,7 @@ class PendingOrder(BaseModel):
     transfer_content: str = Field("", description="Expected bank transfer description")
     secret_transfer_code: str = Field("", description="Secret code to match in transfer description")
     payment_method: str = Field("bank_transfer")
-    provider: str = Field("", description="Payment provider: bank_transfer | rpay | binance_pay")
+    provider: str = Field("", description="Payment provider: bank_transfer | nowpayments | binance_pay")
     balance_used: int = Field(0, ge=0)
     coupon_code: str = Field("")
     original_price: int = Field(0, ge=0)
@@ -141,11 +141,6 @@ class PendingOrder(BaseModel):
     full_name: str | None = None
     username: str | None = None
     email: str | None = None
-
-    # RPay USDT
-    rpay_trans_id: str = Field("")
-    rpay_request_id: str = Field("")
-    rpay_amount: str = Field("", description="Invoice amount in USDT, as sent to RPay")
 
     # Binance Pay. Reconciliation matches on this exact string, so it must stay
     # byte-identical to what the customer was shown.

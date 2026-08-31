@@ -13,7 +13,7 @@ class PaymentMethod(str, enum.Enum):
     """Supported payment methods."""
 
     BANK_TRANSFER = "bank_transfer"
-    USDT_RPAY = "usdt_rpay"
+    USDT_NOWPAYMENTS = "usdt_nowpayments"
     BINANCE_PAY = "binance_pay"
     BALANCE = "balance"  # Full balance payment, no external transfer
 

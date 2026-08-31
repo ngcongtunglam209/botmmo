@@ -253,90 +253,11 @@ def _build_nowpayments_topup_caption(user_id, code: str, amount: int, payment: d
     )
 
 
-def _build_rpay_topup_keyboard(user_id, code: str, invoice: dict):
-    rows = []
-    url_payment = str(invoice.get("url_payment") or "").strip()
-    address = str(invoice.get("address") or "").strip()
-    amount_text = str(invoice.get("amount_text") or "").strip()
-    if url_payment.startswith("http"):
-        rows.append([InlineKeyboardButton(
-            lt(user_id, "🌐 Mở trang thanh toán", "🌐 Open payment page", "🌐 打开支付页面"),
-            url=url_payment,
-        )])
-    if address:
-        rows.append([InlineKeyboardButton(
-            lt(user_id, "📋 Sao chép địa chỉ ví", "📋 Copy wallet address", "📋 复制钱包地址"),
-            copy_text=CopyTextButton(address),
-        )])
-    if amount_text:
-        rows.append([InlineKeyboardButton(
-            lt(user_id, "📋 Sao chép số tiền", "📋 Copy amount", "📋 复制金额"),
-            copy_text=CopyTextButton(amount_text),
-        )])
-    rows.append([_btn(lt(user_id, "Hủy lệnh nạp", "Cancel top-up", "取消充值"),
-                      icon_id="5273914604752216432", callback_data=f"topup_cancel:{code}")])
-    rows.append([_btn(lt(user_id, "Quay lại", "Back", "返回"),
-                      icon_id="6206032691075223572", callback_data="my_stats")])
-    return InlineKeyboardMarkup(rows)
-
-
-def _build_rpay_topup_caption(user_id, code: str, amount: int, invoice: dict) -> str:
-    minutes = max(1, USER_TOPUP_EXPIRATION_SECONDS // 60)
-    network_name = str(invoice.get("network_name") or invoice.get("network") or "").strip() or "USDT"
-    token_symbol = str(invoice.get("token") or "USDT").strip()
-    expires_at = str(invoice.get("expires_at") or "").strip() or (
-        datetime.now() + timedelta(seconds=USER_TOPUP_EXPIRATION_SECONDS)
-    ).strftime('%H:%M:%S')
-    return lt(
-        user_id,
-        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>NẠP VÍ BẰNG {token} ({network})</b>\n\n'
-        '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Số tiền nạp:</b> {amount}\n'
-        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>Số {token} cần chuyển:</b> <code>{crypto}</code>\n'
-        '<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>Địa chỉ ví:</b> <code>{wallet}</code>\n'
-        '<tg-emoji emoji-id="5972022360025336988">🔸</tg-emoji> <b>Mạng lưới:</b> {network}\n'
-        '<tg-emoji emoji-id="5972022360025336988">🔸</tg-emoji> <b>Mã lệnh nạp:</b> <code>{code}</code>\n'
-        '<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Hiệu lực:</b> {minutes} phút (hết hạn {expires})\n\n'
-        '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> Chuyển <b>đúng số tiền ở trên</b> để hệ thống tự cộng ví.\n'
-        '- Chỉ dùng mạng <b>{network}</b>. Chuyển sai mạng sẽ mất tiền.\n'
-        '<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> Tiền trong ví chỉ dùng để mua hàng, không rút ra được.',
-        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>TOP UP WITH {token} ({network})</b>\n\n'
-        '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>Top-up amount:</b> {amount}\n'
-        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>{token} to send:</b> <code>{crypto}</code>\n'
-        '<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>Wallet address:</b> <code>{wallet}</code>\n'
-        '<tg-emoji emoji-id="5972022360025336988">🔸</tg-emoji> <b>Network:</b> {network}\n'
-        '<tg-emoji emoji-id="5972022360025336988">🔸</tg-emoji> <b>Top-up code:</b> <code>{code}</code>\n'
-        '<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Valid for:</b> {minutes} minutes (expires {expires})\n\n'
-        '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> Send the <b>exact amount above</b> so the bot credits your wallet automatically.\n'
-        '- Use only the <b>{network}</b> network. Funds sent through another network may be lost.\n'
-        '<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> Wallet funds can only be spent on purchases, not withdrawn.',
-        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>{token} 充值（{network}）</b>\n\n'
-        '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>充值金额：</b> {amount}\n'
-        '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>需转 {token}：</b> <code>{crypto}</code>\n'
-        '<tg-emoji emoji-id="5373251851074415873">📝</tg-emoji> <b>钱包地址：</b> <code>{wallet}</code>\n'
-        '<tg-emoji emoji-id="5972022360025336988">🔸</tg-emoji> <b>网络：</b> {network}\n'
-        '<tg-emoji emoji-id="5972022360025336988">🔸</tg-emoji> <b>充值单号：</b> <code>{code}</code>\n'
-        '<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>有效期：</b> {minutes} 分钟（{expires} 到期）\n\n'
-        '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> 请转入<b>上方准确金额</b>，系统将自动入账。\n'
-        '- 仅使用 <b>{network}</b> 网络，转错网络可能造成资金丢失。\n'
-        '<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> 钱包余额仅可用于购物，不可提现。',
-        token=html.escape(token_symbol),
-        network=html.escape(network_name),
-        amount=format_money(amount, user_id),
-        crypto=html.escape(str(invoice.get("amount_text") or "")),
-        wallet=html.escape(str(invoice.get("address") or "")),
-        code=code,
-        minutes=minutes,
-        expires=html.escape(expires_at),
-    )
-
-
 def available_topup_methods() -> list:
     """Cac cong nap vi dang bat, theo thu tu hien cho khach."""
     methods = []
     if is_bank_transfer_enabled():
         methods.append("bank")
-    if is_usdt_payment_enabled():
-        methods.append("usdt")
     if is_binance_pay_enabled():
         methods.append("binance")
     from app.integrations.nowpayments_api import is_nowpayments_enabled
@@ -357,9 +278,6 @@ async def show_topup_method_choice(update: Update, context: ContextTypes.DEFAULT
     if "bank" in methods:
         rows.append([_btn(lt(user_id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"),
                           icon_id=BANK_BUTTON_ICON_ID, callback_data=f"topup_pay:bank:{int(amount)}", style="success")])
-    if "usdt" in methods:
-        rows.append([_btn("USDT (RPay)", icon_id="5281029063459234079",
-                          callback_data=f"topup_pay:usdt:{int(amount)}", style="success")])
     if "binance" in methods:
         rows.append([_btn("Binance Pay (USDT)", icon_id=CRYPTO_BUTTON_ICON_ID,
                           callback_data=f"topup_pay:binance:{int(amount)}", style="success")])
@@ -391,7 +309,7 @@ async def show_topup_method_choice(update: Update, context: ContextTypes.DEFAULT
     return True
 
 
-async def create_user_topup_request(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, method: str = "bank", network: str = "") -> bool:
+async def create_user_topup_request(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, method: str = "bank") -> bool:
     """Tao ma nap + QR. Tra False neu khong tao duoc (da co ma cho / sai so tien)."""
     user = update.effective_user
     chat_id = update.effective_chat.id
@@ -432,51 +350,7 @@ async def create_user_topup_request(update: Update, context: ContextTypes.DEFAUL
         "provider": "bank",
     }
     quote_data = None
-    rpay_invoice = None
     np_payment = None
-
-    if method == "usdt":
-        if not is_usdt_payment_enabled():
-            await safe_bot_send_html(
-                context.bot,
-                chat_id,
-                f"{E_LIMIT} " + lt(user.id, "Phương thức thanh toán này chưa được cấu hình.", "This payment method is not configured yet.", "此付款方式尚未配置。"),
-            )
-            return False
-        try:
-            rpay_invoice = await create_rpay_order(
-                order_code=code,
-                amount_vnd=int(amount),
-                goods_name="Wallet topup",
-                goods_detail=code,
-                network=network,
-                expire_minutes=max(1, USER_TOPUP_EXPIRATION_SECONDS // 60),
-            )
-        except Exception as e:
-            logger.error(f"[topup] Khong tao duoc hoa don USDT cho {user.id}: {e}")
-            await safe_bot_send_html(
-                context.bot,
-                chat_id,
-                f"{E_LIMIT} " + lt(user.id, "Không thể tạo hóa đơn USDT. Vui lòng thử lại sau.", "Could not create the USDT invoice. Please try again later.", "无法创建 USDT 账单，请稍后重试。"),
-            )
-            return False
-        # `rpay_request_id` la bi mat callback phai khop lai, `rpay_trans_id` la
-        # thu duong poll hoi trang thai - thieu mot trong hai thi khach tra tien
-        # xong khong ai cong.
-        record.update({
-            "provider": "rpay",
-            "payment_method": "usdt_rpay",
-            "rpay_trans_id": str(rpay_invoice.get("trans_id") or ""),
-            "rpay_request_id": str(rpay_invoice.get("request_id") or ""),
-            "rpay_amount": str(rpay_invoice.get("amount_text") or ""),
-            "rpay_token": str(rpay_invoice.get("token") or "USDT"),
-            "rpay_network": str(rpay_invoice.get("network") or ""),
-            "rpay_network_name": str(rpay_invoice.get("network_name") or ""),
-            "rpay_address": str(rpay_invoice.get("address") or ""),
-            "rpay_url_payment": str(rpay_invoice.get("url_payment") or ""),
-            "rpay_expires_at": str(rpay_invoice.get("expires_at") or ""),
-            "rpay_rate": str(rpay_invoice.get("rate", USDT_RATE_VND_PER_USDT)),
-        })
 
     if method == "binance":
         if not is_binance_pay_enabled():
@@ -576,10 +450,6 @@ async def create_user_topup_request(update: Update, context: ContextTypes.DEFAUL
         caption = _build_nowpayments_topup_caption(user.id, code, amount, np_payment)
         photo = nowpayments_qr_photo(str(np_payment.get("pay_address") or ""))
         keyboard = _build_nowpayments_topup_keyboard(user.id, code, np_payment)
-    elif rpay_invoice is not None:
-        caption = _build_rpay_topup_caption(user.id, code, amount, rpay_invoice)
-        photo = rpay_qr_photo(rpay_invoice)
-        keyboard = _build_rpay_topup_keyboard(user.id, code, rpay_invoice)
     elif quote_data is not None:
         caption = _build_binance_topup_caption(user.id, code, amount, quote_data)
         photo = binance_pay_qr_photo()
@@ -665,32 +535,6 @@ async def handle_topup_amount_input(update: Update, context: ContextTypes.DEFAUL
     await show_topup_method_choice(update, context, amount)
 
 
-async def _show_topup_network_choice(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, networks: list) -> None:
-    """Chuyen sai mang la mat tien, nen mang phai do khach chon co y thuc."""
-    from app.integrations.rpay_api import rpay_network_label
-
-    user_id = update.effective_user.id
-    rows = [[
-        _btn(rpay_network_label(network), icon_id="5281029063459234079",
-             callback_data=f"topup_rpaynet:{network}:{int(amount)}", style="success")
-    ] for network in networks]
-    rows.append([_btn(lt(user_id, "Quay lại", "Back", "返回"),
-                      icon_id="6206032691075223572", callback_data="my_stats")])
-    await safe_edit_message(
-        update.callback_query,
-        text=lt(
-            user_id,
-            "<b>Chọn mạng lưới USDT</b>\n\nChuyển sai mạng sẽ <b>mất tiền</b>. "
-            "Hãy chọn đúng mạng mà ví của bạn hỗ trợ.",
-            "<b>Choose the USDT network</b>\n\nSending on the wrong network <b>loses the funds</b>. "
-            "Pick the network your wallet actually supports.",
-            "<b>请选择 USDT 网络</b>\n\n转错网络会<b>造成资金丢失</b>。请选择您钱包支持的网络。",
-        ),
-        parse_mode=ParseMode.HTML,
-        reply_markup=InlineKeyboardMarkup(rows),
-    )
-
-
 async def _show_topup_nowpayments_choice(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, currencies: list) -> None:
     user_id = update.effective_user.id
     from app.integrations.nowpayments_api import nowpayments_pay_currency_label
@@ -762,14 +606,6 @@ async def handle_topup_method_choice(update: Update, context: ContextTypes.DEFAU
         )
         return True
 
-    if method == "usdt":
-        from app.integrations.rpay_api import rpay_available_networks
-        networks = rpay_available_networks()
-        if len(networks) > 1:
-            await safe_answer(query)
-            await _show_topup_network_choice(update, context, amount, networks)
-            return True
-
     if method == "nowpay":
         from app.integrations.nowpayments_api import nowpayments_currencies_for_amount
         from app.integrations.payments_core import convert_vnd_to_usdt, get_live_usdt_vnd_rate
@@ -805,35 +641,6 @@ async def handle_topup_method_choice(update: Update, context: ContextTypes.DEFAU
     except (TelegramError, ValueError, AttributeError):
         pass
     await create_user_topup_request(update, context, amount, method=method)
-    return True
-
-
-async def handle_topup_network_choice(update: Update, context: ContextTypes.DEFAULT_TYPE, payload: str) -> bool:
-    """`topup_rpaynet:<mang>:<so tien VND>`."""
-    from app.integrations.rpay_api import rpay_available_networks
-
-    query = update.callback_query
-    user_id = update.effective_user.id
-    network, _, amount_text = str(payload or "").partition(":")
-    try:
-        amount = int(amount_text)
-    except (TypeError, ValueError):
-        await safe_answer(query, lt(user_id, "Số tiền không hợp lệ.", "Invalid amount.", "金额无效。"), show_alert=True)
-        return True
-    if network not in rpay_available_networks():
-        await safe_answer(
-            query,
-            lt(user_id, "Mạng lưới không khả dụng.", "This network is not available.", "该网络不可用。"),
-            show_alert=True,
-        )
-        return True
-
-    await safe_answer(query)
-    try:
-        await query.delete_message()
-    except (TelegramError, ValueError, AttributeError):
-        pass
-    await create_user_topup_request(update, context, amount, method="usdt", network=network)
     return True
 
 

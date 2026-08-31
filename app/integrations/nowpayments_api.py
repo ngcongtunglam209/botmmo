@@ -23,7 +23,7 @@
 #      NOWPAYMENTS_UNDERPAY_TOLERANCE (phi mang).
 #
 # SO TIEN CONG CHO KHACH luon lay tu don pending cua ta (VND), khong bao gio
-# lay tu payload - y het quy tac cua Binance Pay va RPay.
+# lay tu payload - y het quy tac cua Binance Pay.
 
 NOWPAYMENTS_STATUS_FINISHED = "finished"
 NOWPAYMENTS_STATUS_PARTIAL = "partially_paid"

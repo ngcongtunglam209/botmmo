@@ -6,7 +6,7 @@
 # Ca hai duong deu chuan hoa ve cung 1 dang {"transactionID", "description",
 # "amount"} roi nap vao pipeline khop-don/cong-tien co san trong
 # app/jobs/payment_monitor.py (check_payment_job) - giong het cach
-# _scan_rpay_payments dang lam. Nho vay
+# _scan_nowpayments_payments dang lam. Nho vay
 # 1 giao dich thay 2 lan (webhook + poll) van chi duoc cong 1 lan, vi
 # db_claim_transaction() ben duoi khoa theo transactionID duy nhat.
 
