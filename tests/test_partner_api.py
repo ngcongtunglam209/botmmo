@@ -22,6 +22,13 @@ def api(monkeypatch):
     modules = load_modules()
     helpers = modules["app.api.helpers"]
 
+    # `init_db()` chay luc bot khoi dong, con test thi khong co buoc do. May dev
+    # thuong da co san data/*.db tu lan chay bot truoc nen khong ai thay; runner
+    # CI thi trang, va moi endpoint ghi log deu do `sqlite3.OperationalError:
+    # no such table: api_request_logs`. init_db() dung CREATE TABLE IF NOT
+    # EXISTS nen goi lai vo hai.
+    modules["app.database.storage"].init_db()
+
     monkeypatch.setattr(helpers, "API_SECRET_KEY", ADMIN_KEY, raising=False)
     helpers.api_keys[PARTNER_KEY] = {
         "name": "Đối tác Test",
