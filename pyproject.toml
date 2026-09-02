@@ -84,3 +84,12 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false  # Gradual typing - enable later
 check_untyped_defs = true
+
+# `app/models/api_models.py` nam trong SECTION_FILES: no duoc exec vao mot
+# namespace chung chu khong duoc import, nen gan het ten trong file la undefined
+# duoi con mat cua mypy (`FastAPI`, `time`, `os`, `API_SECRET_KEY`, ...). Bon
+# module con lai trong app/models/ la module Python binh thuong va van duoc
+# kiem tra day du.
+[[tool.mypy.overrides]]
+module = "app.models.api_models"
+ignore_errors = true
