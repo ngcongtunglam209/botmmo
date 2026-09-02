@@ -121,13 +121,10 @@ async def show_my_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, is_c
     badges = calculate_badges(user_id)
     rank_info = get_user_rank(user_id)
     current_rank = rank_info.get('rank') or {}
-    base_rank = rank_info.get('base_rank') or current_rank
     next_rank = rank_info.get('next_rank')
     user_info = db_get_user(user_id)
     balance = user_info.get('balance', 0) if user_info else 0
-    maintenance_status = rank_info.get('maintenance_status') or {}
     current_rank_name = format_rank_entry_premium(current_rank, user_id=user_id)
-    base_rank_name = format_rank_entry_premium(base_rank, user_id=user_id)
     next_rank_name = format_rank_entry_premium(next_rank, user_id=user_id) if next_rank else ""
 
     achievements_block = ""
@@ -147,17 +144,35 @@ async def show_my_stats(update: Update, context: ContextTypes.DEFAULT_TYPE, is_c
         '<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> <b>VIP 等级</b>\n<blockquote>• 当前：<b>{rank}</b>\n', rank=current_rank_name,
     )
     remaining = rank_info.get("remaining_to_next", 0)
-    if rank_info.get("demoted_by_maintenance"):
+    window_days = rank_info.get("window_days", 0)
+    rank_block += lt(
+        user_id,
+        '• Chi tiêu {window} ngày qua: <b>{spent}</b>\n',
+        '• Spent in last {window} days: <b>{spent}</b>\n',
+        '• 近 {window} 天消费：<b>{spent}</b>\n',
+        window=window_days, spent=format_money(rank_info.get("total_spent", 0), user_id),
+    )
+    if next_rank:
         rank_block += lt(
             user_id,
-            '• Tháng {period} đã chi <b>{spent}</b> / yêu cầu <b>{minimum}</b>\n• Đang bị tụt 1 bậc, cần thêm <b>{remaining}</b> để lấy lại <b>{base}</b> vào tháng sau\n• Quy tắc duy trì: tháng trước chi dưới <b>{minimum}</b> sẽ tụt 1 bậc\n',
-            '• Spent <b>{spent}</b> / required <b>{minimum}</b> in {period}\n• Temporarily down one rank; spend <b>{remaining}</b> more to restore <b>{base}</b> next month\n• Maintenance rule: spending below <b>{minimum}</b> in the previous month lowers one rank\n',
-            '• {period}消费 <b>{spent}</b> / 要求 <b>{minimum}</b>\n• 当前暂降一级；再消费 <b>{remaining}</b>，下月恢复 <b>{base}</b>\n• 保级规则：上月消费低于 <b>{minimum}</b> 将降一级\n',
-            period=maintenance_status.get("period_label", "trước"), spent=format_money(maintenance_status.get("monthly_spend", 0), user_id),
-            minimum=format_money(VIP_MONTHLY_MAINTENANCE_MIN_SPEND, user_id), remaining=format_money(remaining, user_id), base=base_rank_name,
+            '• Cần thêm <b>{amount}</b> để lên <b>{rank}</b>\n',
+            '• Spend <b>{amount}</b> more to reach <b>{rank}</b>\n',
+            '• 再消费 <b>{amount}</b> 即可升级至 <b>{rank}</b>\n',
+            amount=format_money(remaining, user_id), rank=next_rank_name,
         )
-    elif next_rank:
-        rank_block += lt(user_id, '• Cần thêm <b>{amount}</b> để lên <b>{rank}</b>\n', '• Spend <b>{amount}</b> more to reach <b>{rank}</b>\n', '• 再消费 <b>{amount}</b> 即可升级至 <b>{rank}</b>\n', amount=format_money(remaining, user_id), rank=next_rank_name)
+    drop_timestamp = rank_info.get("drop_timestamp") or 0
+    if drop_timestamp:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        drop_date = datetime.fromtimestamp(drop_timestamp, ZoneInfo("Asia/Ho_Chi_Minh")).strftime("%d/%m/%Y")
+        rank_block += lt(
+            user_id,
+            '• Không mua thêm thì <b>{date}</b> sẽ tuột hạng\n',
+            '• Without a new order you drop a rank on <b>{date}</b>\n',
+            '• 若不再下单，将于 <b>{date}</b> 掉级\n',
+            date=drop_date,
+        )
     rank_block += '</blockquote>'
 
     msg = lt(

@@ -161,10 +161,10 @@ def _legacy_build_admin_userinfo_panel(target_id: int, order_page: int = 0):
 
     rank_info = get_user_rank(target_id)
     rank_name = html.escape(str(rank_info['rank']['name']))
-    base_rank = rank_info.get('base_rank') or rank_info['rank']
     next_rank = rank_info.get('next_rank')
     remaining = rank_info.get('remaining_to_next', 0)
-    maintenance_status = rank_info.get('maintenance_status') or {}
+    window_spent = int(rank_info.get('total_spent', 0) or 0)
+    window_days = int(rank_info.get('window_days', 0) or 0)
 
     stats = calculate_user_stats(target_id)
     badges = calculate_badges(target_id)
@@ -195,14 +195,8 @@ def _legacy_build_admin_userinfo_panel(target_id: int, order_page: int = 0):
     )
 
     message += "\n"
-    if rank_info.get('demoted_by_maintenance'):
-        message += (
-            f"┣ Duy trì hạng tháng {html.escape(str(maintenance_status.get('period_label', 'trước')))}: "
-            f"<b>{maintenance_status.get('monthly_spend', 0):,} VNĐ</b> / {VIP_MONTHLY_MAINTENANCE_MIN_SPEND:,} VNĐ\n"
-            f"┗ Đang bị tụt 1 bậc, cần thêm <b>{remaining:,} VNĐ</b> để lấy lại "
-            f"{html.escape(str(base_rank['name']))} vào tháng sau\n"
-        )
-    elif next_rank:
+    message += f"┣ Chi tiêu {window_days} ngày qua: <b>{window_spent:,} VNĐ</b>\n"
+    if next_rank:
         message += f"┗ Cần thêm <b>{remaining:,} VNĐ</b> → {html.escape(str(next_rank['name']))}\n"
     message += "\n"
 
@@ -285,10 +279,10 @@ def _build_admin_userinfo_panel(target_id: int, order_page: int = 0):
 
     rank_info = get_user_rank(target_id)
     rank_name = _format_admin_rank_name(rank_info['rank']['name'])
-    base_rank = rank_info.get('base_rank') or rank_info['rank']
     next_rank = rank_info.get('next_rank')
     remaining = rank_info.get('remaining_to_next', 0)
-    maintenance_status = rank_info.get('maintenance_status') or {}
+    window_spent = int(rank_info.get('total_spent', 0) or 0)
+    window_days = int(rank_info.get('window_days', 0) or 0)
 
     stats = calculate_user_stats(target_id)
     badges = calculate_badges(target_id)
@@ -320,14 +314,8 @@ def _build_admin_userinfo_panel(target_id: int, order_page: int = 0):
     )
 
     message += "\n"
-    if rank_info.get('demoted_by_maintenance'):
-        message += (
-            f"{E_TAG} Duy trì hạng tháng {html.escape(str(maintenance_status.get('period_label', 'trước')))}: "
-            f"<b>{maintenance_status.get('monthly_spend', 0):,} VNĐ</b> / {VIP_MONTHLY_MAINTENANCE_MIN_SPEND:,} VNĐ\n"
-            f"{E_TAG} Đang bị tụt 1 bậc, cần thêm <b>{remaining:,} VNĐ</b> để lấy lại "
-            f"{_format_admin_rank_name(base_rank['name'])} vào tháng sau\n"
-        )
-    elif next_rank:
+    message += f"{E_TAG} Chi tiêu {window_days} ngày qua: <b>{window_spent:,} VNĐ</b>\n"
+    if next_rank:
         message += f"{E_TAG} Cần thêm <b>{remaining:,} VNĐ</b> → {_format_admin_rank_name(next_rank['name'])}\n"
     message += "\n"
 

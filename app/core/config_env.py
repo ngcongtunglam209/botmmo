@@ -213,13 +213,16 @@ ADMIN_EMAIL_BACKUP = os.getenv("ADMIN_EMAIL_BACKUP", "dinikhang@gmail.com").stri
 BACKUP_INTERVAL_TELEGRAM = 21600 # 6 hours (6 * 3600)
 BACKUP_INTERVAL_EMAIL = 259200 # 3 days (3 * 24 * 3600)
 last_email_backup_time = time.time() # Track last email backup timestamp
-VIP_MONTHLY_MAINTENANCE_MIN_SPEND = 200000
+# Hang VIP tinh theo chi tieu trong cua so truot nay, khong phai lifetime cong
+# don. Lifetime chi co the tang, nen discount vinh vien se troi len bac cao
+# nhat va khong bao gio lui; cua so truot bat khach giu nhip mua moi giu hang.
+VIP_RANK_WINDOW_DAYS = 90
 VIP_RANKS = [
     {"name": "⭐️ Đồng", "min_spend": 0, "discount": 0},
-    {"name": "⭐️ Bạc", "min_spend": 500000, "discount": 0},
-    {"name": "⭐️ Vàng", "min_spend": 1000000, "discount": 0},
-    {"name": '<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> Kim Cương', "min_spend": 5000000, "discount": 0},
-    {"name": '⭐️ Cao Thủ', "min_spend": 10000000, "discount": 0},
+    {"name": "⭐️ Bạc", "min_spend": 500000, "discount": 2},
+    {"name": "⭐️ Vàng", "min_spend": 2000000, "discount": 5},
+    {"name": '<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> Kim Cương', "min_spend": 7000000, "discount": 8},
+    {"name": '⭐️ Cao Thủ', "min_spend": 20000000, "discount": 10},
 ]
 WHEEL_PRIZES = [
     {"name": "5,000đ", "type": "balance", "value": 5000, "weight": 30, "emoji": '<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji>'},
