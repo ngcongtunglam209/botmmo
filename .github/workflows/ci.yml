@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   lint:
@@ -44,6 +44,12 @@ jobs:
       - name: Run tests
         env:
           DINO_SUPPRESS_START_BANNER: "1"
+          # Gia tri gia, chi de config_env._require_env() khong sys.exit(1).
+          # Khong test nao goi Telegram hay partner API that.
+          TELEGRAM_TOKEN: "000000:ci-dummy-telegram-token"
+          API_SECRET_KEY: "ci-dummy-api-secret-key"
+          SENDER_APP_PASSWORD: "ci-dummy-app-password"
+          ADMIN_WEB_SESSION_SECRET: "ci-dummy-session-secret"
         run: |
           pytest tests/ -v --tb=short --cov=app/models --cov=app/state --cov=app/services/business_logic --cov-report=term-missing
 

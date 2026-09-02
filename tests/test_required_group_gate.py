@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from telegram.error import BadRequest, NetworkError
 
@@ -59,7 +61,16 @@ def gate(monkeypatch):
     monkeypatch.setattr(payments, "SUPPORT_GROUP_LINK", "https://t.me/lamshop", raising=False)
     monkeypatch.setattr(payments, "ADMIN_USER_ID", 1, raising=False)
     monkeypatch.setattr(payments, "banned_users", set(), raising=False)
-    monkeypatch.setattr(payments, "_required_group_alert_at", 0.0, raising=False)
+    # Khong dat 0.0: `_alert_required_group_broken` so sanh voi time.monotonic(),
+    # ma tren runner CI vua khoi dong thi monotonic() chi vai giay - nho hon
+    # REQUIRED_GROUP_ALERT_INTERVAL_SECONDS (900), nen alert bi throttle va test
+    # do. Tren may dev monotonic() la uptime nhieu ngay nen khong ai thay.
+    monkeypatch.setattr(
+        payments,
+        "_required_group_alert_at",
+        time.monotonic() - payments.REQUIRED_GROUP_ALERT_INTERVAL_SECONDS - 1,
+        raising=False,
+    )
     return payments
 
 
