@@ -283,12 +283,16 @@ async def broadcast_out_of_stock(context: ContextTypes.DEFAULT_TYPE, product_nam
         notified_out_of_stock.add(product_id)
 
     # Tạo message
-    message = (
-        f"{E_ERROR} <b>THÔNG BÁO HẾT HÀNG</b>\n\n"
-        f"{E_TAG} Sản phẩm vừa hết hàng:\n"
-        f"<b>{html.escape(product_name)}</b>\n\n"
-        f"{E_SOS} Chúng tôi sẽ thông báo khi có lại hàng.\n"
-        f"{E_GLOBE} Liên hệ Admin để đặt trước: @{ADMIN_USERNAME}"
+    # Dung san ba ban dich: vong lap ben duoi chi con tra dict theo locale
+    # cua tung nguoi nhan, khong format lai N lan.
+    messages = render_all_locales(
+        "broadcast_out_of_stock",
+        error=E_ERROR,
+        tag=E_TAG,
+        sos=E_SOS,
+        globe=E_GLOBE,
+        product=html.escape(product_name),
+        admin=ADMIN_USERNAME,
     )
 
     success_count = 0
@@ -303,7 +307,10 @@ async def broadcast_out_of_stock(context: ContextTypes.DEFAULT_TYPE, product_nam
                 continue
 
             result = await broadcast_send_message(
-                context.bot, user_id, message, parse_mode=ParseMode.HTML
+                context.bot,
+                user_id,
+                pick_locale(messages, get_user_lang(user_id)),
+                parse_mode=ParseMode.HTML,
             )
             if result == "ok":
                 success_count += 1
@@ -577,19 +584,24 @@ async def _api_maybe_alert_low_balance(api_key: str, key_data: dict, balance: in
     key_data["low_balance_alerted_at"] = time.time()
     await save_data(force=True, tables=[API_KEYS_FILE])
     partner_name = html.escape(str(key_data.get("name") or "Partner"))
-    text = (
-        f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>CẢNH BÁO SỐ DƯ API THẤP</b>\n\n"
-        f"Partner: <b>{partner_name}</b>\n"
-        f"Số dư: <b>{int(balance):,} VNĐ</b>\n"
-        f"Ngưỡng: {threshold:,} VNĐ"
-    )
+    # Text dung trong vong lap: admin va chu vi partner co the khac ngon ngu.
     recipients = {ADMIN_USER_ID}
     owner_id = _api_get_partner_wallet_owner_user_id(key_data)
     if owner_id:
         recipients.add(owner_id)
     for recipient in recipients:
         try:
-            await bot_instance.send_message(recipient, text, parse_mode=ParseMode.HTML)
+            await bot_instance.send_message(
+                recipient,
+                t(
+                    "partner_low_balance_alert",
+                    user_id=recipient,
+                    partner=partner_name,
+                    balance=format_money(int(balance), user_id=recipient),
+                    threshold=format_money(threshold, user_id=recipient),
+                ),
+                parse_mode=ParseMode.HTML,
+            )
         except (TelegramError, ValueError, KeyError, AttributeError):
             logger.debug("Cannot send low API balance alert to %s", recipient)
 
@@ -820,12 +832,14 @@ async def broadcast_back_in_stock(context: ContextTypes.DEFAULT_TYPE, product_na
     notified_out_of_stock.discard(product_id)
 
     # Tạo message
-    message = (
-        f"{E_SUCCESS} <b>ĐÃ CÓ HÀNG TRỞ LẠI!</b>\n\n"
-        f"{E_TAG} <b>Sản phẩm:</b> {html.escape(product_name)}\n"
-        f"{E_STAT} <b>Số lượng:</b> {stock_count} sản phẩm\n\n"
-        f"<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> <b>Đặt hàng ngay:</b> /start\n"
-        f"{E_LOADING} <b>Nhanh tay kẻo hết!</b>"
+    messages = render_all_locales(
+        "broadcast_back_in_stock",
+        success=E_SUCCESS,
+        tag=E_TAG,
+        stat=E_STAT,
+        loading=E_LOADING,
+        product=html.escape(product_name),
+        count=stock_count,
     )
 
     success_count = 0
@@ -840,7 +854,10 @@ async def broadcast_back_in_stock(context: ContextTypes.DEFAULT_TYPE, product_na
                 continue
 
             result = await broadcast_send_message(
-                context.bot, user_id, message, parse_mode=ParseMode.HTML
+                context.bot,
+                user_id,
+                pick_locale(messages, get_user_lang(user_id)),
+                parse_mode=ParseMode.HTML,
             )
             if result == "ok":
                 success_count += 1

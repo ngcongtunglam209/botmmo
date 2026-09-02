@@ -189,14 +189,23 @@ async def handle_waitlist_callback(update: Update, context: ContextTypes.DEFAULT
         stock_waitlist[prod_id] = []
 
     if user_id in stock_waitlist[prod_id]:
-        await safe_answer(update.callback_query, "Bạn đã đăng ký nhận thông báo cho sản phẩm này rồi!", show_alert=True)
+        await safe_answer(update.callback_query, t("waitlist_already_registered", user_id=user_id), show_alert=True)
         return
 
     stock_waitlist[prod_id].append(user_id)
     await save_data(tables=[STOCK_WAITLIST_FILE])
 
     waitlist_count = len(stock_waitlist[prod_id])
-    await safe_answer(update.callback_query, f"Đã đăng ký! Bạn sẽ được thông báo khi {p['name']} có hàng trở lại. ({waitlist_count} người đang chờ)", show_alert=True)
+    await safe_answer(
+        update.callback_query,
+        t(
+            "waitlist_registered",
+            user_id=user_id,
+            product=p['name'],
+            count=waitlist_count,
+        ),
+        show_alert=True,
+    )
 
 
 async def notify_waitlist_users(context, product_id: str, product_name: str, stock_count: int):
@@ -207,17 +216,22 @@ async def notify_waitlist_users(context, product_id: str, product_name: str, sto
     if not waitlist:
         return 0
 
-    message = (
-        f"<tg-emoji emoji-id=\"5447644880824181073\">🔔</tg-emoji> <b>SẢN PHẨM BẠN CHỜ ĐÃ CÓ HÀNG!</b>\n\n"
-        f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>{html.escape(product_name)}</b>\n"
-        f"<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>Số lượng:</b> {stock_count} sản phẩm\n\n"
-        f"<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> <b>Mua ngay trước khi hết!</b> /start"
+    # Danh sach cho co the gom nhieu ngon ngu: dung san ba ban roi chon theo
+    # tung nguoi, thay vi dung mot ban tieng Viet cho tat ca.
+    messages = render_all_locales(
+        "waitlist_back_in_stock",
+        product=html.escape(product_name),
+        count=stock_count,
     )
 
     success = 0
     for user_id in list(waitlist):
         try:
-            await context.bot.send_message(chat_id=user_id, text=message, parse_mode=ParseMode.HTML)
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=pick_locale(messages, get_user_lang(user_id)),
+                parse_mode=ParseMode.HTML,
+            )
             success += 1
             await asyncio.sleep(0.05)
         except (TelegramError, ValueError, KeyError, AttributeError):

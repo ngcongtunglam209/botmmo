@@ -194,6 +194,21 @@ STRINGS = {
         "btn_open_bot_chat": "Mở chat bot",
         "partner_register_guide": "<tg-emoji emoji-id=\"5350481781306958339\">📘</tg-emoji> <b>HƯỚNG DẪN ĐĂNG KÝ API PARTNER</b>\n━━━━━━━━━━━━━━━━━━\n1. Nhấn nút <b>Gửi yêu cầu đăng ký</b> bên dưới.\n2. Chờ Admin duyệt tài khoản.\n3. Bot gửi API Key cho bạn qua tin nhắn.\n4. Nạp ví bằng lệnh <code>/napapi [số_tiền]</code>.\n5. Vào lại <code>/start</code> để thấy menu <b>API Partner</b>.\n\n<i>Menu API chỉ hiện sau khi được Admin duyệt.</i>",
         "partner_topup_menu_guide": "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>HƯỚNG DẪN NẠP VÍ CHUNG</b>\n━━━━━━━━━━━━━━━━━━\n1. Gõ lệnh: <code>/napapi [số_tiền]</code>\n2. Bot trả về QR + nội dung chuyển khoản (NAPI...)\n3. Chuyển đúng số tiền và đúng nội dung\n4. Chờ 1-3 phút hệ thống tự cộng vào ví chung\n\n<b>Ví dụ:</b>\n• <code>/napapi 200000</code>\n• <code>/napapi 500000</code>",
+        "broadcast_out_of_stock": "{error} <b>THÔNG BÁO HẾT HÀNG</b>\n\n{tag} Sản phẩm vừa hết hàng:\n<b>{product}</b>\n\n{sos} Chúng tôi sẽ thông báo khi có lại hàng.\n{globe} Liên hệ Admin để đặt trước: @{admin}",
+        "broadcast_back_in_stock": "{success} <b>ĐÃ CÓ HÀNG TRỞ LẠI!</b>\n\n{tag} <b>Sản phẩm:</b> {product}\n{stat} <b>Số lượng:</b> {count} sản phẩm\n\n<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> <b>Đặt hàng ngay:</b> /start\n{loading} <b>Nhanh tay kẻo hết!</b>",
+        "partner_low_balance_alert": "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>CẢNH BÁO SỐ DƯ API THẤP</b>\n\nPartner: <b>{partner}</b>\nSố dư: <b>{balance}</b>\nNgưỡng: {threshold}",
+        "broadcast_product_promo": "<b>{tag} SẢN PHẨM ĐANG MỞ BÁN</b>\n\n<b>{product}</b>\n{tag} Giá: <b>{price}</b>\n{tag} Thời hạn: <b>{duration}</b>\n{shield} Bảo hành: <b>{warranty}</b>\n\n<blockquote>{description}</blockquote>\nBấm nút bên dưới để mua ngay.",
+        "value_unlimited": "Không giới hạn",
+        "btn_buy_now": "Mua ngay",
+        "btn_view_product": "Xem sản phẩm",
+        "waitlist_back_in_stock": "<tg-emoji emoji-id=\"5447644880824181073\">🔔</tg-emoji> <b>SẢN PHẨM BẠN CHỜ ĐÃ CÓ HÀNG!</b>\n\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>{product}</b>\n<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>Số lượng:</b> {count} sản phẩm\n\n<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> <b>Mua ngay trước khi hết!</b> /start",
+        "waitlist_already_registered": "Bạn đã đăng ký nhận thông báo cho sản phẩm này rồi!",
+        "waitlist_registered": "Đã đăng ký! Bạn sẽ được thông báo khi {product} có hàng trở lại. ({count} người đang chờ)",
+        "support_email_not_found_guide": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>HƯỚNG DẪN TÌM EMAIL ĐƠN HÀNG</b>\n\n{globe} <b>Bước 1:</b> Kiểm tra hộp thư đến chính\n<tg-emoji emoji-id=\"5424857974784925603\">🗑️</tg-emoji> <b>Bước 2:</b> Kiểm tra thư mục <b>Spam/Thư rác</b>\n<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>Bước 3:</b> Kiểm tra các thư mục khác: Promotions, Social\n{tip} <b>Bước 4:</b> Tìm kiếm với từ khóa <code>Lâm Shop</code>\n\n<tg-emoji emoji-id=\"5426991207731437507\">📱</tg-emoji> <b>Trên Gmail Mobile:</b>\n• Mở Gmail → Chạm 3 gạch ngang → Spam\n• Nếu tìm thấy → Đánh dấu 'Không phải spam'\n\n{loading} <b>Thông tin tài khoản cũng luôn được gửi ngay trong Telegram</b>\n\n{limit} <b>Nếu vẫn không tìm thấy:</b> Bấm nút bên dưới để được hỗ trợ",
+        "support_billing_price": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>THÔNG TIN GIÁ CẢ</b>\n\n{tag} Mỗi sản phẩm có giá riêng, xem trực tiếp trong cửa hàng.\n{loading} Gõ /start → <b>Cửa hàng</b> để xem giá mới nhất.\n\n{tag} <b>Ưu đãi hiện tại:</b>\n• Giao hàng tự động 24/7\n• Bảo hành theo từng sản phẩm\n• Hỗ trợ 24/7",
+        "support_billing_refund": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>CHÍNH SÁCH HOÀN TIỀN</b>\n\n{success} <b>Điều kiện hoàn tiền:</b>\n• Trong thời hạn bảo hành của sản phẩm\n• Lỗi từ phía chúng tôi\n• Tài khoản không dùng được sau nhiều lần khắc phục\n\n{limit} <b>Không hoàn tiền nếu:</b>\n• Tự ý đổi mật khẩu hoặc email khôi phục\n• Chia sẻ tài khoản cho nhiều người\n• Vi phạm điều khoản của nền tảng\n\n<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Quy trình hoàn tiền:</b>\n1. Liên hệ Admin với mã đơn hàng\n2. Admin kiểm tra và xác nhận\n3. Hoàn tiền trong 1-3 ngày làm việc",
+        "support_billing_payment": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>HƯỚNG DẪN THANH TOÁN</b>\n\n{tag} <b>Phương thức hiện tại:</b>\n• Chuyển khoản ngân hàng\n• Quét mã QR (nhanh nhất)\n• Số dư ví trong bot\n\n{loading} <b>Quy trình:</b>\n1. Gõ /start → Cửa hàng → chọn sản phẩm\n2. Chọn số lượng và phương thức thanh toán\n3. Quét QR hoặc chuyển khoản thủ công\n4. Bot tự động giao hàng sau 1-3 phút\n\n{tip} <b>Lưu ý quan trọng:</b>\n• Chuyển đúng số tiền và nội dung\n• Đơn hàng tự hủy sau 10 phút nếu không thanh toán",
+        "support_billing_general": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>HỖ TRỢ BILLING TỔNG QUÁT</b>\n\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Giá:</b> Xem trực tiếp từng sản phẩm trong cửa hàng\n<tg-emoji emoji-id=\"5458774648621643551\">💳</tg-emoji> <b>Thanh toán:</b> Chuyển khoản, QR hoặc số dư ví\n<tg-emoji emoji-id=\"5462956611033117422\">🔄</tg-emoji> <b>Hoàn tiền:</b> Trong thời hạn bảo hành nếu lỗi từ chúng tôi\n<tg-emoji emoji-id=\"6129860303619363484\">📞</tg-emoji> <b>Hỗ trợ:</b> 24/7 qua bot và admin\n\n<tg-emoji emoji-id=\"5264919878082509254\">❓</tg-emoji> <b>Câu hỏi cụ thể khác?</b>\nHãy mô tả chi tiết vấn đề của bạn để được hỗ trợ tốt nhất!",
     },
     "en": {
         "main_menu_title": (
@@ -371,6 +386,21 @@ STRINGS = {
         "btn_open_bot_chat": "Open the bot chat",
         "partner_register_guide": "<tg-emoji emoji-id=\"5350481781306958339\">📘</tg-emoji> <b>HOW TO REGISTER FOR THE PARTNER API</b>\n━━━━━━━━━━━━━━━━━━\n1. Press <b>Send a registration request</b> below.\n2. Wait for the admin to approve your account.\n3. The bot sends your API key by message.\n4. Top up with <code>/napapi [amount]</code>.\n5. Open <code>/start</code> again to see the <b>API Partner</b> menu.\n\n<i>The API menu only appears after admin approval.</i>",
         "partner_topup_menu_guide": "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>HOW TO TOP UP THE SHARED WALLET</b>\n━━━━━━━━━━━━━━━━━━\n1. Send: <code>/napapi [amount]</code>\n2. The bot returns a QR code and a transfer reference (NAPI...)\n3. Transfer exactly that amount with exactly that reference\n4. Wait 1-3 minutes for the system to credit the shared wallet\n\n<b>Examples:</b>\n• <code>/napapi 200000</code>\n• <code>/napapi 500000</code>",
+        "broadcast_out_of_stock": "{error} <b>OUT OF STOCK</b>\n\n{tag} This product has just sold out:\n<b>{product}</b>\n\n{sos} We will let you know when it is back.\n{globe} Contact the admin to pre-order: @{admin}",
+        "broadcast_back_in_stock": "{success} <b>BACK IN STOCK!</b>\n\n{tag} <b>Product:</b> {product}\n{stat} <b>Quantity:</b> {count} in stock\n\n<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> <b>Order now:</b> /start\n{loading} <b>Be quick before it sells out.</b>",
+        "partner_low_balance_alert": "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>LOW API BALANCE</b>\n\nPartner: <b>{partner}</b>\nBalance: <b>{balance}</b>\nThreshold: {threshold}",
+        "broadcast_product_promo": "<b>{tag} NOW ON SALE</b>\n\n<b>{product}</b>\n{tag} Price: <b>{price}</b>\n{tag} Duration: <b>{duration}</b>\n{shield} Warranty: <b>{warranty}</b>\n\n<blockquote>{description}</blockquote>\nUse the button below to buy it now.",
+        "value_unlimited": "Unlimited",
+        "btn_buy_now": "Buy now",
+        "btn_view_product": "View the product",
+        "waitlist_back_in_stock": "<tg-emoji emoji-id=\"5447644880824181073\">🔔</tg-emoji> <b>THE PRODUCT YOU WAITED FOR IS BACK!</b>\n\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>{product}</b>\n<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>Quantity:</b> {count} in stock\n\n<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> <b>Buy it before it sells out!</b> /start",
+        "waitlist_already_registered": "You are already on the notification list for this product.",
+        "waitlist_registered": "Done. You will be notified when {product} is back in stock. ({count} people waiting)",
+        "support_email_not_found_guide": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>HOW TO FIND YOUR ORDER EMAIL</b>\n\n{globe} <b>Step 1:</b> Check your main inbox\n<tg-emoji emoji-id=\"5424857974784925603\">🗑️</tg-emoji> <b>Step 2:</b> Check the <b>Spam/Junk</b> folder\n<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>Step 3:</b> Check other tabs: Promotions, Social\n{tip} <b>Step 4:</b> Search for the keyword <code>Lâm Shop</code>\n\n<tg-emoji emoji-id=\"5426991207731437507\">📱</tg-emoji> <b>On Gmail mobile:</b>\n• Open Gmail → tap the three lines → Spam\n• If you find it → mark it 'Not spam'\n\n{loading} <b>Account details are always sent inside Telegram as well.</b>\n\n{limit} <b>Still cannot find it?</b> Press the button below for help.",
+        "support_billing_price": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>PRICING</b>\n\n{tag} Each product is priced individually — see the store for details.\n{loading} Send /start → <b>Store</b> for the current prices.\n\n{tag} <b>What you get:</b>\n• Automatic delivery, 24/7\n• Warranty per product\n• Support 24/7",
+        "support_billing_refund": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>REFUND POLICY</b>\n\n{success} <b>Refunds are possible when:</b>\n• The product is still within its warranty period\n• The fault is on our side\n• The account still does not work after repeated fixes\n\n{limit} <b>No refund if:</b>\n• You changed the password or recovery email yourself\n• The account was shared with several people\n• The platform's terms were broken\n\n<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>How a refund works:</b>\n1. Contact the admin with your order code\n2. The admin checks and confirms\n3. The refund lands within 1-3 business days",
+        "support_billing_payment": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>HOW TO PAY</b>\n\n{tag} <b>Available methods:</b>\n• Bank transfer\n• QR code scan (fastest)\n• Your wallet balance in the bot\n\n{loading} <b>The steps:</b>\n1. Send /start → Store → pick a product\n2. Choose the quantity and a payment method\n3. Scan the QR code or transfer manually\n4. The bot delivers automatically within 1-3 minutes\n\n{tip} <b>Important:</b>\n• Transfer the exact amount with the exact reference\n• Unpaid orders cancel themselves after 10 minutes",
+        "support_billing_general": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>BILLING HELP</b>\n\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Prices:</b> shown on each product in the store\n<tg-emoji emoji-id=\"5458774648621643551\">💳</tg-emoji> <b>Payment:</b> bank transfer, QR code, or wallet balance\n<tg-emoji emoji-id=\"5462956611033117422\">🔄</tg-emoji> <b>Refunds:</b> within the warranty period if the fault is ours\n<tg-emoji emoji-id=\"6129860303619363484\">📞</tg-emoji> <b>Support:</b> 24/7 through the bot and the admin\n\n<tg-emoji emoji-id=\"5264919878082509254\">❓</tg-emoji> <b>Something more specific?</b>\nDescribe your problem in detail and we will help.",
     },
     "zh": {
         "main_menu_title": (
@@ -548,6 +578,21 @@ STRINGS = {
         "btn_open_bot_chat": "打开机器人对话",
         "partner_register_guide": "<tg-emoji emoji-id=\"5350481781306958339\">📘</tg-emoji> <b>合作方 API 注册指南</b>\n━━━━━━━━━━━━━━━━━━\n1. 点击下方<b>提交注册申请</b>按钮。\n2. 等待管理员审核账户。\n3. 机器人将通过消息发送 API 密钥。\n4. 使用 <code>/napapi [金额]</code> 充值。\n5. 重新打开 <code>/start</code> 即可看到 <b>API Partner</b> 菜单。\n\n<i>API 菜单需管理员审核通过后才会显示。</i>",
         "partner_topup_menu_guide": "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>共享钱包充值指南</b>\n━━━━━━━━━━━━━━━━━━\n1. 发送命令：<code>/napapi [金额]</code>\n2. 机器人返回二维码和转账备注（NAPI…）\n3. 按照给出的金额和备注准确转账\n4. 等待 1-3 分钟，系统自动计入共享钱包\n\n<b>示例：</b>\n• <code>/napapi 200000</code>\n• <code>/napapi 500000</code>",
+        "broadcast_out_of_stock": "{error} <b>缺货通知</b>\n\n{tag} 该商品刚刚售罄：\n<b>{product}</b>\n\n{sos} 补货后我们会通知您。\n{globe} 如需预订请联系管理员：@{admin}",
+        "broadcast_back_in_stock": "{success} <b>补货到了！</b>\n\n{tag} <b>商品：</b>{product}\n{stat} <b>数量：</b>{count} 件\n\n<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> <b>立即下单：</b>/start\n{loading} <b>手快有，手慢无！</b>",
+        "partner_low_balance_alert": "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>API 余额不足提醒</b>\n\n合作方：<b>{partner}</b>\n余额：<b>{balance}</b>\n阈值：{threshold}",
+        "broadcast_product_promo": "<b>{tag} 正在发售</b>\n\n<b>{product}</b>\n{tag} 价格：<b>{price}</b>\n{tag} 有效期：<b>{duration}</b>\n{shield} 保修：<b>{warranty}</b>\n\n<blockquote>{description}</blockquote>\n点击下方按钮立即购买。",
+        "value_unlimited": "不限",
+        "btn_buy_now": "立即购买",
+        "btn_view_product": "查看商品",
+        "waitlist_back_in_stock": "<tg-emoji emoji-id=\"5447644880824181073\">🔔</tg-emoji> <b>您等待的商品已到货！</b>\n\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>{product}</b>\n<tg-emoji emoji-id=\"6059654836918423763\">📊</tg-emoji> <b>数量：</b>{count} 件\n\n<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> <b>手快下单，售完为止！</b>/start",
+        "waitlist_already_registered": "您已订阅该商品的到货通知。",
+        "waitlist_registered": "已订阅！{product} 到货后将通知您。（当前 {count} 人等待）",
+        "support_email_not_found_guide": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>如何找到订单邮件</b>\n\n{globe} <b>第 1 步：</b>检查主收件箱\n<tg-emoji emoji-id=\"5424857974784925603\">🗑️</tg-emoji> <b>第 2 步：</b>检查<b>垃圾邮件</b>文件夹\n<tg-emoji emoji-id=\"5854908544712707500\">📁</tg-emoji> <b>第 3 步：</b>检查其他标签：促销、社交\n{tip} <b>第 4 步：</b>搜索关键词 <code>Lâm Shop</code>\n\n<tg-emoji emoji-id=\"5426991207731437507\">📱</tg-emoji> <b>Gmail 手机端：</b>\n• 打开 Gmail → 点击三横线 → 垃圾邮件\n• 找到后 → 标记为「不是垃圾邮件」\n\n{loading} <b>账号信息同样会直接发送到 Telegram。</b>\n\n{limit} <b>仍然找不到？</b>请点击下方按钮联系客服。",
+        "support_billing_price": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>价格信息</b>\n\n{tag} 每件商品价格不同，请在商店中查看。\n{loading} 发送 /start → <b>商店</b>查看最新价格。\n\n{tag} <b>当前优惠：</b>\n• 24/7 自动发货\n• 每件商品均有保修\n• 24/7 客服支持",
+        "support_billing_refund": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>退款政策</b>\n\n{success} <b>可以退款的情形：</b>\n• 商品仍在保修期内\n• 问题出在我方\n• 多次修复后账号仍无法使用\n\n{limit} <b>不予退款的情形：</b>\n• 自行更改密码或找回邮箱\n• 账号被多人共用\n• 违反平台条款\n\n<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>退款流程：</b>\n1. 携订单号联系管理员\n2. 管理员核实并确认\n3. 1-3 个工作日内完成退款",
+        "support_billing_payment": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>付款指南</b>\n\n{tag} <b>目前支持的方式：</b>\n• 银行转账\n• 扫描二维码（最快）\n• 机器人钱包余额\n\n{loading} <b>操作流程：</b>\n1. 发送 /start → 商店 → 选择商品\n2. 选择数量和付款方式\n3. 扫码或手动转账\n4. 机器人将在 1-3 分钟内自动发货\n\n{tip} <b>重要提示：</b>\n• 请按给出的金额和备注准确转账\n• 未付款的订单将在 10 分钟后自动取消",
+        "support_billing_general": "<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>账单与付款帮助</b>\n\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>价格：</b>在商店中查看每件商品\n<tg-emoji emoji-id=\"5458774648621643551\">💳</tg-emoji> <b>付款：</b>银行转账、二维码或钱包余额\n<tg-emoji emoji-id=\"5462956611033117422\">🔄</tg-emoji> <b>退款：</b>保修期内且属我方问题时可退\n<tg-emoji emoji-id=\"6129860303619363484\">📞</tg-emoji> <b>客服：</b>机器人与管理员 24/7 在线\n\n<tg-emoji emoji-id=\"5264919878082509254\">❓</tg-emoji> <b>还有其他具体问题？</b>\n请详细描述您的问题，我们将尽力协助。",
     },
 }
 
@@ -645,6 +690,17 @@ def pick_locale(table, code):
     if code in table:
         return table[code]
     return table.get(DEFAULT_LANG)
+
+
+def render_all_locales(key: str, **kwargs) -> dict:
+    """Dung san mot ban dich cho moi locale, de broadcast khong format N lan.
+
+    Vong lap broadcast truoc day dung text MOT lan roi gui cho tat ca, nen khach
+    en/zh luon nhan tieng Viet. Goi t() trong vong lap thi dung ngon ngu nhung
+    doi so lan format tu 1 thanh N. Ham nay format dung ba lan, roi moi nguoi
+    nhan chi con mot phep tra dict qua pick_locale().
+    """
+    return {code: t(key, lang=code, **kwargs) for code in SUPPORTED_LANGS}
 
 
 def lt(user_id, vi: str, en: str, zh: str, **kwargs) -> str:
