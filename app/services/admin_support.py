@@ -22,7 +22,7 @@ async def handle_warranty_approval(query, context, command):
         await query.edit_message_caption(f"\u003ctg-emoji emoji-id=\"6269163801178804220\"\u003e✅\u003c/tg-emoji\u003e Đã duyệt bảo hành {claim_id}")
         uid = warranty_claims[claim_id]['user_id']
         try:
-            await context.bot.send_message(uid, f"\u003ctg-emoji emoji-id=\"6269163801178804220\"\u003e✅\u003c/tg-emoji\u003e Yêu cầu bảo hành {claim_id} của bạn đã được DUYỆT! Admin sẽ liên hệ sớm.")
+            await context.bot.send_message(uid, t("warranty_claim_approved", user_id=uid, claim_id=claim_id))
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
             logger.warning(f"Cannot notify warranty approval to user {uid}: {e}")
 
@@ -36,7 +36,7 @@ async def handle_warranty_rejection(query, context, command):
         await query.edit_message_caption(f"❌ Đã từ chối bảo hành {claim_id}")
         uid = warranty_claims[claim_id]['user_id']
         try:
-            await context.bot.send_message(uid, f"❌ Yêu cầu bảo hành {claim_id} của bạn đã bị TỪ CHỐI.")
+            await context.bot.send_message(uid, t("warranty_claim_rejected", user_id=uid, claim_id=claim_id))
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
             logger.warning(f"Cannot notify warranty rejection to user {uid}: {e}")
 
@@ -242,10 +242,12 @@ async def handle_reject_report(query, context, command):
     try:
         await context.bot.send_message(
             target_uid,
-            f"\u003ctg-emoji emoji-id=\"5424857974784925603\"\u003e⛔\u003c/tg-emoji\u003e \u003cb\u003eTHÔNG BÁO TỪ ADMIN\u003c/b\u003e\n\n"
-            f"Yêu cầu hỗ trợ cho đơn hàng \u003ccode\u003e{order_code}\u003c/code\u003e đã bị \u003cb\u003eTỪ CHỐI\u003c/b\u003e.\n"
-            f"\u003ctg-emoji emoji-id=\"5460753627817723162\"\u003e💡\u003c/tg-emoji\u003e \u003cb\u003eLý do:\u003c/b\u003e {reason_msg}\n\n"
-            f"\u003ci\u003eVui lòng không tiếp tục gửi yêu cầu cho đơn hàng này.\u003c/i\u003e",
+            t(
+                "support_request_rejected",
+                user_id=target_uid,
+                order_code=order_code,
+                reason=reason_msg,
+            ),
             parse_mode=ParseMode.HTML
         )
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -297,9 +299,11 @@ async def handle_warranty_done(query, context, command, user_id):
             raise ValueError("missing target user id")
         await context.bot.send_message(
             int(target_uid),
-            f"\u003ctg-emoji emoji-id=\"6269163801178804220\"\u003e✅\u003c/tg-emoji\u003e \u003cb\u003eTHÔNG BÁO BẢO HÀNH\u003c/b\u003e\n\n"
-            f"Báo cáo lỗi cho đơn \u003ccode\u003e{html.escape(str(order_code))}\u003c/code\u003e đã được admin xử lý và đánh dấu \u003cb\u003eđã bảo hành\u003c/b\u003e.\n\n"
-            "Vui lòng kiểm tra lại sản phẩm/tài khoản. Nếu vẫn còn lỗi, bạn có thể gửi lại báo cáo hoặc liên hệ hỗ trợ.",
+            t(
+                "warranty_done_notice",
+                user_id=target_uid,
+                order_code=html.escape(str(order_code)),
+            ),
             parse_mode=ParseMode.HTML
         )
         notify_ok = True
@@ -427,12 +431,12 @@ async def handle_replace_auto(query, context, command):
         target_uid = order['user_id']
         await context.bot.send_message(
             target_uid,
-            f"\u003ctg-emoji emoji-id=\"5447644880824181073\"\u003e🔔\u003c/tg-emoji\u003e \u003cb\u003eBẢO HÀNH ĐƠN HÀNG {order_code}\u003c/b\u003e\n\n"
-            f"Admin đã cấp lại sản phẩm mới cho bạn:\n"
-            f"━━━━━━━━━━━━━━━━━━\n"
-            f"\u003ccode\u003e{html.escape(str(item))}\u003c/code\u003e\n"
-            f"━━━━━━━━━━━━━━━━━━\n\n"
-            f"Xin lỗi vì sự bất tiện này!",
+            t(
+                "warranty_replacement_issued",
+                user_id=target_uid,
+                order_code=order_code,
+                item=html.escape(str(item)),
+            ),
             parse_mode=ParseMode.HTML
         )
     except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -459,17 +463,34 @@ async def handle_open_live_chat(query, context, user_id):
     context.user_data['state'] = 'in_live_chat'
 
     chat = live_chats[user_id_str]
-    msg = '\u003ctg-emoji emoji-id="6129860303619363484"\u003e💬\u003c/tg-emoji\u003e \u003cb\u003eLIVE CHAT VỚI ADMIN\u003c/b\u003e\n\n'
+    msg = (
+        '<tg-emoji emoji-id="6129860303619363484">💬</tg-emoji> <b>'
+        + t("live_chat_title", user_id=user_id)
+        + '</b>' + chr(10) + chr(10)
+    )
     recent_msgs = chat['messages'][-10:]
     for m in recent_msgs:
-        from_who = "\u003ctg-emoji emoji-id=\"5350778980158956492\"\u003e🧑\u003c/tg-emoji\u003e Bạn" if m['from'] == 'user' else "\u003ctg-emoji emoji-id=\"5350778980158956492\"\u003e👨\u003c/tg-emoji\u003e‍\u003ctg-emoji emoji-id=\"5854908544712707500\"\u003e💼\u003c/tg-emoji\u003e Admin"
+        you_label = (
+            '<tg-emoji emoji-id="5350778980158956492">🧑</tg-emoji> '
+            + t("live_chat_you", user_id=user_id)
+        )
+        admin_label = (
+            '<tg-emoji emoji-id="5350778980158956492">👨</tg-emoji>'
+            + chr(8205)
+            + '<tg-emoji emoji-id="5854908544712707500">💼</tg-emoji> '
+            + t("live_chat_admin", user_id=user_id)
+        )
+        from_who = you_label if m['from'] == 'user' else admin_label
         time_str = datetime.fromtimestamp(m['timestamp']).strftime('%H:%M')
         msg += f"{from_who} ({time_str}):\n{m['text']}\n\n"
 
     if not recent_msgs:
-        msg += "\u003ci\u003eChưa có tin nhắn. Hãy gửi câu hỏi của bạn!\u003c/i\u003e\n\n"
-    msg += '\u003ctg-emoji emoji-id="5460753627817723162"\u003e💡\u003c/tg-emoji\u003e Gửi tin nhắn để chat với Admin...'
-    btns = [[InlineKeyboardButton("❌ Đóng chat", callback_data="close_live_chat")]]
+        msg += "<i>" + t("live_chat_empty", user_id=user_id) + "</i>" + chr(10) + chr(10)
+    msg += (
+        '<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> '
+        + t("live_chat_prompt", user_id=user_id)
+    )
+    btns = [[InlineKeyboardButton("❌ " + t("live_chat_close", user_id=user_id), callback_data="close_live_chat")]]
 
     await safe_send_message(
         context,

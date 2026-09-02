@@ -254,22 +254,12 @@ async def napapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             break
 
     if not found_key:
-        await update.message.reply_html(
-            "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>BẠN CHƯA CÓ TÀI KHOẢN ĐẠI LÝ (API)</b>\n\n"
-            "Vui lòng đăng ký theo quy trình:\n"
-            "1. Gửi <code>/dkyapi</code>\n"
-            "2. Chờ Admin duyệt\n"
-            "3. Nhận API Key và nạp ví bằng <code>/napapi</code>"
-        )
+        await update.message.reply_html(t("partner_no_account", user_id=update.effective_user.id))
         return
 
     # 2. Xử lý số tiền
     if not context.args:
-        await update.message.reply_html(
-            "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>HƯỚNG DẪN NẠP VÍ CHUNG</b>\n\n"
-            "Cú pháp: <code>/napapi [số_tiền]</code>\n"
-            "Ví dụ: <code>/napapi 500000</code>"
-        )
+        await update.message.reply_html(t("partner_topup_guide", user_id=update.effective_user.id))
         return
 
     try:
@@ -277,10 +267,17 @@ async def napapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         amount_str = context.args[0].replace(',', '').replace('.', '')
         amount = int(amount_str)
         if amount < 10000:
-             await update.message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Số tiền nạp tối thiểu là 10,000đ.")
+             await update.message.reply_text(
+                 t(
+                     "partner_topup_min_amount",
+                     user_id=update.effective_user.id,
+                     min=format_money(10000, user_id=update.effective_user.id),
+                 ),
+                 parse_mode=ParseMode.HTML,
+             )
              return
     except ValueError:
-        await update.message.reply_text("❌ Số tiền không hợp lệ. Vui lòng nhập số.")
+        await update.message.reply_text(t("partner_topup_invalid_amount", user_id=update.effective_user.id))
         return
 
     # 3. Tạo yêu cầu nạp ví và QR theo Telegram ID của user
@@ -291,12 +288,12 @@ async def napapi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         amount=amount,
     )
 
-    caption = (
-        f"<tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>YÊU CẦU NẠP VÍ CHUNG</b>\n\n"
-        f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Partner:</b> {partner_name}\n"
-        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số tiền:</b> {amount:,} VNĐ\n"
-        f"<tg-emoji emoji-id=\"5373251851074415873\">📝</tg-emoji> <b>Nội dung CK:</b> <code>{transfer_content}</code>\n\n"
-        f"<i>Vui lòng quét QR hoặc chuyển khoản đúng nội dung <b>{transfer_content}</b> (Telegram ID của bạn). Hệ thống sẽ tự động duyệt và cộng tiền sau 1-3 phút.</i>"
+    caption = t(
+        "partner_topup_request",
+        user_id=update.effective_user.id,
+        partner=partner_name,
+        amount=format_money(amount, user_id=update.effective_user.id),
+        content=transfer_content,
     )
 
     await update.message.reply_photo(photo=qr_url, caption=caption, parse_mode=ParseMode.HTML)
@@ -397,9 +394,12 @@ async def addmoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         try:
             await context.bot.send_message(
                 target_id,
-                f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>THÔNG BÁO SỐ DƯ</b>\n\n"
-                f"Admin đã cộng <b>+{amount:,} VNĐ</b> vào ví của bạn.\n"
-                f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Số dư hiện tại: <b>{new_balance:,} VNĐ</b>",
+                t(
+                    "wallet_credited_by_admin",
+                    user_id=target_id,
+                    amount=format_money(amount, user_id=target_id),
+                    balance=format_money(new_balance, user_id=target_id),
+                ),
                 parse_mode=ParseMode.HTML
             )
         except (Forbidden, BadRequest) as e:
@@ -458,9 +458,12 @@ async def submoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         try:
             await context.bot.send_message(
                 target_id,
-                f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>THÔNG BÁO TRỪ TIỀN</b>\n\n"
-                f"Admin đã trừ <b>-{amount:,} VNĐ</b> từ ví của bạn.\n"
-                f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Số dư hiện tại: <b>{new_balance:,} VNĐ</b>",
+                t(
+                    "wallet_debited_by_admin",
+                    user_id=target_id,
+                    amount=format_money(amount, user_id=target_id),
+                    balance=format_money(new_balance, user_id=target_id),
+                ),
                 parse_mode=ParseMode.HTML
             )
         except (Forbidden, BadRequest) as e:
