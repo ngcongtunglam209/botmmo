@@ -272,12 +272,14 @@ async def _complete_partner_api_key_rotation(
             await context.bot.edit_message_caption(
                 chat_id=source_chat_id,
                 message_id=source_message_id,
-                caption=(
-                    f"{API_PREM_WARN} <b>QR/API KEY CŨ ĐÃ HẾT HIỆU LỰC</b>\n"
-                    "━━━━━━━━━━━━━━━━━━\n"
-                    f"{API_PREM_SHIELD} <b>Key cũ:</b> <code>{old_key}</code>\n"
-                    f"{API_PREM_LOCK} <b>Key mới:</b> <code>{new_key}</code>\n\n"
-                    "<i>Vui lòng dùng key hoặc QR ở tin nhắn mới nhất bên dưới. Không dùng lại ảnh QR cũ này.</i>"
+                caption=t(
+                    "partner_key_old_invalidated",
+                    user_id=user_id,
+                    warn=API_PREM_WARN,
+                    shield=API_PREM_SHIELD,
+                    lock=API_PREM_LOCK,
+                    old_key=old_key,
+                    new_key=new_key,
                 ),
                 parse_mode=ParseMode.HTML,
                 reply_markup=None,
@@ -285,13 +287,17 @@ async def _complete_partner_api_key_rotation(
         except (TelegramError, ValueError, KeyError, AttributeError):
             logger.debug("Cannot update stale API wallet QR message for user %s", user_id)
 
-    text = (
-        f"{API_PREM_LOCK} <b>ĐÃ ĐỔI API KEY</b>\n"
-        "━━━━━━━━━━━━━━━━━━\n"
-        f"{API_PREM_USER} <b>Partner:</b> {html.escape(str(partner_name))}\n"
-        f"{API_PREM_NOTE} <b>API Key mới:</b> <code>{new_key}</code>\n"
-        f"{API_PREM_MONEY} <b>Số dư ví chung:</b> {current_balance:,} VNĐ\n\n"
-        f"<i>{API_PREM_WARN} API key cũ đã bị vô hiệu hóa để bảo mật. Hãy cập nhật key mới trong hệ thống của bạn.</i>"
+    text = t(
+        "partner_key_changed",
+        user_id=user_id,
+        lock=API_PREM_LOCK,
+        user=API_PREM_USER,
+        note=API_PREM_NOTE,
+        money=API_PREM_MONEY,
+        warn=API_PREM_WARN,
+        partner=html.escape(str(partner_name)),
+        new_key=new_key,
+        balance=format_money(current_balance, user_id=user_id),
     )
     kb = InlineKeyboardMarkup([
         [_btn(lt(user_id, "Nạp Ví", "Top up wallet", "充值钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet")],
@@ -400,13 +406,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 pass
         except Forbidden:
             deep_link = f"https://t.me/{BOT_USERNAME}?start=start"
-            fallback_text = (
-                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>Không thể nhắn riêng cho bạn.</b>\n\n"
-                "Vui lòng mở chat riêng với bot và gửi <code>/start</code> trước,\n"
-                "sau đó quay lại thao tác này."
-            )
+            fallback_text = t("private_chat_required", user_id=user_id)
             fallback_kb = InlineKeyboardMarkup([
-                [InlineKeyboardButton("<tg-emoji emoji-id=\"6129860303619363484\">📩</tg-emoji> Mở chat bot", url=deep_link)]
+                [InlineKeyboardButton(
+                    '<tg-emoji emoji-id="6129860303619363484">📩</tg-emoji> '
+                    + t("btn_open_bot_chat", user_id=user_id),
+                    url=deep_link,
+                )]
             ])
             try:
                 await safe_edit_message(
@@ -567,7 +573,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                     user_id,
                     "<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>YÊU CẦU BẢO HÀNH</b>\n\nVui lòng <b>mô tả vấn đề</b> bạn gặp phải:\n<i>(Gửi tin nhắn mô tả chi tiết)</i>",
                     "<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>WARRANTY REQUEST</b>\n\nPlease <b>describe the problem</b> you ran into:\n<i>(Send a message with the details)</i>",
-                    "<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>质保申请</b>\n\n请<b>描述您遇到的问题</b>：\n<i>（发送一条包含详细信息的消息）</i>",
+                    "<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>保修申请</b>\n\n请<b>描述您遇到的问题</b>：\n<i>（发送一条包含详细信息的消息）</i>",
                 ),
                 parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(lt(user_id, "❌ Hủy", "❌ Cancel", "❌ 取消"), callback_data="main_menu")]])
@@ -626,16 +632,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     elif command in {'api_register_request', 'api_register_guide'}:
         if command == 'api_register_guide':
-            text = (
-                "<tg-emoji emoji-id=\"5350481781306958339\">📘</tg-emoji> <b>HƯỚNG DẪN ĐĂNG KÝ API PARTNER</b>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                "1. Nhấn nút <b>Gửi yêu cầu đăng ký</b> bên dưới.\n"
-                "2. Chờ Admin duyệt tài khoản.\n"
-                "3. Bot gửi API Key cho bạn qua tin nhắn.\n"
-                "4. Nạp ví bằng lệnh <code>/napapi [số_tiền]</code>.\n"
-                "5. Vào lại <code>/start</code> để thấy menu <b>API Partner</b>.\n\n"
-                "<i>Menu API chỉ hiện sau khi được Admin duyệt.</i>"
-            )
+            text = t("partner_register_guide", user_id=user_id)
             kb = InlineKeyboardMarkup([
                 [_btn(lt(user_id, "Gửi yêu cầu đăng ký", "Send a registration request", "提交注册申请"), icon_id="5436359785534466562", callback_data="api_register_request")],
                 [_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data="back_to_main")]
@@ -761,13 +758,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
             logger.info("API key rotated for user %s", user_id)
 
-            text = (
-                "\U0001F511 <b>ĐÃ ĐỔI API KEY</b>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                f"\U0001F464 <b>Partner:</b> {html.escape(str(partner_name))}\n"
-                f"\U0001F6E1 <b>API Key mới:</b> <code>{new_key}</code>\n"
-                f"\U0001F4B0 <b>Số dư ví chung:</b> {current_balance:,} VNĐ\n\n"
-                "<i>\u26A0\uFE0F API key cũ đã bị vô hiệu hóa để bảo mật. Hãy cập nhật key mới trong hệ thống của bạn.</i>"
+            text = t(
+                "partner_key_changed",
+                user_id=user_id,
+                lock=API_PREM_LOCK,
+                user=API_PREM_USER,
+                note=API_PREM_NOTE,
+                money=API_PREM_MONEY,
+                warn=API_PREM_WARN,
+                partner=html.escape(str(partner_name)),
+                new_key=new_key,
+                balance=format_money(current_balance, user_id=user_id),
             )
             kb = InlineKeyboardMarkup([
                 [_btn(lt(user_id, "Nạp Ví", "Top up wallet", "充值钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet")],
@@ -838,17 +839,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             return
 
         if command == 'api_member_topup_help':
-            text = (
-                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>HƯỚNG DẪN NẠP VÍ CHUNG</b>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                "1. Gõ lệnh: <code>/napapi [số_tiền]</code>\n"
-                "2. Bot trả về QR + nội dung chuyển khoản (NAPI...)\n"
-                "3. Chuyển đúng số tiền và đúng nội dung\n"
-                "4. Chờ 1-3 phút hệ thống tự cộng vào ví chung\n\n"
-                "<b>Ví dụ:</b>\n"
-                "• <code>/napapi 200000</code>\n"
-                "• <code>/napapi 500000</code>"
-            )
+            text = t("partner_topup_menu_guide", user_id=user_id)
             kb = InlineKeyboardMarkup([
                 [_btn(lt(user_id, "Ví Chung", "Shared wallet", "共享钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet")],
                 [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]
@@ -856,29 +847,21 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
             return
 
-        base_url_note = (
-            "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>Link hiện tại là Cloudflare Quick Tunnel.</b> Nếu server restart hoặc mở lại cloudflared thì URL có thể đổi.\n\n"
+        base_url_note = t(
+            "partner_base_url_tunnel_note"
             if "trycloudflare.com" in base_url
-            else "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>Link này đang lấy từ cấu hình PUBLIC_API_URL hiện tại.</b>\n\n"
+            else "partner_base_url_config_note",
+            user_id=user_id,
         )
 
         if command == 'api_member_endpoints':
-            text = (
-                "<tg-emoji emoji-id=\"5215392879320505675\">🛠️</tg-emoji> <b>DANH SÁCH ENDPOINT PARTNER</b>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                f"<tg-emoji emoji-id=\"5447410659077661506\">🌐</tg-emoji> <b>Base URL:</b> <code>{base_url}</code>\n"
-                f"{base_url_note}"
-                f"<tg-emoji emoji-id=\"5350481781306958339\">📖</tg-emoji> <b>Tài liệu Web:</b> "
-                f"<a href=\"{safe_docs_url}\">{safe_docs_url}</a>\n\n"
-                "<b>Sản phẩm thường:</b>\n"
-                "• <code>GET /api/v2/me</code>\n"
-                "• <code>GET /api/v2/catalog</code>\n"
-                "• <code>POST /api/v2/orders</code>\n"
-                "• <code>GET /api/v2/orders/{order_code}</code>\n\n"
-                "<b>Headers dùng chung:</b>\n"
-                f"• <code>x-api-key: {partner_key}</code>\n"
-                "• <code>x-idempotency-key: MA_DON_DOI_TAC</code>\n\n"
-                "<b>Mã phản hồi:</b> <code>200</code> OK · <code>400</code> sai endpoint/field · <code>401</code> sai key · <code>402</code> thiếu tiền · <code>404</code> không tìm thấy"
+            text = t(
+                "partner_endpoints_doc",
+                user_id=user_id,
+                base_url=base_url,
+                note=base_url_note,
+                docs_url=safe_docs_url,
+                api_key=partner_key,
             )
             kb = InlineKeyboardMarkup([
                 [_btn(lt(user_id, "Tài Liệu API", "API documentation", "API 文档"), icon_id="5350481781306958339", callback_data="api_member_docs")],
@@ -889,10 +872,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         if command == 'api_member_docs':
             guide_sent = False
-            guide_status = (
-                "<tg-emoji emoji-id=\"5303290914041505430\">⚡️</tg-emoji> "
-                "<b>Mình đã gửi file tài liệu chi tiết ở tin nhắn bên dưới.</b>\n\n"
-            )
+            guide_status = t("partner_guide_file_sent", user_id=user_id)
             try:
                 from telegram import InputFile
                 from app.core.section_manifest import PROJECT_ROOT
@@ -903,12 +883,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         await context.bot.send_document(
                             chat_id=user_id,
                             document=InputFile(guide_stream, filename="API_PARTNER_GUIDE.md"),
-                            caption=(
-                                "<tg-emoji emoji-id=\"5350481781306958339\">📚</tg-emoji> "
-                                "<b>Tài liệu API Partner chi tiết</b>\n"
-                                f"<tg-emoji emoji-id=\"5350481781306958339\">📖</tg-emoji> "
-                                f"<a href=\"{safe_docs_url}\">{safe_docs_url}</a>\n"
-                                "<i>File này có ví dụ tạo đơn, poll đơn, nhận sản phẩm, quantity và các response mẫu.</i>"
+                            caption=t(
+                                "partner_guide_file_caption",
+                                user_id=user_id,
+                                docs_url=safe_docs_url,
                             ),
                             parse_mode='HTML',
                         )
@@ -917,31 +895,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 logger.warning(f"Cannot send API partner guide document to user {user_id}: {e}")
 
             if not guide_sent:
-                guide_status = (
-                    "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> "
-                    "<b>Chưa gửi được file tài liệu.</b> Bạn vẫn có thể xem bản tóm tắt bên dưới.\n\n"
-                )
+                guide_status = t("partner_guide_file_failed", user_id=user_id)
 
-            text = (
-                "<tg-emoji emoji-id=\"5350481781306958339\">📜</tg-emoji> <b>TÀI LIỆU API DÀNH CHO THÀNH VIÊN</b>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                f"{guide_status}"
-                f"<tg-emoji emoji-id=\"5447410659077661506\">🌐</tg-emoji> <b>Base URL:</b> <code>{base_url}</code>\n"
-                f"{base_url_note}"
-                f"<tg-emoji emoji-id=\"5350481781306958339\">📖</tg-emoji> <b>Tài liệu Web:</b> "
-                f"<a href=\"{safe_docs_url}\">{safe_docs_url}</a>\n\n"
-                f"<tg-emoji emoji-id=\"5197288647275071607\">🛡</tg-emoji> <b>API Key của bạn:</b> <code>{partner_key}</code>\n\n"
-                "<b>Gọi API cần các header:</b>\n"
-                f"• <code>x-api-key: {partner_key}</code>\n"
-                "• <code>x-idempotency-key: MA_DON_DOI_TAC</code> (khuyến nghị)\n\n"
-                "<b>Luồng tích hợp:</b>\n"
-                "1. <code>GET /api/v2/catalog</code> → <code>POST /api/v2/orders</code>\n"
-                "3. Đơn poll tại <code>/api/v2/orders/{order_code}</code>\n"
-                "4. Retry phải giữ nguyên partner_ref\n\n"
-                "<b>Ghi nhớ:</b>\n"
-                "• Sản phẩm thường giao ngay nằm trong <code>data.items</code>\n"
-                "• Retry phải giữ nguyên <code>partner_ref</code> và <code>x-idempotency-key</code>\n"
-                "• Gặp <code>402</code>: nạp ví bằng <code>/napapi [số_tiền]</code>"
+            text = t(
+                "partner_docs_summary",
+                user_id=user_id,
+                status=guide_status,
+                base_url=base_url,
+                note=base_url_note,
+                docs_url=safe_docs_url,
+                api_key=partner_key,
             )
             kb = InlineKeyboardMarkup([
                 [InlineKeyboardButton(lt(user_id, "Mở tài liệu Web", "Open the web documentation", "打开网页文档"), url=docs_url)],
@@ -953,64 +916,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
             return
 
-        # command == 'api_member_docs'
-        text = (
-            "<tg-emoji emoji-id=\"5350481781306958339\">📜</tg-emoji> <b>TÀI LIỆU API DÀNH CHO THÀNH VIÊN</b>\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            f"<tg-emoji emoji-id=\"5447410659077661506\">🌐</tg-emoji> <b>Base URL:</b> <code>{base_url}</code>\n"
-            f"{base_url_note}"
-            f"<tg-emoji emoji-id=\"5350481781306958339\">📖</tg-emoji> <b>Tài liệu Web:</b> "
-            f"<a href=\"{safe_docs_url}\">{safe_docs_url}</a>\n\n"
-            f"<tg-emoji emoji-id=\"5197288647275071607\">🛡</tg-emoji> <b>API Key của bạn:</b> <code>{partner_key}</code>\n\n"
-            "<b>Headers khi gọi API:</b>\n"
-            f"• <code>x-api-key: {partner_key}</code>\n"
-            "• <code>x-idempotency-key: MA_DON_DOI_TAC</code> (khuyến nghị)\n\n"
-            "<b>Mẫu cURL mua đơn AUTO (Tài khoản có sẵn):</b>\n"
-            "<pre>curl -X POST " + f"{base_url}/api/v2/orders" + " \\\n"
-            "  -H 'Content-Type: application/json' \\\n"
-            "  -H 'x-api-key: " + f"{partner_key}" + "' \\\n"
-            "  -H 'x-idempotency-key: ORDER_12345' \\\n"
-            "  -d '{\n"
-            '    "partner_ref": "ORDER_12345",\n'
-            '    "product_id": "p_1700000000",\n'
-            '    "quantity": 1,\n'
-            '    "customer_id": "telegram_9988",\n'
-            '    "note": "don tu bot doi tac"\n'
-            "  }'</pre>\n\n"
-            "<b>Mẫu cURL mua đơn MANUAL (Yêu cầu nhập mail):</b>\n"
-            "<pre>curl -X POST " + f"{base_url}/api/v2/orders" + " \\\n"
-            "  -H 'Content-Type: application/json' \\\n"
-            "  -H 'x-api-key: " + f"{partner_key}" + "' \\\n"
-            "  -H 'x-idempotency-key: ORDER_12346' \\\n"
-            "  -d '{\n"
-            '    "partner_ref": "ORDER_12346",\n'
-            '    "product_id": "p_1700000001",\n'
-            '    "quantity": 1,\n'
-            '    "customer_email": "khach@example.com",\n'
-            '    "customer_id": "telegram_9988",\n'
-            '    "note": "youtube premium cho khach"\n'
-            "  }'</pre>\n"
-            "<b>Test nhanh (Dành cho Shell/cURL):</b>\n"
-            "<pre>curl -X GET " + f"{base_url}/api/v2/me" + "\\\n"
-            "  -H 'x-api-key: " + f"{partner_key}" + "'</pre>\n\n"
-            "<b>Kết quả test mẫu (thực tế):</b>\n"
-            "• <code>GET /api/v2/status -> 200 OK</code>\n"
-            "• <code>GET /api/v2/me -> 200 OK</code>\n"
-            "• <code>GET /api/v2/catalog -> 200 OK</code>\n"
-            "• <code>GET /api/v2/orders -> 200 OK</code>\n"
-            "• <code>POST /api/v2/orders -> 402 Payment Required</code> (khi ví chung = 0)\n"
-            "• Cách xử lý: nạp ví chung bằng <code>/napapi [số_tiền]</code> rồi gọi lại đơn.\n\n"
-            "<b>Nội dung tài khoản trả về:</b>\n"
-            "• Đọc ở <code>data.items</code>\n"
-            "• Thường dạng <code>email|password</code>\n"
-            "• Nếu đơn manual/pending thì chưa có items ngay"
-        )
-        kb = InlineKeyboardMarkup([
-            [_btn("Endpoints", icon_id="5215039453487893428", callback_data="api_member_endpoints")],
-            [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]
-        ])
-        await safe_edit_message(query, text=text, parse_mode='HTML', reply_markup=kb)
-        return
+        # Nhanh 'api_member_docs' o tren da xu ly va return, nen khoi tai lieu
+        # thu ba tung nam o day khong bao gio chay. Da go bo.
 
     elif command in {'huongdan', 'chinhsach'}:
         is_guide = command == "huongdan"

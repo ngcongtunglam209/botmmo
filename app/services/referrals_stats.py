@@ -70,10 +70,14 @@ async def process_referral_commission(context, user_id: int, amount: int, order_
         try:
             await context.bot.send_message(
                 referrer_id,
-                f"{E_TAG} <b>BẠN VỪA NHẬN HOA HỒNG!</b>\n\n"
-                f"{E_TAG} <b>Số tiền:</b> +{commission:,} VNĐ\n"
-                f"{E_USER} <b>Từ:</b> Người bạn giới thiệu vừa mua hàng\n"
-                f"{E_TAG} <b>Số dư mới:</b> {new_balance:,} VNĐ",
+                t(
+                    "referral_commission_received",
+                    user_id=referrer_id,
+                    tag=E_TAG,
+                    user=E_USER,
+                    amount=format_money(commission, user_id=referrer_id),
+                    balance=format_money(new_balance, user_id=referrer_id),
+                ),
                 parse_mode=ParseMode.HTML
             )
         except (TelegramError, ValueError, KeyError, AttributeError) as e:

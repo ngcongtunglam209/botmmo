@@ -191,22 +191,31 @@ async def _cleanup_expired_pending_orders(context: ContextTypes.DEFAULT_TYPE, cu
                     current_balance = current_user_data.get('balance', 0)
                     new_balance = current_balance + balance_used
                     db_update_balance(user_id, new_balance)
-                    refund_text = f"\n\n<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> <b>Đã hoàn lại:</b> +{balance_used:,} VNĐ vào ví (Do đơn hết hạn)."
+                    refund_text = t(
+                        "order_expired_refund_note",
+                        user_id=user_id,
+                        amount=format_money(balance_used, user_id=user_id),
+                    )
 
             if details.get("type") == "store_product":
-                caption = (
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>ĐƠN HÀNG ĐÃ HẾT HẠN</b> <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji>\n\n"
-                    f"Đơn hàng này đã hết hạn thanh toán.\n"
-                    f"Vui lòng tạo đơn mới nếu bạn vẫn muốn mua.{refund_text}"
+                caption = t("order_expired_store", user_id=user_id, refund=refund_text)
+                reply_markup = create_back_button_menu(
+                    f'<tg-emoji emoji-id="5247134066322447995">🛒</tg-emoji> {t("btn_new_order", user_id=user_id)}',
+                    "store_main",
+                    user_id=user_id,
                 )
-                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "store_main", user_id=user_id)
             else:
-                caption = (
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>ĐƠN HÀNG ĐÃ HẾT HẠN</b> <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji>\n\n"
-                    f"Đơn hàng cho email <b>{details.get('email', 'N/A')}</b> đã hết hạn thanh toán.\n"
-                    f"Vui lòng tạo đơn mới nếu bạn vẫn muốn mua.{refund_text}"
+                caption = t(
+                    "order_expired_email",
+                    user_id=user_id,
+                    email=details.get("email", "N/A"),
+                    refund=refund_text,
                 )
-                reply_markup = create_back_button_menu("<tg-emoji emoji-id=\"5247134066322447995\">🛒</tg-emoji> Tạo đơn mới", "store_main", user_id=user_id)
+                reply_markup = create_back_button_menu(
+                    f'<tg-emoji emoji-id="5247134066322447995">🛒</tg-emoji> {t("btn_new_order", user_id=user_id)}',
+                    "store_main",
+                    user_id=user_id,
+                )
 
             if details.get('message_id'):
                 if details.get("message_kind") == "text":
@@ -610,13 +619,17 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 try:
                                     await context.bot.send_message(
                                         order_details['user_id'],
-                                        f"{E_ERROR} <b>XIN LỖI - SẢN PHẨM KHÔNG KHẢ DỤNG</b>\n\n"
-                                        f"Sản phẩm bạn đặt (Mã: <code>{prod_id}</code>) hiện không còn khả dụng.\n\n"
-                                        f"{E_TAG} <b>Số tiền CK:</b> {actual_amount:,} VNĐ\n"
-                                        f"{E_TAG} <b>Đã hoàn ví:</b> +{_deleted_total:,} VNĐ\n"
-                                        f"{E_TAG} <b>Mã đơn:</b> <code>{order_code}</code>\n\n"
-                                        f"Toàn bộ tiền đã được hoàn vào Ví Bot.\n"
-                                        f"Khoản hoàn từ {BANK_REFUND_MIN_AMOUNT:,} VNĐ sẽ có thêm lựa chọn nhận qua ngân hàng.",
+                                        t(
+                                            "order_product_unavailable",
+                                            user_id=order_details['user_id'],
+                                            error=E_ERROR,
+                                            tag=E_TAG,
+                                            prod_id=prod_id,
+                                            paid=format_money(actual_amount, user_id=order_details['user_id']),
+                                            refunded=format_money(_deleted_total, user_id=order_details['user_id']),
+                                            order_code=order_code,
+                                            min_bank=format_money(BANK_REFUND_MIN_AMOUNT, user_id=order_details['user_id']),
+                                        ),
                                         parse_mode=ParseMode.HTML
                                     )
                                 except (ValueError, TypeError, KeyError, IndexError) as e:
@@ -651,16 +664,17 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 # MANUAL PRODUCT: Không cần stock, đợi email từ user
                                 await context.bot.send_message(
                                     order_details['user_id'],
-                                    f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG!</b>\n\n"
-                                    f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
-                                    f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>Số lượng:</b> {qty}\n"
-                                    f"{E_TAG} <b>Đã thanh toán:</b> {actual_amount:,} VNĐ\n"
-                                    f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n\n"
-                                    f"{E_GLOBE} <b>Vui lòng nhập email nhận dịch vụ:</b>\n"
-                                    f"<i>Email này sẽ được dùng để Admin setup/gửi thông tin cho bạn</i>\n\n"
-                                    f"<b>Cách gửi email:</b>\n"
-                                    f"• Reply tin nhắn này với email của bạn\n"
-                                    f"• Hoặc dùng lệnh: <code>/guimail email@abc.com</code>",
+                                    t(
+                                        "order_paid_manual",
+                                        user_id=order_details['user_id'],
+                                        success=E_SUCCESS,
+                                        tag=E_TAG,
+                                        globe=E_GLOBE,
+                                        product=p['name'],
+                                        qty=qty,
+                                        amount=format_money(actual_amount, user_id=order_details['user_id']),
+                                        order_code=order_code,
+                                    ),
                                     parse_mode=ParseMode.HTML
                                 )
 
@@ -744,10 +758,13 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                                 try:
                                     await context.bot.send_message(
                                         order_details['user_id'],
-                                        f"❌ <b>RẤT TIẾC!</b>\n\n"
-                                        f"Sản phẩm <b>{p['name']}</b> vừa được mua hết bởi khách khác.\n\n"
-                                        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Đơn hàng đã được hoàn tiền tự động: <b>+{total_refund:,} VNĐ</b>\n"
-                                        f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư mới: <b>{new_balance:,} VNĐ</b>",
+                                        t(
+                                            "order_soldout_refunded",
+                                            user_id=order_details['user_id'],
+                                            product=p['name'],
+                                            refund=format_money(total_refund, user_id=order_details['user_id']),
+                                            balance=format_money(new_balance, user_id=order_details['user_id']),
+                                        ),
                                         parse_mode=ParseMode.HTML
                                     )
                                 except (TelegramError, ValueError, KeyError, AttributeError) as notify_error:
@@ -773,13 +790,20 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                             try:
                                 await context.bot.send_message(
                                     order_details['user_id'],
-                                    f"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG</b>\n\n"
-                                    f"{E_TAG} <b>Sản phẩm:</b> {p['name']}\n"
-                                    f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Số lượng:</b> {qty}\n"
-                                    f"{E_TAG} <b>Thanh toán:</b> {actual_amount:,} VND\n"
-                                    f"{E_LOADING} <b>Thời hạn:</b> {p.get('duration', 'N/A')}\n"
-                                    f"<tg-emoji emoji-id=\"5197288647275071607\">🛡️</tg-emoji> <b>Bảo hành:</b> {p.get('warranty', 'Không')}\n\n"
-                                    f"{E_TIP} <b>Hệ thống đang gửi thông tin tài khoản ngay sau tin nhắn này...</b>",
+                                    t(
+                                        "order_paid_auto",
+                                        user_id=order_details['user_id'],
+                                        success=E_SUCCESS,
+                                        tag=E_TAG,
+                                        loading=E_LOADING,
+                                        tip=E_TIP,
+                                        product=p['name'],
+                                        qty=qty,
+                                        amount=format_money(actual_amount, user_id=order_details['user_id']),
+                                        duration=p.get('duration', 'N/A'),
+                                        warranty=p.get("warranty")
+                                        or t("value_none", user_id=order_details['user_id']),
+                                    ),
                                     parse_mode=ParseMode.HTML
                                 )
                             except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -1184,24 +1208,28 @@ async def process_top_buyer_reward(context, start_dt, end_dt, reward_type, quant
 
     # Gửi thông báo cho User
     user_info = user_data_db.get(str(top_user_id), {})
-    full_name = user_info.get("first_name", "Khách hàng")
+    full_name = user_info.get("first_name") or t("value_customer", user_id=top_user_id)
 
+    # `period_name` van la tieng Viet: no chi con dung o tin bao admin ben duoi.
     period_name = "TUẦN" if reward_type == "WEEKLY" else "THÁNG"
+    period_key = "reward_period_weekly" if reward_type == "WEEKLY" else "reward_period_monthly"
     time_range_str = f"{start_dt.strftime('%d/%m')} - {end_dt.strftime('%d/%m')}"
 
-    msg = (
-        f"⭐️ <b>CHÚC MỪNG TOP 1 NGƯỜI MUA HÀNG {period_name} QUA!</b> ⭐️\n"
-        f"<i>({time_range_str})</i>\n\n"
-        f"Xin chào <b>{full_name}</b>,\n"
-        f"Bạn là người mua hàng nhiều nhất trong {period_name.lower()} vừa qua với <b>{count} đơn hàng</b>.\n\n"
-        f"<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> <b>Phần thưởng của bạn:</b>\n"
-        f"<b>{quantity}x Mã giảm giá {discount_percent}%</b>\n\n"
+    msg = t(
+        "reward_top_buyer",
+        user_id=top_user_id,
+        period=t(period_key, user_id=top_user_id),
+        range=time_range_str,
+        name=full_name,
+        count=count,
+        quantity=quantity,
+        percent=discount_percent,
     )
 
     for code in coupons_created:
-        msg += f"<tg-emoji emoji-id=\"5377624166436445368\">🎟️</tg-emoji> <code>{code}</code>\n"
+        msg += f'<tg-emoji emoji-id="5377624166436445368">🎟️</tg-emoji> <code>{code}</code>\n'
 
-    msg += "\n<i>(Hạn sử dụng: 30 ngày. Áp dụng cho đơn hàng tiếp theo)</i>"
+    msg += t("reward_coupon_footer", user_id=top_user_id)
 
     try:
         await context.bot.send_message(top_user_id, msg, parse_mode=ParseMode.HTML)

@@ -298,7 +298,7 @@ async def ga_edit_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 # feedback
                 try:
                     await edited_msg.reply_text(
-                        f"{E_ERROR} <b>CẢNH BÁO:</b> Bạn đã sửa tin nhắn! Kết quả này sẽ KHÔNG được tính.",
+                        t("giveaway_message_edited", user_id=edited_msg.from_user.id, error=E_ERROR),
                         parse_mode='HTML'
                     )
                 except (Forbidden, BadRequest) as e:

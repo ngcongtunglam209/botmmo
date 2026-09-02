@@ -79,7 +79,7 @@ async def check_if_banned(update) -> bool:
         return False
     user_id = update.effective_user.id
     if user_id in banned_users:
-        message = f"{E_LIMIT} Bạn đã bị cấm sử dụng bot này. Vui lòng liên hệ Admin."
+        message = t("sys_banned", user_id=user_id, limit=E_LIMIT)
         if update.message: await update.message.reply_text(message)
         elif update.callback_query: await safe_answer(update.callback_query, message, show_alert=True)
         return True

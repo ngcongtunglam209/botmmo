@@ -246,9 +246,9 @@ async def combo_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ TẠO COMBO!</b>\n\n"
             f"<tg-emoji emoji-id=\"5334890573281114250\">🆔</tg-emoji> ID: <code>{combo_id}</code>\n"
             f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {products[pid1]['name']} + {products[pid2]['name']}\n"
-            f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Giá gốc: {total:,}đ\n"
+            f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Giá gốc: {format_money(total)}\n"
             f"<tg-emoji emoji-id=\"6059654836918423763\">📉</tg-emoji> Giảm: {discount}%\n"
-            f"<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> Giá combo: {combo_price:,}đ"
+            f"<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> Giá combo: {format_money(combo_price)}"
         )
         return
 
@@ -266,9 +266,9 @@ async def send_upsell_suggestion(context, user_id: int, purchased_prod_id: str):
             price = p['price']
             flash_price, flash_info = get_flash_sale_price(pid, price)
             if flash_info:
-                msg += f'<tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>{html.escape(p["name"])}</b>\n<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <s>{price:,}đ</s> → <b>{flash_price:,}đ</b> <tg-emoji emoji-id="5303290914041505430">⚡</tg-emoji>\n\n'
+                msg += f'<tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>{html.escape(p["name"])}</b>\n<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <s>{format_money(price, user_id=user_id)}</s> → <b>{format_money(flash_price, user_id=user_id)}</b> <tg-emoji emoji-id="5303290914041505430">⚡</tg-emoji>\n\n'
             else:
-                msg += f'<tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>{html.escape(p["name"])}</b>\n<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>{price:,}đ</b>\n\n'
+                msg += f'<tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>{html.escape(p["name"])}</b>\n<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> <b>{format_money(price, user_id=user_id)}</b>\n\n'
             btns.append([InlineKeyboardButton(lt(user_id, "Mua {name}", "Buy {name}", "购买 {name}", name=p['name']), callback_data=f"view_prod_{pid}")])
         btns.append([InlineKeyboardButton(lt(user_id, "Menu chính", "Main Menu", "主菜单"), callback_data="back_to_main")])
         await context.bot.send_message(chat_id=user_id, text=msg, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(btns))
@@ -317,10 +317,16 @@ async def wheel_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, is_call
     total_won = wd.get('total_won', 0)
     msg = lt(
         user_id,
-        '🎡 <b>VÒNG QUAY MAY MẮN</b>\n━━━━━━━━━━━━━━━━━━\n\n🎁 <b>Giải thưởng:</b>\n💎 50,000đ | 💵 20,000đ\n🎁 Giảm 50% | 🎟 Giảm 20%\n💰 5,000đ | 🎟 Giảm 10%\n🪙 2,000đ | 😢 Chúc may mắn\n\n📦 Tổng đơn hàng: <b>{orders}</b>\n🎟 Lượt quay còn: <b>{spins}</b>\n💰 Tổng đã thắng: <b>{won:,}đ</b>\n\n<i>Mỗi đơn hàng = 1 lượt quay!</i>',
-        '🎡 <b>LUCKY WHEEL</b>\n━━━━━━━━━━━━━━━━━━\n\n🎁 <b>Prizes:</b>\n💎 50,000đ | 💵 20,000đ\n🎁 50% off | 🎟 20% off\n💰 5,000đ | 🎟 10% off\n🪙 2,000đ | 😢 Better luck next time\n\n📦 Total orders: <b>{orders}</b>\n🎟 Spins remaining: <b>{spins}</b>\n💰 Total won: <b>{won:,}đ</b>\n\n<i>Each order earns one spin!</i>',
-        '🎡 <b>幸运转盘</b>\n━━━━━━━━━━━━━━━━━━\n\n🎁 <b>奖品：</b>\n💎 50,000đ | 💵 20,000đ\n🎁 五折 | 🎟 八折\n💰 5,000đ | 🎟 九折\n🪙 2,000đ | 😢 祝下次好运\n\n📦 订单总数：<b>{orders}</b>\n🎟 剩余次数：<b>{spins}</b>\n💰 累计中奖：<b>{won:,}đ</b>\n\n<i>每个订单可获得一次机会！</i>',
-        orders=total_orders, spins=remaining_spins, won=total_won,
+        '🎡 <b>VÒNG QUAY MAY MẮN</b>\n━━━━━━━━━━━━━━━━━━\n\n🎁 <b>Giải thưởng:</b>\n💎 {p50} | 💵 {p20}\n🎁 Giảm 50% | 🎟 Giảm 20%\n💰 {p5} | 🎟 Giảm 10%\n🪙 {p2} | 😢 Chúc may mắn\n\n📦 Tổng đơn hàng: <b>{orders}</b>\n🎟 Lượt quay còn: <b>{spins}</b>\n💰 Tổng đã thắng: <b>{won}</b>\n\n<i>Mỗi đơn hàng = 1 lượt quay!</i>',
+        '🎡 <b>LUCKY WHEEL</b>\n━━━━━━━━━━━━━━━━━━\n\n🎁 <b>Prizes:</b>\n💎 {p50} | 💵 {p20}\n🎁 50% off | 🎟 20% off\n💰 {p5} | 🎟 10% off\n🪙 {p2} | 😢 Better luck next time\n\n📦 Total orders: <b>{orders}</b>\n🎟 Spins remaining: <b>{spins}</b>\n💰 Total won: <b>{won}</b>\n\n<i>Each order earns one spin!</i>',
+        '🎡 <b>幸运转盘</b>\n━━━━━━━━━━━━━━━━━━\n\n🎁 <b>奖品：</b>\n💎 {p50} | 💵 {p20}\n🎁 五折 | 🎟 八折\n💰 {p5} | 🎟 九折\n🪙 {p2} | 😢 祝下次好运\n\n📦 订单总数：<b>{orders}</b>\n🎟 剩余次数：<b>{spins}</b>\n💰 累计中奖：<b>{won}</b>\n\n<i>每个订单可获得一次机会！</i>',
+        orders=total_orders,
+        spins=remaining_spins,
+        won=format_money(total_won, user_id=user_id),
+        p50=format_money(50000, user_id=user_id),
+        p20=format_money(20000, user_id=user_id),
+        p5=format_money(5000, user_id=user_id),
+        p2=format_money(2000, user_id=user_id),
     )
     btns = [[_btn(lt(user_id, "QUAY NGAY!", "SPIN NOW!", "立即转盘！"), callback_data="do_spin_wheel")]] if remaining_spins > 0 else [[_btn(lt(user_id, "Hết lượt — Mua thêm để quay!", "No spins — Buy to earn more!", "次数已用完 — 购买后再转！"), callback_data="store_main")]]
     btns.append([_btn(lt(user_id, "Quay lại", "Back", "返回"), callback_data="back_to_main")])
@@ -373,7 +379,7 @@ async def handle_spin_wheel(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 db_update_balance(user_id, user_info.get('balance', 0) + amount, reason=f"Lucky Wheel: +{amount}")
             wd['total_won'] = wd.get('total_won', 0) + amount
             record_promo_cost(amount, "wheel_balance")
-            reward_msg = lt(user_id, "Bạn nhận được <b>{amount:,}đ</b> vào số dư!", "You received <b>{amount:,}đ</b> in your wallet!", "您的钱包已获得 <b>{amount:,}đ</b>！", amount=amount)
+            reward_msg = lt(user_id, "Bạn nhận được <b>{amount}</b> vào số dư!", "You received <b>{amount}</b> in your wallet!", "您的钱包已获得 <b>{amount}</b>！", amount=format_money(amount, user_id=user_id))
     elif prize['type'] == 'coupon':
         import random, string
         estimated_cost = int(35000 * prize['value'] / 100)

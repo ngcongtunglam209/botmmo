@@ -136,13 +136,16 @@ async def handle_manual_order_action(query, context, update):
         await safe_send_message(
             context,
             user_id,
-            f"{E_SUCCESS} \u003cb\u003eĐƠN HÀNG ĐÃ HOÀN THÀNH!\u003c/b\u003e\n\n"
-            f"\u003ctg-emoji emoji-id=\"5972022360025336988\"\u003e🔸\u003c/tg-emoji\u003e \u003cb\u003eMã đơn:\u003c/b\u003e \u003ccode\u003e{order_code}\u003c/code\u003e\n"
-            f"{E_TAG} \u003cb\u003eSản phẩm:\u003c/b\u003e {product_name}\n"
-            f"{E_GLOBE} \u003cb\u003eEmail:\u003c/b\u003e \u003ccode\u003e{email}\u003c/code\u003e\n\n"
-            f"\u003ctg-emoji emoji-id=\"5314638736462966754\"\u003e📬\u003c/tg-emoji\u003e \u003cb\u003eVui lòng kiểm tra email của bạn!\u003c/b\u003e\n"
-            f"(Nếu không thấy, kiểm tra thư mục Spam/Junk)\n\n"
-            f"{E_GLOBE} Nếu có vấn đề, liên hệ Admin để được hỗ trợ.",
+            t(
+                "order_manual_done_email",
+                user_id=user_id,
+                success=E_SUCCESS,
+                tag=E_TAG,
+                globe=E_GLOBE,
+                order_code=order_code,
+                product=product_name,
+                email=email,
+            ),
             parse_mode='HTML'
         )
 
@@ -183,12 +186,17 @@ async def handle_manual_order_action(query, context, update):
         await safe_send_message(
             context,
             user_id,
-            f"{E_LIMIT} \u003cb\u003eĐƠN HÀNG ĐÃ BỊ HỦY\u003c/b\u003e\n\n"
-            f"\u003ctg-emoji emoji-id=\"5972022360025336988\"\u003e🔸\u003c/tg-emoji\u003e \u003cb\u003eMã đơn:\u003c/b\u003e \u003ccode\u003e{order_code}\u003c/code\u003e\n"
-            f"{E_TAG} \u003cb\u003eSản phẩm:\u003c/b\u003e {product_name}\n\n"
-            f"{E_TAG} \u003cb\u003eSố tiền đã hoàn:\u003c/b\u003e {amount:,} VNĐ\n"
-            f"{E_TAG} \u003cb\u003eSố dư mới:\u003c/b\u003e {new_balance:,} VNĐ\n\n"
-            f"{E_GLOBE} Nếu có thắc mắc, vui lòng liên hệ Admin.",
+            t(
+                "order_manual_cancelled_refund",
+                user_id=user_id,
+                limit=E_LIMIT,
+                tag=E_TAG,
+                globe=E_GLOBE,
+                order_code=order_code,
+                product=product_name,
+                refund=format_money(amount, user_id=user_id),
+                balance=format_money(new_balance, user_id=user_id),
+            ),
             parse_mode='HTML'
         )
 
@@ -223,10 +231,12 @@ async def handle_legacy_manual_done_refund(query, context, command):
             try:
                 await context.bot.send_message(
                     customer_id,
-                    f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐƠN HÀNG ĐÃ HOÀN THÀNH!</b>\n\n"
-                    f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Sản phẩm:</b> {found_order.get('product_name', 'N/A')}\n"
-                    f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n\n"
-                    f"Cảm ơn bạn đã sử dụng dịch vụ! <tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji>",
+                    t(
+                        "order_manual_completed",
+                        user_id=customer_id,
+                        product=found_order.get('product_name', 'N/A'),
+                        order_code=order_code,
+                    ),
                     parse_mode='HTML',
                     reply_markup=create_back_button_menu(user_id=customer_id)
                 )
@@ -268,11 +278,14 @@ async def handle_legacy_manual_done_refund(query, context, command):
             try:
                 await context.bot.send_message(
                     customer_id,
-                    f"❌ <b>ĐƠN HÀNG ĐÃ BỊ HỦY</b>\n\n"
-                    f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Sản phẩm:</b> {found_order.get('product_name', 'N/A')}\n"
-                    f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n\n"
-                    f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Đã hoàn tiền:</b> {amount:,} VNĐ\n"
-                    f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> <b>Số dư mới:</b> {new_balance:,} VNĐ",
+                    t(
+                        "order_cancelled_refunded",
+                        user_id=customer_id,
+                        product=found_order.get('product_name', 'N/A'),
+                        order_code=order_code,
+                        refund=format_money(amount, user_id=customer_id),
+                        balance=format_money(new_balance, user_id=customer_id),
+                    ),
                     parse_mode='HTML',
                     reply_markup=create_back_button_menu(user_id=customer_id)
                 )
@@ -400,12 +413,13 @@ async def handle_new_manual_done_refund(query, context, command):
         try:
             await context.bot.send_message(
                 chat_id=user_id,
-                text=(
-                    f"<tg-emoji emoji-id=\"5462956611033117422\">♻️</tg-emoji> <b>ĐƠN HÀNG ĐÃ ĐƯỢC HOÀN TIỀN</b>\n\n"
-                    f"<tg-emoji emoji-id=\"6260059243605398502\">🔖</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n"
-                    f"{E_TAG} <b>Hoàn lại:</b> {amount:,} VNĐ\n"
-                    f"{E_TAG} <b>Số dư mới:</b> {new_balance:,} VNĐ\n\n"
-                    f"<i>Admin đã hoàn tiền do gặp vấn đề kỹ thuật.</i>"
+                text=t(
+                    "order_refunded_by_admin",
+                    user_id=user_id,
+                    tag=E_TAG,
+                    order_code=order_code,
+                    refund=format_money(amount, user_id=user_id),
+                    balance=format_money(new_balance, user_id=user_id),
                 ),
                 parse_mode=ParseMode.HTML
             )

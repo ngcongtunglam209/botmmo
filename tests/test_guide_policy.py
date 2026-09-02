@@ -41,7 +41,7 @@ def test_every_language_covers_the_same_sections(ui):
             "policy": ("Cancellation and refunds", "Data and privacy", "Prohibited use", "Complaints and support"),
         },
         "zh": {
-            "guide": ("报错与质保", "账号安全"),
+            "guide": ("报错与保修", "账号安全"),
             "policy": ("取消与退款", "数据与隐私", "禁止行为", "投诉与支持"),
         },
     }

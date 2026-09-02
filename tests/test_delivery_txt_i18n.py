@@ -25,7 +25,7 @@ def test_order_txt_is_written_in_the_buyer_language(delivery):
     assert "THÔNG TIN ĐƠN HÀNG" in vietnamese
     assert "Mã đơn hàng" in vietnamese and "Bảo hành" in vietnamese
     assert "ORDER INFORMATION" in english and "Warranty" in english
-    assert "订单信息" in chinese and "质保" in chinese
+    assert "订单信息" in chinese and "保修" in chinese
 
 
 def test_an_unknown_language_falls_back_to_vietnamese(delivery):

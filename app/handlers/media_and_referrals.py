@@ -108,7 +108,7 @@ async def photo_message_handler(update: Update, context: ContextTypes.DEFAULT_TY
                 update.effective_user.id,
                 "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã gửi yêu cầu bảo hành. Admin sẽ xem xét sớm.",
                 "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Your warranty request was sent. The admin will review it shortly.",
-                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> 质保申请已提交，管理员会尽快处理。",
+                "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> 保修申请已提交，管理员会尽快处理。",
             ),
             reply_markup=create_main_menu(user_id=update.effective_user.id),
         )

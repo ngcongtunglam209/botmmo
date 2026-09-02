@@ -615,25 +615,41 @@ async def bcsp_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     name = html.escape(str(product.get('name') or prod_id))
     price = int(product.get('price', 0) or 0)
-    duration = html.escape(str(product.get('duration') or 'Không giới hạn'))
-    warranty = html.escape(str(product.get('warranty') or 'Không'))
+    duration_raw = product.get("duration")
+    warranty_raw = product.get("warranty")
     description = html.escape(str(product.get('description') or ''))
     if len(description) > 700:
         description = description[:697] + '...'
 
-    text = (
-        f"<b>{E_TAG} SẢN PHẨM ĐANG MỞ BÁN</b>\n\n"
-        f"<b>{name}</b>\n"
-        f"{E_TAG} Giá: <b>{price:,} VNĐ</b>\n"
-        f"{E_TAG} Thời hạn: <b>{duration}</b>\n"
-        f"{E_SHIELD} Bảo hành: <b>{warranty}</b>\n\n"
-        f"<blockquote>{description}</blockquote>\n"
-        f"Bấm nút bên dưới để mua ngay."
-    )
-    keyboard = InlineKeyboardMarkup([
-        [_btn("Mua ngay", icon_id="5402186569006210455", callback_data=f"sel_qty_{prod_id}", style="success")],
-        [_btn("Xem sản phẩm", icon_id="5350673958874679310", callback_data=f"view_prod_{prod_id}")],
-    ])
+    # Broadcast toi moi user: dung san mot ban text va mot ban ban phim cho
+    # tung locale, roi vong lap chi con chon theo ngon ngu nguoi nhan.
+    texts = {}
+    keyboards = {}
+    for code in SUPPORTED_LANGS:
+        texts[code] = t(
+            "broadcast_product_promo",
+            lang=code,
+            tag=E_TAG,
+            shield=E_SHIELD,
+            product=name,
+            price=format_money(price, lang=code),
+            duration=html.escape(str(duration_raw or t("value_unlimited", lang=code))),
+            warranty=html.escape(str(warranty_raw or t("value_none", lang=code))),
+            description=description,
+        )
+        keyboards[code] = InlineKeyboardMarkup([
+            [_btn(
+                t("btn_buy_now", lang=code),
+                icon_id="5402186569006210455",
+                callback_data=f"sel_qty_{prod_id}",
+                style="success",
+            )],
+            [_btn(
+                t("btn_view_product", lang=code),
+                icon_id="5350673958874679310",
+                callback_data=f"view_prod_{prod_id}",
+            )],
+        ])
 
     all_users_ids = list(user_data_db.keys())
     status_msg = await update.message.reply_html(
@@ -650,9 +666,9 @@ async def bcsp_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             try:
                 await context.bot.send_message(
                     chat_id=int(user_id),
-                    text=text,
+                    text=pick_locale(texts, get_user_lang(user_id)),
                     parse_mode=ParseMode.HTML,
-                    reply_markup=keyboard,
+                    reply_markup=pick_locale(keyboards, get_user_lang(user_id)),
                 )
                 success += 1
                 await asyncio.sleep(0.05)

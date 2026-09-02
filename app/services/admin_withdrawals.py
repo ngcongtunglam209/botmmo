@@ -46,11 +46,16 @@ async def _handle_withdrawal_action_unlocked(query, context, command, user_id):
         try:
             await context.bot.send_message(
                 req['user_id'],
-                f"{E_SUCCESS} <b>YÊU CẦU RÚT TIỀN ĐÃ ĐƯỢC DUYỆT!</b>\n\n"
-                f"{E_TAG} Số tiền: {req['amount']:,} VNĐ\n"
-                f"<tg-emoji emoji-id=\"5278467510604160626\">🏦</tg-emoji> Đã chuyển về: <code>{html.escape(str(req['bank_info']))}</code>\n"
-                f"{E_TAG} Số dư còn lại: {new_balance:,} VNĐ\n\n"
-                f"Cảm ơn bạn đã đồng hành cùng Lâm Shop! {E_MENU}",
+                t(
+                    "withdraw_approved",
+                    user_id=req['user_id'],
+                    success=E_SUCCESS,
+                    tag=E_TAG,
+                    menu=E_MENU,
+                    amount=format_money(req['amount'], user_id=req['user_id']),
+                    bank_info=html.escape(str(req['bank_info'])),
+                    balance=format_money(new_balance, user_id=req['user_id']),
+                ),
                 parse_mode=ParseMode.HTML
             )
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -88,9 +93,13 @@ async def _handle_withdrawal_action_unlocked(query, context, command, user_id):
         try:
             await context.bot.send_message(
                 req['user_id'],
-                f"{E_LIMIT} <b>YÊU CẦU RÚT TIỀN BỊ TỪ CHỐI</b>\n\n"
-                f"{E_TAG} Số tiền: {req['amount']:,} VNĐ\n"
-                f"Tiền đã được trả lại Ví Bot. Vui lòng liên hệ Admin để biết thêm chi tiết.",
+                t(
+                    "withdraw_rejected",
+                    user_id=req['user_id'],
+                    limit=E_LIMIT,
+                    tag=E_TAG,
+                    amount=format_money(req['amount'], user_id=req['user_id']),
+                ),
                 parse_mode=ParseMode.HTML
             )
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -145,15 +154,11 @@ async def handle_api_registration_action(query, context, command, user_id):
         )
 
         try:
-            msg = (
-                f"<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> <b>ĐĂNG KÝ API THÀNH CÔNG!</b>\n\n"
-                f"🔐 <b>API Key của bạn:</b> <code>{new_key}</code>\n"
-                f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Số dư:</b> 0 VNĐ\n\n"
-                f"<b>Hướng dẫn bắt đầu nhanh:</b>\n"
-                f"1. Nạp tiền: <code>/napapi 500000</code>\n"
-                f"2. Tạo đơn: <code>GET /api/v2/catalog</code> → <code>POST /api/v2/orders</code>\n"
-                f"3. Tra đơn: <code>GET /api/v2/orders/{{order_code}}</code>\n\n"
-                f"<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Vào <code>/start</code> để mở tài liệu API đầy đủ."
+            msg = t(
+                "partner_api_registered",
+                user_id=target_uid,
+                api_key=new_key,
+                balance=format_money(0, user_id=target_uid),
             )
             await context.bot.send_message(target_uid, msg, parse_mode=ParseMode.HTML)
         except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -168,6 +173,6 @@ async def handle_api_registration_action(query, context, command, user_id):
             text=f"❌ Đã từ chối yêu cầu API của ID {target_uid}."
         )
         try:
-            await context.bot.send_message(target_uid, "❌ Yêu cầu đăng ký API của bạn đã bị từ chối.")
+            await context.bot.send_message(target_uid, t("partner_api_rejected", user_id=target_uid))
         except (ValueError, TypeError, KeyError, IndexError) as e:
             logger.warning(f"Cannot notify API rejection to user {target_uid}: {e}")

@@ -23,8 +23,7 @@ def maintenance_guard(func):
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
         if MAINTENANCE_MODE and update.effective_user.id != ADMIN_USER_ID:
             await update.message.reply_text(
-                f"{E_ERROR} <b>Bot đang bảo trì</b>\n"
-                f"Vui lòng quay lại sau ít phút.",
+                t("maintenance", user_id=update.effective_user.id),
                 parse_mode=ParseMode.HTML
             )
             return
@@ -47,7 +46,7 @@ def rate_limit_command(cooldown: float = 2.0):
             if now - last < cooldown:
                 remaining = round(cooldown - (now - last), 1)
                 await update.message.reply_text(
-                    f"<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> Vui lòng chờ {remaining}s trước khi dùng lại lệnh này.",
+                    t("sys_rate_limited", user_id=user_id, seconds=remaining),
                     parse_mode=ParseMode.HTML
                 )
                 return

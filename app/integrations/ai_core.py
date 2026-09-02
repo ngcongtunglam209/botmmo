@@ -463,9 +463,9 @@ async def auto_resolve_ticket(ticket_type: TicketType, query: str, user_id: int)
     """Auto-resolve ticket dựa trên type"""
 
     if ticket_type == TicketType.EMAIL_NOT_FOUND:
-        return handle_email_not_found()
+        return handle_email_not_found(user_id)
 
     elif ticket_type == TicketType.BILLING_QUESTIONS:
-        return handle_billing_questions(query)
+        return handle_billing_questions(query, user_id)
 
     return None

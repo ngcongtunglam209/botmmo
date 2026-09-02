@@ -117,7 +117,7 @@ HUONGDAN_TEXT_ZH = (
     '<i>更新时间：2026/08/06</i>\n\n'
     '<b>1. 选择商品</b>\n'
     '• 进入<b>购买</b> → 选择分类 → 选择商品。\n'
-    '• 请仔细阅读商品说明、当前价格、库存、有效期与质保条件。\n'
+    '• 请仔细阅读商品说明、当前价格、库存、有效期与保修条件。\n'
     '<b>2. 选择数量并付款</b>\n'
     '• 选择数量 → 核对总金额 → 使用钱包、银行 QR、USDT（NOWPayments）或 Binance Pay（如已开放）付款。\n'
     '• 使用 QR 时：请在超时前转账<b>准确金额</b>并填写<b>准确备注</b>。\n'
@@ -128,7 +128,7 @@ HUONGDAN_TEXT_ZH = (
     '• 人工订单：按提示提交邮箱或所需信息，等待管理员处理。\n'
     '• 可在<b>已购</b> → 选择订单 → <b>重新获取订单信息</b>中再次查看。\n'
     '• 也可使用<b>再次购买该商品</b>，系统始终按当前价格与库存计算。\n\n'
-    '<b>4. 报错与质保</b>\n'
+    '<b>4. 报错与保修</b>\n'
     '• 进入<b>已购</b> → 选择订单 → <b>报告订单问题</b>。\n'
     '• 请提供订单号、问题截图或录屏，以及已尝试的操作。\n'
     '• 在我们核查之前，请勿修改密码、找回邮箱，也不要共享账号。\n\n'
@@ -232,15 +232,15 @@ CHINHSACH_TEXT_ZH = (
     '• 发货时间取决于商品类型：自动或人工。\n'
     '• 买家须在收货后立即检查商品，并妥善保管相关信息。\n'
     '• 若商品或供应商不允许，请勿公开或转售其内容。\n\n'
-    '<b>4. 质保</b>\n'
+    '<b>4. 保修</b>\n'
     '• 仅在商品或订单标明的期限与范围内适用。\n'
     '• 需提供订单号及故障凭证以便核查。\n'
-    '• 因修改密码/找回邮箱、多人共享、未按指南使用、违反平台条款或自行改动商品造成的问题不在质保范围内。\n'
+    '• 因修改密码/找回邮箱、多人共享、未按指南使用、违反平台条款或自行改动商品造成的问题不在保修范围内。\n'
     '\n'
     '<b>5. 取消与退款</b>\n'
     '• 未付款订单可在超时前取消，钱包中冻结的金额按系统状态退回。\n'
     '• 出现系统已扣款但未生成订单、重复发货，或供应商确认取消/部分退款时，可申请退款。\n'
-    '• 已正确发货且已使用的数字商品通常不予退款，除非属于质保范围或已核实存在故障。\n'
+    '• 已正确发货且已使用的数字商品通常不予退款，除非属于保修范围或已核实存在故障。\n'
     '• 部分使用的问题订单按剩余整天数退款；已开始的当天计为已使用。\n'
     '• 低于 200,000 VND 的退款退入机器人钱包；达到 200,000 VND 及以上可在提供正确信息并经管理员确认后申请银行转账。\n'
     '• 申请银行转账会先从机器人钱包冻结相应金额；若被拒绝，款项将退回钱包。\n'
@@ -260,11 +260,11 @@ CHINHSACH_TEXT_ZH = (
 
 
 def get_guide_text(user_id=None) -> str:
-    return {"vi": HUONGDAN_TEXT_VI, "en": HUONGDAN_TEXT_EN, "zh": HUONGDAN_TEXT_ZH}[get_user_lang(user_id)]
+    return pick_locale({"vi": HUONGDAN_TEXT_VI, "en": HUONGDAN_TEXT_EN, "zh": HUONGDAN_TEXT_ZH}, get_user_lang(user_id))
 
 
 def get_policy_text(user_id=None) -> str:
-    return {"vi": CHINHSACH_TEXT_VI, "en": CHINHSACH_TEXT_EN, "zh": CHINHSACH_TEXT_ZH}[get_user_lang(user_id)]
+    return pick_locale({"vi": CHINHSACH_TEXT_VI, "en": CHINHSACH_TEXT_EN, "zh": CHINHSACH_TEXT_ZH}, get_user_lang(user_id))
 
 
 _BUTTON_ACTION_FIELDS = (

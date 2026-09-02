@@ -417,9 +417,7 @@ async def warranty_photo_handler(update: Update, context: ContextTypes.DEFAULT_T
 
         # Notify user
         await update.message.reply_text(
-            f"<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ GỬI YÊU CẦU BẢO HÀNH</b>\n\n"
-            f"Mã yêu cầu: <code>{claim_id}</code>\n"
-            f"Admin sẽ xem xét trong 24h",
+            t("warranty_claim_sent", user_id=update.effective_user.id, claim_id=claim_id),
             parse_mode=ParseMode.HTML,
             reply_markup=create_main_menu(user_id=update.effective_user.id)
         )

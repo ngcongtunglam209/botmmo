@@ -242,7 +242,7 @@ async def error_handler_callback(update: object, context: ContextTypes.DEFAULT_T
             if chat_id:
                 await context.bot.send_message(
                     chat_id=chat_id,
-                    text="<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại sau.",
+                    text=t("sys_unexpected_error", user_id=getattr(update.effective_user, "id", None)),
                 )
         except (TelegramError, ValueError, AttributeError):
             pass  # Không block nếu gửi user thất bại
