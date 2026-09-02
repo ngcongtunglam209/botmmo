@@ -48,6 +48,8 @@ jobs:
           # Khong test nao goi Telegram hay partner API that.
           TELEGRAM_TOKEN: "000000:ci-dummy-telegram-token"
           API_SECRET_KEY: "ci-dummy-api-secret-key"
+          SENDER_APP_PASSWORD: "ci-dummy-app-password"
+          ADMIN_WEB_SESSION_SECRET: "ci-dummy-session-secret"
         run: |
           pytest tests/ -v --tb=short --cov=app/models --cov=app/state --cov=app/services/business_logic --cov-report=term-missing
 
