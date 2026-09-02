@@ -234,7 +234,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 "quantity": qty,
                 "manual_approval": True
             }
-            await context.bot.send_message(user_id, "<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ DUYỆT ĐƠN HÀNG</b>\n\nTuy nhiên, KHO KHÔNG ĐỦ HÀNG. Admin sẽ liên hệ xử lý sau.", parse_mode=ParseMode.HTML)
+            await context.bot.send_message(user_id, t("order_approved_out_of_stock", user_id=user_id), parse_mode=ParseMode.HTML)
             admin_msg = f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>DUYỆT ĐƠN NHƯNG THIẾU HÀNG!</b>\nĐơn: {order_code}\nCần: {qty} | Có: {len(stock)}"
 
         # FIX BUG #12: Save & Cleanup với index update
