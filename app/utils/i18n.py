@@ -130,6 +130,12 @@ STRINGS = {
         "order_manual_done_email": "{success} <b>ĐƠN HÀNG ĐÃ HOÀN THÀNH!</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n{tag} <b>Sản phẩm:</b> {product}\n{globe} <b>Email:</b> <code>{email}</code>\n\n<tg-emoji emoji-id=\"5314638736462966754\">📬</tg-emoji> <b>Vui lòng kiểm tra email của bạn!</b>\n(Nếu không thấy, kiểm tra thư mục Spam/Junk)\n\n{globe} Nếu có vấn đề, liên hệ Admin để được hỗ trợ.",
         "order_manual_cancelled_refund": "{limit} <b>ĐƠN HÀNG ĐÃ BỊ HỦY</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n{tag} <b>Sản phẩm:</b> {product}\n\n{tag} <b>Số tiền đã hoàn:</b> {refund}\n{tag} <b>Số dư mới:</b> {balance}\n\n{globe} Nếu có thắc mắc, vui lòng liên hệ Admin.",
         "refund_not_approved_yet": "❌ Đơn chưa được duyệt hoàn tiền.",
+        "checkout_pending_order_exists": "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Bạn đang có đơn <b>{order_code}</b> chưa hoàn thành!\nVui lòng hoàn tất hoặc hủy đơn cũ trước khi tạo đơn mới.",
+        "checkout_qr_failed_refunded": "❌ Không thể tạo mã QR. Đã hoàn lại {amount} vào ví.\nVui lòng thử lại sau.",
+        "checkout_qr_failed": "❌ Không thể tạo mã QR. Vui lòng thử lại sau.",
+        "checkout_awaiting_email": "<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <b>CHỜ NHẬP EMAIL...</b>",
+        "product_combo_invalid": "Combo không hợp lệ",
+        "product_combo_offer": "<tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> <b>COMBO ƯU ĐÃI</b>\n\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {first}\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {second}\n\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Giá gốc: <s>{full_price}</s>\n<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> Giá combo: <b>{combo_price}</b> (-{percent}%)\n\n<i>Bấm vào từng sản phẩm để mua riêng:</i>",
     },
     "en": {
         "main_menu_title": (
@@ -243,6 +249,12 @@ STRINGS = {
         "order_manual_done_email": "{success} <b>ORDER COMPLETED!</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Order code:</b> <code>{order_code}</code>\n{tag} <b>Product:</b> {product}\n{globe} <b>Email:</b> <code>{email}</code>\n\n<tg-emoji emoji-id=\"5314638736462966754\">📬</tg-emoji> <b>Please check your inbox!</b>\n(If it is not there, check the Spam/Junk folder.)\n\n{globe} If anything looks wrong, contact the admin for help.",
         "order_manual_cancelled_refund": "{limit} <b>ORDER CANCELLED</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Order code:</b> <code>{order_code}</code>\n{tag} <b>Product:</b> {product}\n\n{tag} <b>Refunded:</b> {refund}\n{tag} <b>New balance:</b> {balance}\n\n{globe} If you have any questions, please contact the admin.",
         "refund_not_approved_yet": "❌ This order has not been approved for a refund yet.",
+        "checkout_pending_order_exists": "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> You still have an unfinished order: <b>{order_code}</b>\nPlease complete or cancel it before creating a new one.",
+        "checkout_qr_failed_refunded": "❌ The QR code could not be created. {amount} has been returned to your wallet.\nPlease try again later.",
+        "checkout_qr_failed": "❌ The QR code could not be created. Please try again later.",
+        "checkout_awaiting_email": "<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <b>WAITING FOR YOUR EMAIL...</b>",
+        "product_combo_invalid": "This combo is not valid",
+        "product_combo_offer": "<tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> <b>COMBO DEAL</b>\n\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {first}\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {second}\n\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Regular price: <s>{full_price}</s>\n<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> Combo price: <b>{combo_price}</b> (-{percent}%)\n\n<i>Tap a product to buy it on its own:</i>",
     },
     "zh": {
         "main_menu_title": (
@@ -356,6 +368,12 @@ STRINGS = {
         "order_manual_done_email": "{success} <b>订单已完成！</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>订单号：</b><code>{order_code}</code>\n{tag} <b>商品：</b>{product}\n{globe} <b>邮箱：</b><code>{email}</code>\n\n<tg-emoji emoji-id=\"5314638736462966754\">📬</tg-emoji> <b>请查收您的邮件！</b>\n（如未收到，请检查垃圾邮件文件夹。）\n\n{globe} 如有问题，请联系管理员。",
         "order_manual_cancelled_refund": "{limit} <b>订单已取消</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>订单号：</b><code>{order_code}</code>\n{tag} <b>商品：</b>{product}\n\n{tag} <b>已退金额：</b>{refund}\n{tag} <b>新余额：</b>{balance}\n\n{globe} 如有疑问，请联系管理员。",
         "refund_not_approved_yet": "❌ 该订单尚未通过退款审核。",
+        "checkout_pending_order_exists": "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> 您还有一笔未完成的订单：<b>{order_code}</b>\n请先完成或取消该订单，再重新下单。",
+        "checkout_qr_failed_refunded": "❌ 无法生成二维码，{amount} 已退回您的钱包。\n请稍后重试。",
+        "checkout_qr_failed": "❌ 无法生成二维码，请稍后重试。",
+        "checkout_awaiting_email": "<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <b>等待输入邮箱……</b>",
+        "product_combo_invalid": "该套餐无效",
+        "product_combo_offer": "<tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> <b>套餐优惠</b>\n\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {first}\n<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {second}\n\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> 原价：<s>{full_price}</s>\n<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> 套餐价：<b>{combo_price}</b>（-{percent}%）\n\n<i>点击单个商品可单独购买：</i>",
     },
 }
 

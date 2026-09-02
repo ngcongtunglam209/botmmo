@@ -698,17 +698,19 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             return True
         combo_prods = [products.get(pid) for pid in combo.get('products', []) if pid in products]
         if len(combo_prods) != 2:
-            await safe_answer(query, "Combo không hợp lệ", show_alert=True)
+            await safe_answer(query, t("product_combo_invalid", user_id=query.from_user.id), show_alert=True)
             return True
         total = sum(p['price'] for p in combo_prods)
         combo_price = int(total * (100 - combo['discount_percent']) / 100)
-        msg = (
-            f"<tg-emoji emoji-id=\"5226711870492126219\">🎯</tg-emoji> <b>COMBO ƯU ĐÃI</b>\n\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {html.escape(combo_prods[0]['name'])}\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {html.escape(combo_prods[1]['name'])}\n\n"
-            f'<tg-emoji emoji-id="5278467510604160626">💰</tg-emoji> Giá gốc: <s>{total:,}đ</s>\n'
-            f"<tg-emoji emoji-id=\"5863724849851011383\">💵</tg-emoji> Giá combo: <b>{combo_price:,}đ</b> (-{combo['discount_percent']}%)\n\n"
-            f"<i>Bấm vào từng sản phẩm để mua riêng:</i>"
+        buyer_id = query.from_user.id
+        msg = t(
+            "product_combo_offer",
+            user_id=buyer_id,
+            first=html.escape(combo_prods[0]['name']),
+            second=html.escape(combo_prods[1]['name']),
+            full_price=format_money(total, user_id=buyer_id),
+            combo_price=format_money(combo_price, user_id=buyer_id),
+            percent=combo['discount_percent'],
         )
         btns = []
         pids = combo['products'] # Assuming combo['products'] is a list of product IDs
@@ -1076,7 +1078,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
             # Edit message và lưu message_id để xóa sau
             waiting_msg = await query.edit_message_text(
-                "<tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <b>CHỜ NHẬP EMAIL...</b>",
+                t("checkout_awaiting_email", user_id=query.from_user.id),
                 reply_markup=None
             )
             context.user_data['waiting_message_id'] = waiting_msg.message_id

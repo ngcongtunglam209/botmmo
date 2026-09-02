@@ -141,8 +141,7 @@ async def generate_product_payment_qr(
     if pending_code:
         await context.bot.send_message(
             user.id,
-            f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Bạn đang có đơn <b>{pending_code}</b> chưa hoàn thành!\n"
-            "Vui lòng hoàn tất hoặc hủy đơn cũ trước khi tạo đơn mới.",
+            t("checkout_pending_order_exists", user_id=user.id, order_code=pending_code),
             parse_mode='HTML',
         )
         if balance_used > 0:
@@ -265,10 +264,14 @@ async def generate_product_payment_qr(
             db_update_balance(user.id, current_bal + balance_used, reason=f"Refund: QR generation failed {prod_id}")
             await context.bot.send_message(
                 user.id,
-                f"❌ Không thể tạo mã QR. Đã hoàn lại {balance_used:,}đ vào ví.\nVui lòng thử lại sau.",
+                t(
+                    "checkout_qr_failed_refunded",
+                    user_id=user.id,
+                    amount=format_money(balance_used, user_id=user.id),
+                ),
             )
         else:
-            await context.bot.send_message(user.id, "❌ Không thể tạo mã QR. Vui lòng thử lại sau.")
+            await context.bot.send_message(user.id, t("checkout_qr_failed", user_id=user.id))
 
 
         return False
@@ -310,7 +313,7 @@ async def generate_product_payment_nowpayments(
     if pending_code:
         await context.bot.send_message(
             user.id,
-            lt(user.id, '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> Bạn đang có đơn <b>{code}</b> chưa hoàn thành!\nVui lòng hoàn tất hoặc hủy đơn cũ trước khi tạo đơn mới.', '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> You have an unfinished order <b>{code}</b>!\nComplete or cancel it before creating a new order.', '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> 您有一个未完成订单 <b>{code}</b>！\n请先完成或取消该订单。', code=pending_code),
+            t("checkout_pending_order_exists", user_id=user.id, order_code=pending_code),
             parse_mode='HTML',
         )
         if balance_used > 0:
@@ -481,7 +484,7 @@ async def generate_product_payment_binance_pay(
     if pending_code:
         await context.bot.send_message(
             user.id,
-            lt(user.id, '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> Bạn đang có đơn <b>{code}</b> chưa hoàn thành!\nVui lòng hoàn tất hoặc hủy đơn cũ trước khi tạo đơn mới.', '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> You have an unfinished order <b>{code}</b>!\nComplete or cancel it before creating a new order.', '<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> 您有一个未完成订单 <b>{code}</b>！\n请先完成或取消该订单。', code=pending_code),
+            t("checkout_pending_order_exists", user_id=user.id, order_code=pending_code),
             parse_mode='HTML',
         )
         if balance_used > 0:
