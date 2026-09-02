@@ -1,0 +1,1532 @@
+[
+  {
+    "file": "app/core/lifecycle.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:text",
+    "evidence": "app/core/lifecycle.py:245 — <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại sau.",
+    "track": "2b"
+  },
+  {
+    "file": "app/core/runtime_state.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/core/runtime_state.py:26 — f\"{E_ERROR} <b>Bot đang bảo trì</b>\\n\"                 f\"Vui lòng quay lại sau ít phút.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/core/runtime_state.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/core/runtime_state.py:50 — f\"<tg-emoji emoji-id=\\\"5213349767672769194\\\">⏳</tg-emoji> Vui lòng chờ {remaining}s trước khi dùng lại lệnh này.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_api.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_html:pos0",
+    "evidence": "app/handlers/admin_api.py:258 — <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>BẠN CHƯA CÓ TÀI KHOẢN ĐẠI LÝ (API)</b>\n\nVui lòng đăng ký theo quy trình:\n1. Gửi <code>/dkyap",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_api.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_html:pos0",
+    "evidence": "app/handlers/admin_api.py:269 — <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>HƯỚNG DẪN NẠP VÍ CHUNG</b>\n\nCú pháp: <code>/napapi [số_tiền]</code>\nVí dụ: <code>/napapi 500",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_api.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/handlers/admin_api.py:280 — <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Số tiền nạp tối thiểu là 10,000đ.",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_api.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/handlers/admin_api.py:283 — ❌ Số tiền không hợp lệ. Vui lòng nhập số.",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_api.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:caption:fstring",
+    "evidence": "app/handlers/admin_api.py:294 — f\"<tg-emoji emoji-id=\\\"6271362510901747485\\\">🤖</tg-emoji> <b>YÊU CẦU NẠP VÍ CHUNG</b>\\n\\n\"         f\"<tg-emoji emoji-id=\\\"5350778980158956492\\\">👤</tg-",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_api.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/admin_api.py:400 — f\"<tg-emoji emoji-id=\\\"6269163801178804220\\\">✅</tg-emoji> <b>THÔNG BÁO SỐ DƯ</b>\\n\\n\"                 f\"Admin đã cộng <b>+{amount:,} VNĐ</b> vào ví củ",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_api.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/admin_api.py:461 — f\"<tg-emoji emoji-id=\\\"5447644880824181073\\\">⚠️</tg-emoji> <b>THÔNG BÁO TRỪ TIỀN</b>\\n\\n\"                 f\"Admin đã trừ <b>-{amount:,} VNĐ</b> từ ví ",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_menu.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/handlers/admin_menu.py:420 — f\"<tg-emoji emoji-id=\\\"6269163801178804220\\\">✅</tg-emoji> <b>ĐÃ GỬI YÊU CẦU BẢO HÀNH</b>\\n\\n\"             f\"Mã yêu cầu: <code>{claim_id}</code>\\n\"    ",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_orders.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1",
+    "evidence": "app/handlers/admin_orders.py:237 — <tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> <b>ĐÃ DUYỆT ĐƠN HÀNG</b>\n\nTuy nhiên, KHO KHÔNG ĐỦ HÀNG. Admin sẽ liên hệ xử lý sau.",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_user_commands.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:text:fstring",
+    "evidence": "app/handlers/admin_user_commands.py:624 — f\"<b>{E_TAG} SẢN PHẨM ĐANG MỞ BÁN</b>\\n\\n\"         f\"<b>{name}</b>\\n\"         f\"{E_TAG} Giá: <b>{price:,} VNĐ</b>\\n\"         f\"{E_TAG} Thời hạn: <b>{d",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:edit_message_caption:caption:fstring",
+    "evidence": "app/handlers/callback_router.py:276 — f\"{API_PREM_WARN} <b>QR/API KEY CŨ ĐÃ HẾT HIỆU LỰC</b>\\n\"                     \"━━━━━━━━━━━━━━━━━━\\n\"                     f\"{API_PREM_SHIELD} <b>Key cũ",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:text:fstring",
+    "evidence": "app/handlers/callback_router.py:288 — f\"{API_PREM_LOCK} <b>ĐÃ ĐỔI API KEY</b>\\n\"         \"━━━━━━━━━━━━━━━━━━\\n\"         f\"{API_PREM_USER} <b>Partner:</b> {html.escape(str(partner_name))}\\n",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=InlineKeyboardButton:pos0",
+    "evidence": "app/handlers/callback_router.py:409 — <tg-emoji emoji-id=\"6129860303619363484\">📩</tg-emoji> Mở chat bot",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:msg:fstring",
+    "evidence": "app/handlers/callback_router.py:582 — f'<tg-emoji emoji-id=\"6129860303619363484\">💬</tg-emoji> <b>{t(\"live_chat_title\", user_id=user_id)}</b>\\n\\n'",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:msg:fstring",
+    "evidence": "app/handlers/callback_router.py:611 — f'<tg-emoji emoji-id=\"6129860303619363484\">💬</tg-emoji> <b>{t(\"live_chat_title\", user_id=user_id)}</b>\\n\\n'",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:text",
+    "evidence": "app/handlers/callback_router.py:629 — <tg-emoji emoji-id=\"5350481781306958339\">📘</tg-emoji> <b>HƯỚNG DẪN ĐĂNG KÝ API PARTNER</b>\n━━━━━━━━━━━━━━━━━━\n1. Nhấn nút <b>Gửi yêu cầu đăng ký</b> b",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:text:fstring",
+    "evidence": "app/handlers/callback_router.py:764 — \"\\U0001F511 <b>ĐÃ ĐỔI API KEY</b>\\n\"                 \"━━━━━━━━━━━━━━━━━━\\n\"                 f\"\\U0001F464 <b>Partner:</b> {html.escape(str(partner_name",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:text",
+    "evidence": "app/handlers/callback_router.py:841 — <tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>HƯỚNG DẪN NẠP VÍ CHUNG</b>\n━━━━━━━━━━━━━━━━━━\n1. Gõ lệnh: <code>/napapi [số_tiền]</code>\n2. B",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:text:fstring",
+    "evidence": "app/handlers/callback_router.py:866 — \"<tg-emoji emoji-id=\\\"5215392879320505675\\\">🛠️</tg-emoji> <b>DANH SÁCH ENDPOINT PARTNER</b>\\n\"                 \"━━━━━━━━━━━━━━━━━━\\n\"                 ",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_document:caption:fstring",
+    "evidence": "app/handlers/callback_router.py:907 — \"<tg-emoji emoji-id=\\\"5350481781306958339\\\">📚</tg-emoji> \"                                 \"<b>Tài liệu API Partner chi tiết</b>\\n\"                   ",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:text:fstring",
+    "evidence": "app/handlers/callback_router.py:925 — \"<tg-emoji emoji-id=\\\"5350481781306958339\\\">📜</tg-emoji> <b>TÀI LIỆU API DÀNH CHO THÀNH VIÊN</b>\\n\"                 \"━━━━━━━━━━━━━━━━━━\\n\"            ",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/flashsale_wheel.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/handlers/flashsale_wheel.py:509 — f'{caption}\\n\\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <i>{note}</i>'",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/games_waitlist.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/games_waitlist.py:34 — f\"{E_LOADING} <b>CHƯA ĐẾN LƯỢT!</b>\\n\\n\"             f\"Bạn cần chờ <b>{hours}h {mins}m</b> nữa mới được chơi tiếp!\\n\\n\"             f\"{E_TIP} <i>Mỗi n",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/games_waitlist.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/games_waitlist.py:49 — \"<tg-emoji emoji-id=\\\"5226711870492126219\\\">🎲</tg-emoji> <b>GAME XÚC XẮC MAY MẮN</b> <tg-emoji emoji-id=\\\"5226711870492126219\\\">🎲</tg-emoji>\\n\\n\"     ",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/games_waitlist.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/games_waitlist.py:101 — f\"<tg-emoji emoji-id=\\\"5226711870492126219\\\">🎲</tg-emoji> <b>KẾT QUẢ: {result_str}</b>\\n\"                 f\"{E_SUCCESS} {E_SUCCESS} <b>CHIẾN THẮNG!!!<",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/games_waitlist.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/games_waitlist.py:138 — f\"<tg-emoji emoji-id=\\\"5226711870492126219\\\">🎲</tg-emoji> <b>KẾT QUẢ: {result_str}</b>\\n\"             f\"{E_SUCCESS} {E_SUCCESS} <b>CHIẾN THẮNG!!!</b> ",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/games_waitlist.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/games_waitlist.py:153 — f\"<tg-emoji emoji-id=\\\"5226711870492126219\\\">🎲</tg-emoji> <b>KẾT QUẢ: {result_str}</b>\\n\\n\"             f\"<tg-emoji emoji-id=\\\"5386856460632201117\\\">😢",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/games_waitlist.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:message:fstring",
+    "evidence": "app/handlers/games_waitlist.py:195 — f\"<tg-emoji emoji-id=\\\"5447644880824181073\\\">🔔</tg-emoji> <b>SẢN PHẨM BẠN CHỜ ĐÃ CÓ HÀNG!</b>\\n\\n\"         f\"<tg-emoji emoji-id=\\\"5854908544712707500\\",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/payment_generation.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/payment_generation.py:144 — f\"<tg-emoji emoji-id=\\\"5447644880824181073\\\">⚠️</tg-emoji> Bạn đang có đơn <b>{pending_code}</b> chưa hoàn thành!\\n\"             \"Vui lòng hoàn tất ho",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/payment_generation.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:caption:fstring",
+    "evidence": "app/handlers/payment_generation.py:207 — f'<tg-emoji emoji-id=\"5240228673738527951\">🏷</tg-emoji> <b>{qr_text[\"invoice\"]}</b>\\n'         f\"━━━━━━━━━━━━━━━━━━\\n<blockquote>\"         f'<tg-emoji",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/payment_generation.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/payment_generation.py:268 — f\"❌ Không thể tạo mã QR. Đã hoàn lại {balance_used:,}đ vào ví.\\nVui lòng thử lại sau.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/payment_generation.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1",
+    "evidence": "app/handlers/payment_generation.py:271 — ❌ Không thể tạo mã QR. Vui lòng thử lại sau.",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/handlers/priority_and_text.py:148 — <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Có lỗi xảy ra khi lưu đơn hàng. Vui lòng thử lại hoặc liên hệ Admin.",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:edit_message_text:text:fstring",
+    "evidence": "app/handlers/priority_and_text.py:454 — f\"{API_PREM_STOP} <b>ĐÃ HỦY ĐỔI API KEY</b>\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/handlers/priority_and_text.py:464 — f\"{API_PREM_STOP} Đã hủy đổi API key.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/handlers/priority_and_text.py:472 — f\"{API_PREM_WARN} Để xác nhận đổi API key, hãy nhập đúng <code>sure</code>.\\n\"                 \"Nếu đổi ý, bạn có thể gõ <code>/cancel</code>.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:edit_message_text:text:fstring",
+    "evidence": "app/handlers/priority_and_text.py:486 — f\"{API_PREM_OK} <b>ĐÃ XÁC NHẬN ĐỔI API KEY</b>\\n\\nHệ thống đang tạo key mới...\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/handlers/priority_and_text.py:496 — f\"{API_PREM_WARN} Không tìm thấy API key đang hoạt động. Vui lòng thử lại từ menu API.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/handlers/priority_and_text.py:502 — f\"{API_PREM_WARN} Yêu cầu xác nhận đã hết hiệu lực. Hãy bấm lại nút đổi API key nếu bạn vẫn muốn tiếp tục.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/handlers/priority_and_text.py:524 — ❌ Email không hợp lệ!\n\n<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Vui lòng nhập email đúng định dạng.\n<i>Ví dụ: example@gmail.com</i>",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/handlers/priority_and_text.py:534 — ❌ Lỗi: Không tìm thấy đơn hàng. Vui lòng thử lại.",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/handlers/priority_and_text.py:573 — f\"{E_SUCCESS} <b>ĐÃ NHẬN EMAIL!</b>\\n\\n\"             f\"{E_GLOBE} <b>Email:</b> <code>{email_input}</code>\\n\"             f\"{E_TAG} <b>Sản phẩm:</b> {p",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/handlers/priority_and_text.py:640 — <tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Email không hợp lệ. Vui lòng nhập lại email chính xác.",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/handlers/priority_and_text.py:650 — f\"{E_SUCCESS} <b>ĐÃ NHẬN EMAIL!</b>\\n\\n\"             f\"{E_GLOBE} <b>Email:</b> <code>{email_input}</code>\\n\"             f\"{E_TAG} <b>Sản phẩm:</b> {o",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/handlers/priority_and_text.py:912 — <tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng này đã được hoàn tiền nên không thể báo lỗi nữa.",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:text",
+    "evidence": "app/handlers/priority_and_text.py:1240 — <tg-emoji emoji-id=\"5314638736462966754\">📬</tg-emoji> <b>Bạn có phản hồi từ Admin:</b>",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/product_catalog.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/handlers/product_catalog.py:572 — ❌ Bạn không có quyền truy cập lệnh này.",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/store_callback.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:msg:fstring",
+    "evidence": "app/handlers/store_callback.py:705 — f\"<tg-emoji emoji-id=\\\"5226711870492126219\\\">🎯</tg-emoji> <b>COMBO ƯU ĐÃI</b>\\n\\n\"             f\"<tg-emoji emoji-id=\\\"5854908544712707500\\\">📦</tg-emoj",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/store_callback.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:edit_message_text:pos0",
+    "evidence": "app/handlers/store_callback.py:1079 — <tg-emoji emoji-id=\"5213349767672769194\">⏳</tg-emoji> <b>CHỜ NHẬP EMAIL...</b>",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/user_entry.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/user_entry.py:372 — f\"{E_SUCCESS} <b>BẠN VỪA GIỚI THIỆU THÀNH CÔNG!</b>\\n\\n\"                                 f\"<tg-emoji emoji-id=\\\"5350778980158956492\\\">👤</tg-emoji> <b>",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/user_entry.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/handlers/user_entry.py:614 — f\"<tg-emoji emoji-id=\\\"5350778980158956492\\\">👨</tg-emoji>‍<tg-emoji emoji-id=\\\"5854908544712707500\\\">💼</tg-emoji> <b>Admin:</b>\\n{user_msg}\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/integrations/payments_core.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:message:fstring",
+    "evidence": "app/integrations/payments_core.py:82 — f\"{E_LIMIT} Bạn đã bị cấm sử dụng bot này. Vui lòng liên hệ Admin.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/admin_background.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:text:fstring",
+    "evidence": "app/jobs/admin_background.py:102 — f\"<tg-emoji emoji-id=\\\"5447644880824181073\\\">🔔</tg-emoji> <b>THÔNG BÁO TỪ BOT</b>\\n\\n\"                             f\"Bạn ơi, mình thấy bạn vừa mua <b>",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/admin_background.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/jobs/admin_background.py:341 — f\"<tg-emoji emoji-id=\\\"5213349767672769194\\\">⏰</tg-emoji> <b>NHẮC NHỞ THANH TOÁN</b>\\n\\n\"                     f\"<tg-emoji emoji-id=\\\"53348905732811142",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/admin_background.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:msg:fstring",
+    "evidence": "app/jobs/admin_background.py:376 — f\"⭐️ <b>HẠNG THÀNH VIÊN CỦA BẠN</b>\\n\"         f\"{'━' * 28}\\n\\n\"         f\"⭐️ Rank: <b>{rank['name']}</b>\\n\"         f\"<tg-emoji emoji-id=\\\"5854908544",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/admin_background.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=augassign:msg",
+    "evidence": "app/jobs/admin_background.py:410 — \n<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> <b>Bạn đã đạt hạng cao nhất!</b> <tg-emoji emoji-id=\"6124902618574625426\">👑</tg-emoji>\n",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/payment_monitor.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:caption:fstring",
+    "evidence": "app/jobs/payment_monitor.py:197 — f\"<tg-emoji emoji-id=\\\"5447644880824181073\\\">⚠️</tg-emoji> <b>ĐƠN HÀNG ĐÃ HẾT HẠN</b> <tg-emoji emoji-id=\\\"5447644880824181073\\\">⚠️</tg-emoji>\\n\\n\"   ",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/payment_monitor.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:caption:fstring",
+    "evidence": "app/jobs/payment_monitor.py:204 — f\"<tg-emoji emoji-id=\\\"5447644880824181073\\\">⚠️</tg-emoji> <b>ĐƠN HÀNG ĐÃ HẾT HẠN</b> <tg-emoji emoji-id=\\\"5447644880824181073\\\">⚠️</tg-emoji>\\n\\n\"   ",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/payment_monitor.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/jobs/payment_monitor.py:613 — f\"{E_ERROR} <b>XIN LỖI - SẢN PHẨM KHÔNG KHẢ DỤNG</b>\\n\\n\"                                         f\"Sản phẩm bạn đặt (Mã: <code>{prod_id}</code>) hiện",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/payment_monitor.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/jobs/payment_monitor.py:654 — f\"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG!</b>\\n\\n\"                                     f\"{E_TAG} <b>Sản phẩm:</b> {p['name']}\\n\"                        ",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/payment_monitor.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/jobs/payment_monitor.py:747 — f\"❌ <b>RẤT TIẾC!</b>\\n\\n\"                                         f\"Sản phẩm <b>{p['name']}</b> vừa được mua hết bởi khách khác.\\n\\n\"                 ",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/payment_monitor.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/jobs/payment_monitor.py:776 — f\"{E_SUCCESS} <b>THANH TOÁN THÀNH CÔNG</b>\\n\\n\"                                     f\"{E_TAG} <b>Sản phẩm:</b> {p['name']}\\n\"                         ",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/payment_monitor.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:msg:fstring",
+    "evidence": "app/jobs/payment_monitor.py:1192 — f\"⭐️ <b>CHÚC MỪNG TOP 1 NGƯỜI MUA HÀNG {period_name} QUA!</b> ⭐️\\n\"         f\"<i>({time_range_str})</i>\\n\\n\"         f\"Xin chào <b>{full_name}</b>,\\n\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/payment_monitor.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=augassign:msg",
+    "evidence": "app/jobs/payment_monitor.py:1204 — \n<i>(Hạn sử dụng: 30 ngày. Áp dụng cho đơn hàng tiếp theo)</i>",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_orders.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/services/admin_orders.py:226 — f\"<tg-emoji emoji-id=\\\"6269163801178804220\\\">✅</tg-emoji> <b>ĐƠN HÀNG ĐÃ HOÀN THÀNH!</b>\\n\\n\"                     f\"<tg-emoji emoji-id=\\\"5854908544712",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_orders.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/services/admin_orders.py:271 — f\"❌ <b>ĐƠN HÀNG ĐÃ BỊ HỦY</b>\\n\\n\"                     f\"<tg-emoji emoji-id=\\\"5854908544712707500\\\">📦</tg-emoji> <b>Sản phẩm:</b> {found_order.get('pr",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_orders.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:text:fstring",
+    "evidence": "app/services/admin_orders.py:404 — f\"<tg-emoji emoji-id=\\\"5462956611033117422\\\">♻️</tg-emoji> <b>ĐƠN HÀNG ĐÃ ĐƯỢC HOÀN TIỀN</b>\\n\\n\"                     f\"<tg-emoji emoji-id=\\\"626005924",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_refund.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:text:fstring",
+    "evidence": "app/services/admin_refund.py:181 — f\"💸 \\u003cb\\u003eĐƠN HÀNG ĐƯỢC HOÀN TIỀN\\u003c/b\\u003e\\n\\n\"                         f\"Mã đơn: \\u003ccode\\u003e{order_code}\\u003c/code\\u003e\\n\"        ",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_refund.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/services/admin_refund.py:276 — \"🏦 <b>NHẬP THÔNG TIN NHẬN TIỀN</b>\\n\\n\"         f\"Mã đơn: <code>{order_code}</code>\\n\"         f\"Số tiền: <b>{refund_amount:,} VNĐ</b>\\n\\n\"         \"N",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_refund.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/services/admin_refund.py:297 — Đã hủy yêu cầu hoàn về ngân hàng.",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_refund.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/services/admin_refund.py:303 — f\"❌ {html_lib.escape(validation_error)}\\n\"             \"Vui lòng nhập: <code>Tên ngân hàng - Số tài khoản - Tên chủ tài khoản</code>\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_refund.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/services/admin_refund.py:312 — ❌ Không tìm thấy đơn hoàn tiền hợp lệ.",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_refund.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/services/admin_refund.py:320 — f\"❌ Khoản hoàn dưới {BANK_REFUND_MIN_AMOUNT:,}đ chỉ nhận qua Ví Bot.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_refund.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/services/admin_refund.py:331 — ⚠️ Yêu cầu hoàn ngân hàng đã tồn tại.",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_refund.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0",
+    "evidence": "app/services/admin_refund.py:338 — ❌ Số dư Ví Bot không còn đủ khoản tiền hoàn để chuyển sang ngân hàng. Vui lòng liên hệ Admin.",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_refund.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/services/admin_refund.py:366 — \"✅ <b>ĐÃ GỬI YÊU CẦU HOÀN NGÂN HÀNG</b>\\n\\n\"         f\"Mã yêu cầu: <code>{request_id}</code>\\n\"         f\"Mã đơn: <code>{order_code}</code>\\n\"        ",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_support.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/services/admin_support.py:25 — f\"\\u003ctg-emoji emoji-id=\\\"6269163801178804220\\\"\\u003e✅\\u003c/tg-emoji\\u003e Yêu cầu bảo hành {claim_id} của bạn đã được DUYỆT! Admin sẽ liên hệ sớm.",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_support.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/services/admin_support.py:39 — f\"❌ Yêu cầu bảo hành {claim_id} của bạn đã bị TỪ CHỐI.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_support.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/services/admin_support.py:245 — f\"\\u003ctg-emoji emoji-id=\\\"5424857974784925603\\\"\\u003e⛔\\u003c/tg-emoji\\u003e \\u003cb\\u003eTHÔNG BÁO TỪ ADMIN\\u003c/b\\u003e\\n\\n\"             f\"Yêu cầu",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_support.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/services/admin_support.py:300 — f\"\\u003ctg-emoji emoji-id=\\\"6269163801178804220\\\"\\u003e✅\\u003c/tg-emoji\\u003e \\u003cb\\u003eTHÔNG BÁO BẢO HÀNH\\u003c/b\\u003e\\n\\n\"             f\"Báo cáo",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_support.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/services/admin_support.py:430 — f\"\\u003ctg-emoji emoji-id=\\\"5447644880824181073\\\"\\u003e🔔\\u003c/tg-emoji\\u003e \\u003cb\\u003eBẢO HÀNH ĐƠN HÀNG {order_code}\\u003c/b\\u003e\\n\\n\"          ",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_support.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:msg",
+    "evidence": "app/services/admin_support.py:462 — <tg-emoji emoji-id=\"6129860303619363484\">💬</tg-emoji> <b>LIVE CHAT VỚI ADMIN</b>\n\n",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_support.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=augassign:msg",
+    "evidence": "app/services/admin_support.py:470 — <i>Chưa có tin nhắn. Hãy gửi câu hỏi của bạn!</i>\n\n",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_support.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=augassign:msg",
+    "evidence": "app/services/admin_support.py:471 — <tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> Gửi tin nhắn để chat với Admin...",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_support.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=InlineKeyboardButton:pos0",
+    "evidence": "app/services/admin_support.py:472 — ❌ Đóng chat",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_withdrawals.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/services/admin_withdrawals.py:49 — f\"{E_SUCCESS} <b>YÊU CẦU RÚT TIỀN ĐÃ ĐƯỢC DUYỆT!</b>\\n\\n\"                 f\"{E_TAG} Số tiền: {req['amount']:,} VNĐ\\n\"                 f\"<tg-emoji emoj",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_withdrawals.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/services/admin_withdrawals.py:91 — f\"{E_LIMIT} <b>YÊU CẦU RÚT TIỀN BỊ TỪ CHỐI</b>\\n\\n\"                 f\"{E_TAG} Số tiền: {req['amount']:,} VNĐ\\n\"                 f\"Tiền đã được trả lại",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_withdrawals.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:msg:fstring",
+    "evidence": "app/services/admin_withdrawals.py:148 — f\"<tg-emoji emoji-id=\\\"5449800250032143374\\\">🎉</tg-emoji> <b>ĐĂNG KÝ API THÀNH CÔNG!</b>\\n\\n\"                 f\"🔐 <b>API Key của bạn:</b> <code>{new_k",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_withdrawals.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1",
+    "evidence": "app/services/admin_withdrawals.py:171 — ❌ Yêu cầu đăng ký API của bạn đã bị từ chối.",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/games_withdrawals_db.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:reply_text:pos0:fstring",
+    "evidence": "app/services/games_withdrawals_db.py:301 — f\"{E_ERROR} <b>CẢNH BÁO:</b> Bạn đã sửa tin nhắn! Kết quả này sẽ KHÔNG được tính.\"",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/notifications_async.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:message:fstring",
+    "evidence": "app/services/notifications_async.py:286 — f\"{E_ERROR} <b>THÔNG BÁO HẾT HÀNG</b>\\n\\n\"         f\"{E_TAG} Sản phẩm vừa hết hàng:\\n\"         f\"<b>{html.escape(product_name)}</b>\\n\\n\"         f\"{E_",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/notifications_async.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:text:fstring",
+    "evidence": "app/services/notifications_async.py:580 — f\"<tg-emoji emoji-id=\\\"5447644880824181073\\\">⚠️</tg-emoji> <b>CẢNH BÁO SỐ DƯ API THẤP</b>\\n\\n\"         f\"Partner: <b>{partner_name}</b>\\n\"         f\"S",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/notifications_async.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:message:fstring",
+    "evidence": "app/services/notifications_async.py:823 — f\"{E_SUCCESS} <b>ĐÃ CÓ HÀNG TRỞ LẠI!</b>\\n\\n\"         f\"{E_TAG} <b>Sản phẩm:</b> {html.escape(product_name)}\\n\"         f\"{E_STAT} <b>Số lượng:</b> {s",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/referrals_stats.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=call:send_message:pos1:fstring",
+    "evidence": "app/services/referrals_stats.py:73 — f\"{E_TAG} <b>BẠN VỪA NHẬN HOA HỒNG!</b>\\n\\n\"                 f\"{E_TAG} <b>Số tiền:</b> +{commission:,} VNĐ\\n\"                 f\"{E_USER} <b>Từ:</b> Ng",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/support_automation.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:message:fstring",
+    "evidence": "app/services/support_automation.py:24 — f\"<tg-emoji emoji-id=\\\"6271362510901747485\\\">🤖</tg-emoji> <b>THÔNG TIN GIÁ CẢ</b>\\n\\n\"             f\"{E_TAG} Mỗi sản phẩm có giá riêng, xem trực tiếp ",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/support_automation.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:message:fstring",
+    "evidence": "app/services/support_automation.py:34 — f\"<tg-emoji emoji-id=\\\"6271362510901747485\\\">🤖</tg-emoji> <b>CHÍNH SÁCH HOÀN TIỀN</b>\\n\\n\"             f\"{E_SUCCESS} <b>Điều kiện hoàn tiền:</b>\\n\"   ",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/support_automation.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:message:fstring",
+    "evidence": "app/services/support_automation.py:50 — f\"<tg-emoji emoji-id=\\\"6271362510901747485\\\">🤖</tg-emoji> <b>HƯỚNG DẪN THANH TOÁN</b>\\n\\n\"             f\"{E_TAG} <b>Phương thức hiện tại:</b>\\n\"      ",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/support_automation.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "critical",
+    "type": "hardcoded_string_customer_facing",
+    "detail": "Chuoi tieng Viet hardcode gui truc tiep toi khach hang, khong qua t()/lt(). Khach dung en/zh nhan tieng Viet. kind=assign:message",
+    "evidence": "app/services/support_automation.py:66 — <tg-emoji emoji-id=\"6271362510901747485\">🤖</tg-emoji> <b>HỖ TRỢ BILLING TỔNG QUÁT</b>\n\n<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>Giá:</",
+    "track": "2b"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "lt() function contract",
+    "locale": "all",
+    "severity": "high",
+    "type": "architecture",
+    "detail": "lt(user_id, vi, en, zh, **kwargs) resolves via direct dict indexing `{\"vi\": vi, \"en\": en, \"zh\": zh}[get_user_lang(user_id)]` with no .get()/fallback. It is only crash-safe today because normalize_lang() is hard-pinned to always return one of vi/en/zh. Adding a 4th supported language via SUPPORTED_LANGS/_LANG_ALIASES without ALSO updating every lt() call site (333 occurrences across 30 files) and every similar raw dict-literal ({'vi':..,'en':..,'zh':..}[get_user_lang(...)]) in store_callback.py, payment_generation.py, priority_and_text.py, store_menu.py, ui_and_email.py would cause an immediate KeyError/500 for any user whose language resolves to the new code.",
+    "evidence": "app/utils/i18n.py:324-326: `def lt(user_id, vi: str, en: str, zh: str, **kwargs) -> str:` / `text = {\"vi\": vi, \"en\": en, \"zh\": zh}[get_user_lang(user_id)]`",
+    "track": "4"
+  },
+  {
+    "file": "tests/test_i18n.py, tests/test_rank_and_balance_i18n.py, tests/test_delivery_txt_i18n.py",
+    "key": "test coverage gap for lt()-based strings",
+    "locale": "all",
+    "severity": "high",
+    "type": "test_gap",
+    "detail": "Key-parity enforcement (test_all_languages_have_the_same_translation_keys) only covers the STRINGS dict (56 keys). The other translation mechanism used throughout the codebase -- lt(user_id, vi, en, zh) with ~333 call sites across 30 files, plus ~10 ad-hoc per-locale dict literals in 6 files -- has no automated check that all three language arguments are present/non-placeholder/distinct. A new lt() call added with a missing or copy-pasted-wrong-language string would not fail any existing test.",
+    "evidence": "tests/test_i18n.py:32-35 `def test_all_languages_have_the_same_translation_keys(): expected = set(i18n.STRINGS[i18n.DEFAULT_LANG]); for lang in i18n.SUPPORTED_LANGS: assert set(i18n.STRINGS[lang]) == expected` -- scope is STRINGS only, confirmed by zero references to `lt(` anywhere in the three test files.",
+    "track": "4"
+  },
+  {
+    "file": "app/api/helpers.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "2 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/api/helpers.py — 2 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/core/lifecycle.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "3 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/core/lifecycle.py — 3 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_api.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "32 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/admin_api.py — 32 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_catalog_commands.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "19 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/admin_catalog_commands.py — 19 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_menu.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "12 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/admin_menu.py — 12 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_ops.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "50 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/admin_ops.py — 50 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_orders.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "25 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/admin_orders.py — 25 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_sales.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "13 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/admin_sales.py — 13 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/admin_user_commands.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "28 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/admin_user_commands.py — 28 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/callback_router.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "1 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/callback_router.py — 1 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/flashsale_wheel.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "24 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/flashsale_wheel.py — 24 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/games_waitlist.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "1 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/games_waitlist.py — 1 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/giveaway.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "18 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/giveaway.py — 18 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "13 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/priority_and_text.py — 13 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/product_catalog.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "55 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/product_catalog.py — 55 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/public_commands.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "5 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/public_commands.py — 5 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/stock_management.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "12 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/stock_management.py — 12 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/store_callback.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "1 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/store_callback.py — 1 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/handlers/store_callback.py",
+    "key": "_checkout_labels.use_combo",
+    "locale": "en, zh",
+    "severity": "medium",
+    "type": "wrong_language",
+    "detail": "The Vietnamese currency symbol 'đ' is hardcoded verbatim inside the English and Chinese checkout combo-payment label, instead of using the locale-aware format_money()/get_user_display_currency() from app/integrations/payments_core.py that the rest of the account-summary code path uses.",
+    "evidence": "app/handlers/store_callback.py:18: en dict `\"use_combo\": \"Use {balance:,}đ + QR {remaining:,}đ\"`; line 20: zh dict `\"use_combo\": \"使用 {balance:,}đ + QR {remaining:,}đ\"`",
+    "track": "4"
+  },
+  {
+    "file": "app/handlers/store_callback.py + app/handlers/callback_router.py vs app/services/orders_delivery.py",
+    "key": "warranty terminology",
+    "locale": "zh",
+    "severity": "medium",
+    "type": "terminology",
+    "detail": "The 'warranty' concept is translated with two different Chinese terms depending on which file renders it: 保修 (bǎoxiū) in the order-detail/product views vs 质保 (zhìbǎo) in the delivered .txt file and its labels dict. Both are legitimate translations of 'warranty' but the inconsistency means the same concept reads differently depending on where a customer sees it.",
+    "evidence": "app/handlers/callback_router.py:1214: `'\\n🛡️ <b>保修：</b> 终身'`; app/handlers/store_callback.py:477 `\"保修\"`, :550 `\"标准保修\"`  ---VS--- app/services/orders_delivery.py:40,70,82 `\"warranty\": \"质保\"`, :752 `\"该订单不含质保服务。\"`, :759 `\"该订单的质保已过期。\"`",
+    "track": "4"
+  },
+  {
+    "file": "app/handlers/user_entry.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "7 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/handlers/user_entry.py — 7 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/admin_background.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "2 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/jobs/admin_background.py — 2 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/backup_and_rewards.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "3 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/jobs/backup_and_rewards.py — 3 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/payment_monitor.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "3 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/jobs/payment_monitor.py — 3 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/jobs/support_and_warranty.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "1 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/jobs/support_and_warranty.py — 1 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_orders.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "1 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/services/admin_orders.py — 1 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/admin_support.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "11 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/services/admin_support.py — 11 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/games_withdrawals_db.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "1 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/services/games_withdrawals_db.py — 1 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/notifications_async.py",
+    "key": null,
+    "locale": "vi (hardcoded)",
+    "severity": "medium",
+    "type": "hardcoded_string_admin_only",
+    "detail": "6 chuoi tieng Viet hardcode trong luong chi admin (1 ADMIN_USER_ID co dinh) truy cap duoc. Khong phai loi hien thi, nhung khoa kha nang mo rong ngon ngu cho admin.",
+    "evidence": "app/services/notifications_async.py — 6 occurrences (AST-classified, guard: admin_command_wrapper / ADMIN_USER_ID / admin_only_prefixes)",
+    "track": "2b"
+  },
+  {
+    "file": "app/services/referrals_stats.py",
+    "key": "f\"rank_name_{tier}\"",
+    "locale": "n/a",
+    "severity": "medium",
+    "type": "dynamic_key",
+    "detail": "Key argument to t() is built at runtime (f-string), cannot be statically verified against STRINGS.",
+    "evidence": "app/services/referrals_stats.py:306 — t(f\"rank_name_{tier}\", ...) (line 306)",
+    "track": "2"
+  },
+  {
+    "file": "app/services/store_menu.py",
+    "key": "store_menu_labels['left'] / ['out'] / ['available'] / ['paused'] embedded in a product button label",
+    "locale": "vi/en/zh",
+    "severity": "medium",
+    "type": "length_limit",
+    "detail": "app/services/store_menu.py:342-366 builds button_text = f\"{name} | {_fmt_price(price)} | {state}\" where `name` is the admin-entered product name (arbitrary length, no cap) and `state` is store_menu_labels['left'].format(count=...) or ['out']/['available']/['paused'] (all short and safe on their own). The dict values themselves are clean, but the composed button label's length is dominated by the unbounded product name field, with no truncation/ellipsis before _btn() at line 360-365. This is a genuine, unbounded exposure to Telegram's 64-char button-label limit if an admin ever enters a long product name -- distinct from the two 'info' cases above because there is no natural ceiling on `name` the way there is on a formatted currency amount.",
+    "evidence": "app/services/store_menu.py:217-220 (store_menu_labels dict, all values <=~10 chars stripped) + :342-366 (button_text construction and _btn(button_text, ...) call).",
+    "track": "3b"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "f\"lang_name_{code}\"",
+    "locale": "n/a",
+    "severity": "medium",
+    "type": "dynamic_key",
+    "detail": "Key argument to t() is built at runtime (f-string), cannot be statically verified against STRINGS.",
+    "evidence": "app/utils/i18n.py:321 — t(f\"lang_name_{code}\", ...) (line 321)",
+    "track": "2"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "lt() call sites (222 occurrences, 30 files)",
+    "locale": "all",
+    "severity": "medium",
+    "type": "architecture/no-parity-tracking-possible",
+    "detail": "def lt(user_id, vi, en, zh, **kwargs) at app/utils/i18n.py:324 is called 222 times across 30 files with inline vi/en/zh string literals as positional arguments. Because these are function-call arguments rather than a keyed table, there is no key to compare across locales - each call site could have a missing/empty/copy-pasted argument and no automated parity check (including this audit's ast-based method) can enumerate or diff them the way it diffs STRINGS. This is a structural gap in translation-parity coverage, not a proven defect.",
+    "evidence": "app/utils/i18n.py:324-332 (definition); 222 call sites located via `grep -ro \"lt([a-zA-Z_.]*,\" app` across 30 files",
+    "track": "1"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "create_language_menu button labels",
+    "locale": "en/zh (menu shown to any user)",
+    "severity": "medium",
+    "type": "wrong_language",
+    "detail": "The language-selection menu's own button labels are hardcoded, not run through t()/STRINGS, and are themselves inconsistent in language: 'Việt Nam 🇻🇳' (Vietnamese), 'China 🇨🇳' (English word), 'Anh 🇬🇧' (Vietnamese word for 'England/English'). An English- or Chinese-reading user selecting their language sees this same mixed-language menu every time (only the 'Back' button uses t('btn_back')).",
+    "evidence": "app/utils/i18n.py:343-346: `_btn(\"Việt Nam 🇻🇳\", ... callback_data=\"set_lang:vi\" ...)`, `_btn(\"China 🇨🇳\", ... callback_data=\"set_lang:zh\" ...)`, `_btn(\"Anh 🇬🇧\", ... callback_data=\"set_lang:en\" ...)`",
+    "track": "4"
+  },
+  {
+    "file": "app/utils/ui_and_email.py",
+    "key": "rank_balance",
+    "locale": "vi/en/zh",
+    "severity": "medium",
+    "type": "length_limit",
+    "detail": "STRINGS['rank_balance'] (\"Hạng: {rank} | Số dư: {balance}\" / \"Rank: {rank} | Balance: {balance}\" / \"等级: {rank} | 余额: {balance}\") is NOT named btn_* so it was skipped by a naive naming-convention length check, but grep confirms it IS rendered as an InlineKeyboardButton label: build_main_menu_status_button_text() (app/utils/ui_and_email.py:55-60) calls t('rank_balance', rank=_localized_rank_name(...), balance=format_money(...)) and the result is passed straight into _btn(status_button_text, ...) at ui_and_email.py:401, inserted as the first row of the main-menu keyboard. Unlike the static btn_* strings, this label's length is NOT fixed at review time -- it embeds a live formatted balance (format_money can render VND thousands-separated integers, or for zh users a dual-currency '¥X (\\$Y)' str",
+    "evidence": "app/utils/ui_and_email.py:43-60 (build_main_menu_status_button_text) and :397-402 (insertion into keyboard via _btn); app/integrations/payments_core.py:378-392 (format_money, zh branch can produce '¥N.NN ($N.NN)').",
+    "track": "3"
+  },
+  {
+    "file": "multiple (app/handlers/payment_generation.py, app/handlers/store_callback.py, app/services/orders_delivery.py, app/services/store_menu.py, app/handlers/priority_and_text.py, app/utils/ui_and_email.py)",
+    "key": "n/a",
+    "locale": "all",
+    "severity": "medium",
+    "type": "architecture/fragmentation",
+    "detail": "8 additional standalone {vi:{...}, en:{...}, zh:{...}} dict/tuple literals exist outside app/utils/i18n.py's STRINGS table, scattered one-per-call-site instead of centralized. Each was manually inspected and is internally parity-complete (same key set/tuple length in vi/en/zh, no missing keys observed), but they are invisible to any tooling or test that only checks STRINGS, and any future edit to one locale without the others would silently pass CI.",
+    "evidence": "app/handlers/payment_generation.py:190-194; app/handlers/store_callback.py:17-20,456-483,609-613,632-636,761-765; app/services/orders_delivery.py:48-90; app/services/store_menu.py:217-221; app/handlers/priority_and_text.py:1206-1210; app/utils/ui_and_email.py:63-260",
+    "track": "1"
+  },
+  {
+    "file": "app/handlers/flashsale_wheel.py",
+    "key": "wheel prize text (inline vi/en/zh dict)",
+    "locale": "en, zh",
+    "severity": "low",
+    "type": "wrong_language",
+    "detail": "The lucky-wheel prize list is hardcoded in raw VND with the Vietnamese 'đ' suffix in all three language variants, so English/Chinese users are shown amounts like '50,000đ' rather than a converted USD/CNY figure or at least 'VND'.",
+    "evidence": "app/handlers/flashsale_wheel.py:320-322: vi/en/zh strings each contain '💎 50,000đ | 💵 20,000đ ... 💰 5,000đ'",
+    "track": "4"
+  },
+  {
+    "file": "app/handlers/priority_and_text.py",
+    "key": "payment method label",
+    "locale": "zh",
+    "severity": "low",
+    "type": "terminology",
+    "detail": "'payment method' is translated as 支付方式 at one call site but as 付款方式 everywhere else in the same file (and in payment_generation.py, store_callback.py, user_topup.py). Both terms are valid Chinese for 'payment method' but the file is internally inconsistent.",
+    "evidence": "app/handlers/priority_and_text.py:785: `f\"请选择支付方式：\"` vs app/handlers/priority_and_text.py:1209: `\"zh\": (..., \"请选择付款方式\")`",
+    "track": "4"
+  },
+  {
+    "file": "app/handlers/store_callback.py",
+    "key": "_checkout_labels['use_combo'] used as a button label at line 800",
+    "locale": "vi/en/zh",
+    "severity": "low",
+    "type": "length_limit",
+    "detail": "labels['use_combo'].format(balance=balance, remaining=remaining) (vi: 'Dùng {balance:,}đ + QR {remaining:,}đ', en: 'Use {balance:,}đ + QR {remaining:,}đ', zh: '使用 {balance:,}đ + QR {remaining:,}đ') is passed straight into _btn(...) at app/handlers/store_callback.py:800, making it -- like rank_balance in the track3 report -- a button label whose length depends on a live formatted VND amount rather than static translator text. At realistic wallet/order magnitudes it stays well under the 64-char limit (e.g. 'Dùng 1.000.000đ + QR 500.000đ' = 30 chars); flagged for completeness as the same architectural pattern already noted in track3.json, not a live violation.",
+    "evidence": "app/handlers/store_callback.py:17-19 (_checkout_labels dict) and :800 (_btn(labels[\"use_combo\"].format(...), ...)).",
+    "track": "3b"
+  },
+  {
+    "file": "app/handlers/store_callback.py",
+    "key": "delivered .txt closing line",
+    "locale": "vi",
+    "severity": "low",
+    "type": "quality",
+    "detail": "The delivered-order .txt file's closing thank-you line switches to the formal 'quý khách' register, while essentially every other Vietnamese user-facing string in the codebase (75+ occurrences) addresses the customer informally as 'bạn'.",
+    "evidence": "app/handlers/store_callback.py:1224: `file_content += \"Cảm ơn quý khách đã mua hàng. Chúc quý khách sử dụng dịch vụ vui vẻ!\\n\"`",
+    "track": "4"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "n/a",
+    "locale": "all",
+    "severity": "low",
+    "type": "architecture",
+    "detail": "Central STRINGS table is 100% parity (55/55 keys, 0 duplicates, 0 empty values) across vi/en/zh. No defects found in this file.",
+    "evidence": "app/utils/i18n.py:20-240",
+    "track": "1"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "btn_api_partner, btn_admin_web, live_chat_admin",
+    "locale": "en",
+    "severity": "low",
+    "type": "possible-untranslated-leakage",
+    "detail": "3 non-endonym keys have EN value identical to VI value: btn_api_partner='API Partner' (both vi/en), btn_admin_web='WebApp API Admin' (both vi/en), live_chat_admin='Admin' (both vi/en). All three are plausibly intentional (technical/brand terms, or a widely used Vietnamese loanword 'Admin'), so classified low severity / not confirmed defects, but flagged since they are not pure emoji/number/URL.",
+    "evidence": "app/utils/i18n.py:47/120 (btn_api_partner), 52/125 (btn_admin_web), 88/161 (live_chat_admin)",
+    "track": "1"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "btn_guide",
+    "locale": "vi",
+    "severity": "low",
+    "type": "html_invalid",
+    "detail": "Value \"HD & CS\" contains a bare '&' not forming a valid HTML entity (would need to be '&amp;' to be well-formed HTML). HTMLParser did not raise a structural error but this is technically invalid HTML-fragment text.",
+    "evidence": "raw excerpt: 'HD & CS'. Confirmed by grep (app/utils/ui_and_email.py:378) that btn_guide is ONLY ever passed to _btn(t(\"btn_guide\",...)) which builds a plain InlineKeyboardButton label -- python-telegram-bot never runs parse_mode/HTML parsing over button text, so this bare '&' is NOT exploitable/crash-causing in the current call graph. Flagged for completeness per the audit's HTML-validity check, severity downgraded to low because no call site renders it as HTML.",
+    "track": "3"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "btn_guide",
+    "locale": "en",
+    "severity": "low",
+    "type": "html_invalid",
+    "detail": "Value \"Guide & Policy\" contains a bare '&'. Same button-only usage as vi locale (ui_and_email.py:378) -- not sent through Telegram's HTML parser.",
+    "evidence": "raw excerpt: 'Guide & Policy'",
+    "track": "3"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "btn_support",
+    "locale": "vi",
+    "severity": "low",
+    "type": "html_invalid",
+    "detail": "Value \"Hỗ Trợ & Liên Hệ\" contains a bare '&'. Confirmed button-only usage (ui_and_email.py:381, callback_data='lienhe_admin') -- not HTML-parsed.",
+    "evidence": "raw excerpt: 'Hỗ Trợ & Liên Hệ'",
+    "track": "3"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "btn_support",
+    "locale": "en",
+    "severity": "low",
+    "type": "html_invalid",
+    "detail": "Value \"Support & Contact\" contains a bare '&'. Same button-only usage as vi.",
+    "evidence": "raw excerpt: 'Support & Contact'",
+    "track": "3"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "btn_wallet",
+    "locale": "vi",
+    "severity": "low",
+    "type": "html_invalid",
+    "detail": "Value \"Tài Khoản & Số Dư\" contains a bare '&'. Confirmed button-only usage (ui_and_email.py:377, callback_data='my_stats') -- not HTML-parsed.",
+    "evidence": "raw excerpt: 'Tài Khoản & Số Dư'",
+    "track": "3"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "btn_wallet",
+    "locale": "en",
+    "severity": "low",
+    "type": "html_invalid",
+    "detail": "Value \"Account & Balance\" contains a bare '&'. Same button-only usage as vi.",
+    "evidence": "raw excerpt: 'Account & Balance'",
+    "track": "3"
+  },
+  {
+    "file": "app/utils/i18n.py",
+    "key": "hello (zh greeting register)",
+    "locale": "zh",
+    "severity": "low",
+    "type": "quality",
+    "detail": "Every other zh string in STRINGS uses the formal/polite 您 (49 occurrences codebase-wide); the greeting string is the sole use of the informal 你.",
+    "evidence": "app/utils/i18n.py:176: `\"hello\": \"你好 {name}!\"` -- contrast with e.g. i18n.py rank_balance zh string using 余额 formally addressed elsewhere, and 49 other 您 hits vs this single 你 hit across app/",
+    "track": "4"
+  },
+  {
+    "file": "app/web (whole package)",
+    "key": "no customer-locale awareness",
+    "locale": "n/a",
+    "severity": "low",
+    "type": "architecture",
+    "detail": "The admin panel and partner API never import app.utils.i18n, never call get_user_lang/t/STRINGS, and never read or expose a customer's 'lang' profile field, despite app/web/bridge.py's KV_TO_STATE mapping 'data_users.json' -> 'user_data_db' (so a web-side edit of a user record, lang field included, would in principle be picked up by publish()). The admin UI itself is hardcoded Vietnamese (`<html lang=\"vi\">`).",
+    "evidence": "app/web/bridge.py:25 `\"data_users.json\": \"user_data_db\"` in KV_TO_STATE; app/web/templates/base.html:2 and app/web/templates/login.html:2 both `<html lang=\"vi\">`; zero matches for i18n/get_user_lang/STRINGS under app/web/",
+    "track": "4"
+  }
+]
