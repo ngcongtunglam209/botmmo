@@ -260,11 +260,11 @@ CHINHSACH_TEXT_ZH = (
 
 
 def get_guide_text(user_id=None) -> str:
-    return {"vi": HUONGDAN_TEXT_VI, "en": HUONGDAN_TEXT_EN, "zh": HUONGDAN_TEXT_ZH}[get_user_lang(user_id)]
+    return pick_locale({"vi": HUONGDAN_TEXT_VI, "en": HUONGDAN_TEXT_EN, "zh": HUONGDAN_TEXT_ZH}, get_user_lang(user_id))
 
 
 def get_policy_text(user_id=None) -> str:
-    return {"vi": CHINHSACH_TEXT_VI, "en": CHINHSACH_TEXT_EN, "zh": CHINHSACH_TEXT_ZH}[get_user_lang(user_id)]
+    return pick_locale({"vi": CHINHSACH_TEXT_VI, "en": CHINHSACH_TEXT_EN, "zh": CHINHSACH_TEXT_ZH}, get_user_lang(user_id))
 
 
 _BUTTON_ACTION_FIELDS = (

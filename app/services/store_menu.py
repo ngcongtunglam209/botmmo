@@ -213,11 +213,11 @@ def is_store_product_available(pid, product, pending_manual_count_by_pid=None) -
 
 def create_store_menu(selected_category=None, user_id=None):
     lang = get_user_lang(user_id)
-    labels = {
+    labels = pick_locale({
         "vi": {"back_main": "Quay lại Main Menu", "back_categories": "Quay lại Danh Mục", "empty": "Danh mục trống", "left": "Còn {count}", "out": "Hết hàng", "available": "Sẵn hàng", "paused": "Tạm ngừng"},
         "en": {"back_main": "Back to Main Menu", "back_categories": "Back to Categories", "empty": "Empty category", "left": "{count} left", "out": "Out of stock", "available": "Available", "paused": "Paused"},
         "zh": {"back_main": "返回主菜单", "back_categories": "返回分类", "empty": "分类为空", "left": "剩余 {count}", "out": "缺货", "available": "有货", "paused": "暂停销售"},
-    }.get(lang)
+    }, lang)
 
     def _fmt_price(price_vnd: int) -> str:
         if not price_vnd: return "0đ" if lang == "vi" else "0 USDT"

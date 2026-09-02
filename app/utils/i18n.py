@@ -321,9 +321,23 @@ def lang_display_name(code, user_id=None, lang=None) -> str:
     return t(f"lang_name_{code}", user_id=user_id, lang=lang)
 
 
+def pick_locale(table, code):
+    """Chon ban dich theo locale, roi ve tieng Viet neu locale la.
+
+    Moi dict theo locale trong repo deu duoc index bang mot ma ngon ngu; neu ma
+    do khong co trong bang thi phep index tran nem KeyError giua luong gui tin
+    cho khach. Bao qua day de luon con duong lui ve DEFAULT_LANG.
+    """
+    if not isinstance(table, dict):
+        return table
+    if code in table:
+        return table[code]
+    return table.get(DEFAULT_LANG)
+
+
 def lt(user_id, vi: str, en: str, zh: str, **kwargs) -> str:
     """Select and format one inline user-facing translation."""
-    text = {"vi": vi, "en": en, "zh": zh}[get_user_lang(user_id)]
+    text = pick_locale({"vi": vi, "en": en, "zh": zh}, get_user_lang(user_id))
     if not kwargs:
         return text
     try:
