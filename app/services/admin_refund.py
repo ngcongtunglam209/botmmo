@@ -89,6 +89,7 @@ async def _handle_admin_refund_unlocked(query, context, update):
 
     # --- Execute refund ---
     refund_target_label = "Ví Bot"
+    refund_target_key = "refund_target_wallet_bot"
     is_api_partner_order = _api_is_order_record(order)
     notify_chat_id = None
     new_balance = 0
@@ -132,6 +133,7 @@ async def _handle_admin_refund_unlocked(query, context, update):
             return
 
         refund_target_label = "Ví chung"
+        refund_target_key = "refund_target_wallet_shared"
         try:
             notify_chat_id = int((key_data or {}).get("user_id", 0) or 0)
         except (TypeError, ValueError):
@@ -165,44 +167,46 @@ async def _handle_admin_refund_unlocked(query, context, update):
     # --- Notify customer ---
     if notify_chat_id:
         try:
+            common = {
+                "user_id": notify_chat_id,
+                "order_code": order_code,
+                "product": order.get("product_name"),
+                "amount": format_money(refund_amount, user_id=notify_chat_id),
+                "reason": refund_reason,
+                "target": t(refund_target_key, user_id=notify_chat_id),
+            }
             if is_api_partner_order:
+                # Nut hoan ve ngan hang khong thuoc nhanh nay: luong `refund_bank:`
+                # doi order.user_id trung voi nguoi bam, ma don partner thi khong.
+                await context.bot.send_message(
+                    chat_id=notify_chat_id,
+                    text=t(
+                        "refund_done_partner",
+                        balance=format_money(int(new_balance or 0), user_id=notify_chat_id),
+                        **common,
+                    ),
+                    parse_mode='HTML'
+                )
+            else:
+                eligible = refund_amount >= BANK_REFUND_MIN_AMOUNT
+                minimum = format_money(BANK_REFUND_MIN_AMOUNT, user_id=notify_chat_id)
+                note = t(
+                    "refund_bank_note_eligible" if eligible else "refund_bank_note_below_min",
+                    user_id=notify_chat_id,
+                    min=minimum,
+                )
                 bank_refund_markup = None
-                if refund_amount >= BANK_REFUND_MIN_AMOUNT:
+                if eligible:
                     bank_refund_markup = InlineKeyboardMarkup([[
                         _btn(
-                            "Yêu cầu hoàn về ngân hàng",
+                            t("btn_refund_to_bank", user_id=notify_chat_id),
                             icon_id="5278467510604160626",
                             callback_data=f"refund_bank:{order_code}",
                         )
                     ]])
                 await context.bot.send_message(
                     chat_id=notify_chat_id,
-                    text=(
-                        f"💸 \u003cb\u003eĐƠN HÀNG ĐƯỢC HOÀN TIỀN\u003c/b\u003e\n\n"
-                        f"Mã đơn: \u003ccode\u003e{order_code}\u003c/code\u003e\n"
-                        f"Sản phẩm: {order.get('product_name')}\n"
-                        f"Số tiền hoàn: \u003cb\u003e{refund_amount:,} VNĐ\u003c/b\u003e ({refund_reason})\n"
-                        f"Nơi hoàn: \u003cb\u003e{refund_target_label}\u003c/b\u003e\n"
-                        f"Số dư ví chung mới: \u003cb\u003e{int(new_balance or 0):,} VNĐ\u003c/b\u003e"
-                    ),
-                    parse_mode='HTML'
-                )
-            else:
-                await context.bot.send_message(
-                    chat_id=notify_chat_id,
-                    text=(
-                        f"💸 \u003cb\u003eĐƠN HÀNG ĐƯỢC HOÀN TIỀN\u003c/b\u003e\n\n"
-                        f"Mã đơn: \u003ccode\u003e{order_code}\u003c/code\u003e\n"
-                        f"Sản phẩm: {order.get('product_name')}\n"
-                        f"Số tiền hoàn: \u003cb\u003e{refund_amount:,} VNĐ\u003c/b\u003e ({refund_reason})\n"
-                        f"Nơi hoàn: \u003cb\u003e{refund_target_label}\u003c/b\u003e\n\n"
-                        f"\u003ci\u003eTiền đã được cộng vào số dư của bạn.\u003c/i\u003e"
-                        + (
-                            f"\n\nKhoản hoàn từ <b>{BANK_REFUND_MIN_AMOUNT:,} VNĐ</b> có thể yêu cầu chuyển về ngân hàng."
-                            if refund_amount >= BANK_REFUND_MIN_AMOUNT else
-                            f"\n\nKhoản hoàn dưới <b>{BANK_REFUND_MIN_AMOUNT:,} VNĐ</b> chỉ hoàn vào Ví Bot."
-                        )
-                    ),
+                    text=t("refund_done_wallet", note=note, **common),
                     parse_mode='HTML',
                     reply_markup=bank_refund_markup,
                 )
@@ -251,14 +255,18 @@ async def begin_bank_refund_request(query, context, command: str):
         await safe_answer(query, "❌ Yêu cầu hoàn tiền không hợp lệ.", show_alert=True)
         return
     if not order.get("refunded_at"):
-        await safe_answer(query, "❌ Đơn chưa được duyệt hoàn tiền.", show_alert=True)
+        await safe_answer(query, t("refund_not_approved_yet", user_id=query.from_user.id), show_alert=True)
         return
 
     refund_amount = int(order.get("refund_amount", 0) or 0)
     if refund_amount < BANK_REFUND_MIN_AMOUNT:
         await safe_answer(
             query,
-            f"Khoản hoàn dưới {BANK_REFUND_MIN_AMOUNT:,}đ chỉ nhận qua Ví Bot.",
+            t(
+                "refund_below_bank_minimum",
+                user_id=query.from_user.id,
+                min=format_money(BANK_REFUND_MIN_AMOUNT, user_id=query.from_user.id),
+            ),
             show_alert=True,
         )
         return
@@ -266,20 +274,19 @@ async def begin_bank_refund_request(query, context, command: str):
     previous_request_id = str(order.get("bank_refund_request_id") or "")
     previous_request = withdrawal_requests.get(previous_request_id) if previous_request_id else None
     if previous_request and previous_request.get("status") in {"pending", "approved"}:
-        await safe_answer(query, "⚠️ Yêu cầu hoàn ngân hàng đã được gửi hoặc xử lý.", show_alert=True)
+        await safe_answer(query, t("refund_bank_request_processing", user_id=query.from_user.id), show_alert=True)
         return
 
     context.user_data["state"] = "awaiting_refund_bank_info"
     context.user_data["refund_bank_order_code"] = order_code
     await safe_answer(query)
     await query.message.reply_text(
-        "🏦 <b>NHẬP THÔNG TIN NHẬN TIỀN</b>\n\n"
-        f"Mã đơn: <code>{order_code}</code>\n"
-        f"Số tiền: <b>{refund_amount:,} VNĐ</b>\n\n"
-        "Nhập theo mẫu:\n"
-        "<code>Tên ngân hàng - Số tài khoản - Tên chủ tài khoản</code>\n\n"
-        "Ví dụ: <code>MB Bank - 0123456789 - NGUYEN VAN A</code>\n"
-        "Gõ <code>/cancel</code> để hủy.",
+        t(
+            "refund_bank_info_prompt",
+            user_id=query.from_user.id,
+            order_code=order_code,
+            amount=format_money(refund_amount, user_id=query.from_user.id),
+        ),
         parse_mode=ParseMode.HTML,
     )
 
@@ -294,14 +301,17 @@ async def handle_refund_bank_info_input(update, context):
     if raw_bank_info.casefold() in {"/cancel", "cancel", "huy", "hủy"}:
         context.user_data.pop("state", None)
         context.user_data.pop("refund_bank_order_code", None)
-        await update.message.reply_text("Đã hủy yêu cầu hoàn về ngân hàng.")
+        await update.message.reply_text(t("refund_bank_cancelled", user_id=update.effective_user.id))
         return
 
     normalized_bank_info, validation_error = normalize_bank_info(raw_bank_info)
     if validation_error:
         await update.message.reply_text(
-            f"❌ {html_lib.escape(validation_error)}\n"
-            "Vui lòng nhập: <code>Tên ngân hàng - Số tài khoản - Tên chủ tài khoản</code>",
+            t(
+                "refund_bank_info_invalid",
+                user_id=update.effective_user.id,
+                error=html_lib.escape(validation_error),
+            ),
             parse_mode=ParseMode.HTML,
         )
         return
@@ -309,7 +319,7 @@ async def handle_refund_bank_info_input(update, context):
     order = order_index.get(order_code)
     user = getattr(update, "effective_user", None)
     if not order or not user or str(order.get("user_id")) != str(user.id):
-        await update.message.reply_text("❌ Không tìm thấy đơn hoàn tiền hợp lệ.")
+        await update.message.reply_text(t("refund_not_found", user_id=getattr(user, "id", None)))
         context.user_data.pop("state", None)
         context.user_data.pop("refund_bank_order_code", None)
         return
@@ -317,7 +327,11 @@ async def handle_refund_bank_info_input(update, context):
     refund_amount = int(order.get("refund_amount", 0) or 0)
     if refund_amount < BANK_REFUND_MIN_AMOUNT:
         await update.message.reply_text(
-            f"❌ Khoản hoàn dưới {BANK_REFUND_MIN_AMOUNT:,}đ chỉ nhận qua Ví Bot."
+            t(
+                "refund_below_bank_minimum",
+                user_id=user.id,
+                min=format_money(BANK_REFUND_MIN_AMOUNT, user_id=user.id),
+            )
         )
         context.user_data.pop("state", None)
         context.user_data.pop("refund_bank_order_code", None)
@@ -328,15 +342,14 @@ async def handle_refund_bank_info_input(update, context):
         previous_request_id = str(order.get("bank_refund_request_id") or "")
         previous_request = withdrawal_requests.get(previous_request_id) if previous_request_id else None
         if previous_request and previous_request.get("status") in {"pending", "approved"}:
-            await update.message.reply_text("⚠️ Yêu cầu hoàn ngân hàng đã tồn tại.")
+            await update.message.reply_text(t("refund_bank_request_exists", user_id=user.id))
             return
 
         user_id_str = str(user.id)
         current_balance = int(user_data_db.get(user_id_str, {}).get("balance", 0) or 0)
         if current_balance < refund_amount:
             await update.message.reply_text(
-                "❌ Số dư Ví Bot không còn đủ khoản tiền hoàn để chuyển sang ngân hàng. "
-                "Vui lòng liên hệ Admin."
+                t("refund_insufficient_wallet", user_id=user.id)
             )
             return
 
@@ -363,12 +376,14 @@ async def handle_refund_bank_info_input(update, context):
     context.user_data.pop("state", None)
     context.user_data.pop("refund_bank_order_code", None)
     await update.message.reply_text(
-        "✅ <b>ĐÃ GỬI YÊU CẦU HOÀN NGÂN HÀNG</b>\n\n"
-        f"Mã yêu cầu: <code>{request_id}</code>\n"
-        f"Mã đơn: <code>{order_code}</code>\n"
-        f"Số tiền: <b>{refund_amount:,} VNĐ</b>\n"
-        f"Thông tin: <code>{html_lib.escape(normalized_bank_info)}</code>\n\n"
-        "Admin sẽ kiểm tra và xác nhận sau khi chuyển khoản.",
+        t(
+            "refund_bank_request_sent",
+            user_id=user.id,
+            request_id=request_id,
+            order_code=order_code,
+            amount=format_money(refund_amount, user_id=user.id),
+            bank_info=html_lib.escape(normalized_bank_info),
+        ),
         parse_mode=ParseMode.HTML,
     )
     await notify_admin_withdrawal(context, request_id)

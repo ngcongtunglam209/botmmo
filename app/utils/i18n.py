@@ -129,6 +129,7 @@ STRINGS = {
         "refund_bank_request_sent": "✅ <b>ĐÃ GỬI YÊU CẦU HOÀN NGÂN HÀNG</b>\n\nMã yêu cầu: <code>{request_id}</code>\nMã đơn: <code>{order_code}</code>\nSố tiền: <b>{amount}</b>\nThông tin: <code>{bank_info}</code>\n\nAdmin sẽ kiểm tra và xác nhận sau khi chuyển khoản.",
         "order_manual_done_email": "{success} <b>ĐƠN HÀNG ĐÃ HOÀN THÀNH!</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n{tag} <b>Sản phẩm:</b> {product}\n{globe} <b>Email:</b> <code>{email}</code>\n\n<tg-emoji emoji-id=\"5314638736462966754\">📬</tg-emoji> <b>Vui lòng kiểm tra email của bạn!</b>\n(Nếu không thấy, kiểm tra thư mục Spam/Junk)\n\n{globe} Nếu có vấn đề, liên hệ Admin để được hỗ trợ.",
         "order_manual_cancelled_refund": "{limit} <b>ĐƠN HÀNG ĐÃ BỊ HỦY</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n{tag} <b>Sản phẩm:</b> {product}\n\n{tag} <b>Số tiền đã hoàn:</b> {refund}\n{tag} <b>Số dư mới:</b> {balance}\n\n{globe} Nếu có thắc mắc, vui lòng liên hệ Admin.",
+        "refund_not_approved_yet": "❌ Đơn chưa được duyệt hoàn tiền.",
     },
     "en": {
         "main_menu_title": (
@@ -241,6 +242,7 @@ STRINGS = {
         "refund_bank_request_sent": "✅ <b>BANK PAYOUT REQUEST SENT</b>\n\nRequest ID: <code>{request_id}</code>\nOrder code: <code>{order_code}</code>\nAmount: <b>{amount}</b>\nDetails: <code>{bank_info}</code>\n\nThe admin will review and confirm once the transfer is done.",
         "order_manual_done_email": "{success} <b>ORDER COMPLETED!</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Order code:</b> <code>{order_code}</code>\n{tag} <b>Product:</b> {product}\n{globe} <b>Email:</b> <code>{email}</code>\n\n<tg-emoji emoji-id=\"5314638736462966754\">📬</tg-emoji> <b>Please check your inbox!</b>\n(If it is not there, check the Spam/Junk folder.)\n\n{globe} If anything looks wrong, contact the admin for help.",
         "order_manual_cancelled_refund": "{limit} <b>ORDER CANCELLED</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Order code:</b> <code>{order_code}</code>\n{tag} <b>Product:</b> {product}\n\n{tag} <b>Refunded:</b> {refund}\n{tag} <b>New balance:</b> {balance}\n\n{globe} If you have any questions, please contact the admin.",
+        "refund_not_approved_yet": "❌ This order has not been approved for a refund yet.",
     },
     "zh": {
         "main_menu_title": (
@@ -353,6 +355,7 @@ STRINGS = {
         "refund_bank_request_sent": "✅ <b>银行退款申请已提交</b>\n\n申请编号：<code>{request_id}</code>\n订单号：<code>{order_code}</code>\n金额：<b>{amount}</b>\n收款信息：<code>{bank_info}</code>\n\n管理员将在转账后核对并确认。",
         "order_manual_done_email": "{success} <b>订单已完成！</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>订单号：</b><code>{order_code}</code>\n{tag} <b>商品：</b>{product}\n{globe} <b>邮箱：</b><code>{email}</code>\n\n<tg-emoji emoji-id=\"5314638736462966754\">📬</tg-emoji> <b>请查收您的邮件！</b>\n（如未收到，请检查垃圾邮件文件夹。）\n\n{globe} 如有问题，请联系管理员。",
         "order_manual_cancelled_refund": "{limit} <b>订单已取消</b>\n\n<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>订单号：</b><code>{order_code}</code>\n{tag} <b>商品：</b>{product}\n\n{tag} <b>已退金额：</b>{refund}\n{tag} <b>新余额：</b>{balance}\n\n{globe} 如有疑问，请联系管理员。",
+        "refund_not_approved_yet": "❌ 该订单尚未通过退款审核。",
     },
 }
 
