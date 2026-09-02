@@ -272,12 +272,14 @@ async def _complete_partner_api_key_rotation(
             await context.bot.edit_message_caption(
                 chat_id=source_chat_id,
                 message_id=source_message_id,
-                caption=(
-                    f"{API_PREM_WARN} <b>QR/API KEY CŨ ĐÃ HẾT HIỆU LỰC</b>\n"
-                    "━━━━━━━━━━━━━━━━━━\n"
-                    f"{API_PREM_SHIELD} <b>Key cũ:</b> <code>{old_key}</code>\n"
-                    f"{API_PREM_LOCK} <b>Key mới:</b> <code>{new_key}</code>\n\n"
-                    "<i>Vui lòng dùng key hoặc QR ở tin nhắn mới nhất bên dưới. Không dùng lại ảnh QR cũ này.</i>"
+                caption=t(
+                    "partner_key_old_invalidated",
+                    user_id=user_id,
+                    warn=API_PREM_WARN,
+                    shield=API_PREM_SHIELD,
+                    lock=API_PREM_LOCK,
+                    old_key=old_key,
+                    new_key=new_key,
                 ),
                 parse_mode=ParseMode.HTML,
                 reply_markup=None,
@@ -285,13 +287,17 @@ async def _complete_partner_api_key_rotation(
         except (TelegramError, ValueError, KeyError, AttributeError):
             logger.debug("Cannot update stale API wallet QR message for user %s", user_id)
 
-    text = (
-        f"{API_PREM_LOCK} <b>ĐÃ ĐỔI API KEY</b>\n"
-        "━━━━━━━━━━━━━━━━━━\n"
-        f"{API_PREM_USER} <b>Partner:</b> {html.escape(str(partner_name))}\n"
-        f"{API_PREM_NOTE} <b>API Key mới:</b> <code>{new_key}</code>\n"
-        f"{API_PREM_MONEY} <b>Số dư ví chung:</b> {current_balance:,} VNĐ\n\n"
-        f"<i>{API_PREM_WARN} API key cũ đã bị vô hiệu hóa để bảo mật. Hãy cập nhật key mới trong hệ thống của bạn.</i>"
+    text = t(
+        "partner_key_changed",
+        user_id=user_id,
+        lock=API_PREM_LOCK,
+        user=API_PREM_USER,
+        note=API_PREM_NOTE,
+        money=API_PREM_MONEY,
+        warn=API_PREM_WARN,
+        partner=html.escape(str(partner_name)),
+        new_key=new_key,
+        balance=format_money(current_balance, user_id=user_id),
     )
     kb = InlineKeyboardMarkup([
         [_btn(lt(user_id, "Nạp Ví", "Top up wallet", "充值钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet")],
@@ -400,13 +406,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 pass
         except Forbidden:
             deep_link = f"https://t.me/{BOT_USERNAME}?start=start"
-            fallback_text = (
-                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>Không thể nhắn riêng cho bạn.</b>\n\n"
-                "Vui lòng mở chat riêng với bot và gửi <code>/start</code> trước,\n"
-                "sau đó quay lại thao tác này."
-            )
+            fallback_text = t("private_chat_required", user_id=user_id)
             fallback_kb = InlineKeyboardMarkup([
-                [InlineKeyboardButton("<tg-emoji emoji-id=\"6129860303619363484\">📩</tg-emoji> Mở chat bot", url=deep_link)]
+                [InlineKeyboardButton(
+                    '<tg-emoji emoji-id="6129860303619363484">📩</tg-emoji> '
+                    + t("btn_open_bot_chat", user_id=user_id),
+                    url=deep_link,
+                )]
             ])
             try:
                 await safe_edit_message(
@@ -626,16 +632,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     elif command in {'api_register_request', 'api_register_guide'}:
         if command == 'api_register_guide':
-            text = (
-                "<tg-emoji emoji-id=\"5350481781306958339\">📘</tg-emoji> <b>HƯỚNG DẪN ĐĂNG KÝ API PARTNER</b>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                "1. Nhấn nút <b>Gửi yêu cầu đăng ký</b> bên dưới.\n"
-                "2. Chờ Admin duyệt tài khoản.\n"
-                "3. Bot gửi API Key cho bạn qua tin nhắn.\n"
-                "4. Nạp ví bằng lệnh <code>/napapi [số_tiền]</code>.\n"
-                "5. Vào lại <code>/start</code> để thấy menu <b>API Partner</b>.\n\n"
-                "<i>Menu API chỉ hiện sau khi được Admin duyệt.</i>"
-            )
+            text = t("partner_register_guide", user_id=user_id)
             kb = InlineKeyboardMarkup([
                 [_btn(lt(user_id, "Gửi yêu cầu đăng ký", "Send a registration request", "提交注册申请"), icon_id="5436359785534466562", callback_data="api_register_request")],
                 [_btn(lt(user_id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data="back_to_main")]
@@ -761,13 +758,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
             logger.info("API key rotated for user %s", user_id)
 
-            text = (
-                "\U0001F511 <b>ĐÃ ĐỔI API KEY</b>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                f"\U0001F464 <b>Partner:</b> {html.escape(str(partner_name))}\n"
-                f"\U0001F6E1 <b>API Key mới:</b> <code>{new_key}</code>\n"
-                f"\U0001F4B0 <b>Số dư ví chung:</b> {current_balance:,} VNĐ\n\n"
-                "<i>\u26A0\uFE0F API key cũ đã bị vô hiệu hóa để bảo mật. Hãy cập nhật key mới trong hệ thống của bạn.</i>"
+            text = t(
+                "partner_key_changed",
+                user_id=user_id,
+                lock=API_PREM_LOCK,
+                user=API_PREM_USER,
+                note=API_PREM_NOTE,
+                money=API_PREM_MONEY,
+                warn=API_PREM_WARN,
+                partner=html.escape(str(partner_name)),
+                new_key=new_key,
+                balance=format_money(current_balance, user_id=user_id),
             )
             kb = InlineKeyboardMarkup([
                 [_btn(lt(user_id, "Nạp Ví", "Top up wallet", "充值钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet")],
@@ -838,17 +839,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             return
 
         if command == 'api_member_topup_help':
-            text = (
-                "<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> <b>HƯỚNG DẪN NẠP VÍ CHUNG</b>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                "1. Gõ lệnh: <code>/napapi [số_tiền]</code>\n"
-                "2. Bot trả về QR + nội dung chuyển khoản (NAPI...)\n"
-                "3. Chuyển đúng số tiền và đúng nội dung\n"
-                "4. Chờ 1-3 phút hệ thống tự cộng vào ví chung\n\n"
-                "<b>Ví dụ:</b>\n"
-                "• <code>/napapi 200000</code>\n"
-                "• <code>/napapi 500000</code>"
-            )
+            text = t("partner_topup_menu_guide", user_id=user_id)
             kb = InlineKeyboardMarkup([
                 [_btn(lt(user_id, "Ví Chung", "Shared wallet", "共享钱包"), icon_id="5278467510604160626", callback_data="api_member_wallet")],
                 [_btn(lt(user_id, "Quay lại menu API", "Back to API menu", "返回 API 菜单"), icon_id="6206032691075223572", callback_data="api_member_menu")]

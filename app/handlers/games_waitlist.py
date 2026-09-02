@@ -31,9 +31,14 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         mins = int((remaining % 3600) // 60)
         await context.bot.send_message(
             chat_id,
-            f"{E_LOADING} <b>CHƯA ĐẾN LƯỢT!</b>\n\n"
-            f"Bạn cần chờ <b>{hours}h {mins}m</b> nữa mới được chơi tiếp!\n\n"
-            f"{E_TIP} <i>Mỗi người chỉ được chơi 1 lần/24 giờ.</i>",
+            t(
+                "game_dice_cooldown",
+                user_id=user_id,
+                loading=E_LOADING,
+                tip=E_TIP,
+                hours=hours,
+                mins=mins,
+            ),
             parse_mode='HTML',
             reply_markup=create_back_button_menu(user_id=user_id)
         )
@@ -46,11 +51,13 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     # 3. Send intro message
     await context.bot.send_message(
         chat_id,
-        "<tg-emoji emoji-id=\"5226711870492126219\">🎲</tg-emoji> <b>GAME XÚC XẮC MAY MẮN</b> <tg-emoji emoji-id=\"5226711870492126219\">🎲</tg-emoji>\n\n"
-        f"{E_TIP} <b>Luật chơi:</b> Chỉ ra 111 hoặc 222 mới THẮNG!\n"
-        f"{E_TAG} <b>Phần thưởng:</b> 1 sản phẩm miễn phí\n"
-        f"{E_TIP} <b>Tip:</b> Chỉ 111, 222 mới thắng\n\n"
-        f"{E_LOADING} Đang quay xúc xắc...",
+        t(
+            "game_dice_intro",
+            user_id=user_id,
+            tip=E_TIP,
+            tag=E_TAG,
+            loading=E_LOADING,
+        ),
         parse_mode='HTML'
     )
 
@@ -98,10 +105,12 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             # Hết hàng - thông báo admin
             await context.bot.send_message(
                 chat_id,
-                f"<tg-emoji emoji-id=\"5226711870492126219\">🎲</tg-emoji> <b>KẾT QUẢ: {result_str}</b>\n"
-                f"{E_SUCCESS} {E_SUCCESS} <b>CHIẾN THẮNG!!!</b> {E_SUCCESS} {E_SUCCESS}\n\n"
-                f"<tg-emoji emoji-id=\"5386856460632201117\">😢</tg-emoji> Rất tiếc, kho đang hết hàng phù hợp.\n"
-                f"Admin sẽ liên hệ bạn để gửi phần thưởng!",
+                t(
+                    "game_dice_win_no_stock",
+                    user_id=user_id,
+                    result=result_str,
+                    success=E_SUCCESS,
+                ),
                 parse_mode='HTML',
                 reply_markup=create_back_button_menu(user_id=user_id)
             )
@@ -135,10 +144,13 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
         await context.bot.send_message(
             chat_id,
-            f"<tg-emoji emoji-id=\"5226711870492126219\">🎲</tg-emoji> <b>KẾT QUẢ: {result_str}</b>\n"
-            f"{E_SUCCESS} {E_SUCCESS} <b>CHIẾN THẮNG!!!</b> {E_SUCCESS} {E_SUCCESS}\n\n"
-            f"Chúc mừng bạn! Bạn được nhận <b>1 sản phẩm MIỄN PHÍ</b>!\n\n"
-            f"{E_TIP} <b>Chọn phần thưởng của bạn:</b>",
+            t(
+                "game_dice_win_choose",
+                user_id=user_id,
+                result=result_str,
+                success=E_SUCCESS,
+                tip=E_TIP,
+            ),
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode='HTML'
         )
@@ -150,10 +162,13 @@ async def dice_game_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         # === THUA ===
         await context.bot.send_message(
             chat_id,
-            f"<tg-emoji emoji-id=\"5226711870492126219\">🎲</tg-emoji> <b>KẾT QUẢ: {result_str}</b>\n\n"
-            f"<tg-emoji emoji-id=\"5386856460632201117\">😢</tg-emoji> Rất tiếc, bạn chưa thắng lần này!\n\n"
-            f"{E_TIP} <b>Tip:</b> Chỉ 111 hoặc 222 mới thắng\n"
-            f"{E_LOADING} Thử lại sau 24 giờ nhé!",
+            t(
+                "game_dice_lose",
+                user_id=user_id,
+                result=result_str,
+                tip=E_TIP,
+                loading=E_LOADING,
+            ),
             reply_markup=create_back_button_menu(user_id=user_id),
             parse_mode='HTML'
         )

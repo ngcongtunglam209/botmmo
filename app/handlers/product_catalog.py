@@ -569,7 +569,7 @@ async def receive_stock_input(update: Update, context: ContextTypes.DEFAULT_TYPE
 async def edit_product_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_USER_ID:
         if update.message:
-            await update.message.reply_text("❌ Bạn không có quyền truy cập lệnh này.")
+            await update.message.reply_text(t("admin_only_command", user_id=update.effective_user.id))
         return ConversationHandler.END
 
     if not products:

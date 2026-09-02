@@ -98,14 +98,11 @@ async def auto_remind_email_job(context: ContextTypes.DEFAULT_TYPE):
 
                     await context.bot.send_message(
                         chat_id=user_id,
-                        text=(
-                            f"<tg-emoji emoji-id=\"5447644880824181073\">🔔</tg-emoji> <b>THÔNG BÁO TỪ BOT</b>\n\n"
-                            f"Bạn ơi, mình thấy bạn vừa mua <b>{product_name}</b> nhưng chưa nhập Email nhận hàng nè.\n\n"
-                            f"<tg-emoji emoji-id=\"5972022360025336988\">🔸</tg-emoji> <b>Mã đơn:</b> <code>{order_code}</code>\n\n"
-                            f"<tg-emoji emoji-id=\"6186252635805323641\">👉</tg-emoji> Vui lòng <b>nhập địa chỉ Email</b> của bạn vào đây ngay nhé!\n\n"
-                            f"<b>Cách gửi email:</b>\n"
-                            f"• Reply tin nhắn này với email của bạn\n"
-                            f"• Hoặc dùng lệnh: <code>/guimail email@abc.com</code>"
+                        text=t(
+                            "order_email_reminder",
+                            user_id=user_id,
+                            product=product_name,
+                            order_code=order_code,
                         ),
                         parse_mode=ParseMode.HTML
                     )
@@ -338,13 +335,14 @@ async def payment_reminder_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                 minutes_left = max(1, int((ORDER_EXPIRATION_SECONDS - elapsed) / 60))
                 await context.bot.send_message(
                     user_id,
-                    f"<tg-emoji emoji-id=\"5213349767672769194\">⏰</tg-emoji> <b>NHẮC NHỞ THANH TOÁN</b>\n\n"
-                    f"<tg-emoji emoji-id=\"5334890573281114250\">🆔</tg-emoji> Mã đơn: <code>{html.escape(str(order_code))}</code>\n"
-                    f"<tg-emoji emoji-id=\"6260059243605398502\">📌</tg-emoji> Sản phẩm: {html.escape(str(product_name))}\n"
-                    f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Số tiền: <b>{amount:,} VNĐ</b>\n\n"
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Bạn chưa thanh toán đơn hàng này.\n"
-                    f"Đơn sẽ tự hủy sau <b>{minutes_left} phút</b> nếu không nhận được thanh toán.\n\n"
-                    "<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> Nếu đã chuyển khoản, vui lòng đợi 1-2 phút để hệ thống xác nhận.",
+                    t(
+                        "payment_reminder",
+                        user_id=user_id,
+                        order_code=html.escape(str(order_code)),
+                        product=html.escape(str(product_name)),
+                        amount=format_money(amount, user_id=user_id),
+                        minutes=minutes_left,
+                    ),
                     parse_mode=ParseMode.HTML
                 )
             except TelegramError:
@@ -373,51 +371,64 @@ async def rank_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     next_rank = vip["next_rank"]
     maintenance_status = vip.get("maintenance_status") or {}
 
-    msg = (
-        f"⭐️ <b>HẠNG THÀNH VIÊN CỦA BẠN</b>\n"
-        f"{'━' * 28}\n\n"
-        f"⭐️ Rank: <b>{rank['name']}</b>\n"
-        f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Tổng đơn: <b>{vip['total_orders']}</b>\n"
-        f"<tg-emoji emoji-id=\"5278467510604160626\">💰</tg-emoji> Tổng chi: <b>{vip['total_spent']:,} VNĐ</b>\n"
-        f"<tg-emoji emoji-id=\"5449800250032143374\">🎁</tg-emoji> Ưu đãi: <b>Không còn giảm giá theo rank</b>\n"
+    divider = "━" * 28
+    msg = t(
+        "rank_panel_header",
+        user_id=user_id,
+        divider=divider,
+        rank=rank['name'],
+        orders=vip['total_orders'],
+        spent=format_money(vip['total_spent'], user_id=user_id),
     )
 
     if vip.get("demoted_by_maintenance"):
-        msg += (
-            f"\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> "
-            f"Tháng {maintenance_status.get('period_label', 'trước')} bạn chỉ chi "
-            f"<b>{maintenance_status.get('monthly_spend', 0):,} VNĐ</b>, dưới mức duy trì "
-            f"<b>{VIP_MONTHLY_MAINTENANCE_MIN_SPEND:,} VNĐ</b> nên đang bị tụt 1 bậc.\n"
-            f"<tg-emoji emoji-id=\"5972022360025336988\">⬆️</tg-emoji> "
-            f"Cần chi tối thiểu <b>{maintenance_status.get('remaining_to_maintain', 0):,} VNĐ</b> "
-            f"trong tháng này để lấy lại <b>{base_rank['name']}</b> vào tháng sau.\n"
+        msg += t(
+            "rank_demoted_notice",
+            user_id=user_id,
+            period=maintenance_status.get("period_label")
+            or t("rank_period_previous", user_id=user_id),
+            spend=format_money(maintenance_status.get("monthly_spend", 0), user_id=user_id),
+            minimum=format_money(VIP_MONTHLY_MAINTENANCE_MIN_SPEND, user_id=user_id),
+            needed=format_money(maintenance_status.get("remaining_to_maintain", 0), user_id=user_id),
+            base_rank=base_rank['name'],
         )
     if next_rank:
         if vip.get("demoted_by_maintenance"):
-            msg += (
-                f"\n<tg-emoji emoji-id=\"5972022360025336988\">⬆️</tg-emoji> <b>Rank cần lấy lại: {next_rank['name']}</b>\n"
-                f"└ Điều kiện: tháng này chi tối thiểu <b>{VIP_MONTHLY_MAINTENANCE_MIN_SPEND:,} VNĐ</b>\n"
+            msg += t(
+                "rank_regain_target",
+                user_id=user_id,
+                rank=next_rank['name'],
+                minimum=format_money(VIP_MONTHLY_MAINTENANCE_MIN_SPEND, user_id=user_id),
             )
         else:
             orders_need = max(0, next_rank["min_orders"] - vip["total_orders"])
             spent_need = max(0, next_rank["min_spent"] - vip["total_spent"])
-            msg += (
-                f"\n<tg-emoji emoji-id=\"5972022360025336988\">⬆️</tg-emoji> <b>Rank tiếp theo: {next_rank['name']}</b>\n"
-                f"├ Cần thêm: <b>{orders_need}</b> đơn hàng\n"
-                f"└ Cần chi thêm: <b>{spent_need:,} VNĐ</b>\n"
+            msg += t(
+                "rank_next_target",
+                user_id=user_id,
+                rank=next_rank['name'],
+                orders_need=orders_need,
+                spent_need=format_money(spent_need, user_id=user_id),
             )
     else:
-        msg += "\n<tg-emoji emoji-id=\"5449800250032143374\">🎉</tg-emoji> <b>Bạn đã đạt hạng cao nhất!</b> <tg-emoji emoji-id=\"6124902618574625426\">👑</tg-emoji>\n"
+        msg += t("rank_highest_reached", user_id=user_id)
 
     # Bảng xếp hạng
-    msg += (
-        f"\n{'━' * 28}\n"
-        "<tg-emoji emoji-id=\"5373251851074415873\">📋</tg-emoji> <b>CÁC CẤP BẬC:</b>\n"
-    )
+    msg += t("rank_tier_list_header", user_id=user_id, divider=divider)
     for r in VIP_RANKS:
-        marker = " ← Bạn" if r["name"] == rank["name"] else ""
-        msg += f"  {r['name']} — {r['min_orders']}+ đơn{marker}\n"
-    msg += f"\n<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Quy tắc duy trì: nếu tháng trước chi dưới <b>{VIP_MONTHLY_MAINTENANCE_MIN_SPEND:,} VNĐ</b> thì sẽ tụt 1 bậc trong tháng này."
+        marker = t("rank_you_marker", user_id=user_id) if r["name"] == rank["name"] else ""
+        msg += t(
+            "rank_tier_row",
+            user_id=user_id,
+            rank=r['name'],
+            min_orders=r['min_orders'],
+            marker=marker,
+        )
+    msg += t(
+        "rank_maintenance_rule",
+        user_id=user_id,
+        minimum=format_money(VIP_MONTHLY_MAINTENANCE_MIN_SPEND, user_id=user_id),
+    )
 
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 

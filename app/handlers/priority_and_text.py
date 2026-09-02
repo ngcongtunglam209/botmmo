@@ -145,7 +145,7 @@ async def priority_email_handler(update: Update, context: ContextTypes.DEFAULT_T
             logging.error(f"❌ Error in priority_email_handler: {e}", exc_info=True)
             # Fallback: Notify user of error
             try:
-                await message.reply_text("<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Có lỗi xảy ra khi lưu đơn hàng. Vui lòng thử lại hoặc liên hệ Admin.")
+                await message.reply_text(t("order_save_error", user_id=update.effective_user.id))
             except (ValueError, TypeError, KeyError, IndexError) as notify_err:
                 logger.debug(f"Cannot send fallback error to user {update.effective_user.id}: {notify_err}")
 
@@ -451,7 +451,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     await context.bot.edit_message_text(
                         chat_id=confirm_chat_id,
                         message_id=confirm_message_id,
-                        text=f"{API_PREM_STOP} <b>ĐÃ HỦY ĐỔI API KEY</b>",
+                        text=t("partner_key_rotate_cancelled_title", user_id=user.id, stop=API_PREM_STOP),
                         parse_mode=ParseMode.HTML,
                         reply_markup=None,
                     )
@@ -461,7 +461,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             await clear_user_state(context)
             if not prompt_updated:
                 await update.message.reply_text(
-                    f"{API_PREM_STOP} Đã hủy đổi API key.",
+                    t("partner_key_rotate_cancelled", user_id=user.id, stop=API_PREM_STOP),
                     parse_mode='HTML',
                     reply_markup=create_main_menu(user_id=user.id),
                 )
@@ -469,8 +469,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
         if lowered_input != 'sure':
             await update.message.reply_text(
-                f"{API_PREM_WARN} Để xác nhận đổi API key, hãy nhập đúng <code>sure</code>.\n"
-                "Nếu đổi ý, bạn có thể gõ <code>/cancel</code>.",
+                t("partner_key_rotate_confirm_hint", user_id=user.id, warn=API_PREM_WARN),
                 parse_mode='HTML',
             )
             return
@@ -483,7 +482,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     await context.bot.edit_message_text(
                         chat_id=confirm_chat_id,
                         message_id=confirm_message_id,
-                        text=f"{API_PREM_OK} <b>ĐÃ XÁC NHẬN ĐỔI API KEY</b>\n\nHệ thống đang tạo key mới...",
+                        text=t("partner_key_rotate_confirmed", user_id=user.id, ok=API_PREM_OK),
                         parse_mode=ParseMode.HTML,
                         reply_markup=None,
                 )
@@ -493,13 +492,13 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         await clear_user_state(context)
         if not partner_key or not isinstance(partner_data, dict):
             await update.message.reply_text(
-                f"{API_PREM_WARN} Không tìm thấy API key đang hoạt động. Vui lòng thử lại từ menu API.",
+                t("partner_key_not_found", user_id=user.id, warn=API_PREM_WARN),
                 parse_mode='HTML',
             )
             return
         if expected_key and str(partner_key).strip() != expected_key:
             await update.message.reply_text(
-                f"{API_PREM_WARN} Yêu cầu xác nhận đã hết hiệu lực. Hãy bấm lại nút đổi API key nếu bạn vẫn muốn tiếp tục.",
+                t("partner_key_rotate_expired", user_id=user.id, warn=API_PREM_WARN),
                 parse_mode='HTML',
             )
             return
@@ -521,9 +520,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
         if not EMAIL_REGEX.match(email_input):
             await update.message.reply_text(
-                "❌ Email không hợp lệ!\n\n"
-                "<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Vui lòng nhập email đúng định dạng.\n"
-                "<i>Ví dụ: example@gmail.com</i>",
+                t("email_invalid_detailed", user_id=update.effective_user.id),
                 parse_mode='HTML'
             )
             return
@@ -531,7 +528,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         # Get pending order info
         pending_order = context.user_data.get('pending_manual_order')
         if not pending_order:
-            await update.message.reply_text("❌ Lỗi: Không tìm thấy đơn hàng. Vui lòng thử lại.")
+            await update.message.reply_text(t("order_not_found_retry", user_id=update.effective_user.id))
             await clear_user_state(context)
             return
 
@@ -570,13 +567,26 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
         # 3. Thông báo cho khách hàng
         await update.message.reply_text(
-            f"{E_SUCCESS} <b>ĐÃ NHẬN EMAIL!</b>\n\n"
-            f"{E_GLOBE} <b>Email:</b> <code>{email_input}</code>\n"
-            f"{E_TAG} <b>Sản phẩm:</b> {prod_name} x{qty}\n"
-            f"{E_TAG} <b>Số tiền:</b> {amount:,} VNĐ\n\n"
-            f"{E_LOADING} <b>Admin đang xử lý đơn hàng...</b>\n"
-            f"{E_SOS} Bạn sẽ nhận thông báo khi hoàn tất!\n\n"
-            f"{E_TIP} <b>Mã đơn:</b> <code>{order_code}</code>",
+            t(
+                "checkout_email_received",
+                user_id=user.id,
+                success=E_SUCCESS,
+                globe=E_GLOBE,
+                tag=E_TAG,
+                loading=E_LOADING,
+                sos=E_SOS,
+                tip=E_TIP,
+                email=email_input,
+                product=prod_name,
+                qty=qty,
+                amount_line=t(
+                    "checkout_amount_line",
+                    user_id=user.id,
+                    tag=E_TAG,
+                    amount=format_money(amount, user_id=user.id),
+                ),
+                order_code=order_code,
+            ),
             parse_mode='HTML',
             reply_markup=create_back_button_menu(user_id=update.effective_user.id if update.effective_user else None)
         )
@@ -637,7 +647,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         email_input = user_input.lower()
 
         if not EMAIL_REGEX.match(email_input):
-            await update.message.reply_text("<tg-emoji emoji-id=\"6129860303619363484\">📧</tg-emoji> Email không hợp lệ. Vui lòng nhập lại email chính xác.")
+            await update.message.reply_text(t("email_invalid_short", user_id=update.effective_user.id))
             return
 
         # Update order với email
@@ -647,12 +657,21 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
         # Thông báo khách
         await update.message.reply_text(
-            f"{E_SUCCESS} <b>ĐÃ NHẬN EMAIL!</b>\n\n"
-            f"{E_GLOBE} <b>Email:</b> <code>{email_input}</code>\n"
-            f"{E_TAG} <b>Sản phẩm:</b> {order_info['product_name']} x{order_info['quantity']}\n\n"
-            f"{E_LOADING} <b>Admin đang xử lý đơn hàng...</b>\n"
-            f"{E_SOS} Bạn sẽ nhận thông báo khi hoàn tất\n\n"
-            f"{E_TIP} <b>Mã đơn:</b> <code>{order_code}</code>",
+            t(
+                "checkout_email_received",
+                user_id=user.id,
+                success=E_SUCCESS,
+                globe=E_GLOBE,
+                tag=E_TAG,
+                loading=E_LOADING,
+                sos=E_SOS,
+                tip=E_TIP,
+                email=email_input,
+                product=order_info['product_name'],
+                qty=order_info['quantity'],
+                amount_line="",
+                order_code=order_code,
+            ),
             parse_mode=ParseMode.HTML,
             reply_markup=create_back_button_menu(user_id=update.effective_user.id if update.effective_user else None)
         )
@@ -906,7 +925,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             return
         if found_order.get('refunded_at'):
             await update.message.reply_text(
-                "<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Đơn hàng này đã được hoàn tiền nên không thể báo lỗi nữa."
+                t("support_order_refunded", user_id=update.effective_user.id)
             )
             await clear_user_state(context)
             return
@@ -1208,7 +1227,11 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         if update.effective_user.id != ADMIN_USER_ID: return
         target_user_id = int(user_state.split(':', 1)[1])
         try:
-            await context.bot.send_message(chat_id=target_user_id, text="<tg-emoji emoji-id=\"5314638736462966754\">📬</tg-emoji> <b>Bạn có phản hồi từ Admin:</b>", parse_mode=ParseMode.HTML)
+            await context.bot.send_message(
+                chat_id=target_user_id,
+                text=t("admin_reply_header", user_id=target_user_id),
+                parse_mode=ParseMode.HTML,
+            )
             await context.bot.copy_message(chat_id=target_user_id, from_chat_id=update.message.chat_id, message_id=update.message.message_id)
             await update.message.reply_text("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Tin nhắn của bạn đã được gửi tới người dùng.")
         except (TelegramError, ValueError, KeyError, AttributeError) as e: logger.error(f"Gửi phản hồi thất bại. Lỗi: {e}"); await update.message.reply_text("❌ Gửi phản hồi thất bại, vui lòng kiểm tra bot admin logs.")

@@ -369,10 +369,16 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                         try:
                             await context.bot.send_message(
                                 referrer_id,
-                                f"{E_SUCCESS} <b>BẠN VỪA GIỚI THIỆU THÀNH CÔNG!</b>\n\n"
-                                f"<tg-emoji emoji-id=\"5350778980158956492\">👤</tg-emoji> <b>Người mới:</b> {format_user_name_html(user=user)}\n"
-                                f"{E_ID} <b>ID:</b> <code>{user.id}</code>\n\n"
-                                f"{E_TAG} Bạn sẽ nhận {REFERRAL_COMMISSION_PERCENT}% hoa hồng khi người này mua hàng!",
+                                t(
+                                    "referral_signup_success",
+                                    user_id=referrer_id,
+                                    success=E_SUCCESS,
+                                    id=E_ID,
+                                    tag=E_TAG,
+                                    name=format_user_name_html(user=user),
+                                    member_id=user.id,
+                                    percent=REFERRAL_COMMISSION_PERCENT,
+                                ),
                                 parse_mode=ParseMode.HTML
                             )
                         except (TelegramError, ValueError, KeyError, AttributeError) as e:
@@ -611,7 +617,17 @@ async def chat_with_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
              live_chats[target_uid_str]['last_activity'] = time.time()
              await save_data()
              try:
-                 await context.bot.send_message(target_uid, f"<tg-emoji emoji-id=\"5350778980158956492\">👨</tg-emoji>‍<tg-emoji emoji-id=\"5854908544712707500\">💼</tg-emoji> <b>Admin:</b>\n{user_msg}", parse_mode=ParseMode.HTML)
+                 admin_label = (
+                     '<tg-emoji emoji-id="5350778980158956492">👨</tg-emoji>'
+                     + chr(8205)
+                     + '<tg-emoji emoji-id="5854908544712707500">💼</tg-emoji> '
+                     + t("live_chat_admin", user_id=target_uid)
+                 )
+                 await context.bot.send_message(
+                     target_uid,
+                     "<b>" + admin_label + "</b>" + chr(10) + user_msg,
+                     parse_mode=ParseMode.HTML,
+                 )
                  await update.message.reply_text("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> Đã gửi.")
              except (TelegramError, ValueError, KeyError, AttributeError) as e:
                  await update.message.reply_text("❌ Lỗi gửi tin, vui lòng kiểm tra kết nối.")
