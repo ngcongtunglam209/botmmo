@@ -798,7 +798,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 f"🎫 优惠码: <code>{coupon_input}</code> (减 {discount_text})\n"
                 f"💰 单价: <s>{base_price_text}</s> → <b>{discounted_unit_text}</b>\n"
                 f"💵 合计: <b>{total_price:,}đ</b>\n\n"
-                f"请选择支付方式：",
+                f"请选择付款方式：",
             ),
             parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(btns)
@@ -839,7 +839,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     user.id,
                     "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>TỪ CHỐI HỖ TRỢ</b>\n\nĐơn hàng này đã bị từ chối bảo hành do <b>HẾT HẠN BẢO HÀNH</b>.\nVui lòng không gửi lại yêu cầu.",
                     "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>SUPPORT DECLINED</b>\n\nThis order was declined because the <b>WARRANTY HAS EXPIRED</b>.\nPlease do not send the request again.",
-                    "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>支持请求已拒绝</b>\n\n该订单因<b>质保已过期</b>被拒绝。\n请勿重复提交。",
+                    "<tg-emoji emoji-id=\"5424857974784925603\">⛔</tg-emoji> <b>支持请求已拒绝</b>\n\n该订单因<b>保修已过期</b>被拒绝。\n请勿重复提交。",
                 ), parse_mode=ParseMode.HTML
             )
             await clear_user_state(context)

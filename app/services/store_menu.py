@@ -220,18 +220,10 @@ def create_store_menu(selected_category=None, user_id=None):
     }, lang)
 
     def _fmt_price(price_vnd: int) -> str:
-        if not price_vnd: return "0đ" if lang == "vi" else "0 USDT"
-        if lang == "vi": return f"{price_vnd:,}đ"
-        try:
-            # Phai goi qua ham cua payments_core: `_cached_live_usdt_rate` la bien
-            # module cua no, duoc gan lai luc chay. Runtime loader chi dong bo bien
-            # giua cac module MOT LAN luc nap, nen doc globals() o day luon thay None
-            # roi rot ve USDT_RATE_VND_PER_USDT (mac dinh 0) -> chia cho 0 -> khach
-            # EN/ZH thay gia VND thay vi USDT.
-            rate = float(get_cached_usdt_rate())
-            return f"{price_vnd / rate:.2f} USDT"
-        except (TypeError, ValueError, ZeroDivisionError):
-            return f"{price_vnd:,} VND"
+        # Truoc day ham nay tu quy doi USDT va tu noi chuoi "0đ"/"{x:,}đ";
+        # format_money() da lam dung viec do cho ca ba locale (VND/USD/CNY),
+        # nen giu hai ban sao cua cung logic chi de lech nhau.
+        return format_money(price_vnd, lang=lang)
 
     keyboard = []
     pending_manual_count_by_pid = _collect_pending_manual_count_by_pid()
@@ -341,6 +333,10 @@ def create_store_menu(selected_category=None, user_id=None):
 
         for pid, product in sorted_products:
             name = str(product.get(f"name_{lang}") or product.get("name") or pid)
+            # Telegram cat nhan button o 64 ky tu. Ten dai lam phan gia va trang thai
+            # bien mat - dung phan khach can nhat de quyet dinh co bam hay khong.
+            if len(name) > 28:
+                name = name[:27].rstrip() + "…"
             price = int(product.get("price", 0) or 0)
             product_icon_id = get_store_icon_id(str(product.get("name") or name), product_fallback_icon_id)
             product_available = is_store_product_available(pid, product, pending_manual_count_by_pid)

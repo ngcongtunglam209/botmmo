@@ -14,9 +14,9 @@ def _format_store_description_text(value) -> str:
 
 def _checkout_labels(user_id):
     return pick_locale({
-        "vi": {"choose_qty": "CHỌN SỐ LƯỢNG MUỐN MUA", "product": "Sản phẩm", "unit_price": "Đơn giá", "stock": "Tồn kho khả dụng", "quantity": "Số lượng", "enter_qty": "Nhập số lượng", "back": "Quay lại", "confirm": "XÁC NHẬN MUA HÀNG", "total": "Tổng tiền", "choose_payment": "Vui lòng chọn phương thức thanh toán", "balance": "Số dư", "insufficient": "Không đủ", "bank": "Chuyển khoản (QR)", "coupon": "Nhập mã giảm giá", "use_combo": "Dùng {balance:,}đ + QR {remaining:,}đ", "out": "Sản phẩm hiện đang hết hàng!", "missing": "Sản phẩm không tồn tại!"},
-        "en": {"choose_qty": "CHOOSE QUANTITY", "product": "Product", "unit_price": "Unit price", "stock": "Available stock", "quantity": "Quantity", "enter_qty": "Enter quantity", "back": "Back", "confirm": "CONFIRM PURCHASE", "total": "Total", "choose_payment": "Choose a payment method", "balance": "Balance", "insufficient": "Insufficient", "bank": "Bank transfer (QR)", "coupon": "Enter coupon", "use_combo": "Use {balance:,}đ + QR {remaining:,}đ", "out": "This product is out of stock!", "missing": "Product not found!"},
-        "zh": {"choose_qty": "选择购买数量", "product": "商品", "unit_price": "单价", "stock": "可用库存", "quantity": "数量", "enter_qty": "输入数量", "back": "返回", "confirm": "确认购买", "total": "总计", "choose_payment": "请选择付款方式", "balance": "余额", "insufficient": "余额不足", "bank": "银行转账（QR）", "coupon": "输入优惠码", "use_combo": "使用 {balance:,}đ + QR {remaining:,}đ", "out": "该商品已缺货！", "missing": "商品不存在！"},
+        "vi": {"choose_qty": "CHỌN SỐ LƯỢNG MUỐN MUA", "product": "Sản phẩm", "unit_price": "Đơn giá", "stock": "Tồn kho khả dụng", "quantity": "Số lượng", "enter_qty": "Nhập số lượng", "back": "Quay lại", "confirm": "XÁC NHẬN MUA HÀNG", "total": "Tổng tiền", "choose_payment": "Vui lòng chọn phương thức thanh toán", "balance": "Số dư", "insufficient": "Không đủ", "bank": "Chuyển khoản (QR)", "coupon": "Nhập mã giảm giá", "use_combo": "Dùng {balance} + QR {remaining}", "out": "Sản phẩm hiện đang hết hàng!", "missing": "Sản phẩm không tồn tại!"},
+        "en": {"choose_qty": "CHOOSE QUANTITY", "product": "Product", "unit_price": "Unit price", "stock": "Available stock", "quantity": "Quantity", "enter_qty": "Enter quantity", "back": "Back", "confirm": "CONFIRM PURCHASE", "total": "Total", "choose_payment": "Choose a payment method", "balance": "Balance", "insufficient": "Insufficient", "bank": "Bank transfer (QR)", "coupon": "Enter coupon", "use_combo": "Use {balance} + QR {remaining}", "out": "This product is out of stock!", "missing": "Product not found!"},
+        "zh": {"choose_qty": "选择购买数量", "product": "商品", "unit_price": "单价", "stock": "可用库存", "quantity": "数量", "enter_qty": "输入数量", "back": "返回", "confirm": "确认购买", "total": "总计", "choose_payment": "请选择付款方式", "balance": "余额", "insufficient": "余额不足", "bank": "银行转账（QR）", "coupon": "输入优惠码", "use_combo": "使用 {balance} + QR {remaining}", "out": "该商品已缺货！", "missing": "商品不存在！"},
     }, get_user_lang(user_id))
 
 
@@ -437,21 +437,12 @@ async def _show_store_product_detail(
     if not already_answered:
         await safe_answer(query)
     lang = get_user_lang(query.from_user.id)
-    curr = "đ" if lang == "vi" else " VND"
 
     def _fmt_price(price_vnd: int) -> str:
-        if not price_vnd: return "0đ" if lang == "vi" else "0 USDT"
-        if lang == "vi": return f"{price_vnd:,}đ"
-        try:
-            # Phai goi qua ham cua payments_core: `_cached_live_usdt_rate` la bien
-            # module cua no, duoc gan lai luc chay. Runtime loader chi dong bo bien
-            # giua cac module MOT LAN luc nap, nen doc globals() o day luon thay None
-            # roi rot ve USDT_RATE_VND_PER_USDT (mac dinh 0) -> chia cho 0 -> khach
-            # EN/ZH thay gia VND thay vi USDT.
-            rate = float(get_cached_usdt_rate())
-            return f"{price_vnd / rate:.2f} USDT"
-        except (TypeError, ValueError, ZeroDivisionError):
-            return f"{price_vnd:,} VND"
+        # Truoc day ham nay tu quy doi USDT va tu noi chuoi "0đ"/"{x:,}đ";
+        # format_money() da lam dung viec do cho ca ba locale (VND/USD/CNY),
+        # nen giu hai ban sao cua cung logic chi de lech nhau.
+        return format_money(price_vnd, lang=lang)
 
 
     labels = pick_locale({
@@ -794,12 +785,15 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             )
 
             btns = []
-            bal_text = f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> {labels['balance']} ({balance:,}đ)"
+            bal_text = (
+                '<tg-emoji emoji-id="5213403875670765022">💳</tg-emoji> '
+                f"{labels['balance']} ({format_money(balance, user_id=query.from_user.id)})"
+            )
             if balance >= total_price:
                 btns.append([_btn(bal_text, callback_data=f"pay_prod_bal_{prod_id}_1", style="success")])
             elif balance > 0:
                 remaining = total_price - balance
-                btns.append([_btn(labels["use_combo"].format(balance=balance, remaining=remaining), icon_id="5213403875670765022", callback_data=f"pay_prod_combo_{prod_id}_1", style="success")])
+                btns.append([_btn(labels["use_combo"].format(balance=format_money(balance, user_id=query.from_user.id), remaining=format_money(remaining, user_id=query.from_user.id)), icon_id="5213403875670765022", callback_data=f"pay_prod_combo_{prod_id}_1", style="success")])
             else:
                 btns.append([_btn(manual["none"], icon_id="5273914604752216432", callback_data="ignore", style="danger")])
 
@@ -897,13 +891,13 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
         btns = []
 
-        bal_text = f"{labels['balance']} ({balance:,}đ)"
+        bal_text = f"{labels['balance']} ({format_money(balance, user_id=query.from_user.id)})"
         if balance >= total_price:
             btns.append([_btn(bal_text, icon_id="5458774648621643551", callback_data=f"pay_prod_bal_{prod_id}_{qty}", style="success")])
         elif balance > 0:
             remaining = total_price - balance
             btns.append([_btn(
-                labels["use_combo"].format(balance=balance, remaining=remaining),
+                labels["use_combo"].format(balance=format_money(balance, user_id=query.from_user.id), remaining=format_money(remaining, user_id=query.from_user.id)),
                 icon_id="5458774648621643551",
                 callback_data=f"pay_prod_combo_{prod_id}_{qty}",
                 style="success",
@@ -925,7 +919,17 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
 
         combo_note = ""
         if 0 < balance < total_price:
-            combo_note = f"\n\n<tg-emoji emoji-id=\"5460753627817723162\">💡</tg-emoji> <i>Bạn có thể kết hợp ví ({balance:,}đ) + chuyển khoản ({total_price - balance:,}đ)</i>"
+            combo_note = chr(10) * 2 + lt(
+                query.from_user.id,
+                '<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> '
+                "<i>Bạn có thể kết hợp ví ({wallet}) + chuyển khoản ({bank})</i>",
+                '<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> '
+                "<i>You can combine your wallet ({wallet}) with a bank transfer ({bank}).</i>",
+                '<tg-emoji emoji-id="5460753627817723162">💡</tg-emoji> '
+                "<i>可以用钱包余额（{wallet}）加银行转账（{bank}）组合支付。</i>",
+                wallet=format_money(balance, user_id=query.from_user.id),
+                bank=format_money(total_price - balance, user_id=query.from_user.id),
+            )
 
         lang = get_user_lang(user_id)
         product_name = p.get(f"name_{lang}") or p.get("name") or prod_id

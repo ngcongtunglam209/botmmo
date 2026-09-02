@@ -38,6 +38,9 @@ _DELIVERY_METADATA_PREFIXES = (
     "付款",
     "有效期",
     "质保",
+    # `保修` la nhan moi (thong nhat thuat ngu); `保修` o tren giu lai vi cac file
+    # .txt da giao cho khach truoc day van dung tu do va van phai parse lai duoc.
+    "保修",
     "注意",
 )
 _DELIVERY_ORDER_HEADERS = ("thong tin don hang", "order information", "订单信息")
@@ -79,7 +82,7 @@ _DELIVERY_TXT_LABELS = {
         "quantity": "数量",
         "payment": "付款",
         "duration": "有效期",
-        "warranty": "质保",
+        "warranty": "保修",
         "description": "说明",
     },
 }
@@ -749,14 +752,14 @@ def build_auto_warranty_rejection_text(order_code: str, warranty_info: dict, use
             user_id,
             "Đơn hàng này không có chính sách bảo hành.",
             "This order does not come with a warranty.",
-            "该订单不含质保服务。",
+            "该订单不含保修服务。",
         )
     else:
         detail = lt(
             user_id,
             "Đơn hàng này đã hết hạn bảo hành.",
             "The warranty for this order has expired.",
-            "该订单的质保已过期。",
+            "该订单的保修已过期。",
         )
 
     return (
@@ -766,7 +769,7 @@ def build_auto_warranty_rejection_text(order_code: str, warranty_info: dict, use
         f"{detail}\n"
         "<b>" + lt(user_id, "Mã đơn:", "Order code:", "订单号：") + "</b> "
         f"<code>{html.escape(str(order_code or ''))}</code>\n"
-        f"{E_SHIELD} <b>" + lt(user_id, "Bảo hành:", "Warranty:", "质保：") + "</b> "
+        f"{E_SHIELD} <b>" + lt(user_id, "Bảo hành:", "Warranty:", "保修：") + "</b> "
         f"{html.escape(warranty_text)}"
         f"{expiry_line}\n\n"
         "<i>"

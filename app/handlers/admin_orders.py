@@ -129,7 +129,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                         f"{E_TAG} <b>商品：</b>{p['name']}\n"
                         f"<tg-emoji emoji-id=\"5334890573281114250\">🔢</tg-emoji> <b>数量：</b>{qty}\n"
                         f"{E_LOADING} <b>有效期：</b>{p.get('duration', 'N/A')}\n"
-                        f"{E_SHIELD} <b>质保：</b>{p.get('warranty', '无')}\n\n"
+                        f"{E_SHIELD} <b>保修：</b>{p.get('warranty', '无')}\n\n"
                         f"{E_TIP} <b>账号信息：</b>",
                     ),
                     parse_mode=ParseMode.HTML
@@ -149,7 +149,7 @@ async def duyet_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                         f"ACCOUNT DETAILS:",
                         f"✅ 您的订单已人工审核通过\n\n"
                         f"商品：{p['name']}\n数量：{qty}\n"
-                        f"有效期：{p.get('duration', 'N/A')}\n质保：{p.get('warranty', '无')}\n\n"
+                        f"有效期：{p.get('duration', 'N/A')}\n保修：{p.get('warranty', '无')}\n\n"
                         f"账号信息：",
                     ),
                 )
