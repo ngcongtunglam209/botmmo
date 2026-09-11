@@ -767,10 +767,19 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 callback_data=f"pay_prod_combo_{prod_id}_{qty}"
             )])
         else:
-            btns.append([_btn(lt(user.id, "Không", "No", "否"), icon_id="5273914604752216432", callback_data="ignore")])
+            btns.append([_btn(
+                lt(user.id,
+                   f"Số dư ({balance_c:,}đ) - Không đủ",
+                   f"Wallet ({balance_c:,}đ) - Insufficient",
+                   f"钱包 ({balance_c:,}đ) - 余额不足"),
+                icon_id="5273914604752216432", callback_data="ignore", style="danger",
+            )])
         from app.integrations.binancepay_api import is_binance_pay_enabled
         if is_binance_pay_enabled():
             btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_{qty}")])
+        from app.integrations.nowpayments_api import is_nowpayments_enabled
+        if is_nowpayments_enabled():
+            btns.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_{qty}")])
         from app.integrations.payments_core import is_bank_transfer_enabled
         if is_bank_transfer_enabled():
             btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
@@ -1181,7 +1190,12 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         # Valid quantity - show confirmation
         await clear_user_state(context)
 
-        total_price = p['price'] * qty
+        # Phai dung dung ham ma buoc tao hoa don dung, neu khong man xac nhan bao
+        # gia goc con bot lai tru gia da giam: khach thay hai con so khac nhau va
+        # nhanh "du so du" o duoi cung chot sai.
+        from app.handlers.payment_generation import _get_product_checkout_total_amount
+        full_price = p['price'] * qty
+        total_price = _get_product_checkout_total_amount(user.id, context, prod_id, p, qty)
         user_info = db_get_user(user.id)
         balance = user_info.get('balance', 0) if user_info else 0
 
@@ -1189,23 +1203,50 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         bal_text = lt(user.id, f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Số dư ({balance:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Wallet ({balance:,}đ)", f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> 钱包 ({balance:,}đ)")
         if balance >= total_price:
             btns.append([InlineKeyboardButton(bal_text, callback_data=f"pay_prod_bal_{prod_id}_{qty}")])
+        elif balance > 0:
+            remaining = total_price - balance
+            btns.append([InlineKeyboardButton(
+                lt(
+                    user.id,
+                    f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Dùng {balance:,}đ + QR {remaining:,}đ",
+                    f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> Use {balance:,}đ + QR {remaining:,}đ",
+                    f"<tg-emoji emoji-id=\"5213403875670765022\">💳</tg-emoji> 使用 {balance:,}đ + QR {remaining:,}đ",
+                ),
+                callback_data=f"pay_prod_combo_{prod_id}_{qty}",
+            )])
         else:
-            btns.append([_btn(lt(user.id, "Không", "No", "否"), icon_id="5273914604752216432", callback_data="ignore")])
+            btns.append([_btn(
+                lt(user.id,
+                   f"Số dư ({balance:,}đ) - Không đủ",
+                   f"Wallet ({balance:,}đ) - Insufficient",
+                   f"钱包 ({balance:,}đ) - 余额不足"),
+                icon_id="5273914604752216432", callback_data="ignore", style="danger",
+            )])
 
         from app.integrations.binancepay_api import is_binance_pay_enabled
         if is_binance_pay_enabled():
             btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_{qty}")])
+        from app.integrations.nowpayments_api import is_nowpayments_enabled
+        if is_nowpayments_enabled():
+            btns.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_{qty}")])
         from app.integrations.payments_core import is_bank_transfer_enabled
         if is_bank_transfer_enabled():
             btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
         btns.append([_btn(lt(user.id, "Quay lại", "Back", "返回"), icon_id="6206032691075223572", callback_data=f"sel_qty_{prod_id}")])
 
+        confirm_labels = pick_locale({
+            "vi": ("XÁC NHẬN MUA HÀNG", "Sản phẩm", "Số lượng", "Tổng tiền", "Vui lòng chọn phương thức thanh toán"),
+            "en": ("CONFIRM PURCHASE", "Product", "Quantity", "Total", "Choose a payment method"),
+            "zh": ("确认购买", "商品", "数量", "总计", "请选择付款方式"),
+        }, get_user_lang(user.id))
+        confirm_title, confirm_product, confirm_qty, confirm_total, confirm_choose = confirm_labels
+        discount_note = f" <s>{full_price:,} VNĐ</s>" if total_price < full_price else ""
         confirm_text = (
-            f'<tg-emoji emoji-id="5247134066322447995">🛍</tg-emoji> <b>XÁC NHẬN MUA HÀNG</b>\n\n'
-            f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> <b>Sản phẩm:</b> {p["name"]}\n'
-            f'<tg-emoji emoji-id="5305749482170758709">0️⃣</tg-emoji> <b>Số lượng:</b> {qty}\n'
-            f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> <b>Tổng tiền:</b> {total_price:,} VNĐ\n\n'
-            f'<tg-emoji emoji-id="6186252635805323641">👇</tg-emoji> Vui lòng chọn phương thức thanh toán:'
+            f'<tg-emoji emoji-id="5247134066322447995">🛍</tg-emoji> <b>{confirm_title}</b>\n\n'
+            f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> <b>{confirm_product}:</b> {p["name"]}\n'
+            f'<tg-emoji emoji-id="5305749482170758709">0️⃣</tg-emoji> <b>{confirm_qty}:</b> {qty}\n'
+            f'<tg-emoji emoji-id="5240228673738527951">🏷</tg-emoji> <b>{confirm_total}:</b> {total_price:,} VNĐ{discount_note}\n\n'
+            f'<tg-emoji emoji-id="6186252635805323641">👇</tg-emoji> {confirm_choose}:'
         )
         render_entities = globals().get("_render_text_with_custom_emoji_entities")
         if callable(render_entities):
