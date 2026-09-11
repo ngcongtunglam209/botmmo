@@ -109,25 +109,25 @@ class TestUserProfile:
         assert rank.discount == 2
 
     def test_vip_rank_gold(self):
-        user = UserProfile(user_id=1, total_spent=1_000_000)
+        user = UserProfile(user_id=1, total_spent=2_000_000)
         rank = user.get_vip_rank()
         assert "Vàng" in rank.name
         assert rank.discount == 5
 
     def test_vip_rank_diamond(self):
-        user = UserProfile(user_id=1, total_spent=5_000_000)
+        user = UserProfile(user_id=1, total_spent=7_000_000)
         rank = user.get_vip_rank()
         assert "Kim Cương" in rank.name
         assert rank.discount == 8
 
     def test_vip_rank_master(self):
-        user = UserProfile(user_id=1, total_spent=10_000_000)
+        user = UserProfile(user_id=1, total_spent=20_000_000)
         rank = user.get_vip_rank()
         assert "Cao Thủ" in rank.name
-        assert rank.discount == 8
+        assert rank.discount == 10
 
     def test_discount_percent(self):
-        user = UserProfile(user_id=1, total_spent=2_000_000)
+        user = UserProfile(user_id=1, total_spent=3_000_000)
         assert user.get_discount_percent() == 5  # Gold level
 
 
@@ -136,7 +136,7 @@ class TestVIPRank:
         ranks = VIPRank.default_ranks()
         assert len(ranks) == 5
         assert ranks[0].min_spend == 0
-        assert ranks[-1].min_spend == 10_000_000
+        assert ranks[-1].min_spend == 20_000_000
 
 
 class TestTransactionRecord:

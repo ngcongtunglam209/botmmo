@@ -21,9 +21,9 @@ class VIPRank(BaseModel):
         return [
             VIPRank(name="⭐️ Đồng", min_spend=0, discount=0),
             VIPRank(name="⭐️ Bạc", min_spend=500_000, discount=2),
-            VIPRank(name="⭐️ Vàng", min_spend=1_000_000, discount=5),
-            VIPRank(name='<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> Kim Cương', min_spend=5_000_000, discount=8),
-            VIPRank(name="⭐️ Cao Thủ", min_spend=10_000_000, discount=8),
+            VIPRank(name="⭐️ Vàng", min_spend=2_000_000, discount=5),
+            VIPRank(name='<tg-emoji emoji-id="5240228673738527951">💎</tg-emoji> Kim Cương', min_spend=7_000_000, discount=8),
+            VIPRank(name="⭐️ Cao Thủ", min_spend=20_000_000, discount=10),
         ]
 
 

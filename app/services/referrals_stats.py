@@ -101,54 +101,6 @@ def _get_user_merged_orders(user_id: int):
     return list(merged_orders.values())
 
 
-def _get_previous_month_maintenance_window(reference_dt=None):
-    from datetime import datetime, timedelta
-    from zoneinfo import ZoneInfo
-
-    tz = ZoneInfo("Asia/Ho_Chi_Minh")
-    now = reference_dt.astimezone(tz) if reference_dt else datetime.now(tz)
-    current_month_start = datetime(now.year, now.month, 1, tzinfo=tz)
-    last_day_previous_month = current_month_start.date() - timedelta(days=1)
-    previous_month_start = datetime(
-        last_day_previous_month.year,
-        last_day_previous_month.month,
-        1,
-        tzinfo=tz,
-    )
-    return previous_month_start, current_month_start, previous_month_start.strftime("%m/%Y")
-
-
-def calculate_user_period_spent(user_id: int, start_ts: float, end_ts: float) -> int:
-    total_spent = 0
-    for order in _get_user_merged_orders(user_id):
-        if not is_completed_order(order):
-            continue
-        try:
-            order_ts = float(order.get("timestamp", 0) or 0)
-            if start_ts <= order_ts < end_ts:
-                total_spent += int(order.get("amount", 0) or 0)
-        except (ValueError, TypeError):
-            continue
-    return total_spent
-
-
-def get_rank_maintenance_status(user_id: int, reference_dt=None):
-    previous_month_start, current_month_start, period_label = _get_previous_month_maintenance_window(reference_dt)
-    monthly_spend = calculate_user_period_spent(
-        user_id,
-        previous_month_start.timestamp(),
-        current_month_start.timestamp(),
-    )
-    remaining_to_maintain = max(0, VIP_MONTHLY_MAINTENANCE_MIN_SPEND - monthly_spend)
-    return {
-        "period_label": period_label,
-        "monthly_spend": monthly_spend,
-        "minimum_required": VIP_MONTHLY_MAINTENANCE_MIN_SPEND,
-        "met_requirement": monthly_spend >= VIP_MONTHLY_MAINTENANCE_MIN_SPEND,
-        "remaining_to_maintain": remaining_to_maintain,
-    }
-
-
 def calculate_user_stats(user_id: int):
     """Tính toán thống kê user"""
     orders = _get_user_merged_orders(user_id)
@@ -310,48 +262,101 @@ def format_rank_entry_premium(rank: dict, user_id=None) -> str:
     return f'{RANK_TIER_ICONS[tier]} {t(f"rank_name_{tier}", user_id=user_id)}'
 
 
+def get_rank_window_stats(user_id: int) -> dict:
+    """Chi tieu, so don va danh sach don trong cua so xet hang VIP.
+
+    Hang tinh theo cua so truot VIP_RANK_WINDOW_DAYS chu khong phai lifetime:
+    lifetime chi tang, nen giam gia vinh vien se troi dan len bac cao nhat va
+    khong bao gio lui. Cua so truot bat khach giu nhip mua moi giu duoc hang.
+    """
+    cutoff = time.time() - VIP_RANK_WINDOW_DAYS * 86400
+    entries = []
+    total_spent = 0
+    for order in _get_user_merged_orders(user_id):
+        if not is_completed_order(order):
+            continue
+        try:
+            timestamp = float(order.get('timestamp', 0) or 0)
+            amount = max(0, int(order.get('amount', 0) or 0))
+        except (ValueError, TypeError):
+            continue
+        if timestamp >= cutoff:
+            entries.append((timestamp, amount))
+            total_spent += amount
+    entries.sort()
+    return {'spent': total_spent, 'orders': len(entries), 'entries': entries}
+
+
+def get_rank_drop_timestamp(window: dict, min_spent: int) -> float:
+    """Thoi diem hang tut neu khach khong mua them don nao nua.
+
+    Don cu roi khoi cua so tai thoi_diem_dat + VIP_RANK_WINDOW_DAYS. Duyet don
+    tu cu den moi, tru dan; don nao lam tong tut xuong duoi nguong cua hang
+    hien tai thi chinh no la don quyet dinh. Tra 0 neu hang khong the tut
+    (hang thap nhat, nguong 0).
+    """
+    if min_spent <= 0:
+        return 0.0
+    remaining = sum(amount for _ts, amount in window['entries'])
+    for timestamp, amount in window['entries']:
+        remaining -= amount
+        if remaining < min_spent:
+            return timestamp + VIP_RANK_WINDOW_DAYS * 86400
+    return 0.0
+
+
 def get_user_rank(user_id: int):
-    """Get VIP rank info for a user based on total spending"""
+    """Get VIP rank info for a user based on spending in the rank window"""
     stats = calculate_user_stats(user_id)
-    total_spent = stats['total_spent']
-    base_rank_index = 0
-    next_lifetime_rank = None
+    window = get_rank_window_stats(user_id)
+    total_spent = window['spent']
+
+    rank_index = 0
+    next_rank = None
     for i, rank in enumerate(VIP_RANKS):
         if total_spent >= rank['min_spent']:
-            base_rank_index = i
-            next_lifetime_rank = VIP_RANKS[i + 1] if i + 1 < len(VIP_RANKS) else None
+            rank_index = i
+            next_rank = VIP_RANKS[i + 1] if i + 1 < len(VIP_RANKS) else None
 
-    maintenance_status = get_rank_maintenance_status(user_id)
-    demoted_by_maintenance = base_rank_index > 0 and not maintenance_status['met_requirement']
-    effective_rank_index = max(0, base_rank_index - 1) if demoted_by_maintenance else base_rank_index
-
-    current_rank = VIP_RANKS[effective_rank_index]
-    base_rank = VIP_RANKS[base_rank_index]
-
-    if demoted_by_maintenance:
-        next_rank = base_rank
-        remaining = maintenance_status['remaining_to_maintain']
+    current_rank = VIP_RANKS[rank_index]
+    if next_rank:
+        next_rank_min_spent = int(next_rank.get('min_spend', next_rank.get('min_spent', 0)) or 0)
+        remaining = max(0, next_rank_min_spent - total_spent)
     else:
-        next_rank = next_lifetime_rank
-        if next_rank:
-            next_rank_min_spent = int(next_rank.get('min_spend', next_rank.get('min_spent', 0)) or 0)
-            remaining = max(0, next_rank_min_spent - total_spent)
-        else:
-            remaining = 0
+        remaining = 0
 
     return {
         'rank': current_rank,
-        'base_rank': base_rank,
+        'base_rank': current_rank,
         'next_rank': next_rank,
         'total_spent': total_spent,
+        'window_orders': window['orders'],
+        'lifetime_spent': stats['total_spent'],
+        'window_days': VIP_RANK_WINDOW_DAYS,
         'remaining_to_next': remaining,
-        'demoted_by_maintenance': demoted_by_maintenance,
-        'maintenance_status': maintenance_status,
+        'drop_timestamp': get_rank_drop_timestamp(window, int(current_rank.get('min_spent', 0) or 0)),
     }
 
-def get_rank_discount(user_id: int):
+
+def _get_rank_discount_info(user_id: int):
+    """Tra ve (phan_tram_giam, dict_hang) theo hang VIP hieu luc cua user.
+
+    Dung hang hieu luc (da bi tru bac neu thang truoc khong chi du muc duy tri),
+    khong dung hang lifetime -- day la cho chan chi phi cua uu dai VIP.
+    """
+    try:
+        rank_info = get_user_vip_rank(user_id)
+    except NameError:
+        rank_info = get_user_rank(user_id)
+    rank = (rank_info or {}).get('rank') or {}
+    percent = max(0, min(100, int(rank.get('discount', 0) or 0)))
+    return percent, rank
+
+
+def get_rank_discount(user_id: int) -> int:
     """Get discount percent based on VIP rank"""
-    return 0
+    percent, _rank = _get_rank_discount_info(user_id)
+    return percent
 
 def get_flash_sale_price(prod_id: str, original_price: int):
     """Check if product has active flash sale, return (discounted_price, sale_info) or (original_price, None)"""
@@ -376,8 +381,18 @@ def get_flash_sale_price(prod_id: str, original_price: int):
 def get_best_discount(user_id: int, prod_id: str, base_price: int):
     """Get best discount between VIP rank and flash sale (not stacked)"""
     flash_price, flash_info = get_flash_sale_price(prod_id, base_price)
-    if flash_info and flash_price < base_price:
+    vip_percent, vip_rank = _get_rank_discount_info(user_id)
+    vip_price = int(base_price * (100 - vip_percent) / 100) if vip_percent else base_price
+
+    # Khong cong don: chi ap dung mot uu dai re nhat cho khach.
+    if flash_info and flash_price < base_price and flash_price <= vip_price:
         return flash_price, 'flash', flash_info
+    if vip_percent and vip_price < base_price:
+        return vip_price, 'vip', {
+            'original': base_price,
+            'discount_percent': vip_percent,
+            'rank': vip_rank,
+        }
     return base_price, None, None
 
 def get_upsell_products(purchased_prod_id: str, limit: int = 2):
@@ -404,6 +419,18 @@ def _get_discount_display_line(user_id: int, prod_id: str, base_price: int):
     best_price, discount_type, info = get_best_discount(user_id, prod_id, base_price)
     if discount_type == 'flash':
         return f"\n<tg-emoji emoji-id=\"5303290914041505430\">⚡</tg-emoji> <b>FLASH SALE -{info['discount_percent']}%:</b> <s>{base_price:,}đ</s> → <b>{best_price:,}đ</b> (Còn {info['countdown']})\n"
+    if discount_type == 'vip':
+        rank_label = format_rank_entry_premium(info.get('rank') or {}, user_id=user_id)
+        return "\n" + lt(
+            user_id,
+            "<b>Ưu đãi {rank} -{percent}%:</b> <s>{old}</s> → <b>{new}</b>\n",
+            "<b>{rank} perk -{percent}%:</b> <s>{old}</s> → <b>{new}</b>\n",
+            "<b>{rank} 会员优惠 -{percent}%：</b><s>{old}</s> → <b>{new}</b>\n",
+            rank=rank_label,
+            percent=info['discount_percent'],
+            old=format_money(base_price, user_id=user_id),
+            new=format_money(best_price, user_id=user_id),
+        )
     return ""
 
 def get_user_wheel_data(user_id: int):

@@ -353,6 +353,19 @@ def main() -> None:
     logger.info(f"<tg-emoji emoji-id=\"5213349767672769194\">⏱</tg-emoji> Bank Cron:     {BANK_CHECK_INTERVAL_SECONDS}s")
     from app.integrations.nowpayments_api import is_nowpayments_enabled
     logger.info(f"<tg-emoji emoji-id=\"5231489647946768652\">🌍</tg-emoji> USDT (NOWPayments): {'ON' if is_nowpayments_enabled() else 'OFF'} | Binance Pay: {'ON' if is_binance_pay_enabled() else 'OFF'}")
+    # Bat ENABLE_PAYMENT_NOWPAYMENTS ma thieu mot key thi cong tat IM LANG:
+    # nut USDT bien mat khoi moi man thanh toan va khong co dong log nao noi
+    # tai sao. Goi ten dung bien con thieu ngay luc khoi dong.
+    if ENABLE_PAYMENT_NOWPAYMENTS and not is_nowpayments_enabled():
+        missing = [name for name, value in (
+            ("NOWPAYMENTS_API_KEY", NOWPAYMENTS_API_KEY),
+            ("NOWPAYMENTS_IPN_SECRET", NOWPAYMENTS_IPN_SECRET),
+            ("NOWPAYMENTS_CURRENCIES", NOWPAYMENTS_CURRENCIES),
+        ) if not value]
+        logger.warning(
+            "NOWPayments bat trong .env nhung bi tat vi thieu: %s. Nut USDT se khong hien.",
+            ", ".join(missing),
+        )
     logger.info(f"<tg-emoji emoji-id=\"5303145396254563405\">🤖</tg-emoji> AI Auto-Reply: {'ON' if AI_AUTO_REPLY else 'OFF'}")
 
     logger.info("<tg-emoji emoji-id=\"6269163801178804220\">✅</tg-emoji> LAM SHOP: Bot started successfully! Ready to serve... <tg-emoji emoji-id=\"5303145396254563405\">🦖</tg-emoji>")

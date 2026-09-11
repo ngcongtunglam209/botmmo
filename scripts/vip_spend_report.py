@@ -15,6 +15,8 @@ Debian mới chặn `pip install` ngoài venv. Vì vậy logic "đơn đã hoàn
     python3 scripts/vip_spend_report.py --db /duong/dan.sqlite
     python3 scripts/vip_spend_report.py --ladder 0:0,500000:2,2000000:5,7000000:8,20000000:10
 
+Hạng xếp theo chi tiêu trong cửa sổ trượt 90 ngày, đúng như get_user_vip_rank().
+
 Chi phí ước tính là CẬN TRÊN: đơn nào đang dính flash sale thì khách ăn giá flash
 chứ không cộng dồn VIP, nên số thật sẽ thấp hơn một chút.
 """
@@ -33,13 +35,14 @@ from zoneinfo import ZoneInfo
 TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 KV_ORDERS = "data_order_history.json"
 
-# Giữ khớp với VIP_MONTHLY_MAINTENANCE_MIN_SPEND trong app/core/config_env.py.
-MAINTENANCE_MIN_SPEND = 200_000
+# Giữ khớp với VIP_RANK_WINDOW_DAYS trong app/core/config_env.py. Hạng tính
+# theo chi tiêu trong cửa sổ trượt này, không phải lifetime cộng dồn.
+RANK_WINDOW_DAYS = 90
 
 # (ngưỡng chi tiêu lifetime, phần trăm giảm). Phải xếp tăng dần theo ngưỡng.
 LADDERS: dict[str, list[tuple[int, int]]] = {
-    "hien-tai": [(0, 0), (500_000, 2), (1_000_000, 5), (5_000_000, 8), (10_000_000, 10)],
-    "gian-20tr": [(0, 0), (500_000, 2), (2_000_000, 5), (7_000_000, 8), (20_000_000, 10)],
+    "hien-tai": [(0, 0), (500_000, 2), (2_000_000, 5), (7_000_000, 8), (20_000_000, 10)],
+    "cu-10tr": [(0, 0), (500_000, 2), (1_000_000, 5), (5_000_000, 8), (10_000_000, 10)],
 }
 RANK_LABELS = ["Đồng", "Bạc", "Vàng", "Kim Cương", "Cao Thủ"]
 
@@ -86,16 +89,13 @@ def load_orders(db_path: str) -> list[dict]:
     return [o for o in data if isinstance(o, dict)] if isinstance(data, list) else []
 
 
-def month_windows(now: datetime) -> tuple[float, float, float]:
-    """Trả (đầu tháng trước, đầu tháng này, mốc 30 ngày trước) dạng timestamp."""
-    this_month = datetime(now.year, now.month, 1, tzinfo=TZ)
-    last_day_prev = this_month.date() - timedelta(days=1)
-    prev_month = datetime(last_day_prev.year, last_day_prev.month, 1, tzinfo=TZ)
-    return prev_month.timestamp(), this_month.timestamp(), (now - timedelta(days=30)).timestamp()
+def cutoffs(now: datetime) -> tuple[float, float]:
+    """Trả (mốc đầu cửa sổ xét hạng, mốc 30 ngày trước) dạng timestamp."""
+    return (now - timedelta(days=RANK_WINDOW_DAYS)).timestamp(), (now - timedelta(days=30)).timestamp()
 
 
 def collect(orders: list[dict], now: datetime) -> dict[int, dict]:
-    prev_start, prev_end, last30 = month_windows(now)
+    window_start, last30 = cutoffs(now)
     users: dict[int, dict] = {}
     for order in orders:
         if not is_completed(order):
@@ -108,11 +108,11 @@ def collect(orders: list[dict], now: datetime) -> dict[int, dict]:
             ts = float(order.get("timestamp", 0) or 0)
         except (ValueError, TypeError):
             continue
-        u = users.setdefault(uid, {"lifetime": 0, "prev_month": 0, "last30": 0, "orders": 0})
+        u = users.setdefault(uid, {"lifetime": 0, "window": 0, "last30": 0, "orders": 0})
         u["lifetime"] += amount
         u["orders"] += 1
-        if prev_start <= ts < prev_end:
-            u["prev_month"] += amount
+        if ts >= window_start:
+            u["window"] += amount
         if ts >= last30:
             u["last30"] += amount
     return users
@@ -139,10 +139,8 @@ def simulate(users: dict[int, dict], ladder: list[tuple[int, int]]) -> list[dict
         for i in range(len(ladder))
     ]
     for u in users.values():
-        base = rank_index(u["lifetime"], ladder)
-        # Không đủ mức duy trì tháng trước thì tụt một bậc, giống get_user_vip_rank().
-        demoted = base > 0 and u["prev_month"] < MAINTENANCE_MIN_SPEND
-        idx = max(0, base - 1) if demoted else base
+        # Hạng theo chi tiêu trong cửa sổ trượt, giống get_user_vip_rank().
+        idx = rank_index(u["window"], ladder)
         row = rows[idx]
         row["users"] += 1
         row["revenue30"] += u["last30"]
@@ -199,9 +197,9 @@ def main() -> None:
     lifetime_total = sum(u["lifetime"] for u in users.values())
     print(f"Đơn hoàn thành: {completed:,} | Khách có đơn: {len(users):,} | Doanh thu lifetime: {lifetime_total:,}đ")
 
-    over10 = sum(1 for u in users.values() if u["lifetime"] >= 10_000_000)
-    over20 = sum(1 for u in users.values() if u["lifetime"] >= 20_000_000)
-    print(f"Khách vượt 10 triệu lifetime: {over10:,} | vượt 20 triệu: {over20:,}")
+    over10 = sum(1 for u in users.values() if u["window"] >= 10_000_000)
+    over20 = sum(1 for u in users.values() if u["window"] >= 20_000_000)
+    print(f"Khách chi trên 10 triệu trong {RANK_WINDOW_DAYS} ngày: {over10:,} | trên 20 triệu: {over20:,}")
 
     ladders = {"tuy-chon": parse_ladder(args.ladder)} if args.ladder else LADDERS
     for name, ladder in ladders.items():

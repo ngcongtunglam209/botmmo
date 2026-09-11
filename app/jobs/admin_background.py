@@ -123,46 +123,15 @@ async def auto_remind_email_job(context: ContextTypes.DEFAULT_TYPE):
 
 VIP_RANKS = [
     {"name": "⭐️ Đồng",         "min_orders": 0,  "min_spent": 0,        "discount": 0},
-    {"name": "⭐️ Bạc",          "min_orders": 0,  "min_spent": 500000,   "discount": 0},
-    {"name": "⭐️ Vàng",         "min_orders": 0,  "min_spent": 1000000,  "discount": 0},
-    {"name": "<tg-emoji emoji-id=\"5240228673738527951\">💎</tg-emoji> Kim Cương",    "min_orders": 0,  "min_spent": 5000000,  "discount": 0},
-    {"name": "⭐️ Cao Thủ",      "min_orders": 0,  "min_spent": 10000000, "discount": 0},
+    {"name": "⭐️ Bạc",          "min_orders": 0,  "min_spent": 500000,   "discount": 2},
+    {"name": "⭐️ Vàng",         "min_orders": 0,  "min_spent": 2000000,  "discount": 5},
+    {"name": "<tg-emoji emoji-id=\"5240228673738527951\">💎</tg-emoji> Kim Cương",    "min_orders": 0,  "min_spent": 7000000,  "discount": 8},
+    {"name": "⭐️ Cao Thủ",      "min_orders": 0,  "min_spent": 20000000, "discount": 10},
 ]
 
 
-def _get_previous_month_maintenance_window(reference_dt=None):
-    from datetime import datetime, timedelta
-    from zoneinfo import ZoneInfo
-
-    tz = ZoneInfo("Asia/Ho_Chi_Minh")
-    now = reference_dt.astimezone(tz) if reference_dt else datetime.now(tz)
-    current_month_start = datetime(now.year, now.month, 1, tzinfo=tz)
-    last_day_previous_month = current_month_start.date() - timedelta(days=1)
-    previous_month_start = datetime(
-        last_day_previous_month.year,
-        last_day_previous_month.month,
-        1,
-        tzinfo=tz,
-    )
-    return previous_month_start, current_month_start, previous_month_start.strftime("%m/%Y")
-
-
-def _calculate_orders_spent_in_period(orders, start_ts: float, end_ts: float) -> int:
-    total_spent = 0
-    for order in orders:
-        if not is_completed_order(order):
-            continue
-        try:
-            order_ts = float(order.get("timestamp", 0) or 0)
-            if start_ts <= order_ts < end_ts:
-                total_spent += int(order.get("amount", 0) or 0)
-        except (ValueError, TypeError):
-            continue
-    return total_spent
-
-
 def get_user_vip_rank(user_id) -> dict:
-    """Tính rank VIP dựa trên tổng đơn hoàn thành và tổng chi tiêu."""
+    """Tính rank VIP theo chi tiêu trong cửa sổ trượt VIP_RANK_WINDOW_DAYS."""
     merged_orders = {}
     for order in user_order_index.get(str(user_id), []):
         order_code = str(order.get("order_code") or "")
@@ -172,59 +141,45 @@ def get_user_vip_rank(user_id) -> dict:
         order_code = str(order.get("order_code") or "")
         if order_code:
             merged_orders[order_code] = order
-    user_orders = list(merged_orders.values())
-    completed = [o for o in user_orders if is_completed_order(o)]
-    total_orders = len(completed)
-    total_spent = sum(o.get('amount', 0) for o in completed)
+    completed = [o for o in merged_orders.values() if is_completed_order(o)]
+    lifetime_spent = sum(o.get("amount", 0) for o in completed)
 
-    base_rank_index = 0
-    next_lifetime_rank = None
+    # Hạng thuần theo cửa sổ trượt: đơn cũ rụng dần nên hạng tự tụt khi khách
+    # ngừng mua, không cần thêm luật duy trì theo tháng nữa.
+    window = get_rank_window_stats(user_id)
+    total_spent = window["spent"]
+    total_orders = window["orders"]
+
+    rank_index = 0
+    next_rank = None
     for i, rank in enumerate(VIP_RANKS):
         if total_orders >= rank["min_orders"] and total_spent >= rank["min_spent"]:
-            base_rank_index = i
-            next_lifetime_rank = VIP_RANKS[i + 1] if i + 1 < len(VIP_RANKS) else None
+            rank_index = i
+            next_rank = VIP_RANKS[i + 1] if i + 1 < len(VIP_RANKS) else None
         else:
-            next_lifetime_rank = rank
+            next_rank = rank
             break
 
-    previous_month_start, current_month_start, period_label = _get_previous_month_maintenance_window()
-    monthly_spend = _calculate_orders_spent_in_period(
-        user_orders,
-        previous_month_start.timestamp(),
-        current_month_start.timestamp(),
-    )
-    maintenance_status = {
-        "period_label": period_label,
-        "monthly_spend": monthly_spend,
-        "minimum_required": VIP_MONTHLY_MAINTENANCE_MIN_SPEND,
-        "met_requirement": monthly_spend >= VIP_MONTHLY_MAINTENANCE_MIN_SPEND,
-        "remaining_to_maintain": max(0, VIP_MONTHLY_MAINTENANCE_MIN_SPEND - monthly_spend),
-    }
-    demoted_by_maintenance = base_rank_index > 0 and not maintenance_status["met_requirement"]
-    effective_rank_index = max(0, base_rank_index - 1) if demoted_by_maintenance else base_rank_index
-    current_rank = VIP_RANKS[effective_rank_index]
-    base_rank = VIP_RANKS[base_rank_index]
-
-    if demoted_by_maintenance:
-        next_rank = base_rank
-    else:
-        next_rank = next_lifetime_rank
-
+    current_rank = VIP_RANKS[rank_index]
     return {
         "rank": current_rank,
-        "base_rank": base_rank,
+        "base_rank": current_rank,
         "next_rank": next_rank,
         "total_orders": total_orders,
         "total_spent": total_spent,
-        "discount_percent": 0,
-        "demoted_by_maintenance": demoted_by_maintenance,
-        "maintenance_status": maintenance_status,
+        "lifetime_spent": lifetime_spent,
+        "window_days": VIP_RANK_WINDOW_DAYS,
+        "discount_percent": int(current_rank.get("discount", 0) or 0),
+        "drop_timestamp": get_rank_drop_timestamp(window, int(current_rank.get("min_spent", 0) or 0)),
     }
+
 
 def apply_vip_discount(user_id, original_price: int) -> tuple:
     """Trả về (giá_sau_giảm, phần_trăm_giảm, tên_rank)."""
     vip = get_user_vip_rank(user_id)
-    return original_price, 0, vip["rank"]["name"]
+    percent = max(0, min(100, int(vip.get("discount_percent", 0) or 0)))
+    discounted = int(original_price * (100 - percent) / 100) if percent else original_price
+    return discounted, percent, vip["rank"]["name"]
 
 
 # ==============================================================================
@@ -367,51 +322,40 @@ async def rank_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     vip = get_user_vip_rank(user_id)
 
     rank = vip["rank"]
-    base_rank = vip.get("base_rank") or rank
     next_rank = vip["next_rank"]
-    maintenance_status = vip.get("maintenance_status") or {}
+    window_days = vip.get("window_days", VIP_RANK_WINDOW_DAYS)
 
     divider = "━" * 28
     msg = t(
         "rank_panel_header",
         user_id=user_id,
         divider=divider,
-        rank=rank['name'],
-        orders=vip['total_orders'],
-        spent=format_money(vip['total_spent'], user_id=user_id),
+        rank=rank["name"],
+        orders=vip["total_orders"],
+        spent=format_money(vip["total_spent"], user_id=user_id),
+        discount=vip.get("discount_percent", 0),
+        window=window_days,
     )
 
-    if vip.get("demoted_by_maintenance"):
-        msg += t(
-            "rank_demoted_notice",
-            user_id=user_id,
-            period=maintenance_status.get("period_label")
-            or t("rank_period_previous", user_id=user_id),
-            spend=format_money(maintenance_status.get("monthly_spend", 0), user_id=user_id),
-            minimum=format_money(VIP_MONTHLY_MAINTENANCE_MIN_SPEND, user_id=user_id),
-            needed=format_money(maintenance_status.get("remaining_to_maintain", 0), user_id=user_id),
-            base_rank=base_rank['name'],
-        )
     if next_rank:
-        if vip.get("demoted_by_maintenance"):
-            msg += t(
-                "rank_regain_target",
-                user_id=user_id,
-                rank=next_rank['name'],
-                minimum=format_money(VIP_MONTHLY_MAINTENANCE_MIN_SPEND, user_id=user_id),
-            )
-        else:
-            orders_need = max(0, next_rank["min_orders"] - vip["total_orders"])
-            spent_need = max(0, next_rank["min_spent"] - vip["total_spent"])
-            msg += t(
-                "rank_next_target",
-                user_id=user_id,
-                rank=next_rank['name'],
-                orders_need=orders_need,
-                spent_need=format_money(spent_need, user_id=user_id),
-            )
+        spent_need = max(0, int(next_rank.get("min_spent", 0) or 0) - vip["total_spent"])
+        msg += t(
+            "rank_next_target",
+            user_id=user_id,
+            rank=next_rank["name"],
+            spent_need=format_money(spent_need, user_id=user_id),
+        )
     else:
         msg += t("rank_highest_reached", user_id=user_id)
+
+    # Ngày hạng tụt nếu khách không mua thêm: đơn cũ rụng khỏi cửa sổ trượt.
+    drop_timestamp = vip.get("drop_timestamp") or 0
+    if drop_timestamp:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        drop_date = datetime.fromtimestamp(drop_timestamp, ZoneInfo("Asia/Ho_Chi_Minh")).strftime("%d/%m/%Y")
+        msg += t("rank_drop_warning", user_id=user_id, date=drop_date, rank=rank["name"])
 
     # Bảng xếp hạng
     msg += t("rank_tier_list_header", user_id=user_id, divider=divider)
@@ -420,15 +364,11 @@ async def rank_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         msg += t(
             "rank_tier_row",
             user_id=user_id,
-            rank=r['name'],
-            min_orders=r['min_orders'],
+            rank=r["name"],
+            min_spent=format_money(r["min_spent"], user_id=user_id),
             marker=marker,
         )
-    msg += t(
-        "rank_maintenance_rule",
-        user_id=user_id,
-        minimum=format_money(VIP_MONTHLY_MAINTENANCE_MIN_SPEND, user_id=user_id),
-    )
+    msg += t("rank_window_rule", user_id=user_id, window=window_days)
 
     await update.message.reply_text(msg, parse_mode=ParseMode.HTML)
 
