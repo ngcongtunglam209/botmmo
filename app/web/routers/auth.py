@@ -142,6 +142,7 @@ async def telegram_callback(request: Request):
                 security.TELEGRAM_JWKS_URL, headers={"Accept": "application/json"}
             )
             if jwks_response.status_code != 200:
+                logger.warning("Telegram JWKS fetch failed: %s", jwks_response.status_code)
                 return _error_redirect("identity")
             claims = security.verify_id_token(
                 str(token_response.json().get("id_token") or ""),

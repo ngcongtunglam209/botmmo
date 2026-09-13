@@ -150,41 +150,84 @@ def build_authorization_url(state: str, nonce: str, verifier: str, redirect_uri:
     return f"{TELEGRAM_AUTH_URL}?{urlencode(params)}"
 
 
-def verify_id_token(id_token: str, jwks: dict, expected_nonce: str) -> dict:
-    """Xác minh chữ ký RS256 và các claim bắt buộc. Trả {} nếu không hợp lệ."""
-    from cryptography.exceptions import InvalidSignature
+# alg -> (kty, crv) của khóa JWKS phải khớp. Telegram công bố cả 4 alg trong
+# openid-configuration và có thể ký ID Token bằng bất kỳ alg nào.
+_JWS_ALGS = {
+    "RS256": ("RSA", None),
+    "ES256": ("EC", "P-256"),
+    "ES256K": ("EC", "secp256k1"),
+    "EdDSA": ("OKP", "Ed25519"),
+}
+
+
+def _verify_jws_signature(alg: str, key: dict, signature: bytes, data: bytes) -> None:
+    """Raise InvalidSignature/ValueError nếu chữ ký sai."""
     from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.asymmetric import padding, rsa
+    from cryptography.hazmat.primitives.asymmetric import ec, ed25519, padding, rsa
+    from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
+
+    def as_int(name: str) -> int:
+        return int.from_bytes(b64url_decode(key[name]), "big")
+
+    if alg == "RS256":
+        rsa.RSAPublicNumbers(as_int("e"), as_int("n")).public_key().verify(
+            signature, data, padding.PKCS1v15(), hashes.SHA256()
+        )
+    elif alg in ("ES256", "ES256K"):
+        # JWS dùng r||s thô 64 byte, cryptography cần DER.
+        if len(signature) != 64:
+            raise ValueError("bad EC signature length")
+        curve = ec.SECP256R1() if alg == "ES256" else ec.SECP256K1()
+        ec.EllipticCurvePublicNumbers(as_int("x"), as_int("y"), curve).public_key().verify(
+            encode_dss_signature(
+                int.from_bytes(signature[:32], "big"), int.from_bytes(signature[32:], "big")
+            ),
+            data,
+            ec.ECDSA(hashes.SHA256()),
+        )
+    elif alg == "EdDSA":
+        ed25519.Ed25519PublicKey.from_public_bytes(b64url_decode(key["x"])).verify(signature, data)
+    else:
+        raise ValueError(f"unsupported alg {alg}")
+
+
+def verify_id_token(id_token: str, jwks: dict, expected_nonce: str) -> dict:
+    """Xác minh chữ ký (RS256/ES256/ES256K/EdDSA) và các claim bắt buộc. Trả {} nếu không hợp lệ."""
+    from cryptography.exceptions import InvalidSignature
+
+    def reject(reason: str) -> dict:
+        logger.warning("Telegram ID Token bị từ chối: %s", reason)
+        return {}
 
     settings = get_settings()
     try:
         header_part, payload_part, signature_part = str(id_token or "").split(".", 2)
         header = json.loads(b64url_decode(header_part).decode("utf-8"))
         claims = json.loads(b64url_decode(payload_part).decode("utf-8"))
-        if header.get("alg") != "RS256":
-            return {}
+        alg = str(header.get("alg") or "")
+        if alg not in _JWS_ALGS:
+            return reject(f"alg={alg!r}")
+        kty, crv = _JWS_ALGS[alg]
+        kid = str(header.get("kid") or "")
         key = next(
             (
                 item
                 for item in (jwks.get("keys") or [])
                 if isinstance(item, dict)
-                and item.get("kty") == "RSA"
-                and str(item.get("kid") or "") == str(header.get("kid") or "")
+                and item.get("kty") == kty
+                and (crv is None or item.get("crv") == crv)
+                and str(item.get("kid") or "") == kid
             ),
             None,
         )
         if not key:
-            return {}
-        public_key = rsa.RSAPublicNumbers(
-            int.from_bytes(b64url_decode(key["e"]), "big"),
-            int.from_bytes(b64url_decode(key["n"]), "big"),
-        ).public_key()
-        public_key.verify(
-            b64url_decode(signature_part),
-            f"{header_part}.{payload_part}".encode("ascii"),
-            padding.PKCS1v15(),
-            hashes.SHA256(),
-        )
+            return reject(f"không có khóa JWKS cho kid={kid!r} alg={alg}")
+        try:
+            _verify_jws_signature(
+                alg, key, b64url_decode(signature_part), f"{header_part}.{payload_part}".encode("ascii")
+            )
+        except (InvalidSignature, ValueError):
+            return reject(f"chữ ký sai (alg={alg})")
 
         now = int(time.time())
         audience = claims.get("aud")
@@ -193,21 +236,23 @@ def verify_id_token(id_token: str, jwks: dict, expected_nonce: str) -> dict:
             audience_ok = client_id in {str(item) for item in audience}
         else:
             audience_ok = hmac.compare_digest(str(audience), client_id)
-        if claims.get("iss") != TELEGRAM_ISSUER or not audience_ok:
-            return {}
+        if claims.get("iss") != TELEGRAM_ISSUER:
+            return reject(f"iss={claims.get('iss')!r}")
+        if not audience_ok:
+            return reject(f"aud={audience!r}")
         if int(claims.get("exp") or 0) < now - 30:
-            return {}
+            return reject(f"hết hạn exp={claims.get('exp')} now={now}")
         if int(claims.get("iat") or 0) > now + 60:
-            return {}
+            return reject(f"iat tương lai iat={claims.get('iat')} now={now}")
         token_nonce = claims.get("nonce")
         if token_nonce is not None and (
             not expected_nonce
             or not hmac.compare_digest(str(token_nonce), str(expected_nonce))
         ):
-            return {}
+            return reject("nonce không khớp")
         return claims
-    except (ValueError, TypeError, KeyError, json.JSONDecodeError, InvalidSignature):
-        return {}
+    except (ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
+        return reject(f"token lỗi định dạng: {type(exc).__name__}")
 
 
 def claims_are_admin(claims: dict[str, Any]) -> bool:
