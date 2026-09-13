@@ -30,6 +30,8 @@ services:
       # Phai tro vao thu muc duoc mount ben duoi, xem chu thich o volumes.
       DB_PATH: /app/data/database.sqlite
       LOG_FILE: /app/logs/bot.log
+      # Gio local cho log va datetime.now() khong tz. Dong ho van phai dong bo NTP tren host.
+      TZ: Asia/Ho_Chi_Minh
     volumes:
       # Mount ca thu muc chu khong phai rieng file .sqlite: SQLite chay WAL nen
       # con ghi database.sqlite-wal va -shm ben canh. Neu chi mount file thi hai
