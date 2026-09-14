@@ -281,3 +281,30 @@ def test_a_binance_topup_is_refused_when_the_gateway_is_off(topup_env, monkeypat
     context = PhotoContext()
     assert asyncio.run(topup.create_user_topup_request(FakeUpdate(), context, 100000, method="binance")) is False
     assert pending == {}
+
+
+def test_a_nowpayments_topup_uses_the_network_the_customer_picked(topup_env, monkeypatch):
+    topup, _db, _users, pending = topup_env
+    import sys
+
+    np_api = sys.modules["app.integrations.nowpayments_api"]
+    seen = {}
+
+    async def fake_payment(order_code, amount_vnd, pay_currency):
+        seen["currency"] = pay_currency
+        return {"payment_id": "42", "pay_amount": 3.85, "pay_currency": pay_currency, "pay_address": "0xabc"}
+
+    monkeypatch.setattr(np_api, "is_nowpayments_enabled", lambda: True)
+    monkeypatch.setattr(np_api, "create_nowpayments_payment", fake_payment)
+    monkeypatch.setattr(np_api, "nowpayments_qr_photo", lambda address: "https://qr.example/np")
+
+    context = PhotoContext()
+    # Regression: the network-choice screen passes `network=`, which used to raise TypeError.
+    assert asyncio.run(
+        topup.create_user_topup_request(FakeUpdate(), context, 100000, method="nowpay", network="usdtbsc")
+    ) is True
+
+    _code, details = topup.get_user_pending_topup(555)
+    assert seen["currency"] == "usdtbsc"
+    assert details["nowpayments_currency"] == "usdtbsc"
+    assert details["nowpayments_payment_id"] == "42"

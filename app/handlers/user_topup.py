@@ -309,7 +309,7 @@ async def show_topup_method_choice(update: Update, context: ContextTypes.DEFAULT
     return True
 
 
-async def create_user_topup_request(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, method: str = "bank") -> bool:
+async def create_user_topup_request(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, method: str = "bank", network: str = "") -> bool:
     """Tao ma nap + QR. Tra False neu khong tao duoc (da co ma cho / sai so tien)."""
     user = update.effective_user
     chat_id = update.effective_chat.id
