@@ -182,7 +182,8 @@ def _build_nowpayments_topup_keyboard(user_id, code: str, payment: dict):
     if invoice_url:
         rows.append([InlineKeyboardButton(nowpayments_invoice_button_label(user_id), url=invoice_url)])
     address = str(payment.get("pay_address") or "").strip()
-    amount_text = format(payment["pay_amount"], "f") if payment.get("pay_amount") is not None else ""
+    # Hoa don: so tien that do trang NOWPayments quyet dinh theo coin khach chon.
+    amount_text = format(payment["pay_amount"], "f") if payment.get("pay_amount") is not None and not invoice_url else ""
     extra_id = str(payment.get("payin_extra_id") or "").strip()
     if address:
         rows.append([InlineKeyboardButton(
@@ -315,7 +316,7 @@ async def show_topup_method_choice(update: Update, context: ContextTypes.DEFAULT
         rows.append([_btn("Binance Pay (USDT)", icon_id=CRYPTO_BUTTON_ICON_ID,
                           callback_data=f"topup_pay:binance:{int(amount)}", style="success")])
     if "nowpay" in methods:
-        rows.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079",
+        rows.append([_btn("Crypto (NOWPayments)", icon_id="5281029063459234079",
                           callback_data=f"topup_pay:nowpay:{int(amount)}", style="success")])
     rows.append([_btn(lt(user_id, "Quay lại", "Back", "返回"),
                       icon_id="6206032691075223572", callback_data="my_stats")])
