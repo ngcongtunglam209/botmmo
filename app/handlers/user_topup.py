@@ -182,7 +182,8 @@ def _build_nowpayments_topup_keyboard(user_id, code: str, payment: dict):
     if invoice_url:
         rows.append([InlineKeyboardButton(nowpayments_invoice_button_label(user_id), url=invoice_url)])
     address = str(payment.get("pay_address") or "").strip()
-    amount_text = format(payment["pay_amount"], "f") if payment.get("pay_amount") is not None else ""
+    # Hoa don: so tien that do trang NOWPayments quyet dinh theo coin khach chon.
+    amount_text = format(payment["pay_amount"], "f") if payment.get("pay_amount") is not None and not invoice_url else ""
     extra_id = str(payment.get("payin_extra_id") or "").strip()
     if address:
         rows.append([InlineKeyboardButton(
