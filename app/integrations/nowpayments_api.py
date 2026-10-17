@@ -521,7 +521,9 @@ def build_nowpayments_checkout_keyboard(order_code: str, pay_address: str, amoun
             lt(user_id, "📋 Sao chép địa chỉ", "📋 Copy address", "📋 复制地址"),
             copy_text=CopyTextButton(pay_address),
         )])
-    if amount_text:
+    # Hoa don: so tien that do trang NOWPayments quyet dinh theo coin khach chon,
+    # copy con so USDT uoc tinh chi gay nham.
+    if amount_text and not invoice_url:
         rows.append([InlineKeyboardButton(
             lt(user_id, "📋 Sao chép số tiền", "📋 Copy amount", "📋 复制金额"),
             copy_text=CopyTextButton(amount_text),
