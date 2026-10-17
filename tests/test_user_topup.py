@@ -136,7 +136,7 @@ def test_topup_qr_uses_the_same_builder_as_checkout(topup_env, monkeypatch):
     # The two QR images used to come from different providers (img.vietqr.io for
     # top-ups, qr.sepay.vn for purchases), so the frame and logo did not match.
     assert topup.build_user_topup_qr_url("NAPU5551234", 100000) == ui.create_vietqr_link(100000, "NAPU5551234")
-    assert "qr.sepay.vn" in topup.build_user_topup_qr_url("NAPU5551234", 100000)
+    assert "img.vietqr.io" in topup.build_user_topup_qr_url("NAPU5551234", 100000)
 
 
 def _set_display_rates(monkeypatch, *, vnd_per_usdt="26000", cny_per_usdt="7.2"):

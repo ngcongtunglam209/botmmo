@@ -90,13 +90,12 @@ BANK_ID = get_env_str("BANK_ID", "MB")
 BANK_ACCOUNT_NUMBER = os.getenv("BANK_ACCOUNT_NUMBER", "").strip()
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME", "").strip()
 
-# --- SePay: duong thanh toan ngan hang duy nhat (webhook la chinh, poll chi
+# --- GPM Pay: duong thanh toan ngan hang duy nhat (webhook la chinh, poll chi
 # la du phong doi soat lai) ---
-ENABLE_PAYMENT_SEPAY = get_env_bool("ENABLE_PAYMENT_SEPAY", True)
-SEPAY_WEBHOOK_API_KEY = os.getenv("SEPAY_WEBHOOK_API_KEY", "").strip()
-SEPAY_API_TOKEN = os.getenv("SEPAY_API_TOKEN", "").strip()
-SEPAY_API_BASE_URL = get_env_str("SEPAY_API_BASE_URL", "https://my.sepay.vn").rstrip("/")
-SEPAY_ACCOUNT_NUMBER = os.getenv("SEPAY_ACCOUNT_NUMBER", "").strip() or BANK_ACCOUNT_NUMBER
+ENABLE_PAYMENT_GPMPAY = get_env_bool("ENABLE_PAYMENT_GPMPAY", True)
+GPMPAY_WEBHOOK_SECRET = os.getenv("GPMPAY_WEBHOOK_SECRET", "").strip()
+GPMPAY_API_TOKEN = os.getenv("GPMPAY_API_TOKEN", "").strip()
+GPMPAY_API_BASE_URL = get_env_str("GPMPAY_API_BASE_URL", "https://api.gpmpay.com/api/v1").rstrip("/")
 ADMIN_USER_ID = get_env_int("ADMIN_USER_ID", 0, minimum=0)
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "").strip()
 SUPPORT_GROUP_LINK = os.getenv("SUPPORT_GROUP_LINK", "").strip()
@@ -341,8 +340,8 @@ def _iter_log_secrets():
     candidates = (
         TELEGRAM_TOKEN,
         API_SECRET_KEY,
-        SEPAY_WEBHOOK_API_KEY,
-        SEPAY_API_TOKEN,
+        GPMPAY_WEBHOOK_SECRET,
+        GPMPAY_API_TOKEN,
         NOWPAYMENTS_API_KEY,
         NOWPAYMENTS_IPN_SECRET,
         BINANCE_API_KEY,
@@ -426,7 +425,7 @@ USER_TOPUP_EXPIRATION_SECONDS = get_env_int("USER_TOPUP_EXPIRATION_SECONDS", 900
 ORDER_EXPIRATION_SECONDS = 600
 BANK_CHECK_INTERVAL_SECONDS = get_env_int("BANK_CHECK_INTERVAL_SECONDS", 15, minimum=5)
 BANK_API_TIMEOUT_SECONDS = get_env_float("BANK_API_TIMEOUT_SECONDS", 6.0, minimum=2.0)
-SEPAY_POLL_LOOKBACK_MINUTES = get_env_int("SEPAY_POLL_LOOKBACK_MINUTES", 180, minimum=15)
+GPMPAY_POLL_LOOKBACK_MINUTES = get_env_int("GPMPAY_POLL_LOOKBACK_MINUTES", 180, minimum=15)
 BANK_REFUND_MIN_AMOUNT = get_env_int("BANK_REFUND_MIN_AMOUNT", 200000, minimum=200000)
 
 # Tối ưu: Compile regex trước để tăng tốc

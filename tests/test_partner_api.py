@@ -255,5 +255,5 @@ def test_openapi_lists_partner_endpoints(api):
     assert "/api/v2/orders" in schema["paths"]
     assert "/api/v1/users/profile" in schema["paths"]
     # Endpoint nội bộ không được lộ trong tài liệu công khai.
-    assert "/webhook/sepay" not in schema["paths"]
+    assert "/webhook/gpmpay" not in schema["paths"]
     assert "/admin" not in schema["paths"]

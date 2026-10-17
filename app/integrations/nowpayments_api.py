@@ -34,6 +34,11 @@ NOWPAYMENTS_STATUS_IN_FLIGHT = frozenset({"waiting", "confirming", "confirmed", 
 # IPN da xac thuc chu ky, cho payment_monitor rut o vong quet ke tiep.
 nowpayments_ipn_inbox: list = []
 
+# Nut "Coin khac": khong tao payment theo mang co dinh ma mo trang hoa don cua
+# NOWPayments de khach tu chon coin. Sentinel nay di qua cac callback
+# `nowpaynet_` / `topup_npnet:` nhu mot ma dong tien binh thuong.
+NOWPAYMENTS_INVOICE_CHOICE = "any"
+
 
 def is_nowpayments_enabled() -> bool:
     """Bat khi co du API key, IPN secret va it nhat mot ma dong tien.
@@ -47,6 +52,12 @@ def is_nowpayments_enabled() -> bool:
         and NOWPAYMENTS_IPN_SECRET
         and NOWPAYMENTS_CURRENCIES
     )
+
+
+def nowpayments_invoice_available() -> bool:
+    """Trang hoa don chi dung duoc khi IPN toi duoc: payment_id cua don hoa don
+    ta chi biet qua IPN dau tien, khong co no thi duong poll du phong mu."""
+    return is_nowpayments_enabled() and bool(nowpayments_callback_url())
 
 
 def nowpayments_normalize_ref(payment_id) -> str:
@@ -154,14 +165,18 @@ def nowpayments_normalize_payment(body: dict) -> dict | None:
     if actually_paid is None or actually_paid <= 0:
         logger.warning("NOWPayments: payment %s khong doc duoc actually_paid -> bo qua", payment_id)
         return None
-    if actually_paid < (pay_amount - NOWPAYMENTS_UNDERPAY_TOLERANCE):
+    pay_currency = str(body.get("pay_currency") or "").strip().lower()
+    # Dung sai tuyet doi (0.01) chi co nghia voi stablecoin. Don hoa don cho
+    # khach chon coin bat ky: 0.01 BTC la ca trieu dong, nen coin khac phai tra du.
+    tolerance = NOWPAYMENTS_UNDERPAY_TOLERANCE if pay_currency.startswith(("usdt", "usdc")) else Decimal("0")
+    if actually_paid < (pay_amount - tolerance):
         logger.error(
             "NOWPayments: payment %s (don %s) tra thieu %s/%s %s -> KHONG cong",
             payment_id,
             order_code,
             actually_paid,
             pay_amount,
-            str(body.get("pay_currency") or "").strip().lower(),
+            pay_currency,
         )
         return None
 
@@ -171,8 +186,34 @@ def nowpayments_normalize_payment(body: dict) -> dict | None:
         "order_code": order_code,
         "pay_amount": pay_amount,
         "actually_paid": actually_paid,
-        "pay_currency": str(body.get("pay_currency") or "").strip().lower(),
+        "pay_currency": pay_currency,
     }
+
+
+def nowpayments_remember_payment_id(body: dict) -> bool:
+    """IPN dau tien cua don hoa don la luc duy nhat ta biet payment_id -> ghi vao
+    ban ghi pending de duong poll du phong co ma ma hoi lai. Don tao bang
+    create_nowpayments_payment da co payment_id tu dau nen khong bi dung toi.
+
+    ponytail: don hoa don ma IPN chet hoan toan thi poll mu; nang cap = GET
+    /v1/payment/?invoiceId= (can JWT dang nhap email/password).
+    """
+    if not isinstance(body, dict):
+        return False
+    payment_id = str(body.get("payment_id") or "").strip()
+    order_code = str(body.get("order_id") or "").strip()
+    if not payment_id or not order_code:
+        return False
+    for code, details in iter_pending_nowpayments_records():
+        if code != order_code or details.get("nowpayments_payment_id"):
+            continue
+        details["nowpayments_payment_id"] = payment_id
+        pay_currency = str(body.get("pay_currency") or "").strip().lower()
+        if pay_currency:
+            details["nowpayments_currency"] = pay_currency
+        logger.info("NOWPayments: don hoa don %s gan payment %s (%s)", order_code, payment_id, pay_currency)
+        return True
+    return False
 
 
 def nowpayments_pay_currency_label(currency: str) -> str:
@@ -297,6 +338,8 @@ async def create_nowpayments_payment(order_code: str, amount_vnd: int, pay_curre
             "NOWPAYMENTS_CURRENCIES)"
         )
     currency = str(pay_currency or "").strip().lower()
+    if currency == NOWPAYMENTS_INVOICE_CHOICE:
+        return await create_nowpayments_invoice(order_code, amount_vnd)
     if currency not in NOWPAYMENTS_CURRENCIES:
         raise RuntimeError(f"Ma dong tien khong nam trong NOWPAYMENTS_CURRENCIES: {currency}")
 
@@ -349,6 +392,49 @@ async def create_nowpayments_payment(order_code: str, amount_vnd: int, pay_curre
         # khach mat tien, nen phai chuyen tiep len giao dien.
         "payin_extra_id": str(body.get("payin_extra_id") or "").strip(),
         "rate": live_rate,
+    }
+
+
+async def create_nowpayments_invoice(order_code: str, amount_vnd: int) -> dict:
+    """Hoa don mo tren trang NOWPayments, khach tu chon coin + mang o do.
+
+    Tra ve cung dang voi create_nowpayments_payment nhung khong co dia chi:
+    `invoice_url` thay cho `pay_address`, `payment_id` rong cho toi khi IPN
+    dau tien bao ve (nowpayments_remember_payment_id).
+    """
+    from app.integrations.payments_core import convert_vnd_to_usdt, get_live_usdt_vnd_rate
+
+    if not nowpayments_invoice_available():
+        raise RuntimeError("NOWPayments invoice can PUBLIC_API_URL de nhan IPN")
+
+    live_rate = await get_live_usdt_vnd_rate()
+    price_amount = convert_vnd_to_usdt(amount_vnd, rate=live_rate)
+    # Niem yet bang dong USDT dang dung cho cac nut mang co dinh, de so khach
+    # thay trong bot va tren trang hoa don la mot.
+    price_currency = NOWPAYMENTS_PAYOUT_CURRENCY or NOWPAYMENTS_CURRENCIES[0]
+    payload = {
+        "price_amount": float(price_amount),
+        "price_currency": price_currency,
+        "order_id": order_code,
+        "order_description": f"Order {order_code}",
+        "ipn_callback_url": nowpayments_callback_url(),
+    }
+    body = await _nowpayments_request("POST", "/invoice", payload)
+
+    invoice_url = str(body.get("invoice_url") or "").strip()
+    invoice_id = str(body.get("id") or "").strip()
+    if not invoice_url.lower().startswith("https://") or not invoice_id:
+        raise RuntimeError("NOWPayments khong tra ve invoice_url/id hop le")
+
+    return {
+        "payment_id": "",
+        "pay_address": "",
+        "pay_amount": _nowpayments_decimal(price_amount, Decimal("0")),
+        "pay_currency": NOWPAYMENTS_INVOICE_CHOICE,
+        "payin_extra_id": "",
+        "rate": live_rate,
+        "invoice_id": invoice_id,
+        "invoice_url": invoice_url,
     }
 
 
@@ -418,8 +504,18 @@ def nowpayments_qr_photo(pay_address: str):
     return f"https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={_quote(str(pay_address), safe='')}"
 
 
-def build_nowpayments_checkout_keyboard(order_code: str, pay_address: str, amount_text: str, user_id=None):
+def nowpayments_invoice_button_label(user_id=None) -> str:
+    return lt(user_id, "🌐 Mở trang thanh toán", "🌐 Open payment page", "🌐 打开支付页面")
+
+
+def nowpayments_invoice_choice_label(user_id=None) -> str:
+    return lt(user_id, "Coin khác (trang NOWPayments)", "Other coin (NOWPayments page)", "其他币种（NOWPayments 页面）")
+
+
+def build_nowpayments_checkout_keyboard(order_code: str, pay_address: str, amount_text: str, user_id=None, invoice_url: str = ""):
     rows = []
+    if invoice_url:
+        rows.append([InlineKeyboardButton(nowpayments_invoice_button_label(user_id), url=invoice_url)])
     if pay_address:
         rows.append([InlineKeyboardButton(
             lt(user_id, "📋 Sao chép địa chỉ", "📋 Copy address", "📋 复制地址"),

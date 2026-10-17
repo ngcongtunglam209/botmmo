@@ -1,13 +1,13 @@
 # Huong Dan Setup BotMMO
 
-Tai lieu nay huong dan setup source bot sau khi da lam sach secret, data cu va cac API nguon ngoai. Mac dinh source chi con bot Telegram, API server noi bo va tuy chon thanh toan ngan hang qua SePay.
+Tai lieu nay huong dan setup source bot sau khi da lam sach secret, data cu va cac API nguon ngoai. Mac dinh source chi con bot Telegram, API server noi bo va tuy chon thanh toan ngan hang qua GPM Pay.
 
 ## 1. Yeu Cau
 
 - Python 3.11 tro len
 - Windows PowerShell hoac terminal tuong duong
 - Token bot Telegram tu BotFather
-- Neu dung thanh toan ngan hang: tai khoan SePay da lien ket ngan hang
+- Neu dung thanh toan ngan hang: tai khoan GPM Pay (app.gpmpay.com) da them tai khoan ngan hang
 
 Kiem tra Python:
 
@@ -79,33 +79,34 @@ ACCOUNT_NAME=...
 
 Dung de sinh ma QR chuyen khoan hien cho khach.
 
-### Bat SePay (duong thanh toan ngan hang duy nhat)
+### Bat GPM Pay (duong thanh toan ngan hang duy nhat)
 
-SePay dung webhook chinh thuc (SePay tu push giao dich ve server), khong can
-mat khau Internet Banking. Poll chi la du phong khi webhook bi mat (VPS restart,
-mang loi) hoac chua kip cau hinh webhook.
+GPM Pay push webhook ve server trong 1-2 giay moi khi tai khoan co tien vao,
+khong can mat khau Internet Banking. Poll chi la du phong khi webhook bi mat
+(VPS restart, mang loi) hoac chua kip cau hinh webhook. Tai lieu: docs.gpmpay.com.
 
-1. Vao `my.sepay.vn` -> lien ket tai khoan ngan hang can nhan tien.
-2. Lay 2 gia tri:
-   - **API Token** (my.sepay.vn -> API Token): dung cho poll du phong.
-   - **Webhook API Key** (my.sepay.vn -> Webhooks -> tao Webhook moi, dat API Key rieng): dung de xac thuc request SePay gui toi bot.
-3. Cau hinh webhook tren dashboard SePay, URL tro ve:
+1. Vao `app.gpmpay.com` -> them tai khoan ngan hang nhan tien va xac minh.
+2. Tao **API Token** (trang API Tokens) voi scope `transactions:read` - dung cho
+   poll du phong. Token chi hien 1 lan.
+3. Tao webhook, URL tro ve:
    ```
-   https://<domain-hoac-subdomain-cua-ban>/webhook/sepay
+   https://<domain-hoac-subdomain-cua-ban>/webhook/gpmpay
    ```
-   (can HTTPS that su - dung Cloudflare proxy hoac Caddy/nginx + certbot truoc VPS).
+   - Che do xac thuc: **HMAC**. Secret chi hien 1 lan luc tao.
+   - Dien `.env` va restart bot **truoc** khi bam luu: GPM Pay ping thu endpoint
+     (body `test: true`) va chi luu khi bot tra 2xx trong 5 giay.
+   - Khong bat gui giao dich SIMULATED cung duoc: bot bo qua moi giao dich
+     `source=SIMULATED` (chi log, khong cong tien).
+   - Can HTTPS that su (Cloudflare proxy hoac Caddy truoc VPS).
 4. Dien `.env`:
    ```env
-   ENABLE_PAYMENT_SEPAY=true
-   SEPAY_WEBHOOK_API_KEY=<API Key webhook o buoc 2>
-   SEPAY_API_TOKEN=<API Token o buoc 2>
-   SEPAY_ACCOUNT_NUMBER=<so tai khoan da lien ket SePay>
+   ENABLE_PAYMENT_GPMPAY=true
+   GPMPAY_WEBHOOK_SECRET=<secret HMAC o buoc 3>
+   GPMPAY_API_TOKEN=<API Token o buoc 2>
    ```
-5. Kiem tra bang lenh admin `/sodumb` trong bot - lenh nay doc so du luy ke qua
-   `GET /userapi/bankaccounts/list` cua SePay (can `SEPAY_API_TOKEN`).
 
-Ma QR chuyen khoan (`create_vietqr_link`) da dung san endpoint anh mien phi cua
-SePay tu truoc, khong can doi gi them buoc nay.
+Ma QR chuyen khoan (`create_vietqr_link`) dung anh mien phi cua `img.vietqr.io`
+tu `BANK_ID` + `BANK_ACCOUNT_NUMBER` + `ACCOUNT_NAME`, khong goi GPM Pay.
 
 ### Bat buoc tham gia nhom
 
@@ -183,7 +184,7 @@ Dam bao `.env` da duoc dien truoc khi build/chay.
 
 ## 7b. Reverse Proxy (Cloudflare + Caddy)
 
-Can thiet de co HTTPS that cho admin panel, webhook SePay, va Telegram OAuth
+Can thiet de co HTTPS that cho admin panel, webhook GPM Pay, va Telegram OAuth
 callback. `docker-compose.yml` da co san service `caddy` dung lam reverse
 proxy - port 8080 cua bot khong con public truc tiep ra VPS nua, chi Caddy
 (80/443) moi public. Ly do bat buoc: `_admin_web_client_ip()` tin thang
@@ -229,7 +230,7 @@ Neu terminal bao thieu `TELEGRAM_TOKEN`, `API_SECRET_KEY` hoac bien bank, hay ki
 Neu chua dung bank, dat:
 
 ```env
-ENABLE_PAYMENT_SEPAY=false
+ENABLE_PAYMENT_GPMPAY=false
 ```
 
 ### Conflict getUpdates

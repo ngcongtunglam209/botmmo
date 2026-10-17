@@ -110,7 +110,13 @@ async def _send_product_qr_photo_or_prompt(
     **kwargs,
 ):
     try:
-        return await context.bot.send_photo(**kwargs)
+        if kwargs.get("photo"):
+            return await context.bot.send_photo(**kwargs)
+        # Khong co anh (hoa don NOWPayments khong co dia chi -> khong co QR):
+        # gui chu voi cung ban phim.
+        kwargs.pop("photo", None)
+        kwargs["text"] = kwargs.pop("caption", "")
+        return await context.bot.send_message(**kwargs)
     except Forbidden:
         await release_reserved_order_code(order_code)
         user = getattr(update, "effective_user", None)
@@ -369,6 +375,7 @@ async def generate_product_payment_nowpayments(
     network_name = nowpayments_pay_currency_label(payment["pay_currency"])
     amount_text = format(payment["pay_amount"], "f")
     pay_address = payment["pay_address"]
+    invoice_url = str(payment.get("invoice_url") or "")
     extra_id = payment.get("payin_extra_id") or ""
     # Vai mang bat buoc memo/tag; thieu no la tien vao vi tong cua san va khong
     # ai lan ra chu don nao. Neu co thi phai hien that noi bat.
@@ -395,6 +402,20 @@ async def generate_product_payment_nowpayments(
         refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "",
         expires=(datetime.now() + timedelta(seconds=ORDER_EXPIRATION_SECONDS)).strftime('%H:%M:%S'),
     )
+    if invoice_url:
+        # Hoa don: khach chon coin/mang tren trang NOWPayments, bot khong biet
+        # dia chi hay mang nen khong co gi de "sao chep" - chi co nut mo trang.
+        caption = lt(
+            user.id,
+            '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>THANH TOÁN TIỀN ĐIỆN TỬ</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Sản phẩm:</b> <i>{product}</i> x{quantity}\n{balance}• <b>Cần thanh toán:</b> {due:,} VNĐ\n\n• <b>Giá trị:</b> <code>{crypto}</code> USDT\n• <b>Tỉ giá:</b> 1 USDT = {rate:,} VNĐ\n• <b>Mã đơn:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>LƯU Ý:</b>\n- Bấm <b>Mở trang thanh toán</b>, chọn coin và mạng bạn muốn, rồi chuyển <b>đúng số tiền</b> trang đó hiển thị.\n- Hết hạn sau {minutes} phút.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Hết hạn lúc:</b> {expires}',
+            '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>CRYPTO PAYMENT</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>Product:</b> <i>{product}</i> x{quantity}\n{balance}• <b>Amount due:</b> {due:,} VND\n\n• <b>Value:</b> <code>{crypto}</code> USDT\n• <b>Rate:</b> 1 USDT = {rate:,} VND\n• <b>Order code:</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>NOTE:</b>\n- Tap <b>Open payment page</b>, pick the coin and network you want, then send the <b>exact amount</b> shown there.\n- Expires in {minutes} minutes.{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>Expires at:</b> {expires}',
+            '<tg-emoji emoji-id="5281029063459234079">🤑</tg-emoji> <b>加密货币支付</b>\n━━━━━━━━━━━━━━━━━━\n<blockquote><tg-emoji emoji-id="5854908544712707500">📦</tg-emoji> <b>商品：</b> <i>{product}</i> x{quantity}\n{balance}• <b>应付：</b> {due:,} VND\n\n• <b>价值：</b> <code>{crypto}</code> USDT\n• <b>汇率：</b> 1 USDT = {rate:,} VND\n• <b>订单号：</b> <code>{code}</code></blockquote>\n\n<tg-emoji emoji-id="5447644880824181073">⚠️</tg-emoji> <b>提示：</b>\n- 点击<b>打开支付页面</b>，选择您想用的币种和网络，然后按页面显示的<b>准确金额</b>转账。\n- {minutes} 分钟后过期。{refund}\n<tg-emoji emoji-id="5213349767672769194">⏰</tg-emoji> <b>到期时间：</b> {expires}',
+            product=html.escape(str(p['name'])), quantity=quantity, balance=balance_line, due=amount_due,
+            crypto=html.escape(amount_text), rate=payment.get("rate", USDT_RATE_VND_PER_USDT), code=order_code,
+            minutes=ORDER_EXPIRATION_SECONDS // 60,
+            refund=lt(user.id, " Ví sẽ được hoàn lại nếu hủy.", " Wallet funds will be refunded if cancelled.", " 取消后钱包资金将退回。") if balance_used > 0 else "",
+            expires=(datetime.now() + timedelta(seconds=ORDER_EXPIRATION_SECONDS)).strftime('%H:%M:%S'),
+        )
     caption += _build_payment_legal_notice(user.id)
 
     try:
@@ -409,7 +430,9 @@ async def generate_product_payment_nowpayments(
             photo=nowpayments_qr_photo(pay_address),
             caption=caption,
             parse_mode='HTML',
-            reply_markup=build_nowpayments_checkout_keyboard(order_code, pay_address, amount_text, user_id=user.id),
+            reply_markup=build_nowpayments_checkout_keyboard(
+                order_code, pay_address, amount_text, user_id=user.id, invoice_url=invoice_url,
+            ),
         )
         if sent_message is None:
             return
@@ -440,6 +463,8 @@ async def generate_product_payment_nowpayments(
             "nowpayments_address": pay_address,
             "nowpayments_extra_id": str(extra_id),
             "nowpayments_rate": str(payment.get("rate", USDT_RATE_VND_PER_USDT)),
+            "nowpayments_invoice_id": str(payment.get("invoice_id") or ""),
+            "nowpayments_invoice_url": invoice_url,
         }
         if isinstance(extra_pending_data, dict):
             pending_payload.update(extra_pending_data)

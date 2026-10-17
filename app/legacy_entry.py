@@ -238,7 +238,6 @@ def register_handlers(application) -> None:
         "pending_withdrawals": pending_withdrawals_command,
         "addmoney": addmoney_command,
         "submoney": submoney_command,
-        "sodumb": sodumb_command,
 
         "icon": icon_command,
 
@@ -258,7 +257,7 @@ def register_handlers(application) -> None:
         application.add_handler(private_command(command, lambda u, c, f=func: admin_command_wrapper(u, c, f)))
 
 def main() -> None:
-    if not TELEGRAM_TOKEN or (ENABLE_PAYMENT_SEPAY and not SEPAY_WEBHOOK_API_KEY):
+    if not TELEGRAM_TOKEN or (ENABLE_PAYMENT_GPMPAY and not GPMPAY_WEBHOOK_SECRET):
         logger.critical("!!! CẢNH BÁO: Thiếu biến cấu hình cần thiết !!!")
         return
 

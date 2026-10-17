@@ -477,62 +477,6 @@ async def submoney_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         await update.message.reply_text("❌ Có lỗi xảy ra.")
 
 
-def _mask_bank_account(account_no: str) -> str:
-    digits = str(account_no or "").strip()
-    if len(digits) <= 4:
-        return "*" * len(digits)
-    return f"{'*' * (len(digits) - 4)}{digits[-4:]}"
-
-
-async def sodumb_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Admin-only command: so du luy ke cua tai khoan ngan hang gan tren SePay."""
-    import asyncio
-    import datetime
-    import html as html_lib
-
-    from app.integrations.sepay_api import sepay_fetch_account_balance
-
-    user = getattr(update, "effective_user", None)
-    if not user or user.id != ADMIN_USER_ID:
-        return
-
-    account_no = str(SEPAY_ACCOUNT_NUMBER or BANK_ACCOUNT_NUMBER or "").strip()
-    if not str(SEPAY_API_TOKEN or "").strip():
-        await update.message.reply_text("❌ Chưa cấu hình SEPAY_API_TOKEN.")
-        return
-
-    status_message = await update.message.reply_text("⏳ Đang kiểm tra số dư SePay...")
-    try:
-        balance = await asyncio.wait_for(
-            sepay_fetch_account_balance(account_no),
-            timeout=max(10.0, float(BANK_API_TIMEOUT_SECONDS) + 5.0),
-        )
-        if not balance:
-            result_text = (
-                "❌ <b>KHÔNG TÌM THẤY TÀI KHOẢN</b>\n\n"
-                f"Tài khoản cấu hình: <code>{_mask_bank_account(account_no)}</code>"
-            )
-        else:
-            checked_at = datetime.datetime.now().strftime("%H:%M:%S %d/%m/%Y")
-            account_name = html_lib.escape(balance.get("account_name") or "SePay")
-            bank_name = html_lib.escape(balance.get("bank") or "")
-            currency = html_lib.escape(balance.get("currency") or "VND")
-            result_text = (
-                "🏦 <b>SỐ DƯ TÀI KHOẢN SEPAY</b>\n\n"
-                f"👤 Chủ tài khoản: <b>{account_name}</b>\n"
-                f"🏛 Ngân hàng: <b>{bank_name or 'N/A'}</b>\n"
-                f"💳 Số tài khoản: <code>{_mask_bank_account(balance['account_no'])}</code>\n"
-                f"💰 Số dư lũy kế: <b>{int(balance['current_balance']):,} {currency}</b>\n"
-                f"🕒 Kiểm tra lúc: <code>{checked_at}</code>"
-            )
-        await status_message.edit_text(result_text, parse_mode=ParseMode.HTML)
-    except Exception as exc:
-        # Never include the exception body: upstream errors may contain account data.
-        logger.warning("SePay balance check failed (%s)", type(exc).__name__)
-        await status_message.edit_text(
-            "❌ Không kiểm tra được số dư SePay. Vui lòng kiểm tra SEPAY_API_TOKEN hoặc thử lại sau."
-        )
-
 
 
 

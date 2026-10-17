@@ -210,9 +210,9 @@ def clear_store_coupon_context(context):
         context.user_data.pop(key, None)
 
 def is_bank_transfer_enabled() -> bool:
-    """QR chuyen khoan chay qua SePay (webhook + poll doi soat)."""
-    from app.core.config_env import ENABLE_PAYMENT_SEPAY
-    return bool(ENABLE_PAYMENT_SEPAY)
+    """QR chuyen khoan chay qua GPM Pay (webhook + poll doi soat)."""
+    from app.core.config_env import ENABLE_PAYMENT_GPMPAY
+    return bool(ENABLE_PAYMENT_GPMPAY)
 
 def _sanitize_invoice_text(value: str, fallback: str) -> str:
     raw_value = str(value or "").strip()

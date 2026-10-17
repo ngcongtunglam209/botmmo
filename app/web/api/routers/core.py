@@ -1,4 +1,4 @@
-"""Endpoint hạ tầng: health check, status, mua link legacy, webhook SePay."""
+"""Endpoint hạ tầng: health check, status, mua link legacy, webhook GPM Pay."""
 
 from __future__ import annotations
 
@@ -83,40 +83,43 @@ async def buy_link(req: LegacyBuyRequest, headers: ActorHeaders = Depends()):
     }
 
 
-@router.post("/webhook/sepay", include_in_schema=False)
-async def sepay_webhook(request: Request):
-    """Nhận giao dịch ngân hàng do SePay push.
+@router.post("/webhook/gpmpay", include_in_schema=False)
+async def gpmpay_webhook(request: Request):
+    """Nhận giao dịch ngân hàng do GPM Pay push (chế độ xác thực HMAC).
 
-    SePay coi mọi response khác 200/201 là thất bại và retry nhiều giờ. Vì vậy
-    payload rác / sai key / chưa bật SePay đều trả 200 — retry không giúp gì.
-    Chỉ lỗi hạ tầng thật mới để exception bay lên thành 500 cho SePay gửi lại.
-    Giao dịch hợp lệ chỉ được đưa vào hàng đợi; payment_monitor khớp đơn ở vòng
-    quét kế tiếp.
+    GPM Pay retry mọi response ngoài 2xx (tối đa 6 lần, tới 6 giờ). Vì vậy
+    payload rác / chưa bật GPM Pay / gói tin xác minh `test: true` đều trả 200 —
+    retry không giúp gì. Sai chữ ký trả 401. Giao dịch hợp lệ chỉ được đưa vào
+    hàng đợi; payment_monitor khớp đơn ở vòng quét kế tiếp.
     """
-    from app.integrations.sepay_api import (
-        sepay_normalize_webhook_payload,
-        sepay_verify_webhook_key,
-        sepay_webhook_inbox,
+    import json
+
+    from app.integrations.gpmpay_api import (
+        gpmpay_normalize_webhook_payload,
+        gpmpay_verify_signature,
+        gpmpay_webhook_inbox,
     )
 
-    if not sepay_verify_webhook_key(request.headers.get("Authorization")):
+    # Chữ ký tính trên raw body, phải đọc trước khi parse JSON.
+    raw_body = await request.body()
+    if not gpmpay_verify_signature(raw_body, request.headers.get("X-GPMPay-Signature")):
         return JSONResponse(status_code=401, content={"success": False})
 
-    if not engine.value(engine.CONFIG_MODULE, "ENABLE_PAYMENT_SEPAY", False):
-        logger.warning("SePay webhook: ENABLE_PAYMENT_SEPAY=false -> bỏ qua payload")
+    if not engine.value(engine.CONFIG_MODULE, "ENABLE_PAYMENT_GPMPAY", False):
+        logger.warning("GPMPay webhook: ENABLE_PAYMENT_GPMPAY=false -> bỏ qua payload")
         return {"success": True}
 
     try:
-        body = await request.json()
-    except Exception as error:
-        logger.warning("SePay webhook: body không phải JSON hợp lệ: %s", error)
+        body = json.loads(raw_body)
+    except ValueError as error:
+        logger.warning("GPMPay webhook: body không phải JSON hợp lệ: %s", error)
         return {"success": True}
 
-    normalized = sepay_normalize_webhook_payload(body)
+    normalized = gpmpay_normalize_webhook_payload(body)
     if normalized:
-        sepay_webhook_inbox.append(normalized)
+        gpmpay_webhook_inbox.append(normalized)
         logger.info(
-            "SePay webhook: nhận giao dịch %s số tiền %s",
+            "GPMPay webhook: nhận giao dịch %s số tiền %s",
             normalized["transactionID"],
             f"{normalized['amount']:,}đ",
         )
@@ -138,6 +141,7 @@ async def nowpayments_ipn(request: Request):
     from app.integrations.nowpayments_api import (
         nowpayments_ipn_inbox,
         nowpayments_normalize_payment,
+        nowpayments_remember_payment_id,
         nowpayments_verify_signature,
     )
 
@@ -154,6 +158,9 @@ async def nowpayments_ipn(request: Request):
         logger.warning("NOWPayments IPN: ENABLE_PAYMENT_NOWPAYMENTS=false -> bỏ qua payload")
         return {"success": True}
 
+    # Đơn hóa đơn (khách chọn coin trên trang NOWPayments) chỉ biết payment_id
+    # qua IPN đầu tiên — ghi lại để vòng poll dự phòng có mã mà hỏi.
+    nowpayments_remember_payment_id(body)
     normalized = nowpayments_normalize_payment(body)
     if normalized:
         nowpayments_ipn_inbox.append(normalized)

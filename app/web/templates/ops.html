@@ -60,7 +60,7 @@
     <form method="post" action="/admin/ops/toggle" class="form-grid" style="padding: 16px">
       {{ csrf(csrf_token) }}
       {{ select('Thao tác', 'mode', [
-        ('sepay_on', 'Bật SePay'), ('sepay_off', 'Tắt SePay'),
+        ('gpmpay_on', 'Bật GPM Pay'), ('gpmpay_off', 'Tắt GPM Pay'),
         ('binance_pay_on', 'Bật Binance Pay'), ('binance_pay_off', 'Tắt Binance Pay')]) }}
       <div class="form-actions"><button type="submit">Áp dụng</button></div>
     </form>

@@ -559,13 +559,17 @@ def build_transfer_content(secret_code):
     )).replace("xxx", str(secret_code))
 
 def create_vietqr_link(amount, add_info):
-    """Tạo link QR qua API SePay.vn chuẩn hóa"""
+    """Tạo link ảnh VietQR qua img.vietqr.io (cách docs GPM Pay hướng dẫn).
+
+    Ảnh QR không đi qua GPM Pay: không cần token, không tính quota. Nội dung
+    chuyển khoản chứa mã đơn, GPM Pay chỉ việc bắn webhook kèm nội dung đó.
+    """
+    from urllib.parse import urlencode
+
     try:
-        encoded_add_info = quote(add_info)
-        # Sử dụng API SePay theo chuẩn tài liệu:
-        # Template để trống sẽ lấy mặc định là "Khung VietQR" có logo Napas247 rất đẹp
-        return f"https://qr.sepay.vn/img?acc={BANK_ACCOUNT_NUMBER}&bank={BANK_ID}&amount={amount}&des={encoded_add_info}"
+        query = urlencode({"amount": int(amount), "addInfo": add_info, "accountName": ACCOUNT_NAME}, quote_via=quote)
+        return f"https://img.vietqr.io/image/{BANK_ID}-{BANK_ACCOUNT_NUMBER}-compact2.png?{query}"
     except (ValueError, TypeError, KeyError, AttributeError) as e:
-        logger.error(f"Error creating SePay QR link: {e}")
+        logger.error(f"Error creating VietQR link: {e}")
         return None
 
