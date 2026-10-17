@@ -558,18 +558,19 @@ def build_transfer_content(secret_code):
         "Chuyen nay de em lo xxx",
     )).replace("xxx", str(secret_code))
 
-def create_vietqr_link(amount, add_info):
-    """Tạo link ảnh VietQR qua img.vietqr.io (cách docs GPM Pay hướng dẫn).
+def create_vietqr_png(amount, add_info):
+    """Ảnh QR chuyển khoản (PNG bytes) sinh tại chỗ theo chuẩn NAPAS VietQR,
+    không gọi img.vietqr.io: không phụ thuộc bên thứ ba lúc khách thanh toán,
+    mã đơn và số tiền không đi qua server lạ.
 
-    Ảnh QR không đi qua GPM Pay: không cần token, không tính quota. Nội dung
-    chuyển khoản chứa mã đơn, GPM Pay chỉ việc bắn webhook kèm nội dung đó.
+    Nội dung chuyển khoản chứa mã đơn, GPM Pay chỉ việc bắn webhook kèm nội
+    dung đó. Trả None khi thiếu cấu hình ngân hàng (BANK_ID/BANK_BIN/số TK).
     """
-    from urllib.parse import urlencode
+    from app.utils.vietqr import make_vietqr_png
 
     try:
-        query = urlencode({"amount": int(amount), "addInfo": add_info, "accountName": ACCOUNT_NAME}, quote_via=quote)
-        return f"https://img.vietqr.io/image/{BANK_ID}-{BANK_ACCOUNT_NUMBER}-compact2.png?{query}"
-    except (ValueError, TypeError, KeyError, AttributeError) as e:
-        logger.error(f"Error creating VietQR link: {e}")
+        return make_vietqr_png(BANK_ID, BANK_ACCOUNT_NUMBER, int(amount), str(add_info or ""), bank_bin=BANK_BIN)
+    except Exception as e:
+        logger.error(f"Error creating VietQR image: {e}")
         return None
 

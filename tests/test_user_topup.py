@@ -133,10 +133,14 @@ def test_topup_qr_uses_the_same_builder_as_checkout(topup_env, monkeypatch):
     modules = load_modules()
     ui = modules["app.utils.ui_and_email"]
 
-    # The two QR images used to come from different providers (img.vietqr.io for
-    # top-ups, qr.sepay.vn for purchases), so the frame and logo did not match.
-    assert topup.build_user_topup_qr_url("NAPU5551234", 100000) == ui.create_vietqr_link(100000, "NAPU5551234")
-    assert "img.vietqr.io" in topup.build_user_topup_qr_url("NAPU5551234", 100000)
+    # Both QR images are rendered locally from the same NAPAS payload builder, so
+    # the bank, amount format and content field can never drift apart again.
+    monkeypatch.setattr(ui, "BANK_ID", "MB", raising=False)
+    monkeypatch.setattr(ui, "BANK_BIN", "", raising=False)
+    monkeypatch.setattr(ui, "BANK_ACCOUNT_NUMBER", "0837324643", raising=False)
+    png = topup.build_user_topup_qr_photo("NAPU5551234", 100000)
+    assert png == ui.create_vietqr_png(100000, "NAPU5551234")
+    assert png[:4] == b"\x89PNG"
 
 
 def _set_display_rates(monkeypatch, *, vnd_per_usdt="26000", cny_per_usdt="7.2"):

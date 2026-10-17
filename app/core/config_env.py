@@ -87,6 +87,8 @@ SENDER_APP_PASSWORD = os.getenv("SENDER_APP_PASSWORD", "").strip()
 
 # --- Config (có default an toàn) ---
 BANK_ID = get_env_str("BANK_ID", "MB")
+# BIN 6 so do NHNN cap. De trong thi tra theo BANK_ID (bang trong app/utils/vietqr.py).
+BANK_BIN = get_env_str("BANK_BIN", "")
 BANK_ACCOUNT_NUMBER = os.getenv("BANK_ACCOUNT_NUMBER", "").strip()
 ACCOUNT_NAME = os.getenv("ACCOUNT_NAME", "").strip()
 

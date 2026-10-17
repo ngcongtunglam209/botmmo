@@ -70,9 +70,9 @@ def get_user_pending_topup(user_id):
     return None, None
 
 
-def build_user_topup_qr_url(code: str, amount: int) -> str:
-    """QR nap vi dung chung khung VietQR voi phan mua hang (create_vietqr_link)."""
-    return create_vietqr_link(int(amount), str(code))
+def build_user_topup_qr_photo(code: str, amount: int):
+    """QR nap vi (PNG bytes) dung chung bo sinh VietQR voi phan mua hang (create_vietqr_png)."""
+    return create_vietqr_png(int(amount), str(code))
 
 
 def _build_topup_caption(user_id, code: str, amount: int) -> str:
@@ -494,7 +494,7 @@ async def create_user_topup_request(
         keyboard = _build_topup_keyboard(user.id, code, quote_data)
     else:
         caption = _build_topup_caption(user.id, code, amount)
-        photo = build_user_topup_qr_url(code, amount)
+        photo = build_user_topup_qr_photo(code, amount)
         keyboard = _build_topup_keyboard(user.id, code)
     if np_payment is not None and np_payment.get("invoice_url"):
         # Hoa don khong co dia chi -> khong co QR; gui chu kem nut mo trang.

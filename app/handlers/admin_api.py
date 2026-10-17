@@ -187,9 +187,8 @@ async def napi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         }
         await save_data(force=True)
 
-        # Tạo link QR VietQR
-        _encoded_partner = quote(f"Nap {partner_name}")
-        qr_url = f"https://img.vietqr.io/image/{BANK_ID}-{BANK_ACCOUNT_NUMBER}-print.png?amount={amount}&addInfo={deposit_code}&accountName={quote(ACCOUNT_NAME)}"
+        # QR VietQR sinh tai cho (app/utils/vietqr.py), khong goi img.vietqr.io
+        qr_photo = create_vietqr_png(amount, deposit_code)
 
         caption = (
             f"<tg-emoji emoji-id=\"5278467510604160626\">🏦</tg-emoji> <b>QR Code Nạp Ví Chung</b>\n\n"
@@ -199,7 +198,10 @@ async def napi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             f"<i><tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> Hệ thống sẽ tự động cộng tiền khi nhận được chuyển khoản có nội dung <b>{deposit_code}</b>.</i>"
         )
 
-        await update.message.reply_photo(photo=qr_url, caption=caption, parse_mode=ParseMode.HTML)
+        if qr_photo:
+            await update.message.reply_photo(photo=qr_photo, caption=caption, parse_mode=ParseMode.HTML)
+        else:
+            await update.message.reply_text(caption, parse_mode=ParseMode.HTML)
 
 def build_partner_api_topup_qr_url(transfer_content: str, amount: int | None = None) -> str:
     safe_content = quote(str(transfer_content or "").strip())
