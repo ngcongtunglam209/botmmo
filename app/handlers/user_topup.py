@@ -315,7 +315,7 @@ async def show_topup_method_choice(update: Update, context: ContextTypes.DEFAULT
         rows.append([_btn("Binance Pay (USDT)", icon_id=CRYPTO_BUTTON_ICON_ID,
                           callback_data=f"topup_pay:binance:{int(amount)}", style="success")])
     if "nowpay" in methods:
-        rows.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079",
+        rows.append([_btn("Crypto (NOWPayments)", icon_id="5281029063459234079",
                           callback_data=f"topup_pay:nowpay:{int(amount)}", style="success")])
     rows.append([_btn(lt(user_id, "Quay lại", "Back", "返回"),
                       icon_id="6206032691075223572", callback_data="my_stats")])

@@ -802,7 +802,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_1", style="success")])
             from app.integrations.nowpayments_api import is_nowpayments_enabled
             if is_nowpayments_enabled():
-                btns.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_1", style="success")])
+                btns.append([_btn("Crypto (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_1", style="success")])
             from app.integrations.payments_core import is_bank_transfer_enabled
             if is_bank_transfer_enabled():
                 btns.append([_btn(labels["bank"], icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_1", style="success")])
@@ -910,7 +910,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_{qty}", style="success")])
         from app.integrations.nowpayments_api import is_nowpayments_enabled
         if is_nowpayments_enabled():
-            btns.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_{qty}", style="success")])
+            btns.append([_btn("Crypto (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_{qty}", style="success")])
         from app.integrations.payments_core import is_bank_transfer_enabled
         if is_bank_transfer_enabled():
             btns.append([_btn(labels["bank"], icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}", style="success")])
@@ -1554,7 +1554,7 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
     elif data.startswith("pay_prod_usdt_trc20_") or data.startswith("pay_prod_rpay_") or data.startswith("rpaynet_"):
         await safe_answer(
             query,
-            "Phương thức này đã ngừng. Vui lòng chọn USDT (NOWPayments) hoặc Binance Pay.",
+            "Phương thức này đã ngừng. Vui lòng chọn Crypto (NOWPayments) hoặc Binance Pay.",
             show_alert=True,
         )
         return True

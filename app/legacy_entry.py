@@ -351,7 +351,7 @@ def main() -> None:
     logger.info(f"<tg-emoji emoji-id=\"5436359785534466562\">🔌</tg-emoji> API Port:      {API_SERVER_PORT}")
     logger.info(f"<tg-emoji emoji-id=\"5213349767672769194\">⏱</tg-emoji> Bank Cron:     {BANK_CHECK_INTERVAL_SECONDS}s")
     from app.integrations.nowpayments_api import is_nowpayments_enabled
-    logger.info(f"<tg-emoji emoji-id=\"5231489647946768652\">🌍</tg-emoji> USDT (NOWPayments): {'ON' if is_nowpayments_enabled() else 'OFF'} | Binance Pay: {'ON' if is_binance_pay_enabled() else 'OFF'}")
+    logger.info(f"<tg-emoji emoji-id=\"5231489647946768652\">🌍</tg-emoji> Crypto (NOWPayments): {'ON' if is_nowpayments_enabled() else 'OFF'} | Binance Pay: {'ON' if is_binance_pay_enabled() else 'OFF'}")
     # Bat ENABLE_PAYMENT_NOWPAYMENTS ma thieu mot key thi cong tat IM LANG:
     # nut USDT bien mat khoi moi man thanh toan va khong co dong log nao noi
     # tai sao. Goi ten dung bien con thieu ngay luc khoi dong.
