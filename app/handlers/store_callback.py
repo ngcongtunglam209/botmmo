@@ -1421,7 +1421,10 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         # bam vao mot mang duoi san la chac chan ra hoa don hong.
         from app.handlers.payment_generation import _get_product_checkout_total_amount
         from app.integrations.nowpayments_api import (
+            NOWPAYMENTS_INVOICE_CHOICE,
             nowpayments_currencies_for_amount,
+            nowpayments_invoice_available,
+            nowpayments_invoice_choice_label,
             nowpayments_pay_currency_label,
         )
         from app.integrations.payments_core import convert_vnd_to_usdt, get_live_usdt_vnd_rate
@@ -1451,11 +1454,16 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
             return True
 
         from app.handlers.payment_generation import generate_product_payment_nowpayments
-        if len(currencies) > 1:
+        invoice_ok = nowpayments_invoice_available()
+        if len(currencies) > 1 or invoice_ok:
             rows = [[
                 _btn(nowpayments_pay_currency_label(currency), icon_id="5281029063459234079",
                      callback_data=f"nowpaynet_{currency}_{prod_id}_{qty}", style="success")
             ] for currency in currencies]
+            if invoice_ok:
+                # Coin ngoai NOWPAYMENTS_CURRENCIES: mo trang hoa don, khach tu chon.
+                rows.append([_btn(nowpayments_invoice_choice_label(query.from_user.id), icon_id="5281029063459234079",
+                                  callback_data=f"nowpaynet_{NOWPAYMENTS_INVOICE_CHOICE}_{prod_id}_{qty}")])
             rows.append([_btn(
                 lt(query.from_user.id, "⬅️ Quay lại", "⬅️ Back", "⬅️ 返回"),
                 callback_data=f"sel_qty_{prod_id}",
@@ -1496,8 +1504,14 @@ async def handle_store_callback(update: Update, context: ContextTypes.DEFAULT_TY
         else:
             prod_id = rest; qty = 1
 
-        from app.integrations.nowpayments_api import NOWPAYMENTS_CURRENCIES
-        if currency not in NOWPAYMENTS_CURRENCIES:
+        from app.integrations.nowpayments_api import (
+            NOWPAYMENTS_CURRENCIES,
+            NOWPAYMENTS_INVOICE_CHOICE,
+            nowpayments_invoice_available,
+        )
+        if currency not in NOWPAYMENTS_CURRENCIES and not (
+            currency == NOWPAYMENTS_INVOICE_CHOICE and nowpayments_invoice_available()
+        ):
             await safe_answer(query, "❌ Mạng lưới không khả dụng!", show_alert=True)
             return True
         if not products.get(prod_id):

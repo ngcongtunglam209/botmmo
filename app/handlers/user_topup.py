@@ -71,7 +71,7 @@ def get_user_pending_topup(user_id):
 
 
 def build_user_topup_qr_url(code: str, amount: int) -> str:
-    """QR nap vi dung chung khung VietQR voi phan mua hang (qr.sepay.vn)."""
+    """QR nap vi dung chung khung VietQR voi phan mua hang (create_vietqr_link)."""
     return create_vietqr_link(int(amount), str(code))
 
 
@@ -175,7 +175,12 @@ def _build_topup_keyboard(user_id, code: str, quote_data: dict | None = None):
 
 
 def _build_nowpayments_topup_keyboard(user_id, code: str, payment: dict):
+    from app.integrations.nowpayments_api import nowpayments_invoice_button_label
+
     rows = []
+    invoice_url = str(payment.get("invoice_url") or "").strip()
+    if invoice_url:
+        rows.append([InlineKeyboardButton(nowpayments_invoice_button_label(user_id), url=invoice_url)])
     address = str(payment.get("pay_address") or "").strip()
     amount_text = format(payment["pay_amount"], "f") if payment.get("pay_amount") is not None else ""
     extra_id = str(payment.get("payin_extra_id") or "").strip()
@@ -205,6 +210,34 @@ def _build_nowpayments_topup_caption(user_id, code: str, amount: int, payment: d
     from app.integrations.nowpayments_api import nowpayments_pay_currency_label
 
     minutes = max(1, USER_TOPUP_EXPIRATION_SECONDS // 60)
+    if payment.get("invoice_url"):
+        # Hoa don: coin/mang do khach chon tren trang NOWPayments, bot khong biet
+        # dia chi nen chi hien gia tri va nut mo trang.
+        return lt(
+            user_id,
+            "<b>NẠP VÍ BẰNG TIỀN ĐIỆN TỬ</b>\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n"
+            "<blockquote>\u2022 <b>Số tiền nạp:</b> {amount}\n"
+            "\u2022 <b>Giá trị:</b> <code>{crypto}</code> USDT\n"
+            "\u2022 <b>Mã nạp:</b> <code>{code}</code></blockquote>\n\n"
+            "\u26A0\uFE0F Bấm <b>Mở trang thanh toán</b>, chọn coin và mạng bạn muốn, rồi chuyển "
+            "<b>đúng số tiền</b> trang đó hiển thị.\nHết hạn sau {minutes} phút.",
+            "<b>TOP UP WITH CRYPTO</b>\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n"
+            "<blockquote>\u2022 <b>Top-up amount:</b> {amount}\n"
+            "\u2022 <b>Value:</b> <code>{crypto}</code> USDT\n"
+            "\u2022 <b>Top-up code:</b> <code>{code}</code></blockquote>\n\n"
+            "\u26A0\uFE0F Tap <b>Open payment page</b>, pick the coin and network you want, then send the "
+            "<b>exact amount</b> shown there.\nExpires in {minutes} minutes.",
+            "<b>加密货币充值</b>\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n"
+            "<blockquote>\u2022 <b>充值金额：</b> {amount}\n"
+            "\u2022 <b>价值：</b> <code>{crypto}</code> USDT\n"
+            "\u2022 <b>充值码：</b> <code>{code}</code></blockquote>\n\n"
+            "\u26A0\uFE0F 点击<b>打开支付页面</b>，选择您想用的币种和网络，然后按页面显示的<b>准确金额</b>转账。\n"
+            "{minutes} 分钟后过期。",
+            amount=format_money(amount, user_id),
+            crypto=html.escape(format(payment["pay_amount"], "f")),
+            code=code,
+            minutes=minutes,
+        )
     extra_id = str(payment.get("payin_extra_id") or "").strip()
     # Mang nao bat buoc memo ma khach bo trong thi tien vao vi tong cua san,
     # khong ai lan ra la cua lenh nap nao.
@@ -309,7 +342,9 @@ async def show_topup_method_choice(update: Update, context: ContextTypes.DEFAULT
     return True
 
 
-async def create_user_topup_request(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, method: str = "bank") -> bool:
+async def create_user_topup_request(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, method: str = "bank", network: str = ""
+) -> bool:
     """Tao ma nap + QR. Tra False neu khong tao duoc (da co ma cho / sai so tien)."""
     user = update.effective_user
     chat_id = update.effective_chat.id
@@ -440,6 +475,8 @@ async def create_user_topup_request(update: Update, context: ContextTypes.DEFAUL
             "nowpayments_address": str(np_payment.get("pay_address") or ""),
             "nowpayments_extra_id": str(np_payment.get("payin_extra_id") or ""),
             "nowpayments_rate": str(np_payment.get("rate", USDT_RATE_VND_PER_USDT)),
+            "nowpayments_invoice_id": str(np_payment.get("invoice_id") or ""),
+            "nowpayments_invoice_url": str(np_payment.get("invoice_url") or ""),
         })
 
     pending_user_topups[code] = record
@@ -458,6 +495,10 @@ async def create_user_topup_request(update: Update, context: ContextTypes.DEFAUL
         caption = _build_topup_caption(user.id, code, amount)
         photo = build_user_topup_qr_url(code, amount)
         keyboard = _build_topup_keyboard(user.id, code)
+    if np_payment is not None and np_payment.get("invoice_url"):
+        # Hoa don khong co dia chi -> khong co QR; gui chu kem nut mo trang.
+        await safe_bot_send_html(context.bot, chat_id, caption, reply_markup=keyboard)
+        return True
     try:
         if not photo:
             raise ValueError("khong tao duoc anh QR")
@@ -537,12 +578,20 @@ async def handle_topup_amount_input(update: Update, context: ContextTypes.DEFAUL
 
 async def _show_topup_nowpayments_choice(update: Update, context: ContextTypes.DEFAULT_TYPE, amount: int, currencies: list) -> None:
     user_id = update.effective_user.id
-    from app.integrations.nowpayments_api import nowpayments_pay_currency_label
+    from app.integrations.nowpayments_api import (
+        NOWPAYMENTS_INVOICE_CHOICE,
+        nowpayments_invoice_available,
+        nowpayments_invoice_choice_label,
+        nowpayments_pay_currency_label,
+    )
 
     rows = [[
         _btn(nowpayments_pay_currency_label(currency), icon_id="5281029063459234079",
              callback_data=f"topup_npnet:{currency}:{int(amount)}", style="success")
     ] for currency in currencies]
+    if nowpayments_invoice_available():
+        rows.append([_btn(nowpayments_invoice_choice_label(user_id), icon_id="5281029063459234079",
+                          callback_data=f"topup_npnet:{NOWPAYMENTS_INVOICE_CHOICE}:{int(amount)}")])
     rows.append([_btn(lt(user_id, "Quay lại", "Back", "返回"),
                       icon_id="6206032691075223572", callback_data="my_stats")])
     await safe_bot_send_html(
@@ -564,7 +613,11 @@ async def handle_topup_nowpayments_choice(update: Update, context: ContextTypes.
     """`topup_npnet:<currency>:<so tien VND>` tu man hinh chon mang."""
     query = update.callback_query
     user_id = update.effective_user.id
-    from app.integrations.nowpayments_api import NOWPAYMENTS_CURRENCIES
+    from app.integrations.nowpayments_api import (
+        NOWPAYMENTS_CURRENCIES,
+        NOWPAYMENTS_INVOICE_CHOICE,
+        nowpayments_invoice_available,
+    )
 
     currency, _, amount_text = str(payload or "").partition(":")
     try:
@@ -572,7 +625,9 @@ async def handle_topup_nowpayments_choice(update: Update, context: ContextTypes.
     except (TypeError, ValueError):
         await safe_answer(query, lt(user_id, "Số tiền không hợp lệ.", "Invalid amount.", "金额无效。"), show_alert=True)
         return True
-    if currency not in NOWPAYMENTS_CURRENCIES:
+    if currency not in NOWPAYMENTS_CURRENCIES and not (
+        currency == NOWPAYMENTS_INVOICE_CHOICE and nowpayments_invoice_available()
+    ):
         await safe_answer(
             query,
             lt(user_id, "Mạng lưới không khả dụng.", "This network is not available.", "该网络不可用。"),
@@ -607,7 +662,7 @@ async def handle_topup_method_choice(update: Update, context: ContextTypes.DEFAU
         return True
 
     if method == "nowpay":
-        from app.integrations.nowpayments_api import nowpayments_currencies_for_amount
+        from app.integrations.nowpayments_api import nowpayments_currencies_for_amount, nowpayments_invoice_available
         from app.integrations.payments_core import convert_vnd_to_usdt, get_live_usdt_vnd_rate
 
         try:
@@ -630,7 +685,7 @@ async def handle_topup_method_choice(update: Update, context: ContextTypes.DEFAU
                 show_alert=True,
             )
             return True
-        if len(currencies) > 1:
+        if len(currencies) > 1 or nowpayments_invoice_available():
             await safe_answer(query)
             await _show_topup_nowpayments_choice(update, context, amount, currencies)
             return True

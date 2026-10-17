@@ -26,7 +26,6 @@ BRAND_TOKENS = frozenset(
         "id",
         "nowpayments",
         "qr",
-        "sepay",
         "telegram",
         "usdt",
         "vnd",

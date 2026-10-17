@@ -377,3 +377,94 @@ async def test_min_amounts_are_cached_per_currency(monkeypatch):
     # The floor moves with network fees, not per order — one lookup per currency
     # per cache window, not one per checkout.
     assert sorted(calls) == ["usdtbsc", "usdtmatic", "usdttrc20"]
+
+
+# --- "Other coin": hosted NOWPayments invoice -------------------------------
+
+
+def test_the_invoice_choice_needs_a_reachable_ipn_url(monkeypatch):
+    np, _ = _load()
+    _configure(monkeypatch, np)
+
+    # Without IPN the invoice's payment_id is never learned, so polling would be
+    # blind and the order could only be credited by hand. Hide the button.
+    monkeypatch.setattr(np, "PUBLIC_API_URL", "", raising=False)
+    assert np.nowpayments_invoice_available() is False
+
+    monkeypatch.setattr(np, "PUBLIC_API_URL", "https://shop.example", raising=False)
+    assert np.nowpayments_invoice_available() is True
+
+
+async def test_the_invoice_choice_creates_a_hosted_invoice_priced_in_usdt(monkeypatch):
+    np, _ = _load()
+    _configure(monkeypatch, np)
+    monkeypatch.setattr(np, "PUBLIC_API_URL", "https://shop.example/", raising=False)
+    monkeypatch.setattr(np, "NOWPAYMENTS_PAYOUT_CURRENCY", "", raising=False)
+
+    import sys
+    core = sys.modules["app.integrations.payments_core"]
+
+    async def fake_rate():
+        return Decimal("26000")
+
+    monkeypatch.setattr(core, "get_live_usdt_vnd_rate", fake_rate)
+
+    calls = []
+
+    async def fake_request(method, path, payload=None):
+        calls.append((method, path, payload))
+        return {"id": 4522625843, "invoice_url": "https://nowpayments.io/payment/?iid=4522625843"}
+
+    monkeypatch.setattr(np, "_nowpayments_request", fake_request)
+
+    payment = await np.create_nowpayments_payment("ICLD123456", 39900, np.NOWPAYMENTS_INVOICE_CHOICE)
+
+    method, path, payload = calls[0]
+    assert (method, path) == ("POST", "/invoice")
+    # Priced in the same USDT ticker the fixed-network buttons use, so the
+    # number the customer saw in the bot is the number on the invoice page.
+    assert payload["price_currency"] == "usdtbsc"
+    assert payload["order_id"] == "ICLD123456"
+    assert payload["ipn_callback_url"] == "https://shop.example/webhook/nowpayments"
+    assert Decimal(str(payload["price_amount"])) >= Decimal("39900") / Decimal("26000")
+
+    assert payment["invoice_url"] == "https://nowpayments.io/payment/?iid=4522625843"
+    assert payment["invoice_id"] == "4522625843"
+    assert payment["pay_currency"] == "any"
+    # No address and no payment_id yet: both only exist once the customer picks
+    # a coin on the hosted page.
+    assert payment["pay_address"] == ""
+    assert payment["payment_id"] == ""
+
+
+def test_the_first_ipn_of_an_invoice_order_fills_in_the_payment_id_for_polling(monkeypatch):
+    np, _ = _load()
+    _configure(monkeypatch, np)
+    record = {"provider": "nowpayments", "status": "pending_payment", "amount": 39900, "nowpayments_payment_id": ""}
+    monkeypatch.setattr(np, "pending_orders", {"ICLD123456": record}, raising=False)
+    monkeypatch.setattr(np, "pending_user_topups", {}, raising=False)
+
+    # The very first callback is usually "waiting" — not creditable, but it is
+    # the only moment we learn which payment belongs to this invoice.
+    waiting = _ipn(payment_status="waiting", pay_currency="ltc", actually_paid=0)
+    assert np.nowpayments_remember_payment_id(waiting) is True
+    assert record["nowpayments_payment_id"] == "5745459419"
+    assert record["nowpayments_currency"] == "ltc"
+
+    # A later payment for the same order (e.g. a re-deposit) must not hijack it.
+    assert np.nowpayments_remember_payment_id(_ipn(payment_id=999, pay_currency="btc")) is False
+    assert record["nowpayments_payment_id"] == "5745459419"
+
+    # Orders that already carry a payment_id (fixed-network flow) are untouched.
+    assert np.nowpayments_remember_payment_id(_ipn(order_id="OTHER")) is False
+
+
+def test_the_underpay_tolerance_only_applies_to_stablecoins(monkeypatch):
+    np, _ = _load()
+    _configure(monkeypatch, np, tolerance="0.01")
+
+    # 0.01 USDT is a network-fee rounding. 0.01 BTC is a car. Any coin the
+    # customer can pick on the invoice page must be paid in full.
+    assert np.nowpayments_normalize_payment(_ipn(pay_currency="usdtbsc", pay_amount=1.54, actually_paid=1.535)) is not None
+    assert np.nowpayments_normalize_payment(_ipn(pay_currency="btc", pay_amount=0.0010, actually_paid=0.0009)) is None
+    assert np.nowpayments_normalize_payment(_ipn(pay_currency="btc", pay_amount=0.0010, actually_paid=0.0010)) is not None

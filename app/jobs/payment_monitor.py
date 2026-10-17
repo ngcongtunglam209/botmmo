@@ -420,8 +420,8 @@ async def _scan_nowpayments_payments(synthetic_transactions: list) -> dict:
     return {"enabled": True, "ok": not error, "error": error, "count": found}
 
 
-async def _scan_sepay_payments(synthetic_transactions: list) -> dict:
-    """SePay: rut het giao dich webhook da nhan (duong chinh, gan tuc thi),
+async def _scan_gpmpay_payments(synthetic_transactions: list) -> dict:
+    """GPM Pay: rut het giao dich webhook da nhan (duong chinh, gan tuc thi),
     roi doi soat lai bang poll API (du phong khi webhook bi mat/chua bat).
 
     Ca hai deu nap dung dang {"transactionID","description","amount"} vao
@@ -432,29 +432,29 @@ async def _scan_sepay_payments(synthetic_transactions: list) -> dict:
     Tra ve trang thai suc khoe cho check_payment_job cap nhat thong ke va canh
     bao admin: {"enabled": bool, "ok": bool, "error": str, "count": int}.
     """
-    from app.integrations.sepay_api import sepay_webhook_inbox, sepay_fetch_history
+    from app.integrations.gpmpay_api import gpmpay_fetch_history, gpmpay_webhook_inbox
 
-    if not ENABLE_PAYMENT_SEPAY:
+    if not ENABLE_PAYMENT_GPMPAY:
         return {"enabled": False, "ok": True, "error": "", "count": 0}
 
     found = 0
 
     # 1) Webhook inbox - rut het (khong co await xen giua doc/xoa nen an toan).
-    if sepay_webhook_inbox:
-        drained, sepay_webhook_inbox[:] = list(sepay_webhook_inbox), []
+    if gpmpay_webhook_inbox:
+        drained, gpmpay_webhook_inbox[:] = list(gpmpay_webhook_inbox), []
         synthetic_transactions.extend(drained)
         found += len(drained)
 
-    # 2) Poll du phong - chi chay khi co cau hinh SEPAY_API_TOKEN.
+    # 2) Poll du phong - chi chay khi co cau hinh GPMPAY_API_TOKEN.
     try:
-        polled = await sepay_fetch_history()
+        polled = await gpmpay_fetch_history()
         for tx in polled:
             if db_check_tx_exists(tx["transactionID"]):
                 continue
             synthetic_transactions.append(tx)
             found += 1
     except Exception as e:
-        logger.warning(f"SePay poll scan failed: {e}")
+        logger.warning(f"GPMPay poll scan failed: {e}")
         return {"enabled": True, "ok": False, "error": str(e), "count": found}
 
     return {"enabled": True, "ok": True, "error": "", "count": found}
@@ -488,23 +488,23 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     nowpayments_status = await _scan_nowpayments_payments(synthetic_transactions)
     if not nowpayments_status["ok"]:
         logger.warning(f"❌ LỖI API NOWPAYMENTS: {nowpayments_status['error'] or 'Unknown Error'}")
-    sepay_status = await _scan_sepay_payments(synthetic_transactions)
+    gpmpay_status = await _scan_gpmpay_payments(synthetic_transactions)
 
     try:
         transactions = list(synthetic_transactions)
 
-        # Suc khoe duong ngan hang = suc khoe SePay (webhook + poll doi soat).
+        # Suc khoe duong ngan hang = suc khoe GPM Pay (webhook + poll doi soat).
         _bank_api_last_check_time = time.time()
         _bank_api_total_checks += 1
-        if sepay_status["ok"]:
+        if gpmpay_status["ok"]:
             _bank_api_fail_count = 0
-            _bank_api_last_status = "ok" if sepay_status["enabled"] else "disabled"
+            _bank_api_last_status = "ok" if gpmpay_status["enabled"] else "disabled"
             _bank_api_last_error = ""
-            _bank_api_last_tx_count = sepay_status["count"]
+            _bank_api_last_tx_count = gpmpay_status["count"]
             _bank_api_total_success += 1
         else:
-            msg = sepay_status["error"] or "Unknown Error"
-            logger.warning(f"❌ LỖI API SEPAY: {msg}")
+            msg = gpmpay_status["error"] or "Unknown Error"
+            logger.warning(f"❌ LỖI API GPMPAY: {msg}")
             _bank_api_last_status = "error"
             _bank_api_last_error = msg[:240]
             _bank_api_fail_count += 1
@@ -514,7 +514,7 @@ async def check_payment_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                 _bank_api_last_alert_time = now_ts
                 await context.bot.send_message(
                     ADMIN_USER_ID,
-                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>LỖI KẾT NỐI SEPAY API</b> (lần {_bank_api_fail_count})\n\nServer trả về: {msg}",
+                    f"<tg-emoji emoji-id=\"5447644880824181073\">⚠️</tg-emoji> <b>LỖI KẾT NỐI GPMPAY API</b> (lần {_bank_api_fail_count})\n\nServer trả về: {msg}",
                     parse_mode=ParseMode.HTML
                 )
             # Webhook van co the da day giao dich ve -> chi thoat khi rong.

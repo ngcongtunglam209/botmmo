@@ -82,8 +82,8 @@ Mounted into the same FastAPI app the bot serves (`app/api/server.py` runs uvico
 
 Three independently toggled rails, all polled/reconciled by `app/jobs/payment_monitor.py`:
 
-- **SePay** (`ENABLE_PAYMENT_SEPAY`) — VND bank transfer. Webhook at `/webhook/sepay` authenticated by `SEPAY_WEBHOOK_API_KEY`; API-token polling is fallback only. VietQR images via SePay.
-- **NOWPayments** (`ENABLE_PAYMENT_NOWPAYMENTS`) — USDT, multi-currency (`NOWPAYMENTS_CURRENCIES`). IPN at `/webhook/nowpayments` signed HMAC-SHA512 with `NOWPAYMENTS_IPN_SECRET`; per-payment polling is fallback only.
+- **GPM Pay** (`ENABLE_PAYMENT_GPMPAY`) — VND bank transfer. Webhook at `/webhook/gpmpay` signed HMAC-SHA256 (`X-GPMPay-Signature: t=,v1=`) with `GPMPAY_WEBHOOK_SECRET`; only `source=REAL` incoming transfers count (`test` pings and SIMULATED are ignored); `GPMPAY_API_TOKEN` polling is fallback only. VietQR images via img.vietqr.io.
+- **NOWPayments** (`ENABLE_PAYMENT_NOWPAYMENTS`) — USDT, multi-currency (`NOWPAYMENTS_CURRENCIES`). IPN at `/webhook/nowpayments` signed HMAC-SHA512 with `NOWPAYMENTS_IPN_SECRET`; per-payment polling is fallback only. A "Coin khác" button opens a hosted NOWPayments invoice (`POST /v1/invoice`, sentinel currency `any` through the same `nowpaynet_` / `topup_npnet:` callbacks) so the customer can pay in any coin; it is only offered when `PUBLIC_API_URL` is set, because the invoice's `payment_id` is learned from its first IPN (`nowpayments_remember_payment_id`) and the underpay tolerance applies to stablecoins only.
 - **Binance Pay** (`ENABLE_PAYMENT_BINANCE_PAY`) — matched by amount + time leeway against a merchant history feed.
 
 Orders and wallet top-ups share the same payment-generation path (`app/handlers/payment_generation.py`, `app/handlers/user_topup.py`).
