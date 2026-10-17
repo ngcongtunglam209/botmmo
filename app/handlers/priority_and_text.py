@@ -779,7 +779,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_{qty}")])
         from app.integrations.nowpayments_api import is_nowpayments_enabled
         if is_nowpayments_enabled():
-            btns.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_{qty}")])
+            btns.append([_btn("Crypto (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_{qty}")])
         from app.integrations.payments_core import is_bank_transfer_enabled
         if is_bank_transfer_enabled():
             btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])
@@ -1228,7 +1228,7 @@ async def text_message_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             btns.append([_btn("Binance Pay", icon_id=CRYPTO_BUTTON_ICON_ID, callback_data=f"pay_prod_binance_{prod_id}_{qty}")])
         from app.integrations.nowpayments_api import is_nowpayments_enabled
         if is_nowpayments_enabled():
-            btns.append([_btn("USDT (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_{qty}")])
+            btns.append([_btn("Crypto (NOWPayments)", icon_id="5281029063459234079", callback_data=f"pay_prod_nowpay_{prod_id}_{qty}")])
         from app.integrations.payments_core import is_bank_transfer_enabled
         if is_bank_transfer_enabled():
             btns.append([_btn(lt(user.id, "Chuyển khoản (QR)", "Bank transfer (QR)", "银行转账（QR）"), icon_id=BANK_BUTTON_ICON_ID, callback_data=f"pay_prod_qr_{prod_id}_{qty}")])

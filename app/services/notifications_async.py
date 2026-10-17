@@ -110,7 +110,7 @@ async def notify_admin_store_order(
     payment_labels = {
         "balance": "Số dư",
         "bank_transfer": "Chuyển khoản",
-        "usdt_nowpayments": "USDT (NOWPayments)",
+        "usdt_nowpayments": "Crypto (NOWPayments)",
         "usdt_rpay": "USDT (RPay)",  # cong da go bo; don cu van con nhan nay
         "binance_pay": "Binance Pay",
     }
