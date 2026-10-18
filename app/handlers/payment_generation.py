@@ -184,8 +184,8 @@ async def generate_product_payment_qr(
 
     secret_transfer_code = generate_secret_transfer_code()
     transfer_content = build_transfer_content(secret_transfer_code)
-    qr_link = create_vietqr_link(qr_amount, transfer_content)
-    if not qr_link:
+    qr_photo = create_vietqr_png(qr_amount, transfer_content)
+    if not qr_photo:
         await release_reserved_order_code(order_code)
         _refund_balance_used_if_needed(user.id, balance_used, f"Refund: QR link failed {prod_id}")
         await _reply_payment_generation_error(update, context, "❌ Lỗi hệ thống tạo mã QR.")
@@ -228,7 +228,7 @@ async def generate_product_payment_qr(
         created_ts = time.time()
         sent_message = await _send_product_qr_photo_or_prompt(
             update, context, order_code, prod_id, balance_used,
-            chat_id=user.id, photo=qr_link, caption=caption, parse_mode='HTML',
+            chat_id=user.id, photo=qr_photo, caption=caption, parse_mode='HTML',
             reply_markup=InlineKeyboardMarkup([[
                 _btn(qr_text["cancel"], icon_id="6186252635805323641", callback_data=f"cancel_payment_{prod_id}", style="danger")
             ]]),

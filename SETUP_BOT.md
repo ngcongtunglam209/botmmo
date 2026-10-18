@@ -105,8 +105,11 @@ khong can mat khau Internet Banking. Poll chi la du phong khi webhook bi mat
    GPMPAY_API_TOKEN=<API Token o buoc 2>
    ```
 
-Ma QR chuyen khoan (`create_vietqr_link`) dung anh mien phi cua `img.vietqr.io`
-tu `BANK_ID` + `BANK_ACCOUNT_NUMBER` + `ACCOUNT_NAME`, khong goi GPM Pay.
+Ma QR chuyen khoan (`create_vietqr_png`) duoc bot tu sinh theo chuan NAPAS VietQR
+(`app/utils/vietqr.py`) tu `BANK_ID` + `BANK_ACCOUNT_NUMBER`, khong goi GPM Pay
+va khong phu thuoc `img.vietqr.io`. Ngan hang khong co trong bang BIN thi dien
+`BANK_BIN` (6 so). Rieng `qr_url` tra cho doi tac qua partner API van la link
+img.vietqr.io vi doi tac can mot URL.
 
 ### Bat buoc tham gia nhom
 
